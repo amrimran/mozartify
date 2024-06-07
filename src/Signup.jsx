@@ -10,6 +10,11 @@ import {
   Modal,
   InputAdornment,
   IconButton,
+  Radio,
+  RadioGroup,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { createGlobalStyle } from "styled-components";
@@ -55,13 +60,14 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-const ModalContainer = styled(Box)(({ theme }) => ({
+const ModalContainer = styled(Box)(() => ({
   position: "absolute",
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
   backgroundColor: "#FFFFFF",
   border: "2px solid #483C32",
+  borderRadius: 20,
   boxShadow: 24,
   padding: 32,
   width: 400,
@@ -75,6 +81,7 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [role, setRole] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
@@ -85,9 +92,18 @@ export default function Signup() {
       setErrorMessage("Passwords do not match");
       return;
     }
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setErrorMessage("Password must be at least 8 characters long and include both letters and numbers");
+      return;
+    }
+    if (!role) {
+      setErrorMessage("Please select a role");
+      return;
+    }
     setErrorMessage(""); // Clear any previous error messages
     axios
-      .post("http://localhost:3001/signup", { username, email, password })
+      .post("http://localhost:3001/signup", { username, email, password, role })
       .then((result) => {
         console.log(result);
         setIsModalOpen(true); // Show the success modal
@@ -256,8 +272,30 @@ export default function Signup() {
                 }}
               />
 
+              <FormControl component="fieldset" sx={{ mt: 2 }}>
+               
+                <RadioGroup
+                  aria-label="role"
+                  name="role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  row
+                >
+                  <FormControlLabel
+                    value="customer"
+                    control={<Radio required />}
+                    label="Customer"
+                  />
+                  <FormControlLabel
+                    value="music_entry_clerk"
+                    control={<Radio required />}
+                    label="Music Entry Clerk"
+                  />
+                </RadioGroup>
+              </FormControl>
+
               {errorMessage && (
-                <Typography color="error" variant="body2" sx={{ mt: 2 }}>
+                <Typography color="error" variant="body2" align="center" sx={{ mt: 2 }}>
                   {errorMessage}
                 </Typography>
               )}
