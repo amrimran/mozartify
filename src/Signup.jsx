@@ -87,6 +87,11 @@ export default function Signup() {
       setErrorMessage("Passwords do not match");
       return;
     }
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setErrorMessage("Password must be at least 8 characters long and include both letters and numbers");
+      return;
+    }
     if (!role) {
       setErrorMessage("Please select a role");
       return;
@@ -231,6 +236,7 @@ export default function Signup() {
               />
 
               <FormControl component="fieldset" sx={{ mt: 2 }}>
+               
                 <RadioGroup
                   aria-label="role"
                   name="role"
@@ -252,7 +258,7 @@ export default function Signup() {
               </FormControl>
 
               {errorMessage && (
-                <Typography color="error" variant="body2" sx={{ mt: 2 }}>
+                <Typography color="error" variant="body2" align="center" sx={{ mt: 2 }}>
                   {errorMessage}
                 </Typography>
               )}
