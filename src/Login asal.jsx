@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
-function Login() {
+function LoginAsal() {
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
   const navigate = useNavigate();
@@ -68,4 +68,4 @@ function Login() {
     </div>
   );
 }
-export default Login;
+export default LoginAsal;
