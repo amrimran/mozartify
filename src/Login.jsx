@@ -7,21 +7,21 @@ import {
   TextField,
   Button,
   Grid,
-  Modal,
   InputAdornment,
   IconButton,
+  Modal,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { createGlobalStyle } from "styled-components";
-import Visibility from '@mui/icons-material/VisibilityOff';
-import VisibilityOff from '@mui/icons-material/Visibility';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Image from "./assets/mozartify.png";
-import Image2 from "./assets/handrock.png";
-import backgroundImage from "./assets/signupWP.png";
+import Image2 from "./assets/handmusic.png";
+import backgroundImage from "./assets/loginWP.png";
 
 const FormContainer = styled(Box)(({ theme }) => ({
   backgroundColor: "#FFFFFF",
-  borderRadius: "20px 20px 200px 20px",
+  borderRadius: "20px",
   boxShadow: "0px 3px 6px rgba(0,0,0,1)",
   padding: 80,
   width: "60%",
@@ -29,14 +29,16 @@ const FormContainer = styled(Box)(({ theme }) => ({
   flexDirection: "column",
   justifyContent: "center",
   alignItems: "center",
+  fontFamily: 'Montserrat',
 }));
 
 const BackgroundContainer = styled(Box)(() => ({
+  backgroundColor: "#f5f5f5",
   backgroundImage: `url(${backgroundImage})`,
   backgroundSize: "cover",
   backgroundRepeat: "no-repeat",
   backgroundAttachment: "fixed",
-  backgroundPosition: "bottom",
+  backgroundPosition: "top",
   minHeight: "100vh",
   width: "100vw",
   display: "flex",
@@ -52,6 +54,7 @@ const GlobalStyle = createGlobalStyle`
   body {
     margin: 0;
     padding: 0;
+    font-family: 'Montserrat', sans-serif;
   }
 `;
 
@@ -66,54 +69,61 @@ const ModalContainer = styled(Box)(({ theme }) => ({
   padding: 32,
   width: 400,
   textAlign: "center",
+  fontFamily: 'Montserrat',
 }));
 
-export default function Signup() {
-  const [username, setUsername] = useState("");
+const LeftContainer = styled(Box)(() => ({
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+  alignItems: "center",
+  textAlign: "center",
+  padding: 20,
+  fontFamily: 'Montserrat',
+  position: 'relative', // Enable absolute positioning for child elements
+}));
+
+const HandMusicImage = styled('img')(({ theme }) => ({
+  position: 'bottom',
+  bottom: 0,
+  left: 0,
+  width: '150%',
+  maxWidth: '450px', // Ensure the image is big
+}));
+
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match");
-      return;
-    }
-    setErrorMessage(""); // Clear any previous error messages
     axios
-      .post("http://localhost:3001/signup", { username, email, password })
+      .post("http://localhost:3001/login", { email, password })
       .then((result) => {
         console.log(result);
-        setIsModalOpen(true); // Show the success modal
+        if (result.data === "Success") {
+          setIsModalOpen(true);
+        } else {
+          setErrorMessage("Invalid email or password");
+        }
       })
       .catch((err) => {
-        if (err.response && err.response.data && err.response.data.message) {
-          setErrorMessage(err.response.data.message);
-          console.log(err.response.data.message); // Log only the error message
-        } else {
-          setErrorMessage("An error occurred. Please try again.");
-          console.log("An error occurred. Please try again."); // Log a general error message
-        }
+        console.log(err);
+        setErrorMessage("An error occurred. Please try again.");
       });
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    navigate("/login"); // Navigate to login page after closing the modal
+    navigate("/home");
   };
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
-  };
-
-  const handleClickShowConfirmPassword = () => {
-    setShowConfirmPassword(!showConfirmPassword);
   };
 
   return (
@@ -125,6 +135,37 @@ export default function Signup() {
           spacing={2}
           sx={{ height: "100%", width: "100%", margin: 0 }}
         >
+          <Grid
+            item
+            xs={12}
+            md={4}
+            sx={{
+              height: "100vh",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              flexDirection: "column",
+            }}
+            style={{ padding: 0 }}
+          >
+            <LeftContainer>
+              <img src={Image} alt="Mozartify" style={{ width: "50%" }} />
+              <Typography
+                variant="h3"
+                fontWeight="bold"
+                sx={{ fontFamily: "Montserrat", ml: 6, mt: -3, color: "#FFFFFF" }}
+              >
+                Welcome
+                <br />
+                Back!
+              </Typography>
+              <HandMusicImage
+                src={Image2}
+                alt="Hand Music"
+              />
+            </LeftContainer>
+          </Grid>
+
           <Grid
             item
             xs={12}
@@ -141,34 +182,20 @@ export default function Signup() {
               <Typography
                 variant="h5"
                 align="center"
-                fontFamily="Montserrat"
                 fontWeight="bold"
                 gutterBottom
-                sx={{ marginBottom: 2 }}
+                sx={{ fontFamily: "Montserrat", marginBottom: 1 }}
               >
-                Please fill this form to create an account
+                Hello! Welcome back.
               </Typography>
-
-              <TextField
-                fullWidth
-                label="Username"
-                margin="normal"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                sx={{
-                  "& label.Mui-focused": { color: "#483C32" },
-                  "& .MuiInput-underline:after": {
-                    borderBottomColor: "#483C32",
-                  },
-                  "& .MuiOutlinedInput-root": {
-                    "& fieldset": { borderColor: "#483C32" },
-                    "&:hover fieldset": { borderColor: "#483C32" },
-                    "&.Mui-focused fieldset": { borderColor: "#483C32" },
-                  },
-                }}
-              />
-
+              <Typography
+                variant="body1"
+                align="center"
+                color="textSecondary"
+                sx={{ fontFamily: "Montserrat", marginBottom: 3 }}
+              >
+                Log in using the information you provided during registration
+              </Typography>
               <TextField
                 fullWidth
                 label="Email Address"
@@ -222,46 +249,27 @@ export default function Signup() {
                   },
                 }}
               />
-              <TextField
-                fullWidth
-                label="Confirm Password"
-                type={showConfirmPassword ? "text" : "password"}
-                margin="normal"
-                variant="outlined"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={handleClickShowConfirmPassword}
-                        edge="end"
-                      >
-                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  "& label.Mui-focused": { color: "#483C32" },
-                  "& .MuiInput-underline:after": {
-                    borderBottomColor: "#483C32",
-                  },
-                  "& .MuiOutlinedInput-root": {
-                    "& fieldset": { borderColor: "#483C32" },
-                    "&:hover fieldset": { borderColor: "#483C32" },
-                    "&.Mui-focused fieldset": { borderColor: "#483C32" },
-                  },
-                }}
-              />
-
               {errorMessage && (
                 <Typography color="error" variant="body2" sx={{ mt: 2 }}>
                   {errorMessage}
                 </Typography>
               )}
-
+              <Box
+                sx={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mt: 2,
+                }}
+              >
+                <Link
+                  to="/forgot-password"
+                  style={{ textDecoration: "none", color: "#483C32"}}
+                >
+                  Forgot Password?
+                </Link>
+              </Box>
               <Button
                 variant="outlined"
                 size="large"
@@ -280,66 +288,22 @@ export default function Signup() {
                   },
                 }}
               >
-                Sign Up
+                Login Now
               </Button>
-
               <Typography
                 variant="body2"
                 align="center"
                 sx={{ mt: 2, fontFamily: "Montserrat", color: "#483C32" }}
               >
-                Already have an account?{" "}
+                Don’t have an account?{" "}
                 <Link
-                  to="/login"
+                  to="/signup"
                   style={{ textDecoration: "none", color: "#C44131", fontWeight: "bold"}}
                 >
-                  LOGIN
+                  REGISTER
                 </Link>
               </Typography>
             </FormContainer>
-          </Grid>
-
-          <Grid
-            item
-            xs={12}
-            md={4}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "right",
-              alignItems: "right",
-              margin: 0,
-            }}
-            style={{ padding: 0 }}
-          >
-            <Box
-              sx={{
-                marginLeft: { xs: 0, md: 4 },
-                textAlign: "center",
-              }}
-            >
-              <Box sx={{ mt: 2 }} style={{ padding: 0 }}>
-                <img src={Image} alt="Mozartify" style={{ width: "50%" }} />
-              </Box>
-              <Typography
-                variant="h3"
-                color="white"
-                fontWeight="bold"
-                align="center"
-                sx={{fontFamily: "Montserrat", mt: -3 }}
-              >
-                Welcome to
-                <br />
-                Mozartify
-              </Typography>
-              <Box sx={{ mt: 1 }}>
-                <img
-                  src={Image2}
-                  alt="Mozartify"
-                  style={{ width: "100%", maxWidth: "403px" }}
-                />
-              </Box>
-            </Box>
           </Grid>
         </Grid>
       </BackgroundContainer>
@@ -352,11 +316,10 @@ export default function Signup() {
       >
         <ModalContainer>
           <Typography id="modal-title" variant="h6" component="h2">
-            Sign-Up Successful!
+            Login Successful!
           </Typography>
           <Typography id="modal-description" sx={{ mt: 2 }}>
-            Your account has been created successfully. Please check your email
-            for the verification link.
+            You have logged in successfully. Welcome back!
           </Typography>
           <Button onClick={handleCloseModal} sx={{ mt: 2 }} variant="contained">
             OK
