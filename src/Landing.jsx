@@ -37,7 +37,7 @@ export default function Landing() {
         position="sticky"
         elevation={0}
         sx={{
-          height: "7vh",
+          height: "8vh",
           background: "linear-gradient(to right, #c44131, #483C32)",
         }}
       >
@@ -280,7 +280,7 @@ export default function Landing() {
                       borderRadius: 15,
                       textTransform: "none",
                       fontFamily: "Montserrat",
-                      fontSize: "3.0rem",
+                      fontSize: "2.5rem",
                       padding: "20px 20px",
                       overflow: "hidden",
                       whiteSpace: "nowrap",
