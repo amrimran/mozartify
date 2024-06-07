@@ -9,8 +9,12 @@ import {
   TextField,
   Button,
   Grid,
-  FormGroup,
   Modal,
+  Radio,
+  RadioGroup,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { createGlobalStyle } from "styled-components";
@@ -53,13 +57,14 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-const ModalContainer = styled(Box)(({ theme }) => ({
+const ModalContainer = styled(Box)(() => ({
   position: "absolute",
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
   backgroundColor: "#FFFFFF",
   border: "2px solid #483C32",
+  borderRadius: 20,
   boxShadow: 24,
   padding: 32,
   width: 400,
@@ -71,6 +76,7 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
@@ -81,9 +87,13 @@ export default function Signup() {
       setErrorMessage("Passwords do not match");
       return;
     }
+    if (!role) {
+      setErrorMessage("Please select a role");
+      return;
+    }
     setErrorMessage(""); // Clear any previous error messages
     axios
-      .post("http://localhost:3001/signup", { username, email, password })
+      .post("http://localhost:3001/signup", { username, email, password, role })
       .then((result) => {
         console.log(result);
         setIsModalOpen(true); // Show the success modal
@@ -220,6 +230,27 @@ export default function Signup() {
                 }}
               />
 
+              <FormControl component="fieldset" sx={{ mt: 2 }}>
+                <RadioGroup
+                  aria-label="role"
+                  name="role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  row
+                >
+                  <FormControlLabel
+                    value="customer"
+                    control={<Radio required />}
+                    label="Customer"
+                  />
+                  <FormControlLabel
+                    value="music_entry_clerk"
+                    control={<Radio required />}
+                    label="Music Entry Clerk"
+                  />
+                </RadioGroup>
+              </FormControl>
+
               {errorMessage && (
                 <Typography color="error" variant="body2" sx={{ mt: 2 }}>
                   {errorMessage}
@@ -253,11 +284,12 @@ export default function Signup() {
               >
                 Already have an account?{" "}
                 <Link
-                  href="/login"
-                  sx={{
+                  to="/login"
+                  style={{
                     fontFamily: "Montserrat",
                     color: "#C44131",
                     fontWeight: "bold",
+                    textDecoration: "none",
                   }}
                 >
                   LOGIN
