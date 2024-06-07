@@ -1,16 +1,16 @@
-// import axios from "axios";
-// import { useState } from "react";
-// import { Link } from "react-router-dom";
-// import { useNavigate } from 'react-router-dom';
 import React from "react";
+import axios from "axios";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
-  Container,
   Box,
   Typography,
   TextField,
   Button,
-  Link,
   Grid,
+  FormGroup,
+  Modal,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { createGlobalStyle } from "styled-components";
@@ -32,10 +32,10 @@ const FormContainer = styled(Box)(({ theme }) => ({
 
 const BackgroundContainer = styled(Box)(() => ({
   backgroundImage: `url(${backgroundImage})`,
-  backgroundSize: "cover", // Ensure the background image covers the entire area
-  backgroundRepeat: "no-repeat", // Prevent the background image from repeating
-  backgroundAttachment: "fixed", // Keep the background image fixed in place
-  backgroundPosition: "bottom", // Center the background image
+  backgroundSize: "cover",
+  backgroundRepeat: "no-repeat",
+  backgroundAttachment: "fixed",
+  backgroundPosition: "bottom",
   minHeight: "100vh",
   width: "100vw",
   display: "flex",
@@ -53,7 +53,57 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
+const ModalContainer = styled(Box)(({ theme }) => ({
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  backgroundColor: "#FFFFFF",
+  border: "2px solid #483C32",
+  boxShadow: 24,
+  padding: 32,
+  width: 400,
+  textAlign: "center",
+}));
+
 export default function Signup() {
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match");
+      return;
+    }
+    setErrorMessage(""); // Clear any previous error messages
+    axios
+      .post("http://localhost:3001/signup", { username, email, password })
+      .then((result) => {
+        console.log(result);
+        setIsModalOpen(true); // Show the success modal
+      })
+      .catch((err) => {
+        if (err.response && err.response.data && err.response.data.message) {
+          setErrorMessage(err.response.data.message);
+          console.log(err.response.data.message); // Log only the error message
+        } else {
+          setErrorMessage("An error occurred. Please try again.");
+          console.log("An error occurred. Please try again."); // Log a general error message
+        }
+      });
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    navigate("/login"); // Navigate to login page after closing the modal
+  };
+
   return (
     <>
       <GlobalStyle />
@@ -75,7 +125,7 @@ export default function Signup() {
             }}
             style={{ padding: 0 }}
           >
-            <FormContainer>
+            <FormContainer component="form" onSubmit={handleSubmit}>
               <Typography
                 variant="h5"
                 align="center"
@@ -92,6 +142,8 @@ export default function Signup() {
                 label="Username"
                 margin="normal"
                 required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 sx={{
                   "& label.Mui-focused": { color: "#483C32" },
                   "& .MuiInput-underline:after": {
@@ -111,6 +163,19 @@ export default function Signup() {
                 margin="normal"
                 variant="outlined"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                sx={{
+                  "& label.Mui-focused": { color: "#483C32" },
+                  "& .MuiInput-underline:after": {
+                    borderBottomColor: "#483C32",
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": { borderColor: "#483C32" },
+                    "&:hover fieldset": { borderColor: "#483C32" },
+                    "&.Mui-focused fieldset": { borderColor: "#483C32" },
+                  },
+                }}
               />
               <TextField
                 fullWidth
@@ -119,6 +184,19 @@ export default function Signup() {
                 margin="normal"
                 variant="outlined"
                 required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                sx={{
+                  "& label.Mui-focused": { color: "#483C32" },
+                  "& .MuiInput-underline:after": {
+                    borderBottomColor: "#483C32",
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": { borderColor: "#483C32" },
+                    "&:hover fieldset": { borderColor: "#483C32" },
+                    "&.Mui-focused fieldset": { borderColor: "#483C32" },
+                  },
+                }}
               />
               <TextField
                 fullWidth
@@ -127,10 +205,31 @@ export default function Signup() {
                 margin="normal"
                 variant="outlined"
                 required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                sx={{
+                  "& label.Mui-focused": { color: "#483C32" },
+                  "& .MuiInput-underline:after": {
+                    borderBottomColor: "#483C32",
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": { borderColor: "#483C32" },
+                    "&:hover fieldset": { borderColor: "#483C32" },
+                    "&.Mui-focused fieldset": { borderColor: "#483C32" },
+                  },
+                }}
               />
+
+              {errorMessage && (
+                <Typography color="error" variant="body2" sx={{ mt: 2 }}>
+                  {errorMessage}
+                </Typography>
+              )}
+
               <Button
                 variant="outlined"
                 size="large"
+                type="submit"
                 sx={{
                   mt: 5,
                   px: 10,
@@ -211,82 +310,26 @@ export default function Signup() {
           </Grid>
         </Grid>
       </BackgroundContainer>
+
+      <Modal
+        open={isModalOpen}
+        onClose={handleCloseModal}
+        aria-labelledby="modal-title"
+        aria-describedby="modal-description"
+      >
+        <ModalContainer>
+          <Typography id="modal-title" variant="h6" component="h2">
+            Sign-Up Successful!
+          </Typography>
+          <Typography id="modal-description" sx={{ mt: 2 }}>
+            Your account has been created successfully. Please check your email
+            for the verification link.
+          </Typography>
+          <Button onClick={handleCloseModal} sx={{ mt: 2 }} variant="contained">
+            OK
+          </Button>
+        </ModalContainer>
+      </Modal>
     </>
   );
 }
-
-// function Signup() {
-//   const [name, setName] = useState();
-//   const [email, setEmail] = useState();
-//   const [password, setPassword] = useState();
-//   const navigate = useNavigate()
-
-//   const handleSubmit = (e) => {
-//     e.preventDefault();
-//     axios
-//       .post('http://localhost:3001/signup', { name, email, password })
-//       .then((result) => {console.log(result)
-//         navigate('/login')
-//       })
-//       .catch((err) => console.log(err));
-//   };
-
-//   return (
-//     // <div>
-//     //   <div className="bg-white p-3 rounded w-25">
-//     //     <h2>Register</h2>
-//     //     <form onSubmit={handleSubmit}>
-//     //       <div className="mb-3">
-//     //         <label htmlFor="name">
-//     //           <strong>Name</strong>
-//     //         </label>
-//     //         <input
-//     //           type="text"
-//     //           placeholder="Enter Name"
-//     //           autoComplete="off"
-//     //           name="name"
-//     //           className="form-control rounded-0"
-//     //           onChange={(e) => setName(e.target.value)}
-//     //         />
-//     //       </div>
-//     //       <div className="mb-3">
-//     //         <label htmlFor="email">
-//     //           <strong>Email</strong>
-//     //         </label>
-//     //         <input
-//     //           type="email"
-//     //           placeholder="Enter Email"
-//     //           autoComplete="off"
-//     //           name="email"
-//     //           className="form-control rounded-0"
-//     //           onChange={(e) => setEmail(e.target.value)}
-//     //         />
-//     //       </div>
-//     //       <div className="mb-3">
-//     //         <label htmlFor="password">
-//     //           <strong>Password</strong>
-//     //         </label>
-//     //         <input
-//     //           type="password"
-//     //           placeholder="Enter Password"
-//     //           autoComplete="off"
-//     //           name="password"
-//     //           className="form-control rounded-0"
-//     //           onChange={(e) => setPassword(e.target.value)}
-//     //         />
-//     //       </div>
-//     //       <button type="submit" className="btn btn-success w-100 rounded-0">
-//     //         Register
-//     //       </button>
-//     //     </form>
-//     //     <p>Already Have an Account</p>
-//     //     <Link
-//     //       to="/login"
-//     //       className="btn btn-default border w-100 bg-light rounded-0 text-decoration-none"
-//     //     >
-//     //       Login
-//     //     </Link>
-//     //   </div>
-//     // </div>
-//   );
-// }
