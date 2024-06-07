@@ -24,7 +24,7 @@ const sendVerificationEmail = (email, token) => {
   transporter.sendMail({
     from: "amirimran728@gmail.com",
     to: email,
-    subject: "Verify your email",
+    subject: "Mozartify Email Verification",
     html: `Click <a href="${url}">here</a> to verify your email.`,
   });
 };
