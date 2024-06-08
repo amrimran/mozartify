@@ -253,16 +253,7 @@ export default function CustomerLibrary() {
                 key={item.path}
               >
                 <ListItemButton>
-                  <ListItemIcon>
-                    <IconButton onClick={() => handleFavoriteClick(item._id)}>
-                      {item.liked ? (
-                        <Favorite style={{ color: "#c44131" }} />
-                      ) : (
-                        <FavoriteBorder />
-                      )}
-                    </IconButton>
-                  </ListItemIcon>
-
+                  <ListItemIcon>{item.icon}</ListItemIcon>
                   <ListItemText primary={item.label} />
                 </ListItemButton>
               </Link>
@@ -275,7 +266,7 @@ export default function CustomerLibrary() {
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
-            padding:5
+            padding: 5,
           }}
         >
           <Box

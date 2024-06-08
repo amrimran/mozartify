@@ -111,7 +111,7 @@ export default function CustomerMyCart() {
             </Box>
           </Box>
           <Box>
-            <Typography variant="h4">Dashboard</Typography>
+            <Typography variant="h4">My Cart</Typography>
             <Typography variant="body1" sx={{ mt: 2 }}>
               Welcome to your dashboard. Here you can manage your libraries,
               favourites, cart, and more.
