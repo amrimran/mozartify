@@ -65,23 +65,31 @@ export default function CustomerMyCart() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              pt:5
+              pt: 5,
             }}
           >
-            <img src={SidebarMozartifyLogo} alt="MozartifyIcon" style={{ maxWidth: "100%", maxHeight: "48px" }} />
+            <img
+              src={SidebarMozartifyLogo}
+              alt="MozartifyIcon"
+              style={{ maxWidth: "100%", maxHeight: "48px" }}
+            />
 
-            <Typography variant="h6" sx={{ mt: 2, fontFamily:"Montserrat" }}>
+            <Typography variant="h6" sx={{ mt: 2, fontFamily: "Montserrat" }}>
               Mozartify
             </Typography>
           </Box>
           <List>
             {navigationItems.map((item) => (
-              <ListItemButton key={item.path}>
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <Link to={item.path} style={{ textDecoration: "none" }}>
+              <Link
+                to={item.path}
+                style={{ textDecoration: "none" }}
+                key={item.path}
+              >
+                <ListItemButton>
+                  <ListItemIcon>{item.icon}</ListItemIcon>
                   <ListItemText primary={item.label} />
-                </Link>
-              </ListItemButton>
+                </ListItemButton>
+              </Link>
             ))}
           </List>
         </Box>

@@ -10,6 +10,7 @@ import CustomerFavourites from "./CustomerFavourites";
 import CustomerMyCart from "./CustomerMyCart";
 import CustomerFeedback from "./CustomerFeedback";
 import CustomerProfile from "./CustomerProfile";
+import CustomerMusicScoreView from "./CustomerMusicScoreView";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path="/customer-mycart" element={<CustomerMyCart />} />
         <Route path="/customer-feedback" element={<CustomerFeedback/>} />
         <Route path="/customer-profile" element={<CustomerProfile/>} />
+        <Route path="/customer-library/customer-music-score-view/:id" element={<CustomerMusicScoreView/>} />
       </Routes>
     </BrowserRouter>
   );
