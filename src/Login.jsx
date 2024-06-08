@@ -120,7 +120,7 @@ export default function Login() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    navigate("/home");
+    navigate("/customer-homepage");
   };
 
   const handleClickShowPassword = () => {
