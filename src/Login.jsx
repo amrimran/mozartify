@@ -13,8 +13,8 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { createGlobalStyle } from "styled-components";
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import Visibility from '@mui/icons-material/VisibilityOff';
+import VisibilityOff from '@mui/icons-material/Visibility';
 import Image from "./assets/mozartify.png";
 import Image2 from "./assets/handmusic.png";
 import backgroundImage from "./assets/loginWP.png";

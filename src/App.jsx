@@ -11,6 +11,11 @@ import CustomerMyCart from "./CustomerMyCart";
 import CustomerFeedback from "./CustomerFeedback";
 import CustomerProfile from "./CustomerProfile";
 import CustomerMusicScoreView from "./CustomerMusicScoreView";
+import MusicEntryClerkHomepage from "./MusicEntryClerkHomepage";
+import MusicEntryClerkUpload from "./MusicEntryClerkUpload";
+import MusicEntryClerkPreview from "./MusicEntryClerkPreview";
+import MusicEntryClerkCatalog from "./MusicEntryClerkCatalog";
+
 
 function App() {
   return (
@@ -28,6 +33,12 @@ function App() {
         <Route path="/customer-feedback" element={<CustomerFeedback/>} />
         <Route path="/customer-profile" element={<CustomerProfile/>} />
         <Route path="/customer-library/customer-music-score-view/:id" element={<CustomerMusicScoreView/>} />
+        <Route path="/customer-feedback" element={<CustomerFeedback />} />
+        <Route path="/customer-profile" element={<CustomerProfile />} />
+        <Route path="/clerk-homepage" element={<MusicEntryClerkHomepage />} />
+        <Route path="/clerk-upload" element={<MusicEntryClerkUpload />} />
+        <Route path="/clerk-preview" element={<MusicEntryClerkPreview />} />
+        <Route path="/clerk-catalog" element={<MusicEntryClerkCatalog />} />
       </Routes>
     </BrowserRouter>
   );
