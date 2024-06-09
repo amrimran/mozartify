@@ -1,8 +1,11 @@
-# React + Vite
+# Mozartify: Music Repository and Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## About Us
+We are **Nur Nifail Amsyar** and **Wan Amir Imran**, final-year students from the University of Malaya's Faculty of Computer Science and Information Technology (FCSIT). We are pursuing a Bachelor of Computer Science in Software Engineering.
 
-Currently, two official plugins are available:
+## Project Overview
+Currently, we are working on our final year project, which involves the development of a music score sheet repository and management system.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
+
+Thank you for your time and attention.
