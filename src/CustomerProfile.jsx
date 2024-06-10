@@ -2,27 +2,28 @@ import React from "react";
 import {
   Box,
   List,
-  ListItem,
   ListItemIcon,
   ListItemText,
   Avatar,
   Typography,
   ListItemButton,
 } from "@mui/material";
-import HomeIcon from "@mui/icons-material/Home";
-import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import FeedbackIcon from "@mui/icons-material/Feedback";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import ExitToAppIcon from "@mui/icons-material/ExitToApp";
+import {
+  Home as HomeIcon,
+  LibraryBooks as LibraryBooksIcon,
+  Favorite as FavoriteIcon,
+  ShoppingCart as ShoppingCartIcon,
+  Feedback as FeedbackIcon,
+  AccountCircle as AccountCircleIcon,
+  ExitToApp as ExitToAppIcon,
+} from "@mui/icons-material";
+
+
 import { Link } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 
 export default function CustomerProfile() {
-  const username = "Nifail Amsyar"; // Replace with dynamic username
-
   const navigationItems = [
     { path: "/customer-homepage", label: "My Dashboard", icon: <HomeIcon /> },
     {

@@ -16,8 +16,7 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import { Link, useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
-import ScanIcon from "./assets/scan-icon.png"; // Placeholder for scan icon
-import ImportIcon from "./assets/import-icon.png"; // Placeholder for import icon
+import ImportIcon from "./assets/import-icon.png";
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -131,42 +130,7 @@ export default function MusicEntryClerkUpload() {
                 width: "80%",
               }}
             >
-              <Box
-                sx={{
-                  textAlign: "center",
-                  border: "2px solid #ccc",
-                  borderRadius: 8,
-                  padding: 4,
-                  width: "40%",
-                }}
-              >
-                <img src={ScanIcon} alt="Scan Icon" style={{ width: "100px", height: "100px" }} />
-                <Typography variant="h6" sx={{ mt: 2, fontFamily: "Montserrat" }}>
-                  Scan using scanner
-                </Typography>
-                <Button
-                  variant="outlined"
-                  size="large"
-                  sx={{
-                    mt: 5,
-                    px: 10,
-                    fontFamily: "Montserrat",
-                    fontWeight: "bold",
-                    color: "#483C32", // Custom text color for outlined button
-                    borderColor: "#483C32", // Custom border color for outlined button
-                    "&:hover": {
-                      backgroundColor: "#483C32",
-                      color: "#FFFFFF",
-                      borderColor: "#483C32", // Ensures border is also set when hovered
-                    },
-                  }}
-                >
-                  Scan
-                </Button>
-              </Box>
-              <Typography variant="h6" sx={{ fontFamily: "Montserrat" }}>
-                OR
-              </Typography>
+              
               <Box
                 sx={{
                   textAlign: "center",
