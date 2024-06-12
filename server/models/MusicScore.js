@@ -1,69 +1,69 @@
 const mongoose = require('mongoose');
 
 const MusicScoreSchema = new mongoose.Schema({
-  mss_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    auto: true,
-  },
-  mss_title: {
+  ms_title: {
     type: String,
     required: true,
   },
-  mss_content: {
+  ms_content: {
     type: String,
     required: true,
   },
-  mss_genre: {
+  ms_genre: {
     type: String,
     required: true,
   },
-  mss_composer: {
+  ms_composer: {
     type: String,
     required: true,
   },
-  mss_copyright: {
+  ms_copyright: {
     type: String,
     required: true,
   },
-  mss_artist: {
+  ms_artist: {
     type: String,
     required: true,
   },
-  mss_desc: {
+  ms_desc: {
     type: String,
     required: true,
   },
-  mss_historical_context: {
+  ms_historical_context: {
     type: String,
     required: true,
   },
-  mss_instrumentation: {
+  ms_instrumentation: {
     type: String,
     required: true,
   },
-  mss_key: {
+  ms_key: {
     type: String,
     required: true,
   },
-  mss_lyrics: {
+  ms_lyrics: {
     type: String,
     required: true,
   },
-  mss_date_published: {
+  ms_date_published: {
     type: Date,
     required: true,
   },
-  mss_date_uploaded: {
+  ms_date_uploaded: {
     type: Date,
     required: true,
   },
-  mss_price: {
+  ms_price: {
     type: Number,
     required: true,
   },
-  mss_audio: {
+  ms_audio: {
     type: String,
     required: true,
+  },
+  ms_cover_image: {
+    type: String,
+    required: false
   },
   ownerIds: [{
     type: mongoose.Schema.Types.ObjectId,

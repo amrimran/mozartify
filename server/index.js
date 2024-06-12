@@ -190,16 +190,22 @@ app.get('/user/:id', async (req, res) => {
 });
 
 // Route to get music scores owned by the user
-app.get("/music-scores", async (req, res) => {
+app.get('/music-scores', async (req, res) => {
   const { userId } = req.query;
 
   try {
-    const musicScores = await MusicScoreModel.find({ ownerIds: userId });
+    let musicScores;
+    if (userId) {
+      musicScores = await MusicScoreModel.find({ ownerIds: userId });
+    } else {
+      musicScores = await MusicScoreModel.find();
+    }
     res.json(musicScores);
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err });
+    res.status(500).json({ message: 'Server error', error: err });
   }
 });
+
 
 app.post('/favourites', async (req, res) => {
   const { userId, musicScoreId } = req.body;
@@ -235,6 +241,15 @@ app.get('/customer-music-score-view/:id', async (req, res) => {
     res.json(musicScore);
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err });
+  }
+});
+
+app.get('/api/image-path', async (req, res) => {
+  try {
+    const image = await MusicScoreModel.findOne();
+    res.json({ path: image.ms_cover_image });
+  } catch (error) {
+    res.status(500).send('Server error');
   }
 });
 

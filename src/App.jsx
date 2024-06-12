@@ -33,6 +33,7 @@ function App() {
         <Route path="/customer-feedback" element={<CustomerFeedback/>} />
         <Route path="/customer-profile" element={<CustomerProfile/>} />
         <Route path="/customer-library/customer-music-score-view/:id" element={<CustomerMusicScoreView/>} />
+        <Route path="/customer-music-score-view/:id" element={<CustomerMusicScoreView/>} />
         <Route path="/customer-feedback" element={<CustomerFeedback />} />
         <Route path="/customer-profile" element={<CustomerProfile />} />
         <Route path="/clerk-homepage" element={<MusicEntryClerkHomepage />} />

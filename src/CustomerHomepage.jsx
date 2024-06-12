@@ -1,63 +1,296 @@
-import React from "react";
+import React, { useEffect, useState, useRef } from "react";
+import axios from "axios";
+import Fuse from "fuse.js";
+import { ref, getDownloadURL } from "firebase/storage";
+import { storage } from "./firebase";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 import {
   Box,
   List,
-  ListItem,
   ListItemIcon,
   ListItemText,
   Avatar,
   Typography,
   ListItemButton,
+  IconButton,
+  Pagination,
+  InputBase,
+  Paper,
+  Button,
+  Drawer,
+  FormControl,
+  InputLabel,
+  TextField,
+  Select,
+  MenuItem,
+  Grid,
+  Card,
+  CardContent,
+  CardMedia,
+  useMediaQuery,
+  Tooltip,
 } from "@mui/material";
-import HomeIcon from "@mui/icons-material/Home";
-import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import FeedbackIcon from "@mui/icons-material/Feedback";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import ExitToAppIcon from "@mui/icons-material/ExitToApp";
-import { Link } from "react-router-dom";
+
+import {
+  PlayArrow,
+  Home,
+  LibraryBooks,
+  Favorite,
+  ShoppingCart,
+  Feedback,
+  AccountCircle,
+  ExitToApp,
+  FilterAlt,
+  ArrowBack,
+  ArrowForward,
+} from "@mui/icons-material";
+import { Link, useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 
+const options = {
+  keys: [
+    "ms_title",
+    "ms_genre",
+    "ms_composer",
+    "ms_artist",
+    "ms_instrumentation",
+  ],
+  threshold: 0.3,
+};
+
+const EllipsisTypography = ({ title }) => {
+  const [isOverflowed, setIsOverflowed] = useState(false);
+  const textRef = useRef(null);
+
+  useEffect(() => {
+    const element = textRef.current;
+    if (element) {
+      setIsOverflowed(element.scrollWidth > element.clientWidth);
+    }
+  }, [title]);
+
+  return (
+    <Tooltip title={title} disableHoverListener={!isOverflowed}>
+      <Typography
+        ref={textRef}
+        variant="body1"
+        sx={{
+          textAlign: "center",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
+        {title}
+      </Typography>
+    </Tooltip>
+  );
+};
+
 export default function CustomerHomepage() {
-  const username = "Nifail Amsyar";
+  const [username, setUsername] = useState("");
+  const [musicScores, setMusicScores] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [favorites, setFavorites] = useState([]);
+  const [genre, setGenre] = useState("");
+  const [composer, setComposer] = useState("");
+  const [instrumentation, setInstrumentation] = useState("");
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(100);
+  const scoresPerPage = 10;
+  const userId = "6663a93dd0f65edd4857eb95";
+
+  //fetch user id and music score
+  useEffect(() => {
+    // Fetch user details
+    axios
+      .get(`http://localhost:3001/user/${userId}`)
+      .then((response) => {
+        setUsername(response.data.username); // Set the username state with the fetched data
+        setFavorites(response.data.favorites || []); // Set the favorites state, defaulting to an empty array if no favorites are found
+      })
+      .catch((error) => {
+        console.error("Error fetching user details:", error); // Log any errors that occur during the fetch
+      });
+  
+    // Fetch all music scores
+    axios
+      .get('http://localhost:3001/music-scores') // URL without the userId parameter
+      .then((response) => {
+        setMusicScores(response.data);
+         console.log(musicScores.length)
+      })
+      .catch((error) => {
+        console.error("Error fetching music scores:", error); // Log any errors that occur during the fetch
+      });
+  }, []); // No dependencies, only runs on initial mount
+  
+
+  useEffect(() => {
+    const fetchImagePaths = async () => {
+      const updatedMusicScores = await Promise.all(
+        musicScores.map(async (score) => {
+          const imageUrl = await fetchImagePath(score.ms_cover_image);
+          return { ...score, imageUrl };
+        })
+      );
+      setMusicScores(updatedMusicScores);
+    };
+
+    if (musicScores.length > 0) {
+      fetchImagePaths();
+    }
+  }, [musicScores]);
+
+  const fetchImagePath = async (imagePath) => {
+    try {
+      const storageRef = ref(storage, imagePath);
+      const url = await getDownloadURL(storageRef);
+      return url;
+    } catch (error) {
+      console.error("Error fetching image path or URL:", error);
+      return null;
+    }
+  };
+  
+
+  const NextArrow = (props) => {
+    const { onClick } = props;
+    return (
+      <IconButton
+        style={{
+          position: "absolute",
+          right: "-25px",
+          top: "50%",
+          transform: "translateY(-50%)",
+          zIndex: 1,
+        }}
+        onClick={onClick}
+      >
+        <ArrowForward />
+      </IconButton>
+    );
+  };
+
+  const PrevArrow = (props) => {
+    const { onClick } = props;
+    return (
+      <IconButton
+        style={{
+          position: "absolute",
+          left: "-25px",
+          top: "50%",
+          transform: "translateY(-50%)",
+          zIndex: 1,
+        }}
+        onClick={onClick}
+      >
+        <ArrowBack />
+      </IconButton>
+    );
+  };
+
+  const settings = {
+    dots: false,
+    infinite: false,
+    speed: 500,
+    slidesToShow: 4,
+    slidesToScroll: 1,
+    nextArrow: <NextArrow />,
+    prevArrow: <PrevArrow />,
+    pauseOnHover: true,
+  };
+
+  const fuse = new Fuse(musicScores, options);
+
+  const filteredScores = searchQuery
+    ? fuse.search(searchQuery).map((result) => result.item)
+    : musicScores;
+
+  const filterByGenre = (score) => {
+    const result = !genre || score.ms_genre === genre;
+    return result;
+  };
+
+  const filterByComposer = (score) => {
+    const result =
+      !composer ||
+      score.ms_composer.toLowerCase().includes(composer.toLowerCase());
+    return result;
+  };
+
+  const filterByInstrumentation = (score) => {
+    const result =
+      !instrumentation ||
+      score.ms_instrumentation
+        .toLowerCase()
+        .includes(instrumentation.toLowerCase());
+    return result;
+  };
+
+  const filterByPrice = (score) =>
+    score.ms_price >= minPrice && score.ms_price <= maxPrice;
+
+  const applyFilters = (scores) => {
+    return scores.filter((score) => {
+      return (
+        filterByGenre(score) &&
+        filterByComposer(score) &&
+        filterByInstrumentation(score) &&
+        filterByPrice(score)
+      );
+    });
+  };
+
+  const clearFilters = () => {
+    setGenre("");
+    setComposer("");
+    setInstrumentation("");
+    setMinPrice(0);
+    setMaxPrice(100);
+  };
+
+  const filteredAndSearchedScores = applyFilters(filteredScores);
+
+  const indexOfLastScore = currentPage * scoresPerPage;
+  const indexOfFirstScore = indexOfLastScore - scoresPerPage;
+  const currentScores = filteredAndSearchedScores.slice(
+    indexOfFirstScore,
+    indexOfLastScore
+  );
 
   const navigationItems = [
-    { path: "/customer-homepage", label: "My Dashboard", icon: <HomeIcon /> },
-    {
-      path: "/customer-library",
-      label: "Libraries",
-      icon: <LibraryBooksIcon />,
-    },
-    {
-      path: "/customer-favourites",
-      label: "Favourites",
-      icon: <FavoriteIcon />,
-    },
-    { path: "/customer-mycart", label: "My Cart", icon: <ShoppingCartIcon /> },
-    { path: "/customer-feedback", label: "Feedback", icon: <FeedbackIcon /> },
+    { path: "/customer-homepage", label: "My Dashboard", icon: <Home /> },
+    { path: "/customer-library", label: "Libraries", icon: <LibraryBooks /> },
+    { path: "/customer-favourites", label: "Favourites", icon: <Favorite /> },
+    { path: "/customer-mycart", label: "My Cart", icon: <ShoppingCart /> },
+    { path: "/customer-feedback", label: "Feedback", icon: <Feedback /> },
     {
       path: "/customer-profile",
       label: "Customer Profile",
-      icon: <AccountCircleIcon />,
+      icon: <AccountCircle />,
     },
-    { path: "/login", label: "Logout", icon: <ExitToAppIcon /> },
+    { path: "/login", label: "Logout", icon: <ExitToApp /> },
   ];
 
   const GlobalStyle = createGlobalStyle`
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Montserrat', sans-serif;
-  }
-`;
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Montserrat', sans-serif;
+    }
+  `;
 
   return (
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh" }}>
-        <Box sx={{ width: 225, bgcolor: "#E4DCC8", p: 2 }}>
+        <Box sx={{ width: 225, bgcolor: "#E4DCC8", p: 2, flexShrink: 0 }}>
           <Box
             sx={{
               textAlign: "center",
@@ -73,7 +306,6 @@ export default function CustomerHomepage() {
               alt="MozartifyIcon"
               style={{ maxWidth: "100%", maxHeight: "48px" }}
             />
-
             <Typography variant="h6" sx={{ mt: 2, fontFamily: "Montserrat" }}>
               Mozartify
             </Typography>
@@ -93,7 +325,15 @@ export default function CustomerHomepage() {
             ))}
           </List>
         </Box>
-        <Box sx={{ flexGrow: 1, p: 3 }}>
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            padding: 5,
+          }}
+        >
           <Box
             sx={{
               display: "flex",
@@ -102,7 +342,157 @@ export default function CustomerHomepage() {
               mb: 3,
             }}
           >
-            <Typography variant="h6">Welcome to Mozartify</Typography>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Paper
+                component="form"
+                sx={{
+                  p: "6px 10px",
+                  display: "flex",
+                  alignItems: "center",
+                  width: 600,
+                  border: "1px solid #c44131",
+                  borderRadius: "50px",
+                }}
+              >
+                <InputBase
+                  sx={{ ml: 1, flex: 1 }}
+                  placeholder="Look for music scores here..."
+                  inputProps={{ "aria-label": "search music scores" }}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </Paper>
+              <IconButton
+                sx={{ p: "10px", ml: 2 }}
+                aria-label="filter"
+                onClick={() => setIsDrawerOpen(true)}
+              >
+                <FilterAlt sx={{ color: "#483C32" }} />
+              </IconButton>
+
+              <Drawer
+                anchor="right"
+                open={isDrawerOpen}
+                onClose={() => setIsDrawerOpen(false)}
+              >
+                <Box sx={{ width: 400, p: 2 }}>
+                  <Typography variant="h6" sx={{ mb: 2 }}>
+                    Filter Options
+                  </Typography>
+
+                  {/* Genre Filter */}
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel>Genre</InputLabel>
+                    <Select
+                      label="Genre"
+                      value={genre}
+                      onChange={(e) => setGenre(e.target.value)}
+                    >
+                      <MenuItem value="">All</MenuItem>
+                      <MenuItem value="Classical">Classical</MenuItem>
+                      <MenuItem value="Jazz">Jazz</MenuItem>
+                      <MenuItem value="Pop">Pop</MenuItem>
+                      {/* Add more genres as needed */}
+                    </Select>
+                  </FormControl>
+
+                  {/* Composer Filter */}
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel>Composer</InputLabel>
+                    <Select
+                      label="Composer"
+                      value={composer}
+                      onChange={(e) => setComposer(e.target.value)}
+                    >
+                      <MenuItem value="">All</MenuItem>
+                      <MenuItem value="Mozart">Mozart</MenuItem>
+                      <MenuItem value="Beethoven">Beethoven</MenuItem>
+                      <MenuItem value="Gershwin">Gershwin</MenuItem>
+                      <MenuItem value="Chopin">Chopin</MenuItem>
+                      <MenuItem value="Debussy">Debussy</MenuItem>
+                      <MenuItem value="Scott Joplin">Scott Joplin</MenuItem>
+                      <MenuItem value="Erik Satie">Erik Satie</MenuItem>
+                      <MenuItem value="Vivaldi">Vivaldi</MenuItem>
+                      <MenuItem value="Pacheibel">Pacheibel</MenuItem>
+                      <MenuItem value="Ravel">Ravel</MenuItem>
+                      <MenuItem value="Liszt">Liszt</MenuItem>
+                      <MenuItem value="Rimsky-Korsakov">
+                        Rimsky-Korsakov
+                      </MenuItem>
+                      <MenuItem value="Tchaikovsky">Tchaikovsky</MenuItem>
+                      <MenuItem value="Holst">Holst</MenuItem>
+
+                      {/* Add more genres as needed */}
+                    </Select>
+                  </FormControl>
+
+                  {/* Instrumentation Filter */}
+                  <TextField
+                    label="Instrumentation"
+                    variant="outlined"
+                    fullWidth
+                    sx={{ mb: 2 }}
+                    value={instrumentation}
+                    onChange={(e) => setInstrumentation(e.target.value)}
+                  />
+
+                  {/* Price Range Inputs */}
+                  <TextField
+                    label="Min Price"
+                    variant="outlined"
+                    fullWidth
+                    type="number"
+                    sx={{ mb: 2 }}
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                  />
+                  <TextField
+                    label="Max Price"
+                    variant="outlined"
+                    fullWidth
+                    type="number"
+                    sx={{ mb: 2 }}
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                  />
+
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    sx={{
+                      mt: 4,
+                      backgroundColor: "#483C32",
+                      color: "#fff",
+                      "&:hover": {
+                        backgroundColor: "#3c312a",
+                      },
+                    }}
+                    onClick={() => setIsDrawerOpen(false)}
+                  >
+                    CLOSE FILTERS
+                  </Button>
+
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    sx={{
+                      mt: 2,
+                      borderColor: "#C44131",
+                      color: "#C44131",
+                      "&:hover": {
+                        borderColor: "#C44131",
+                        color: "#FFFFFF",
+                        backgroundColor: "#C44131",
+                      },
+                    }}
+                    onClick={clearFilters}
+                  >
+                    CLEAR FILTERS
+                  </Button>
+                </Box>
+              </Drawer>
+            </Box>
+
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography variant="body1" sx={{ mr: 2 }}>
                 {username}
@@ -110,12 +500,169 @@ export default function CustomerHomepage() {
               <Avatar>{username[0]}</Avatar>
             </Box>
           </Box>
-          <Box>
-            <Typography variant="h4">Dashboard</Typography>
-            <Typography variant="body1" sx={{ mt: 2 }}>
-              Welcome to your dashboard. Here you can manage your libraries,
-              favourites, cart, and more.
-            </Typography>
+
+          <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
+            <Box display="flex" alignItems="center" mb={2}>
+              <Typography variant="h4">
+                {searchQuery ? "Search Result" : "Dashboard"}
+              </Typography>
+            </Box>
+            {searchQuery ? (
+              <Box>
+                {filteredAndSearchedScores.length > 0 ? (
+                  filteredAndSearchedScores.map((score) => (
+                    <Box
+                      key={score._id}
+                      sx={{ display: "flex", alignItems: "center", mb: 2 }}
+                    >
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="h6">{score.ms_title}</Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          Genre: {score.ms_genre} | Composer:{" "}
+                          {score.ms_composer} | Artist: {score.ms_artist}
+                        </Typography>
+                      </Box>
+                      <IconButton>
+                        <Favorite
+                          color={
+                            favorites.includes(score._id) ? "error" : "disabled"
+                          }
+                        />
+                      </IconButton>
+                      <IconButton>
+                        <PlayArrow />
+                      </IconButton>
+                    </Box>
+                  ))
+                ) : (
+                  <Typography variant="body2">No results found</Typography>
+                )}
+              </Box>
+            ) : (
+              <>
+                <Box>
+                  <Typography variant="h5" gutterBottom>
+                    Popular
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      position: "relative",
+                    }}
+                  >
+                    <Box sx={{ width: "calc(100% - 60px)" }}>
+                      <Slider {...settings}>
+                        {musicScores.map((score) => (
+                          <Box key={score._id} sx={{ padding: "0 20px" }}>
+                            <Link
+                              to={`/customer-music-score-view/${score._id}`}
+                              style={{ textDecoration: "none" }}
+                            >
+                              <Card
+                                sx={{
+                                  width: 200,
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  justifyContent: "space-between",
+                                  border: "2px solid #000",
+                                  borderRadius: 10,
+                                }}
+                              >
+                                <CardMedia
+                                  component="img"
+                                  image={score.imageUrl}
+                                  alt={score.ms_title}
+                                />
+                                <CardContent
+                                  sx={{
+                                    flexGrow: 1,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  <EllipsisTypography title={score.ms_title} />
+                                  <Typography
+                                    variant="body2"
+                                    color="textSecondary"
+                                    sx={{ textAlign: "center" }}
+                                  >
+                                    {score.ms_artist}
+                                  </Typography>
+                                </CardContent>
+                              </Card>
+                            </Link>
+                          </Box>
+                        ))}
+                      </Slider>
+                    </Box>
+                  </Box>
+                </Box>
+
+                <Box sx={{ mt: 4 }}>
+                  <Typography variant="h5" gutterBottom>
+                    For You
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      position: "relative",
+                    }}
+                  >
+                    <Box sx={{ width: "calc(100% - 60px)" }}>
+                      <Slider {...settings}>
+                        {musicScores.map((score) => (
+                          <Box key={score._id} sx={{ padding: "0 20px" }}>
+                            <Link
+                              to={`/customer-music-score-view/${score._id}`}
+                              style={{ textDecoration: "none" }}
+                            >
+                              <Card
+                                sx={{
+                                  width: 200,
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  justifyContent: "space-between",
+                                  border: "2px solid #000",
+                                  borderRadius: 10,
+                                }}
+                              >
+                                <CardMedia
+                                  component="img"
+                                  image={score.imageUrl}
+                                  alt={score.ms_title}
+                                />
+                                <CardContent
+                                  sx={{
+                                    flexGrow: 1,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  <EllipsisTypography title={score.ms_title} />
+                                  <Typography
+                                    variant="body2"
+                                    color="textSecondary"
+                                    sx={{ textAlign: "center" }}
+                                  >
+                                    {score.ms_artist}
+                                  </Typography>
+                                </CardContent>
+                              </Card>
+                            </Link>
+                          </Box>
+                        ))}
+                      </Slider>
+                    </Box>
+                  </Box>
+                </Box>
+              </>
+            )}
           </Box>
         </Box>
       </Box>

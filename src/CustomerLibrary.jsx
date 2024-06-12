@@ -39,13 +39,13 @@ import SidebarMozartifyLogo from "./assets/mozartify.png";
 
 const options = {
   keys: [
-    "mss_title",
-    "mss_genre",
-    "mss_composer",
-    "mss_artist",
-    "mss_instrumentation",
+    "ms_title",
+    "ms_genre",
+    "ms_composer",
+    "ms_artist",
+    "ms_instrumentation",
   ],
-  threshold: 0.3, // Adjust the threshold for more or less fuzzy matching
+  threshold: 0.3,
 };
 
 export default function CustomerLibrary() {
@@ -95,7 +95,7 @@ export default function CustomerLibrary() {
       .then((response) => {
         const scoresWithLikes = response.data.map((score) => ({
           ...score,
-          liked: favorites.includes(score._id), // Ensure this matches the favorite ID format
+          liked: favorites.includes(score._id),
         }));
         setMusicScores(scoresWithLikes);
       })
@@ -139,23 +139,21 @@ export default function CustomerLibrary() {
     : musicScores;
 
   const filterByGenre = (score) => {
-    const result = !genre || score.mss_genre === genre;
-    console.log(`Filtering by genre (${genre}):`, result, score);
+    const result = !genre || score.ms_genre === genre;
     return result;
   };
 
   const filterByComposer = (score) => {
     const result =
       !composer ||
-      score.mss_composer.toLowerCase().includes(composer.toLowerCase());
-    console.log(`Filtering by composer (${composer}):`, result, score);
+      score.ms_composer.toLowerCase().includes(composer.toLowerCase());
     return result;
   };
 
   const filterByInstrumentation = (score) => {
     const result =
       !instrumentation ||
-      score.mss_instrumentation
+      score.ms_instrumentation
         .toLowerCase()
         .includes(instrumentation.toLowerCase());
     console.log(
@@ -167,7 +165,7 @@ export default function CustomerLibrary() {
   };
 
   const filterByPrice = (score) =>
-    score.mss_price >= minPrice && score.mss_price <= maxPrice;
+    score.ms_price >= minPrice && score.ms_price <= maxPrice;
 
   const applyFilters = (scores) => {
     return scores.filter((score) => {
@@ -470,8 +468,8 @@ export default function CustomerLibrary() {
                   }
                 >
                   <ListItemText
-                    primary={item.mss_title}
-                    secondary={`Genre: ${item.mss_genre} | Composer: ${item.mss_composer} | Artist: ${item.mss_artist}`}
+                    primary={item.ms_title}
+                    secondary={`Genre: ${item.ms_genre} | Composer: ${item.ms_composer} | Artist: ${item.ms_artist}`}
                   />
                   <ListItemIcon>
                     <IconButton

@@ -39,11 +39,11 @@ import SidebarMozartifyLogo from "./assets/mozartify.png";
 
 const options = {
   keys: [
-    "mss_title",
-    "mss_genre",
-    "mss_composer",
-    "mss_artist",
-    "mss_instrumentation",
+    "ms_title",
+    "ms_genre",
+    "ms_composer",
+    "ms_artist",
+    "ms_instrumentation",
   ],
   threshold: 0.3, // Adjust the threshold for more or less fuzzy matching
 };
@@ -68,7 +68,6 @@ export default function CustomerFavourites() {
 
   const userId = "6663a93dd0f65edd4857eb95";
 
-  // Fetch user's username and favorites
   useEffect(() => {
     axios
       .get(`http://localhost:3001/user/${userId}`)
@@ -87,10 +86,10 @@ export default function CustomerFavourites() {
       .get(`http://localhost:3001/music-scores?userId=${userId}`)
       .then((response) => {
         const scoresWithLikes = response.data.filter((score) =>
-          favorites.includes(score.mss_id)
+          favorites.includes(score._id)
         ).map((score) => ({
           ...score,
-          liked: favorites.includes(score.mss_id), // Ensure this matches the favorite ID format
+          liked: favorites.includes(score._id), // Ensure this matches the favorite ID format
         }));
         setMusicScores(scoresWithLikes);
       })
@@ -109,7 +108,7 @@ export default function CustomerFavourites() {
         // Update the music scores to reflect the change
         setMusicScores((prevScores) =>
           prevScores.map((score) => {
-            if (score.mss_id === musicScoreId) {
+            if (score._id === musicScoreId) {
               return {
                 ...score,
                 liked: updatedFavorites.includes(musicScoreId),
@@ -134,7 +133,7 @@ export default function CustomerFavourites() {
     : musicScores;
 
   const filterByGenre = (score) => {
-    const result = !genre || score.mss_genre === genre;
+    const result = !genre || score.ms_genre === genre;
     console.log(`Filtering by genre (${genre}):`, result, score);
     return result;
   };
@@ -142,7 +141,7 @@ export default function CustomerFavourites() {
   const filterByComposer = (score) => {
     const result =
       !composer ||
-      score.mss_composer.toLowerCase().includes(composer.toLowerCase());
+      score.ms_composer.toLowerCase().includes(composer.toLowerCase());
     console.log(`Filtering by composer (${composer}):`, result, score);
     return result;
   };
@@ -150,7 +149,7 @@ export default function CustomerFavourites() {
   const filterByInstrumentation = (score) => {
     const result =
       !instrumentation ||
-      score.mss_instrumentation
+      score.ms_instrumentation
         .toLowerCase()
         .includes(instrumentation.toLowerCase());
     console.log(
@@ -162,7 +161,7 @@ export default function CustomerFavourites() {
   };
 
   const filterByPrice = (score) =>
-    score.mss_price >= minPrice && score.mss_price <= maxPrice;
+    score.ms_price >= minPrice && score.ms_price <= maxPrice;
 
   const applyFilters = (scores) => {
     return scores.filter((score) => {
@@ -466,14 +465,14 @@ export default function CustomerFavourites() {
                   }
                 >
                   <ListItemText
-                    primary={item.mss_title}
-                    secondary={`Genre: ${item.mss_genre} | Composer: ${item.mss_composer} | Artist: ${item.mss_artist}`}
+                    primary={item.ms_title}
+                    secondary={`Genre: ${item.ms_genre} | Composer: ${item.ms_composer} | Artist: ${item.ms_artist}`}
                   />
                   <ListItemIcon>
                     <IconButton
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleFavoriteClick(item.mss_id);
+                        handleFavoriteClick(item._id);
                       }}
                     >
                       {item.liked ? (

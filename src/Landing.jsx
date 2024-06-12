@@ -139,7 +139,6 @@ export default function Landing() {
           width: "100vw",
           display: "flex",
           flexDirection: "column",
-          alignItems: "flex-start",
           margin: 0,
           overflow: "hidden",
           pt: 8,

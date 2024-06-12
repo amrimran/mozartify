@@ -33,23 +33,23 @@ export default function CustomerMusicScoreView(){
     <Box sx={{ p: 3 }}>
       <Paper sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          {musicScore.mss_title}
+          {musicScore.ms_title}
         </Typography>
         <List>
           <ListItem>
-            <ListItemText primary="Genre" secondary={musicScore.mss_genre} />
+            <ListItemText primary="Genre" secondary={musicScore.ms_genre} />
           </ListItem>
           <ListItem>
-            <ListItemText primary="Composer" secondary={musicScore.mss_composer} />
+            <ListItemText primary="Composer" secondary={musicScore.ms_composer} />
           </ListItem>
           <ListItem>
-            <ListItemText primary="Artist" secondary={musicScore.mss_artist} />
+            <ListItemText primary="Artist" secondary={musicScore.ms_artist} />
           </ListItem>
           <ListItem>
-            <ListItemText primary="Instrumentation" secondary={musicScore.mss_instrumentation} />
+            <ListItemText primary="Instrumentation" secondary={musicScore.ms_instrumentation} />
           </ListItem>
           <ListItem>
-            <ListItemText primary="Price" secondary={`$${musicScore.mss_price}`} />
+            <ListItemText primary="Price" secondary={`$${musicScore.ms_price}`} />
           </ListItem>
           {/* Add more fields as necessary */}
         </List>
