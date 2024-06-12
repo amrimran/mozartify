@@ -3,16 +3,20 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-const MetadataModel = require('./models/Metadata'); // Importing the Metadata model
+const { exec } = require('child_process');
+const fs = require('fs');
+const MetadataModel = require('./models/Metadata');
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-mongoose.connect("mongodb://localhost:27017/mozartify", {});
+mongoose.connect("mongodb://localhost:27017/mozartify", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
-// File upload configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads/');
@@ -22,17 +26,64 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const acceptedFileTypes = ["image/jpeg", "image/png", "image/jpg"];
+    if (acceptedFileTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only JPEG, PNG, and JPG files are allowed.'));
+    }
+  }
+});
 
-// Endpoint for file upload
 app.post('/upload', upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
   }
-  res.json({ filePath: `/uploads/${req.file.filename}` });
+
+  const inputFilePath = path.join(__dirname, 'uploads', req.file.filename);
+  const outputDir = path.join(__dirname, 'uploads', `${path.parse(req.file.filename).name}`);
+  const outputFilePath = path.join(outputDir, `${path.parse(req.file.filename).name}.mxl`);
+
+  // Create a new directory for this upload
+  fs.mkdir(outputDir, { recursive: true }, (err) => {
+    if (err) {
+      console.error(`Error creating directory: ${err.message}`);
+      return res.status(500).json({ message: 'Error creating directory', error: err.message });
+    }
+
+    console.log(`Running Audiveris on file: ${inputFilePath}`);
+
+    const command = `audiveris -batch -transcribe -export -output ${outputDir} ${inputFilePath}`;
+
+    exec(command, (error, stdout, stderr) => {
+      console.log(`Audiveris command: ${command}`);
+
+      if (error) {
+        console.error(`Error executing Audiveris: ${error.message}`);
+        console.error(`Error details: ${stderr}`);
+        return res.status(500).json({ message: 'Error processing file with Audiveris', error: error.message });
+      }
+
+      console.log(`Audiveris stdout: ${stdout}`);
+      console.log(`Audiveris stderr: ${stderr}`);
+
+      // Verify the .mxl file exists
+      fs.access(outputFilePath, fs.constants.F_OK, (err) => {
+        if (err) {
+          console.error(`Error: ${outputFilePath} does not exist`);
+          return res.status(500).json({ message: 'Error: .mxl file was not created' });
+        }
+
+        console.log(`Success: ${outputFilePath} exists`);
+        res.json({ filePath: `/uploads/${req.file.filename}`, mxlFilePath: `/uploads/${path.parse(req.file.filename).name}/${path.parse(req.file.filename).name}.mxl` });
+      });
+    });
+  });
 });
 
-// Endpoint for saving metadata
 app.post('/catalog', async (req, res) => {
   try {
     const metadata = new MetadataModel(req.body);
@@ -43,7 +94,6 @@ app.post('/catalog', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3002;  // Change to a different port if necessary
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.listen(3002, () => {
+  console.log("Server is running on port 3002");
 });

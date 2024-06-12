@@ -27,8 +27,8 @@
     "mongoose": "^8.4.1",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.13",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-router-dom": "^6.23.1",
     "react-slick": "^0.30.2",
     "slick-carousel": "^1.8.1",
@@ -42,8 +42,12 @@
     "eslint-plugin-react": "^7.34.1",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
+<<<<<<< Updated upstream
     "vite": "^5.2.0",
     "wrangler": "^3.60.2"
+=======
+    "vite": "^5.2.13"
+>>>>>>> Stashed changes
   },
   "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
   "main": "vite.config.js",

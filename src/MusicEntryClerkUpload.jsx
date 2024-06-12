@@ -8,6 +8,7 @@ import {
   Typography,
   ListItemButton,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
@@ -26,13 +27,35 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
+const buttonStyles = {
+  fontFamily: "Montserrat",
+  fontWeight: "bold",
+  color: "#483C32",
+  borderColor: "#483C32",
+  "&:hover": {
+    backgroundColor: "#483C32",
+    color: "#FFFFFF",
+    borderColor: "#483C32",
+  },
+};
+
 export default function MusicEntryClerkUpload() {
-  const username = "Nifail Amsyar"; // Replace with dynamic username
+  const username = "Nifail Amsyar";
   const [selectedFile, setSelectedFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState("");
   const navigate = useNavigate();
 
   const handleFileChange = (event) => {
-    setSelectedFile(event.target.files[0]);
+    const file = event.target.files[0];
+    const acceptedFileTypes = ["image/jpeg", "image/png", "image/jpg"];
+    if (file && acceptedFileTypes.includes(file.type)) {
+      setSelectedFile(file);
+      setUploadMessage("");
+    } else {
+      alert("Please select a valid image file (jpg, jpeg, png).");
+      setSelectedFile(null);
+    }
   };
 
   const handleUpload = () => {
@@ -41,6 +64,7 @@ export default function MusicEntryClerkUpload() {
       return;
     }
 
+    setIsUploading(true);
     const formData = new FormData();
     formData.append("file", selectedFile);
 
@@ -50,11 +74,16 @@ export default function MusicEntryClerkUpload() {
     })
       .then(response => response.json())
       .then(data => {
+        setIsUploading(false);
         if (data.filePath) {
           navigate("/clerk-preview", { state: { file: data.filePath, fileName: selectedFile.name } });
+        } else {
+          setUploadMessage("Error uploading file. Please try again.");
         }
       })
       .catch(error => {
+        setIsUploading(false);
+        setUploadMessage("Error uploading file. Please try again.");
         console.error("Error uploading file:", error);
       });
   };
@@ -106,7 +135,7 @@ export default function MusicEntryClerkUpload() {
               mb: 3,
             }}
           >
-            <Typography variant="h6">Digitize</Typography>
+            <Typography variant="h6">Music Entry Clerk</Typography>
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography variant="body1" sx={{ mr: 2 }}>
                 {username}
@@ -119,7 +148,7 @@ export default function MusicEntryClerkUpload() {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              height: "calc(100% - 64px)", // Adjust height to account for header
+              height: "calc(100% - 64px)",
             }}
           >
             <Box
@@ -130,7 +159,6 @@ export default function MusicEntryClerkUpload() {
                 width: "80%",
               }}
             >
-              
               <Box
                 sx={{
                   textAlign: "center",
@@ -146,6 +174,7 @@ export default function MusicEntryClerkUpload() {
                 </Typography>
                 <input
                   type="file"
+                  accept=".jpg,.jpeg,.png"
                   onChange={handleFileChange}
                   style={{ display: 'none' }}
                   id="upload-button"
@@ -158,15 +187,7 @@ export default function MusicEntryClerkUpload() {
                     sx={{
                       mt: 5,
                       px: 10,
-                      fontFamily: "Montserrat",
-                      fontWeight: "bold",
-                      color: "#483C32", // Custom text color for outlined button
-                      borderColor: "#483C32", // Custom border color for outlined button
-                      "&:hover": {
-                        backgroundColor: "#483C32",
-                        color: "#FFFFFF",
-                        borderColor: "#483C32", // Ensures border is also set when hovered
-                      },
+                      ...buttonStyles,
                     }}
                   >
                     Choose File
@@ -179,20 +200,18 @@ export default function MusicEntryClerkUpload() {
                     sx={{
                       mt: 2,
                       px: 10,
-                      fontFamily: "Montserrat",
-                      fontWeight: "bold",
-                      color: "#483C32", // Custom text color for outlined button
-                      borderColor: "#483C32", // Custom border color for outlined button
-                      "&:hover": {
-                        backgroundColor: "#483C32",
-                        color: "#FFFFFF",
-                        borderColor: "#483C32", // Ensures border is also set when hovered
-                      },
+                      ...buttonStyles,
                     }}
                     onClick={handleUpload}
+                    disabled={isUploading}
                   >
-                    Upload
+                    {isUploading ? <CircularProgress size={24} /> : "Upload"}
                   </Button>
+                )}
+                {uploadMessage && (
+                  <Typography variant="body1" sx={{ mt: 2, color: 'red' }}>
+                    {uploadMessage}
+                  </Typography>
                 )}
               </Box>
             </Box>
