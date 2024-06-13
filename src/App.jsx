@@ -8,13 +8,14 @@ import CustomerHomepage from "./CustomerHomepage";
 import CustomerLibrary from "./CustomerLibrary";
 import CustomerFavourites from "./CustomerFavourites";
 import CustomerMyCart from "./CustomerMyCart";
-import CustomerFeedback from "./CustomerFeedback";
+import CustomerAddNewFeedback from "./CustomerAddNewFeedback";
 import CustomerProfile from "./CustomerProfile";
 import CustomerMusicScoreView from "./CustomerMusicScoreView";
 import MusicEntryClerkHomepage from "./MusicEntryClerkHomepage";
 import MusicEntryClerkUpload from "./MusicEntryClerkUpload";
 import MusicEntryClerkPreview from "./MusicEntryClerkPreview";
 import MusicEntryClerkCatalog from "./MusicEntryClerkCatalog";
+import CustomerInbox from "./CustomerInbox";
 
 
 function App() {
@@ -30,12 +31,12 @@ function App() {
         <Route path="/customer-library" element={<CustomerLibrary />} />
         <Route path="/customer-favourites" element={<CustomerFavourites />} />
         <Route path="/customer-mycart" element={<CustomerMyCart />} />
-        <Route path="/customer-feedback" element={<CustomerFeedback/>} />
+        <Route path="/customer-inbox" element={<CustomerInbox/>} />
         <Route path="/customer-profile" element={<CustomerProfile/>} />
         <Route path="/customer-library/customer-music-score-view/:id" element={<CustomerMusicScoreView/>} />
         <Route path="/customer-favourites/customer-music-score-view/:id" element={<CustomerMusicScoreView/>} />
         <Route path="/customer-music-score-view/:id" element={<CustomerMusicScoreView/>} />
-        <Route path="/customer-feedback" element={<CustomerFeedback />} />
+        <Route path="/customer-inbox/customer-add-new-feedback" element={<CustomerAddNewFeedback />} />
         <Route path="/customer-profile" element={<CustomerProfile />} />
         <Route path="/clerk-homepage" element={<MusicEntryClerkHomepage />} />
         <Route path="/clerk-upload" element={<MusicEntryClerkUpload />} />

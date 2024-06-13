@@ -36,7 +36,7 @@ export default function CustomerMyCart() {
       icon: <FavoriteIcon />,
     },
     { path: "/customer-mycart", label: "My Cart", icon: <ShoppingCartIcon /> },
-    { path: "/customer-feedback", label: "Feedback", icon: <FeedbackIcon /> },
+    { path: "/customer-inbox", label: "Inbox", icon: <FeedbackIcon /> },
     {
       path: "/customer-profile",
       label: "Customer Profile",

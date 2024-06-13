@@ -195,7 +195,7 @@ export default function CustomerLibrary() {
     { path: "/customer-library", label: "Libraries", icon: <LibraryBooks /> },
     { path: "/customer-favourites", label: "Favourites", icon: <Favorite /> },
     { path: "/customer-mycart", label: "My Cart", icon: <ShoppingCart /> },
-    { path: "/customer-feedback", label: "Feedback", icon: <Feedback /> },
+    { path: "/customer-inbox", label: "Inbox", icon: <Feedback /> },
     {
       path: "/customer-profile",
       label: "Customer Profile",

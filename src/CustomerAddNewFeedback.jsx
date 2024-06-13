@@ -8,6 +8,11 @@ import {
   Avatar,
   Typography,
   ListItemButton,
+  Divider,
+  TextField,
+  Button,
+  Grid,
+  IconButton,
 } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
@@ -16,11 +21,12 @@ import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import FeedbackIcon from "@mui/icons-material/Feedback";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
+import { Upload as UploadIcon } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 
-export default function CustomerFeedback() {
+export default function CustomerAddNewFeedback() {
   const username = "Nifail Amsyar"; // Replace with dynamic username
 
   const navigationItems = [
@@ -36,7 +42,7 @@ export default function CustomerFeedback() {
       icon: <FavoriteIcon />,
     },
     { path: "/customer-mycart", label: "My Cart", icon: <ShoppingCartIcon /> },
-    { path: "/customer-feedback", label: "Feedback", icon: <FeedbackIcon /> },
+    { path: "/customer-inbox", label: "Inbox", icon: <FeedbackIcon /> },
     {
       path: "/customer-profile",
       label: "Customer Profile",
@@ -102,7 +108,7 @@ export default function CustomerFeedback() {
               mb: 3,
             }}
           >
-            <Typography variant="h6">Welcome to Mozartify</Typography>
+            <Typography variant="h4">Feedback</Typography>
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography variant="body1" sx={{ mr: 2 }}>
                 {username}
@@ -111,11 +117,69 @@ export default function CustomerFeedback() {
             </Box>
           </Box>
           <Box>
-            <Typography variant="h4">Feedback</Typography>
-            <Typography variant="body1" sx={{ mt: 2 }}>
-              Welcome to your dashboard. Here you can manage your libraries,
-              favourites, cart, and more.
-            </Typography>
+            <Divider />
+            <Box sx={{ mt: 2, p: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Username"
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Title"
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    required
+                    fullWidth
+                    multiline
+                    rows={4}
+                    label="Detail"
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Box
+                    sx={{
+                      border: "1px dashed grey",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      height: "100%",
+                      p: 2,
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      align="center"
+                    >
+                      Attachment (if any)
+                    </Typography>
+                    <IconButton component="label">
+                      <UploadIcon />
+                      <input type="file" hidden />
+                    </IconButton>
+                  </Box>
+                </Grid>
+              </Grid>
+              <Box sx={{ mt: 5, display: "flex", justifyContent: "center" }}>
+                <Button variant="contained" color="primary">
+                  Send Feedback
+                </Button>
+              </Box>
+            </Box>
           </Box>
         </Box>
       </Box>
