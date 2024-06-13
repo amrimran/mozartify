@@ -35,8 +35,9 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 export default function CustomerAddNewFeedback() {
+  const userId = "6663a93dd0f65edd4857eb95"; // Placeholder user ID
   const [formData, setFormData] = useState({
-    username: "Nifail Amsyar",
+    username: "duwenago69",
     title: "",
     detail: "",
     attachment: null,
@@ -57,22 +58,27 @@ export default function CustomerAddNewFeedback() {
     data.append("username", formData.username);
     data.append("title", formData.title);
     data.append("detail", formData.detail);
+    data.append("user_id", userId); // Add user_id to the form data
+
     if (formData.attachment) {
       data.append("attachment", formData.attachment, formData.attachment.name);
     }
-  
+
     try {
-      const response = await axios.post("http://localhost:3003/api/feedback", data, {
-        headers: {
+      const response = await axios.post(
+        "http://localhost:3003/api/feedback",
+        data,
+        {
+          headers: {
             "Content-Type": "multipart/form-data",
-        },
-    });    
+          },
+        }
+      );
       console.log("Feedback submitted:", response.data);
     } catch (error) {
       console.error("There was an error submitting the feedback!", error);
     }
   };
-  
 
   const navigationItems = [
     { path: "/customer-homepage", label: "My Dashboard", icon: <HomeIcon /> },
