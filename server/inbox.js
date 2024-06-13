@@ -14,7 +14,6 @@ app.use(bodyParser.json());
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-
 // MongoDB connection
 mongoose.connect('mongodb://localhost:27017/mozartify', {
     useNewUrlParser: true,
@@ -27,16 +26,12 @@ db.once('open', () => {
     console.log('Connected to MongoDB');
 });
 
-
 // Routes
 app.post('/api/feedback', upload.single('attachment'), async (req, res) => {
-    console.log("Received Data:", req.body); // Log received data
-    console.log("Received File:", req.file); // Log received file if any
-    
-    const { username, title, detail } = req.body;
+    const { username, title, detail, user_id } = req.body;
     const attachment = req.file ? req.file.buffer : null; // Store the attachment as a buffer
-    
-    const feedback = new Feedback({ username, title, detail, attachment });
+
+    const feedback = new Feedback({ username, title, detail, attachment, user_id });
     try {
         const savedFeedback = await feedback.save();
         res.status(201).json(savedFeedback);
@@ -45,18 +40,24 @@ app.post('/api/feedback', upload.single('attachment'), async (req, res) => {
     }
 });
 
-  
-
 app.get('/api/feedback', async (req, res) => {
+  const { userId } = req.query;
+
   try {
-    const feedbacks = await Feedback.find();
-    res.status(200).json(feedbacks);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+    let feedbacks;
+    if (userId) {
+      feedbacks= await Feedback.find({ user_id: userId });
+    } else {
+      feedbacks = await Feedback.find();
+    }
+    res.json(feedbacks);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err });
   }
 });
 
+
 const PORT = process.env.PORT || 3003;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });

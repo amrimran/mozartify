@@ -1,14 +1,13 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   List,
-  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Avatar,
   Divider,
   Typography,
-  ListItemButton,
   Button,
   Table,
   TableBody,
@@ -30,8 +29,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 import { styled } from "@mui/material/styles";
+import axios from "axios";
 
-// Custom styled component for the icon
 const CustomAddIcon = styled(AddIcon)(({ theme }) => ({
   backgroundColor: "#c44131",
   color: "white",
@@ -40,9 +39,33 @@ const CustomAddIcon = styled(AddIcon)(({ theme }) => ({
 }));
 
 export default function CustomerInbox() {
-  const username = "Nifail Amsyar"; // Replace with dynamic username
+  const [feedbackData, setFeedbackData] = useState([]);
+  const [username, setUsername] = useState("");
+  
+  const userId = "6663a93dd0f65edd4857eb95";
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    axios
+      .get(`http://localhost:3001/user/${userId}`)
+      .then((response) => {
+        setUsername(response.data.username);
+      })
+      .catch((error) => {
+        console.error("Error fetching user details:", error);
+      });
+
+      axios
+      .get(`http://localhost:3003/api/feedback`)
+      .then((response) => {
+        const userFeedbacks = response.data.filter(feedback => feedback.user_id === userId);
+        setFeedbackData(userFeedbacks);
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      });
+  }, [userId]);
 
   const navigationItems = [
     { path: "/customer-homepage", label: "My Dashboard", icon: <HomeIcon /> },
@@ -64,44 +87,6 @@ export default function CustomerInbox() {
       icon: <AccountCircleIcon />,
     },
     { path: "/login", label: "Logout", icon: <ExitToAppIcon /> },
-  ];
-
-  const feedbackData = [
-    {
-      id: "IN001",
-      username: "Nifail Amsyar",
-      title: "Bug on payment",
-      detail: "Error when purchasing...",
-      attachment: "IMG_001",
-    },
-    {
-      id: "IN002",
-      username: "Wan Amaer",
-      title: "Dashboard error",
-      detail: "I found an error when displaying...",
-      attachment: "IMG_002",
-    },
-    {
-      id: "IN003",
-      username: "Ali Rahman",
-      title: "Login Issue",
-      detail: "Unable to login with correct credentials...",
-      attachment: "IMG_003",
-    },
-    {
-      id: "IN004",
-      username: "Sarah Lee",
-      title: "Performance Lag",
-      detail: "App performance is very slow...",
-      attachment: "IMG_004",
-    },
-    {
-      id: "IN005",
-      username: "John Doe",
-      title: "Crash on Start",
-      detail: "App crashes immediately after starting...",
-      attachment: "IMG_005",
-    },
   ];
 
   const GlobalStyle = createGlobalStyle`
@@ -209,20 +194,22 @@ export default function CustomerInbox() {
                   </TableHead>
                   <TableBody>
                     {feedbackData.map((row) => (
-                      <TableRow key={row.id}>
+                      <TableRow key={row._id}>
                         <TableCell component="th" scope="row">
-                          {row.id}
+                          {row._id}
                         </TableCell>
                         <TableCell>{row.username}</TableCell>
                         <TableCell>{row.title}</TableCell>
                         <TableCell>{row.detail}</TableCell>
                         <TableCell>
-                          <a
-                            href={`#${row.attachment}`}
-                            style={{ color: "red" }}
-                          >
-                            {row.attachment}
-                          </a>
+                          {row.attachment && (
+                            <a
+                              href={`#${row.attachment}`}
+                              style={{ color: "red" }}
+                            >
+                              {row.attachment}
+                            </a>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
