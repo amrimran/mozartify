@@ -156,11 +156,6 @@ export default function CustomerLibrary() {
       score.ms_instrumentation
         .toLowerCase()
         .includes(instrumentation.toLowerCase());
-    console.log(
-      `Filtering by instrumentation (${instrumentation}):`,
-      result,
-      score
-    );
     return result;
   };
 
@@ -187,7 +182,6 @@ export default function CustomerLibrary() {
   };
 
   const filteredAndSearchedScores = applyFilters(filteredScores);
-  console.log("Filtered and searched scores:", filteredAndSearchedScores);
 
   const indexOfLastScore = currentPage * scoresPerPage;
   const indexOfFirstScore = indexOfLastScore - scoresPerPage;
@@ -461,6 +455,7 @@ export default function CustomerLibrary() {
             <List>
               {currentScores.map((item, index) => (
                 <ListItemButton
+                  key={item._id}
                   onClick={() =>
                     navigate(
                       `/customer-library/customer-music-score-view/${item._id}`
@@ -488,7 +483,7 @@ export default function CustomerLibrary() {
                   <ListItemIcon>
                     <IconButton
                       onClick={(e) => {
-                        e.stopPropagation(); /* Add play logic here */
+                        e.stopPropagation();
                       }}
                     >
                       <PlayArrow />

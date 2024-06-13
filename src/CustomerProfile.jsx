@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState} from "react";
 import {
   Box,
   List,
@@ -18,12 +18,25 @@ import {
   ExitToApp as ExitToAppIcon,
 } from "@mui/icons-material";
 
-
+import axios from "axios";
 import { Link } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 
 export default function CustomerProfile() {
+  const [username, setUsername] = useState("");
+  const userId = "6663a93dd0f65edd4857eb95";
+
+  useEffect(() => {
+    axios
+      .get(`http://localhost:3001/user/${userId}`)
+      .then((response) => {
+        setUsername(response.data.username); 
+      })
+      .catch((error) => {
+        console.error("Error fetching user details:", error);
+      });
+  }, []); 
   const navigationItems = [
     { path: "/customer-homepage", label: "My Dashboard", icon: <HomeIcon /> },
     {

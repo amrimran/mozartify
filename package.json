@@ -42,12 +42,7 @@
     "eslint-plugin-react": "^7.34.1",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
-<<<<<<< Updated upstream
-    "vite": "^5.2.0",
-    "wrangler": "^3.60.2"
-=======
     "vite": "^5.2.13"
->>>>>>> Stashed changes
   },
   "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
   "main": "vite.config.js",

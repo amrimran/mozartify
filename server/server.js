@@ -12,10 +12,7 @@ app.use(express.json());
 app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-mongoose.connect("mongodb://localhost:27017/mozartify", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+mongoose.connect("mongodb://localhost:27017/mozartify");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

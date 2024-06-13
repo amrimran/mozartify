@@ -102,34 +102,30 @@ export default function CustomerHomepage() {
   const [instrumentation, setInstrumentation] = useState("");
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(100);
+  const [forYouScores, setForYouScores] = useState([]);
   const scoresPerPage = 10;
   const userId = "6663a93dd0f65edd4857eb95";
 
-  //fetch user id and music score
   useEffect(() => {
-    // Fetch user details
     axios
       .get(`http://localhost:3001/user/${userId}`)
       .then((response) => {
-        setUsername(response.data.username); // Set the username state with the fetched data
-        setFavorites(response.data.favorites || []); // Set the favorites state, defaulting to an empty array if no favorites are found
+        setUsername(response.data.username);
+        setFavorites(response.data.favorites || []);
       })
       .catch((error) => {
-        console.error("Error fetching user details:", error); // Log any errors that occur during the fetch
+        console.error("Error fetching user details:", error);
       });
-  
-    // Fetch all music scores
+
     axios
-      .get('http://localhost:3001/music-scores') // URL without the userId parameter
+      .get("http://localhost:3001/music-scores")
       .then((response) => {
         setMusicScores(response.data);
-         console.log(musicScores.length)
       })
       .catch((error) => {
-        console.error("Error fetching music scores:", error); // Log any errors that occur during the fetch
+        console.error("Error fetching music scores:", error);
       });
-  }, []); // No dependencies, only runs on initial mount
-  
+  }, []);
 
   useEffect(() => {
     const fetchImagePaths = async () => {
@@ -157,7 +153,17 @@ export default function CustomerHomepage() {
       return null;
     }
   };
-  
+
+  useEffect(() => {
+    const notOwnedScores = musicScores.filter(score => !score.ownerIds.includes(userId));
+    
+    const ownedScores = musicScores.filter(score => score.ownerIds.includes(userId));
+    const userGenres = new Set(ownedScores.map(score => score.ms_genre));
+
+    const recommendedScores = notOwnedScores.filter(score => userGenres.has(score.ms_genre));
+
+    setForYouScores(recommendedScores);
+  }, [musicScores, userId]);
 
   const NextArrow = (props) => {
     const { onClick } = props;
@@ -554,48 +560,56 @@ export default function CustomerHomepage() {
                   >
                     <Box sx={{ width: "calc(100% - 60px)" }}>
                       <Slider {...settings}>
-                        {musicScores.map((score) => (
-                          <Box key={score._id} sx={{ padding: "0 20px" }}>
-                            <Link
-                              to={`/customer-music-score-view/${score._id}`}
-                              style={{ textDecoration: "none" }}
-                            >
-                              <Card
-                                sx={{
-                                  width: 200,
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  justifyContent: "space-between",
-                                  border: "2px solid #000",
-                                  borderRadius: 10,
-                                }}
+                        {musicScores
+                          .filter(
+                            (score) =>
+                              Array.isArray(score.ownerIds) &&
+                              score.ownerIds.length > 0
+                          )
+                          .map((score) => (
+                            <Box key={score._id} sx={{ padding: "0 20px" }}>
+                              <Link
+                                to={`/customer-music-score-view/${score._id}`}
+                                style={{ textDecoration: "none" }}
                               >
-                                <CardMedia
-                                  component="img"
-                                  image={score.imageUrl}
-                                  alt={score.ms_title}
-                                />
-                                <CardContent
+                                <Card
                                   sx={{
-                                    flexGrow: 1,
+                                    width: 200,
                                     display: "flex",
                                     flexDirection: "column",
-                                    justifyContent: "center",
+                                    justifyContent: "space-between",
+                                    border: "2px solid #000",
+                                    borderRadius: 10,
                                   }}
                                 >
-                                  <EllipsisTypography title={score.ms_title} />
-                                  <Typography
-                                    variant="body2"
-                                    color="textSecondary"
-                                    sx={{ textAlign: "center" }}
+                                  <CardMedia
+                                    component="img"
+                                    image={score.imageUrl}
+                                    alt={score.ms_title}
+                                  />
+                                  <CardContent
+                                    sx={{
+                                      flexGrow: 1,
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      justifyContent: "center",
+                                    }}
                                   >
-                                    {score.ms_artist}
-                                  </Typography>
-                                </CardContent>
-                              </Card>
-                            </Link>
-                          </Box>
-                        ))}
+                                    <EllipsisTypography
+                                      title={score.ms_title}
+                                    />
+                                    <Typography
+                                      variant="body2"
+                                      color="textSecondary"
+                                      sx={{ textAlign: "center" }}
+                                    >
+                                      {score.ms_artist}
+                                    </Typography>
+                                  </CardContent>
+                                </Card>
+                              </Link>
+                            </Box>
+                          ))}
                       </Slider>
                     </Box>
                   </Box>
@@ -615,7 +629,7 @@ export default function CustomerHomepage() {
                   >
                     <Box sx={{ width: "calc(100% - 60px)" }}>
                       <Slider {...settings}>
-                        {musicScores.map((score) => (
+                        {forYouScores.map((score) => (
                           <Box key={score._id} sx={{ padding: "0 20px" }}>
                             <Link
                               to={`/customer-music-score-view/${score._id}`}

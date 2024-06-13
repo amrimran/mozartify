@@ -83,7 +83,7 @@ export default function CustomerFavourites() {
   // Fetch user's music scores and filter by favorites
   useEffect(() => {
     axios
-      .get(`http://localhost:3001/music-scores?userId=${userId}`)
+      .get(`http://localhost:3001/music-scores`)
       .then((response) => {
         const scoresWithLikes = response.data.filter((score) =>
           favorites.includes(score._id)
@@ -134,7 +134,6 @@ export default function CustomerFavourites() {
 
   const filterByGenre = (score) => {
     const result = !genre || score.ms_genre === genre;
-    console.log(`Filtering by genre (${genre}):`, result, score);
     return result;
   };
 
@@ -142,7 +141,6 @@ export default function CustomerFavourites() {
     const result =
       !composer ||
       score.ms_composer.toLowerCase().includes(composer.toLowerCase());
-    console.log(`Filtering by composer (${composer}):`, result, score);
     return result;
   };
 
@@ -152,11 +150,6 @@ export default function CustomerFavourites() {
       score.ms_instrumentation
         .toLowerCase()
         .includes(instrumentation.toLowerCase());
-    console.log(
-      `Filtering by instrumentation (${instrumentation}):`,
-      result,
-      score
-    );
     return result;
   };
 
@@ -183,7 +176,6 @@ export default function CustomerFavourites() {
   };
 
   const filteredAndSearchedScores = applyFilters(filteredScores);
-  console.log("Filtered and searched scores:", filteredAndSearchedScores);
 
   const indexOfLastScore = currentPage * scoresPerPage;
   const indexOfFirstScore = indexOfLastScore - scoresPerPage;
