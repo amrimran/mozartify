@@ -51,7 +51,6 @@ export default function CustomerMusicScoreView(){
           <ListItem>
             <ListItemText primary="Price" secondary={`$${musicScore.ms_price}`} />
           </ListItem>
-          {/* Add more fields as necessary */}
         </List>
       </Paper>
     </Box>

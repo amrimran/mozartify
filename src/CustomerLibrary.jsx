@@ -111,7 +111,6 @@ export default function CustomerLibrary() {
         const updatedFavorites = response.data.favorites;
         setFavorites(updatedFavorites);
 
-        // Update the music scores to reflect the change
         setMusicScores((prevScores) =>
           prevScores.map((score) => {
             if (score._id === musicScoreId) {
@@ -307,7 +306,6 @@ export default function CustomerLibrary() {
                     Filter Options
                   </Typography>
 
-                  {/* Genre Filter */}
                   <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel>Genre</InputLabel>
                     <Select
@@ -319,7 +317,7 @@ export default function CustomerLibrary() {
                       <MenuItem value="Classical">Classical</MenuItem>
                       <MenuItem value="Jazz">Jazz</MenuItem>
                       <MenuItem value="Pop">Pop</MenuItem>
-                      {/* Add more genres as needed */}
+            
                     </Select>
                   </FormControl>
 
@@ -349,11 +347,10 @@ export default function CustomerLibrary() {
                       <MenuItem value="Tchaikovsky">Tchaikovsky</MenuItem>
                       <MenuItem value="Holst">Holst</MenuItem>
 
-                      {/* Add more genres as needed */}
+      
                     </Select>
                   </FormControl>
 
-                  {/* Instrumentation Filter */}
                   <TextField
                     label="Instrumentation"
                     variant="outlined"
@@ -363,7 +360,6 @@ export default function CustomerLibrary() {
                     onChange={(e) => setInstrumentation(e.target.value)}
                   />
 
-                  {/* Price Range Inputs */}
                   <TextField
                     label="Min Price"
                     variant="outlined"

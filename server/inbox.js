@@ -3,18 +3,18 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const multer = require('multer');
-const Feedback = require('./models/Feedback'); // Import the Feedback model
+const Feedback = require('./models/Feedback');
 
 const app = express();
 
-// Middleware
+
 app.use(cors());
 app.use(bodyParser.json());
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// MongoDB connection
+
 mongoose.connect('mongodb://localhost:27017/mozartify');
 
 const db = mongoose.connection;
@@ -23,10 +23,10 @@ db.once('open', () => {
     console.log('Connected to MongoDB');
 });
 
-// Routes
+
 app.post('/api/feedback', upload.single('attachment'), async (req, res) => {
     const { username, title, detail, user_id } = req.body;
-    const attachment = req.file ? req.file.buffer : null; // Store the attachment as a buffer
+    const attachment = req.file ? req.file.buffer : null;
 
     const feedback = new Feedback({ username, title, detail, attachment, user_id });
     try {

@@ -45,7 +45,7 @@ const options = {
     "ms_artist",
     "ms_instrumentation",
   ],
-  threshold: 0.3, // Adjust the threshold for more or less fuzzy matching
+  threshold: 0.3,
 };
 
 export default function CustomerFavourites() {
@@ -80,7 +80,6 @@ export default function CustomerFavourites() {
       });
   }, [userId]);
 
-  // Fetch user's music scores and filter by favorites
   useEffect(() => {
     axios
       .get(`http://localhost:3001/music-scores`)
@@ -89,7 +88,7 @@ export default function CustomerFavourites() {
           favorites.includes(score._id)
         ).map((score) => ({
           ...score,
-          liked: favorites.includes(score._id), // Ensure this matches the favorite ID format
+          liked: favorites.includes(score._id),
         }));
         setMusicScores(scoresWithLikes);
       })
@@ -343,11 +342,11 @@ export default function CustomerFavourites() {
                       <MenuItem value="Tchaikovsky">Tchaikovsky</MenuItem>
                       <MenuItem value="Holst">Holst</MenuItem>
 
-                      {/* Add more genres as needed */}
+                 
                     </Select>
                   </FormControl>
 
-                  {/* Instrumentation Filter */}
+  
                   <TextField
                     label="Instrumentation"
                     variant="outlined"
@@ -357,7 +356,6 @@ export default function CustomerFavourites() {
                     onChange={(e) => setInstrumentation(e.target.value)}
                   />
 
-                  {/* Price Range Inputs */}
                   <TextField
                     label="Min Price"
                     variant="outlined"
@@ -477,7 +475,7 @@ export default function CustomerFavourites() {
                   <ListItemIcon>
                     <IconButton
                       onClick={(e) => {
-                        e.stopPropagation(); /* Add play logic here */
+                        e.stopPropagation();
                       }}
                     >
                       <PlayArrow />

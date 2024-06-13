@@ -21,7 +21,7 @@ import { createGlobalStyle } from "styled-components";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 
 export default function CustomerMyCart() {
-  const username = "Nifail Amsyar"; // Replace with dynamic username
+  const username = "Nifail Amsyar";
 
   const navigationItems = [
     { path: "/customer-homepage", label: "My Dashboard", icon: <HomeIcon /> },

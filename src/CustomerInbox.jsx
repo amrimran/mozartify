@@ -166,7 +166,7 @@ export default function CustomerInbox() {
                 }
                 sx={{
                   backgroundColor: "#F4F7FE",
-                  color: "#000", // Adjust text color if needed
+                  color: "#000",
                   "&:hover": {
                     backgroundColor: "#E0E5F2",
                   },

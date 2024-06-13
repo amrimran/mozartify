@@ -402,7 +402,7 @@ export default function CustomerHomepage() {
                     </Select>
                   </FormControl>
 
-                  {/* Composer Filter */}
+          
                   <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel>Composer</InputLabel>
                     <Select
@@ -428,11 +428,10 @@ export default function CustomerHomepage() {
                       <MenuItem value="Tchaikovsky">Tchaikovsky</MenuItem>
                       <MenuItem value="Holst">Holst</MenuItem>
 
-                      {/* Add more genres as needed */}
+
                     </Select>
                   </FormControl>
 
-                  {/* Instrumentation Filter */}
                   <TextField
                     label="Instrumentation"
                     variant="outlined"
@@ -442,7 +441,7 @@ export default function CustomerHomepage() {
                     onChange={(e) => setInstrumentation(e.target.value)}
                   />
 
-                  {/* Price Range Inputs */}
+  
                   <TextField
                     label="Min Price"
                     variant="outlined"
