@@ -20,10 +20,9 @@ export default function MusicEntryClerkPreview() {
   const location = useLocation();
   const navigate = useNavigate();
   const { file, fileName } = location.state;
-  const username = "Nifail Amsyar"; // Replace with dynamic username
+  const username = "Nifail Amsyar";
 
   const handleEdit = () => {
-    // For now, the edit button does nothing
     alert("Edit functionality is not implemented yet.");
   };
 

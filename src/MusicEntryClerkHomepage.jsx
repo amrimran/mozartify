@@ -25,7 +25,7 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 export default function MusicEntryClerkHomepage() {
-  const username = "Clerk Name"; // Replace with dynamic username
+  const username = "Clerk Name";
 
   const navigationItems = [
     { path: "/clerk-homepage", label: "My Dashboard", icon: <HomeIcon /> },

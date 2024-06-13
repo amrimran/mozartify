@@ -30,7 +30,7 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 export default function MusicEntryClerkCatalog() {
-  const username = "Nifail Amsyar"; // Replace with dynamic username
+  const username = "Nifail Amsyar";
   const navigate = useNavigate();
   const location = useLocation();
 

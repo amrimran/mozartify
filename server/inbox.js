@@ -5,9 +5,7 @@ const bodyParser = require('body-parser');
 const multer = require('multer');
 const Feedback = require('./models/Feedback');
 
-const app = express();
-
-
+const app = express();  
 app.use(cors());
 app.use(bodyParser.json());
 

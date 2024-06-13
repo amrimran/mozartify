@@ -101,27 +101,27 @@ export default function Signup() {
       setErrorMessage("Please select a role");
       return;
     }
-    setErrorMessage(""); // Clear any previous error messages
+    setErrorMessage(""); 
     axios
       .post("http://localhost:3001/signup", { username, email, password, role })
       .then((result) => {
         console.log(result);
-        setIsModalOpen(true); // Show the success modal
+        setIsModalOpen(true);
       })
       .catch((err) => {
         if (err.response && err.response.data && err.response.data.message) {
           setErrorMessage(err.response.data.message);
-          console.log(err.response.data.message); // Log only the error message
+          console.log(err.response.data.message); 
         } else {
           setErrorMessage("An error occurred. Please try again.");
-          console.log("An error occurred. Please try again."); // Log a general error message
+          console.log("An error occurred. Please try again.");
         }
       });
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    navigate("/login"); // Navigate to login page after closing the modal
+    navigate("/login");
   };
 
   const handleClickShowPassword = () => {
@@ -309,12 +309,12 @@ export default function Signup() {
                   px: 10,
                   fontFamily: "Montserrat",
                   fontWeight: "bold",
-                  color: "#483C32", // Custom text color for outlined button
-                  borderColor: "#483C32", // Custom border color for outlined button
+                  color: "#483C32",
+                  borderColor: "#483C32",
                   "&:hover": {
                     backgroundColor: "#483C32",
                     color: "#FFFFFF",
-                    borderColor: "#483C32", // Ensures border is also set when hovered
+                    borderColor: "#483C32",
                   },
                 }}
               >

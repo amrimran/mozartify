@@ -80,7 +80,7 @@ const LeftContainer = styled(Box)(() => ({
   textAlign: "center",
   padding: 20,
   fontFamily: 'Montserrat',
-  position: 'relative', // Enable absolute positioning for child elements
+  position: 'relative', 
 }));
 
 const HandMusicImage = styled('img')(({ theme }) => ({
@@ -88,7 +88,7 @@ const HandMusicImage = styled('img')(({ theme }) => ({
   bottom: 0,
   left: 0,
   width: '150%',
-  maxWidth: '450px', // Ensure the image is big
+  maxWidth: '450px', 
 }));
 
 export default function Login() {
@@ -280,12 +280,12 @@ export default function Login() {
                   px: 10,
                   fontFamily: "Montserrat",
                   fontWeight: "bold",
-                  color: "#483C32", // Custom text color for outlined button
-                  borderColor: "#483C32", // Custom border color for outlined button
+                  color: "#483C32", 
+                  borderColor: "#483C32", 
                   "&:hover": {
                     backgroundColor: "#483C32",
                     color: "#FFFFFF",
-                    borderColor: "#483C32", // Ensures border is also set when hovered
+                    borderColor: "#483C32", 
                   },
                 }}
               >

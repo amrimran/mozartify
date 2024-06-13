@@ -68,7 +68,7 @@ export default function Landing() {
           flexDirection: "row",
           alignItems: "flex-start",
           margin: 0,
-          overflow: "hidden", // Ensure content does not overflow the box
+          overflow: "hidden", 
         }}
       >
         <Grid container spacing={2} sx={{ height: "100%", margin: 0 }}>
@@ -195,8 +195,8 @@ export default function Landing() {
                     alignItems: "center",
                     justifyContent: "center",
                     p: 2,
-                    boxShadow: "none", // Remove shadow
-                    border: "none", // Ensure no border
+                    boxShadow: "none", 
+                    border: "none", 
                   }}
                 >
                   <img
@@ -205,7 +205,7 @@ export default function Landing() {
                     style={{
                       width: "35%",
                       height: "auto",
-                      marginBottom: 16, // Space between image and text
+                      marginBottom: 16,
                     }}
                   />
                   <Typography
@@ -272,7 +272,7 @@ export default function Landing() {
                     variant="contained"
                     sx={{
                       width: "100%",
-                      minHeight: "160px", // Set the minimum height to double the original
+                      minHeight: "160px", 
                       backgroundColor: "white",
                       color: "black",
                       border: "2px solid black",

@@ -118,12 +118,12 @@ export default function ForgotPassword() {
               px: 10,
               fontFamily: "Montserrat",
               fontWeight: "bold",
-              color: "#483C32", // Custom text color for outlined button
-              borderColor: "#483C32", // Custom border color for outlined button
+              color: "#483C32", 
+              borderColor: "#483C32", 
               "&:hover": {
                 backgroundColor: "#483C32",
                 color: "#FFFFFF",
-                borderColor: "#483C32", // Ensures border is also set when hovered
+                borderColor: "#483C32", 
               },
             }}
           >
