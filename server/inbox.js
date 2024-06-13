@@ -15,10 +15,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // MongoDB connection
-mongoose.connect('mongodb://localhost:27017/mozartify', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-});
+mongoose.connect('mongodb://localhost:27017/mozartify');
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
@@ -39,6 +36,7 @@ app.post('/api/feedback', upload.single('attachment'), async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 });
+
 
 app.get('/api/feedback', async (req, res) => {
   const { userId } = req.query;
