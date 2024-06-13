@@ -36,7 +36,8 @@
     "react-slick": "^0.30.2",
     "slick-carousel": "^1.8.1",
     "styled-components": "^6.1.11",
-    "xml2abc": "https://wim.vree.org/js/xml2abc.tgz"
+    "xml2abc": "https://wim.vree.org/js/xml2abc.tgz",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",
