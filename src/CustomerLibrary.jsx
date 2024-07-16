@@ -70,7 +70,7 @@ export default function CustomerLibrary() {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3001/user/${userId}`)
+      .get(`http://localhost:3000/user/${userId}`)
       .then((response) => {
         setUsername(response.data.username);
         setFavorites(response.data.favorites || []);
@@ -80,7 +80,7 @@ export default function CustomerLibrary() {
       });
 
     axios
-      .get(`http://localhost:3001/music-scores?userId=${userId}`)
+      .get(`http://localhost:3000/music-scores?userId=${userId}`)
       .then((response) => {
         setMusicScores(response.data);
       })
@@ -91,7 +91,7 @@ export default function CustomerLibrary() {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3001/music-scores?userId=${userId}`)
+      .get(`http://localhost:3000/music-scores?userId=${userId}`)
       .then((response) => {
         const scoresWithLikes = response.data.map((score) => ({
           ...score,
@@ -106,7 +106,7 @@ export default function CustomerLibrary() {
 
   const handleFavoriteClick = (musicScoreId) => {
     axios
-      .post(`http://localhost:3001/favourites`, { userId, musicScoreId })
+      .post(`http://localhost:3000/favourites`, { userId, musicScoreId })
       .then((response) => {
         const updatedFavorites = response.data.favorites;
         setFavorites(updatedFavorites);

@@ -103,7 +103,7 @@ export default function Signup() {
     }
     setErrorMessage(""); 
     axios
-      .post("http://localhost:3001/signup", { username, email, password, role })
+      .post("http://localhost:3000/signup", { username, email, password, role })
       .then((result) => {
         console.log(result);
         setIsModalOpen(true);

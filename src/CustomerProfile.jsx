@@ -29,7 +29,7 @@ export default function CustomerProfile() {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3001/user/${userId}`)
+      .get(`http://localhost:3000/user/${userId}`)
       .then((response) => {
         setUsername(response.data.username); 
       })

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
-const MusicScore = require('./models/MusicScore');
-const User = require('./models/User');
+const MusicScore = require('../models/MusicScore');
+const User = require('../models/User');
 
 mongoose.connect("mongodb://localhost:27017/mozartify");
 

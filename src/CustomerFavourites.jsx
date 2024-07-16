@@ -70,7 +70,7 @@ export default function CustomerFavourites() {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3001/user/${userId}`)
+      .get(`http://localhost:3000/user/${userId}`)
       .then((response) => {
         setUsername(response.data.username);
         setFavorites(response.data.favorites || []);
@@ -82,7 +82,7 @@ export default function CustomerFavourites() {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3001/music-scores`)
+      .get(`http://localhost:3000/music-scores`)
       .then((response) => {
         const scoresWithLikes = response.data.filter((score) =>
           favorites.includes(score._id)
@@ -99,7 +99,7 @@ export default function CustomerFavourites() {
 
   const handleFavoriteClick = (musicScoreId) => {
     axios
-      .post(`http://localhost:3001/favourites`, { userId, musicScoreId })
+      .post(`http://localhost:3000/favourites`, { userId, musicScoreId })
       .then((response) => {
         const updatedFavorites = response.data.favorites;
         setFavorites(updatedFavorites);

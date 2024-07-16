@@ -53,7 +53,7 @@ export default function ForgotPassword() {
   const handleSubmit = (e) => {
     e.preventDefault();
     axios
-      .post("http://localhost:3001/forgot-password", { email })
+      .post("http://localhost:3000/forgot-password", { email })
       .then((response) => {
         setMessage("If this email is registered, you will receive a password reset link.");
       })

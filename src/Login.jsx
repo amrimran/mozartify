@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -9,12 +9,11 @@ import {
   Grid,
   InputAdornment,
   IconButton,
-  Modal,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { createGlobalStyle } from "styled-components";
-import Visibility from '@mui/icons-material/VisibilityOff';
-import VisibilityOff from '@mui/icons-material/Visibility';
+import Visibility from "@mui/icons-material/VisibilityOff";
+import VisibilityOff from "@mui/icons-material/Visibility";
 import Image from "./assets/mozartify.png";
 import Image2 from "./assets/handmusic.png";
 import backgroundImage from "./assets/loginWP.png";
@@ -29,7 +28,7 @@ const FormContainer = styled(Box)(({ theme }) => ({
   flexDirection: "column",
   justifyContent: "center",
   alignItems: "center",
-  fontFamily: 'Montserrat',
+  fontFamily: "Montserrat",
 }));
 
 const BackgroundContainer = styled(Box)(() => ({
@@ -47,7 +46,7 @@ const BackgroundContainer = styled(Box)(() => ({
   flexDirection: "row",
   margin: 0,
   overflow: "hidden",
-  fontFamily: 'Montserrat',
+  fontFamily: "Montserrat",
 }));
 
 const GlobalStyle = createGlobalStyle`
@@ -58,20 +57,6 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-const ModalContainer = styled(Box)(({ theme }) => ({
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  backgroundColor: "#FFFFFF",
-  border: "2px solid #483C32",
-  boxShadow: 24,
-  padding: 32,
-  width: 400,
-  textAlign: "center",
-  fontFamily: 'Montserrat',
-}));
-
 const LeftContainer = styled(Box)(() => ({
   display: "flex",
   flexDirection: "column",
@@ -79,37 +64,35 @@ const LeftContainer = styled(Box)(() => ({
   alignItems: "center",
   textAlign: "center",
   padding: 20,
-  fontFamily: 'Montserrat',
-  position: 'relative', 
+  fontFamily: "Montserrat",
+  position: "relative",
 }));
 
-const HandMusicImage = styled('img')(({ theme }) => ({
-  position: 'bottom',
+const HandMusicImage = styled("img")(({ theme }) => ({
+  position: "bottom",
   bottom: 0,
   left: 0,
-  width: '150%',
-  maxWidth: '450px', 
+  width: "150%",
+  maxWidth: "450px",
 }));
 
 export default function Login() {
-  const [email, setEmail] = useState("");
+  const [username_or_email, setUsernameOrEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
     axios
-      .post("http://localhost:3001/login", { email, password })
+      .post("http://localhost:3000/login", { username_or_email, password })
       .then((result) => {
-        console.log(result);
-        if (result.data === "Success") {
-          setIsModalOpen(true);
+        if (result.data.message === "Success") {
+          navigate("/customer-homepage");
         } else {
-          setErrorMessage("Invalid email or password");
+          setErrorMessage("Invalid username/email or password");
         }
       })
       .catch((err) => {
@@ -118,14 +101,16 @@ export default function Login() {
       });
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    navigate("/customer-homepage");
-  };
-
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
+
+  useEffect(() => {
+    window.history.pushState(null, null, window.location.href);
+    window.onpopstate = function () {
+      window.history.go(1);
+    };
+  }, []);
 
   return (
     <>
@@ -154,16 +139,18 @@ export default function Login() {
               <Typography
                 variant="h3"
                 fontWeight="bold"
-                sx={{ fontFamily: "Montserrat", ml: 6, mt: -3, color: "#FFFFFF" }}
+                sx={{
+                  fontFamily: "Montserrat",
+                  ml: 6,
+                  mt: -3,
+                  color: "#FFFFFF",
+                }}
               >
                 Welcome
                 <br />
                 Back!
               </Typography>
-              <HandMusicImage
-                src={Image2}
-                alt="Hand Music"
-              />
+              <HandMusicImage src={Image2} alt="Hand Music" />
             </LeftContainer>
           </Grid>
 
@@ -179,7 +166,7 @@ export default function Login() {
             }}
             style={{ padding: 0 }}
           >
-            <FormContainer component="form" onSubmit={handleSubmit}>
+            <FormContainer component="form" onSubmit={handleLogin}>
               <Typography
                 variant="h5"
                 align="center"
@@ -199,12 +186,12 @@ export default function Login() {
               </Typography>
               <TextField
                 fullWidth
-                label="Email Address"
+                label="Username or Email Address"
                 margin="normal"
                 variant="outlined"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={username_or_email}
+                onChange={(e) => setUsernameOrEmail(e.target.value)}
                 sx={{
                   "& label.Mui-focused": { color: "#483C32" },
                   "& .MuiInput-underline:after": {
@@ -229,10 +216,7 @@ export default function Login() {
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton
-                        onClick={handleClickShowPassword}
-                        edge="end"
-                      >
+                      <IconButton onClick={handleClickShowPassword} edge="end">
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
@@ -266,7 +250,7 @@ export default function Login() {
               >
                 <Link
                   to="/forgot-password"
-                  style={{ textDecoration: "none", color: "#483C32"}}
+                  style={{ textDecoration: "none", color: "#483C32" }}
                 >
                   Forgot Password?
                 </Link>
@@ -280,12 +264,12 @@ export default function Login() {
                   px: 10,
                   fontFamily: "Montserrat",
                   fontWeight: "bold",
-                  color: "#483C32", 
-                  borderColor: "#483C32", 
+                  color: "#483C32",
+                  borderColor: "#483C32",
                   "&:hover": {
                     backgroundColor: "#483C32",
                     color: "#FFFFFF",
-                    borderColor: "#483C32", 
+                    borderColor: "#483C32",
                   },
                 }}
               >
@@ -299,7 +283,11 @@ export default function Login() {
                 Don’t have an account?{" "}
                 <Link
                   to="/signup"
-                  style={{ textDecoration: "none", color: "#C44131", fontWeight: "bold"}}
+                  style={{
+                    textDecoration: "none",
+                    color: "#C44131",
+                    fontWeight: "bold",
+                  }}
                 >
                   REGISTER
                 </Link>
@@ -308,25 +296,6 @@ export default function Login() {
           </Grid>
         </Grid>
       </BackgroundContainer>
-
-      <Modal
-        open={isModalOpen}
-        onClose={handleCloseModal}
-        aria-labelledby="modal-title"
-        aria-describedby="modal-description"
-      >
-        <ModalContainer>
-          <Typography id="modal-title" variant="h6" component="h2">
-            Login Successful!
-          </Typography>
-          <Typography id="modal-description" sx={{ mt: 2 }}>
-            You have logged in successfully. Welcome back!
-          </Typography>
-          <Button onClick={handleCloseModal} sx={{ mt: 2 }} variant="contained">
-            OK
-          </Button>
-        </ModalContainer>
-      </Modal>
     </>
   );
 }

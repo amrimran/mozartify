@@ -90,7 +90,7 @@ export default function MusicEntryClerkPreview() {
           </Box>
           <Box sx={{ display: "flex", flexGrow: 1 }}>
             <Box sx={{ width: "50%", textAlign: "center", p: 3 }}>
-            <img src={`http://localhost:3002${file}`} alt={fileName} style={{ maxWidth: "55%", height: "auto", border: "1px solid #ccc", borderRadius: 8 }} />
+            <img src={`http://localhost:3001${file}`} alt={fileName} style={{ maxWidth: "55%", height: "auto", border: "1px solid #ccc", borderRadius: 8 }} />
             </Box>
             <Box sx={{ width: "40%", textAlign: "center", p: 3, display: "flex", flexDirection: "column", justifyContent: "center", bgcolor: "#f8f8f8", borderRadius: 8 }}>
               <Typography variant="h6" sx={{ mb: 2, fontFamily: "Montserrat", color: "red", fontWeight: "bold" }}>

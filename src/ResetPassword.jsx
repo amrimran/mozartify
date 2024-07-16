@@ -61,7 +61,7 @@ export default function ResetPassword() {
     }
 
     axios
-      .post(`http://localhost:3001/reset-password/${token}`, { password })
+      .post(`http://localhost:3000/reset-password/${token}`, { password })
       .then((response) => {
         setMessage("Your password has been successfully reset.");
         setError("");

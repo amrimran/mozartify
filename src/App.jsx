@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Landing from "./Landing";
 import Signup from "./Signup";
 import Login from "./Login";
@@ -16,11 +16,12 @@ import MusicEntryClerkUpload from "./MusicEntryClerkUpload";
 import MusicEntryClerkPreview from "./MusicEntryClerkPreview";
 import MusicEntryClerkCatalog from "./MusicEntryClerkCatalog";
 import CustomerInbox from "./CustomerInbox";
+import TestSession from "./TestSession";
 
 
 function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/signup" element={<Signup />} />
@@ -42,8 +43,12 @@ function App() {
         <Route path="/clerk-upload" element={<MusicEntryClerkUpload />} />
         <Route path="/clerk-preview" element={<MusicEntryClerkPreview />} />
         <Route path="/clerk-catalog" element={<MusicEntryClerkCatalog />} />
+
+        <Route path="/test-session" element={<TestSession />} />
+
+
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
 

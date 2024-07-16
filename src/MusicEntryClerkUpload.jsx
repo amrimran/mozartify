@@ -68,7 +68,7 @@ export default function MusicEntryClerkUpload() {
     const formData = new FormData();
     formData.append("file", selectedFile);
 
-    fetch('http://localhost:3002/upload', {
+    fetch('http://localhost:3001/upload', {
       method: 'POST',
       body: formData,
     })

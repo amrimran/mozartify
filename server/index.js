@@ -1,27 +1,57 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
+const session = require("express-session");
+const MongoDBStore = require("connect-mongodb-session")(session);
+
 const UserModel = require("./models/User");
 const MusicScoreModel = require("./models/MusicScore");
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 
-mongoose.connect("mongodb://localhost:27017/mozartify");
+const store = new MongoDBStore({
+  uri: process.env.DB_URI,
+  collection: "sessions",
+});
+
+store.on("error", (error) => {
+  console.log(error);
+});
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: store,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      sameSite: "lax",
+      httpOnly: true,
+    },
+  })
+);
+
+mongoose.connect(process.env.DB_URI);
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "amirimran728@gmail.com",
-    pass: "roazgjmptmdzwibi",
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
 const sendVerificationEmail = (email, username, token) => {
-  const url = `http://localhost:3001/verify-email?token=${token}`;
+  const url = `http://localhost:3000/verify-email?token=${token}`;
   const emailTemplate = `
     <div style="border: 2px solid #483C32; border-radius: 10px; padding: 20px; font-family: Arial, sans-serif; width: 600px; margin: 0 auto;">
       <div style="text-align: center;">
@@ -39,7 +69,7 @@ const sendVerificationEmail = (email, username, token) => {
 
   transporter.sendMail(
     {
-      from: "amirimran728@gmail.com",
+      from: "Mozartify",
       to: email,
       subject: "Mozartify Email Verification",
       html: emailTemplate,
@@ -72,7 +102,7 @@ const sendAdminApprovalEmail = (adminEmail, username, email) => {
 
   transporter.sendMail(
     {
-      from: "amirimran728@gmail.com",
+      from: "Mozartify",
       to: adminEmail,
       subject: "New Music Entry Clerk Approval Needed",
       html: emailTemplate,
@@ -85,6 +115,13 @@ const sendAdminApprovalEmail = (adminEmail, username, email) => {
       }
     }
   );
+};
+
+const isAuthenticated = (req, res, next) => {
+  if (req.session.userId) {
+    return next();
+  }
+  res.status(401).json({ message: "Unauthorized" });
 };
 
 app.post("/signup", async (req, res) => {
@@ -116,7 +153,7 @@ app.post("/signup", async (req, res) => {
     if (role === "customer") {
       const token = jwt.sign(
         { username, email, password, role },
-        "your_jwt_secret",
+        process.env.JWT_SECRET,
         {
           expiresIn: "1h",
         }
@@ -124,7 +161,7 @@ app.post("/signup", async (req, res) => {
       sendVerificationEmail(email, username, token);
       res.json({ message: "Verification email sent" });
     } else if (role === "music_entry_clerk") {
-      sendAdminApprovalEmail("amsyar@cravings.co", username, email);
+      sendAdminApprovalEmail(process.env.ADMIN_EMAIL, username, email);
       res.json({ message: "Your request has been submitted for approval" });
     } else {
       res.status(400).json({ message: "Invalid role" });
@@ -140,7 +177,7 @@ app.get("/verify-email", async (req, res) => {
   try {
     const { username, email, password, role } = jwt.verify(
       token,
-      "your_jwt_secret"
+      process.env.JWT_SECRET
     );
 
     const user = await UserModel.findOne({ email });
@@ -161,22 +198,62 @@ app.get("/verify-email", async (req, res) => {
   }
 });
 
-app.post("/login", (req, res) => {
-  const { email, password } = req.body;
-  UserModel.findOne({ email: email }).then((user) => {
+app.post("/login", async (req, res) => {
+  const { username_or_email, password } = req.body;
+
+  try {
+    const user = await UserModel.findOne({
+      $or: [{ email: username_or_email }, { username: username_or_email }],
+    });
+
     if (user) {
       if (user.password === password) {
-        res.json("Success");
+        req.session.userId = user._id;
+        req.session.save((err) => {
+          if (err) {
+            console.log("Session save error:", err);
+            return res
+              .status(500)
+              .json({ message: "Session save error", error: err });
+          }
+          console.log("Session set successfully:", req.session.userId);
+          res.json({ message: "Success", userId: user._id });
+        });
       } else {
-        res.json("the password is incorrect");
+        res.status(400).json({ message: "The password is incorrect" });
       }
     } else {
-      res.json("No record existed");
+      res.status(400).json({ message: "No record existed" });
     }
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
+});
+
+app.get("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ message: "Could not log out", error: err });
+    }
+    res.json({ message: "Logged out successfully" });
+    console.log("babyyy");
   });
 });
 
-app.get('/user/:id', async (req, res) => {
+app.get("/current-user", isAuthenticated, (req, res) => {
+  UserModel.findById(req.session.userId)
+    .then((user) => {
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json(user);
+    })
+    .catch((err) => {
+      res.status(500).json({ message: "Server error", error: err });
+    });
+});
+
+app.get("/user/:id", async (req, res) => {
   const userId = req.params.id;
   try {
     const user = await UserModel.findById(userId);
@@ -189,8 +266,7 @@ app.get('/user/:id', async (req, res) => {
   }
 });
 
-// Route to get music scores owned by the user
-app.get('/music-scores', async (req, res) => {
+app.get("/music-scores", async (req, res) => {
   const { userId } = req.query;
 
   try {
@@ -202,12 +278,11 @@ app.get('/music-scores', async (req, res) => {
     }
     res.json(musicScores);
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err });
+    res.status(500).json({ message: "Server error", error: err });
   }
 });
 
-
-app.post('/favourites', async (req, res) => {
+app.post("/favourites", async (req, res) => {
   const { userId, musicScoreId } = req.body;
 
   try {
@@ -219,20 +294,25 @@ app.post('/favourites', async (req, res) => {
     const isFavorite = user.favorites.includes(musicScoreId);
 
     if (isFavorite) {
-      user.favorites = user.favorites.filter(favId => favId.toString() !== musicScoreId);
+      user.favorites = user.favorites.filter(
+        (favId) => favId.toString() !== musicScoreId
+      );
     } else {
       user.favorites.push(musicScoreId);
     }
 
     await user.save();
 
-    res.json({ message: "Favorite updated successfully", favorites: user.favorites });
+    res.json({
+      message: "Favorite updated successfully",
+      favorites: user.favorites,
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err });
   }
 });
 
-app.get('/customer-music-score-view/:id', async (req, res) => {
+app.get("/customer-music-score-view/:id", async (req, res) => {
   try {
     const musicScore = await MusicScoreModel.findById(req.params.id);
     if (!musicScore) {
@@ -244,15 +324,15 @@ app.get('/customer-music-score-view/:id', async (req, res) => {
   }
 });
 
-app.get('/api/image-path', async (req, res) => {
+app.get("/api/image-path", async (req, res) => {
   try {
     const image = await MusicScoreModel.findOne();
     res.json({ path: image.ms_cover_image });
   } catch (error) {
-    res.status(500).send('Server error');
+    res.status(500).send("Server error");
   }
 });
 
-app.listen(3001, () => {
-  console.log("Server is running on port 3001");
+app.listen(3000, () => {
+  console.log("Server is running on port 3000");
 });

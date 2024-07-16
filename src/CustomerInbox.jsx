@@ -48,7 +48,7 @@ export default function CustomerInbox() {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3001/user/${userId}`)
+      .get(`http://localhost:3000/user/${userId}`)
       .then((response) => {
         setUsername(response.data.username);
       })
@@ -57,7 +57,7 @@ export default function CustomerInbox() {
       });
 
       axios
-      .get(`http://localhost:3003/api/feedback`)
+      .get(`http://localhost:3002/api/feedback`)
       .then((response) => {
         const userFeedbacks = response.data.filter(feedback => feedback.user_id === userId);
         setFeedbackData(userFeedbacks);
