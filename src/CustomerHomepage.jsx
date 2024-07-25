@@ -322,7 +322,7 @@ export default function CustomerHomepage() {
     { path: "/customer-inbox", label: "Inbox", icon: <Feedback /> },
     {
       path: "/customer-profile",
-      label: "Customer Profile",
+      label: "User Profile",
       icon: <AccountCircle />,
     },
   ];

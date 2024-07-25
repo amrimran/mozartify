@@ -2,8 +2,9 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Landing from "./Landing";
 import Signup from "./Signup";
 import Login from "./Login";
-import Home from "./Home";
 import ForgotPassword from "./ForgotPassword";
+import ResetPassword from "./ResetPassword";
+import Home from "./Home";
 import CustomerHomepage from "./CustomerHomepage";
 import CustomerLibrary from "./CustomerLibrary";
 import CustomerFavourites from "./CustomerFavourites";
@@ -28,6 +29,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/home" element={<Home />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/customer-homepage" element={<CustomerHomepage />} />
         <Route path="/customer-library" element={<CustomerLibrary />} />
         <Route path="/customer-favourites" element={<CustomerFavourites />} />

@@ -217,7 +217,7 @@ app.post("/login", async (req, res) => {
               .json({ message: "Session save error", error: err });
           }
           console.log("Session set successfully:", req.session.userId);
-          res.json({ message: "Success", userId: user._id });
+          res.json({ message: "Success", userId: user._id, role: user.role, isActive: user.isActive});
         });
       } else {
         res.status(400).json({ message: "The password is incorrect" });
@@ -230,6 +230,59 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Email not found" });
+    }
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    const resetLink = `http://localhost:5173/reset-password?token=${token}`;
+    const emailTemplate = `
+      <div>
+        <p>You requested for a password reset. Click the link below to reset your password:</p>
+        <a href="${resetLink}">Reset Password</a>
+      </div>
+    `;
+
+    await transporter.sendMail({
+      from: "Mozartify",
+      to: email,
+      subject: "Password Reset",
+      html: emailTemplate,
+    });
+
+    res.json({ message: "Password reset link sent to your email" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
+});
+
+app.post("/reset-password", async (req, res) => {
+  const { token, newPassword } = req.body;
+  try {
+    const { userId } = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(400).json({ message: "Invalid token" });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: "Password reset successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
+});
+
+
+
 app.get("/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -238,6 +291,32 @@ app.get("/logout", (req, res) => {
     res.json({ message: "Logged out successfully" });
     console.log("babyyy");
   });
+});
+
+app.put("/user/update", async (req, res) => {
+  const { username, password } = req.body;
+  
+  try {
+    const userId = req.session.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.username = username;
+    if (password) {
+      user.password = password;
+    }
+
+    await user.save();
+    res.json({ message: "Profile updated successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
 });
 
 app.get("/current-user", isAuthenticated, (req, res) => {
@@ -251,6 +330,46 @@ app.get("/current-user", isAuthenticated, (req, res) => {
     .catch((err) => {
       res.status(500).json({ message: "Server error", error: err });
     });
+});
+
+app.delete("/user/delete", async (req, res) => {
+  const userId = req.session.userId;
+  
+  try {
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await UserModel.findByIdAndDelete(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ message: "Account deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
+});
+
+app.put("/user/deactivate", async (req, res) => {
+  const userId = req.session.userId;
+  
+  try {
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.isActive = false;  // Assuming you have an isActive field in your schema
+    await user.save();
+    res.json({ message: "Account deactivated successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
 });
 
 app.get("/user/:id", async (req, res) => {
