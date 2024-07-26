@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -13,7 +14,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 
-mongoose.connect('mongodb://localhost:27017/mozartify');
+mongoose.connect(process.env.DB_URI);
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
@@ -53,7 +54,6 @@ app.get('/api/feedback', async (req, res) => {
 });
 
 
-const PORT = process.env.PORT || 3003;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+app.listen(3002, () => {
+    console.log(`Server is running on port 3002`);
 });

@@ -50,6 +50,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 
+axios.defaults.withCredentials = true;
+
 const options = {
   keys: [
     "ms_title",
@@ -91,7 +93,6 @@ const EllipsisTypography = ({ title }) => {
 };
 
 export default function CustomerHomepage() {
-  const [username, setUsername] = useState("");
   const [musicScores, setMusicScores] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
@@ -104,21 +105,26 @@ export default function CustomerHomepage() {
   const [maxPrice, setMaxPrice] = useState(100);
   const [forYouScores, setForYouScores] = useState([]);
   const scoresPerPage = 10;
-  const userId = "6663a93dd0f65edd4857eb95";
+  const [currentUser, setCurrentUser] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/current-user");
+        setCurrentUser(response.data);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+        navigate("/login");
+      }
+    };
+
+    fetchCurrentUser();
+  }, [navigate]);
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3001/user/${userId}`)
-      .then((response) => {
-        setUsername(response.data.username);
-        setFavorites(response.data.favorites || []);
-      })
-      .catch((error) => {
-        console.error("Error fetching user details:", error);
-      });
-
-    axios
-      .get("http://localhost:3001/music-scores")
+      .get("http://localhost:3000/music-scores")
       .then((response) => {
         setMusicScores(response.data);
       })
@@ -155,15 +161,24 @@ export default function CustomerHomepage() {
   };
 
   useEffect(() => {
-    const notOwnedScores = musicScores.filter(score => !score.ownerIds.includes(userId));
-    
-    const ownedScores = musicScores.filter(score => score.ownerIds.includes(userId));
-    const userGenres = new Set(ownedScores.map(score => score.ms_genre));
-
-    const recommendedScores = notOwnedScores.filter(score => userGenres.has(score.ms_genre));
-
-    setForYouScores(recommendedScores);
-  }, [musicScores, userId]);
+    if (currentUser && musicScores.length > 0) {
+      const notOwnedScores = musicScores.filter(
+        (score) => !score.ownerIds.includes(currentUser._id)
+      );
+  
+      const ownedScores = musicScores.filter((score) =>
+        score.ownerIds.includes(currentUser._id)
+      );
+      const userGenres = new Set(ownedScores.map((score) => score.ms_genre));
+  
+      const recommendedScores = notOwnedScores.filter((score) =>
+        userGenres.has(score.ms_genre)
+      );
+  
+      setForYouScores(recommendedScores);
+    }
+  }, [musicScores, currentUser]);
+  
 
   const NextArrow = (props) => {
     const { onClick } = props;
@@ -199,6 +214,35 @@ export default function CustomerHomepage() {
         <ArrowBack />
       </IconButton>
     );
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axios.get("http://localhost:3000/logout");
+      setCurrentUser(null);
+      // Clear the browser's cache
+      if ('caches' in window) {
+        caches.keys().then((names) => {
+          names.forEach((name) => {
+            caches.delete(name);
+          });
+        });
+      }
+
+      // Manipulate browser history to prevent going back
+      window.history.pushState(null, null, window.location.href);
+      window.history.pushState(null, null, window.location.href);
+      window.history.go(-2);
+
+      window.onpopstate = function () {
+        window.history.go(1);
+      };
+
+      navigate("/login", { replace: true }); // Redirect to login page after logout
+    } catch (error) {
+      console.error("Error during logout:", error);
+      alert("An error occurred during logout. Please try again.");
+    }
   };
 
   const settings = {
@@ -278,10 +322,9 @@ export default function CustomerHomepage() {
     { path: "/customer-inbox", label: "Inbox", icon: <Feedback /> },
     {
       path: "/customer-profile",
-      label: "Customer Profile",
+      label: "User Profile",
       icon: <AccountCircle />,
     },
-    { path: "/login", label: "Logout", icon: <ExitToApp /> },
   ];
 
   const GlobalStyle = createGlobalStyle`
@@ -329,6 +372,12 @@ export default function CustomerHomepage() {
                 </ListItemButton>
               </Link>
             ))}
+            <ListItemButton onClick={handleLogout}>
+              <ListItemIcon>
+                <ExitToApp />
+              </ListItemIcon>
+              <ListItemText primary="Logout" />
+            </ListItemButton>
           </List>
         </Box>
         <Box
@@ -402,7 +451,6 @@ export default function CustomerHomepage() {
                     </Select>
                   </FormControl>
 
-          
                   <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel>Composer</InputLabel>
                     <Select
@@ -427,8 +475,6 @@ export default function CustomerHomepage() {
                       </MenuItem>
                       <MenuItem value="Tchaikovsky">Tchaikovsky</MenuItem>
                       <MenuItem value="Holst">Holst</MenuItem>
-
-
                     </Select>
                   </FormControl>
 
@@ -441,7 +487,6 @@ export default function CustomerHomepage() {
                     onChange={(e) => setInstrumentation(e.target.value)}
                   />
 
-  
                   <TextField
                     label="Min Price"
                     variant="outlined"
@@ -499,10 +544,21 @@ export default function CustomerHomepage() {
             </Box>
 
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="body1" sx={{ mr: 2 }}>
-                {username}
-              </Typography>
-              <Avatar>{username[0]}</Avatar>
+              {currentUser ? (
+                <>
+                  <Typography variant="body1" sx={{ mr: 2 }}>
+                    {currentUser.username}
+                  </Typography>
+                  <Avatar>{currentUser.username.charAt(0)}</Avatar>
+                </>
+              ) : (
+                <>
+                  <Typography variant="body1" sx={{ mr: 2 }}>
+                    Loading...
+                  </Typography>
+                  <Avatar></Avatar>
+                </>
+              )}
             </Box>
           </Box>
 

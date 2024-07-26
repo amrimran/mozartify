@@ -6,7 +6,8 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ['customer', 'music_entry_clerk'], default: 'customer' },
   approval: { type: Boolean, default: false },
-  favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'MusicScore' }]
+  favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'MusicScore' }],
+  isActive: { type: Boolean, default: true },
 });
 
 const UserModel = mongoose.model('User', UserSchema);

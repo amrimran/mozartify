@@ -1,9 +1,10 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Landing from "./Landing";
 import Signup from "./Signup";
 import Login from "./Login";
-import Home from "./Home";
 import ForgotPassword from "./ForgotPassword";
+import ResetPassword from "./ResetPassword";
+import Home from "./Home";
 import CustomerHomepage from "./CustomerHomepage";
 import CustomerLibrary from "./CustomerLibrary";
 import CustomerFavourites from "./CustomerFavourites";
@@ -17,16 +18,19 @@ import MusicEntryClerkPreview from "./MusicEntryClerkPreview";
 import MusicEntryClerkCatalog from "./MusicEntryClerkCatalog";
 import CustomerInbox from "./CustomerInbox";
 import MusicEntryClerkEdit from "./MusicEntryClerkEdit"; // Ensure this matches the actual file name exactly
+import TestSession from "./TestSession";
+
 
 function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/home" element={<Home />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/customer-homepage" element={<CustomerHomepage />} />
         <Route path="/customer-library" element={<CustomerLibrary />} />
         <Route path="/customer-favourites" element={<CustomerFavourites />} />
@@ -43,8 +47,12 @@ function App() {
         <Route path="/clerk-preview" element={<MusicEntryClerkPreview />} />
         <Route path="/clerk-catalog" element={<MusicEntryClerkCatalog />} />
         <Route path="/clerk-edit" element={<MusicEntryClerkEdit />} /> {/* Update route for the MusicEntryClerkEdit component */}
+
+        <Route path="/test-session" element={<TestSession />} />
+
+
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
 

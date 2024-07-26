@@ -16,7 +16,7 @@ export default function CustomerMusicScoreView(){
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3001/customer-music-score-view/${id}`)
+      .get(`http://localhost:3000/customer-music-score-view/${id}`)
       .then((response) => {
         setMusicScore(response.data);
       })

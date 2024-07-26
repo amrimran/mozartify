@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -12,7 +13,7 @@ app.use(express.json());
 app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-mongoose.connect("mongodb://localhost:27017/mozartify");
+mongoose.connect(process.env.DB_URI);
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -155,6 +156,6 @@ app.post('/catalog', async (req, res) => {
   }
 });
 
-app.listen(3002, () => {
-  console.log("Server is running on port 3002");
+app.listen(3001, () => {
+  console.log("Server is running on port 3001");
 });

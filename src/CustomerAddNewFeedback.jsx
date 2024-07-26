@@ -66,7 +66,7 @@ export default function CustomerAddNewFeedback() {
 
     try {
       const response = await axios.post(
-        "http://localhost:3003/api/feedback",
+        "http://localhost:3002/api/feedback",
         data,
         {
           headers: {
