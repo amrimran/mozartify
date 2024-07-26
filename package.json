@@ -15,7 +15,8 @@
     "@fontsource/roboto": "^5.0.13",
     "@mui/icons-material": "^5.15.19",
     "@mui/material": "^5.15.19",
-    "abcjs": "^6.3.0",
+    "abcjs": "^6.4.1",
+    "adm-zip": "^0.5.14",
     "axios": "^1.7.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -36,6 +37,7 @@
     "react-slick": "^0.30.2",
     "slick-carousel": "^1.8.1",
     "styled-components": "^6.1.11",
+    "unzipper": "^0.12.2",
     "xml2abc": "https://wim.vree.org/js/xml2abc.tgz",
     "xml2js": "^0.6.2"
   },

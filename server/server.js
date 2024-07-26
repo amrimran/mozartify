@@ -26,11 +26,11 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const acceptedFileTypes = ["image/jpeg", "image/png", "image/jpg"];
+    const acceptedFileTypes = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
     if (acceptedFileTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only JPEG, PNG, and JPG files are allowed.'));
+      cb(new Error('Invalid file type. Only JPEG, PNG, , JPG and PDF files are allowed.'));
     }
   }
 });
@@ -42,7 +42,9 @@ app.post('/upload', upload.single('file'), (req, res) => {
 
   const inputFilePath = path.join(__dirname, 'uploads', req.file.filename);
   const outputDir = path.join(__dirname, 'uploads', `${path.parse(req.file.filename).name}`);
-  const outputFilePath = path.join(outputDir, `${path.parse(req.file.filename).name}.mxl`);
+  const mxlFilePath = path.join(outputDir, `${path.parse(req.file.filename).name}.mxl`);
+  const xmlFilePath = path.join(outputDir, `${path.parse(req.file.filename).name}.xml`);
+  const abcFilePath = path.join(outputDir, `${path.parse(req.file.filename).name}.abc`);
 
   // Create a new directory for this upload
   fs.mkdir(outputDir, { recursive: true }, (err) => {
@@ -68,14 +70,76 @@ app.post('/upload', upload.single('file'), (req, res) => {
       console.log(`Audiveris stderr: ${stderr}`);
 
       // Verify the .mxl file exists
-      fs.access(outputFilePath, fs.constants.F_OK, (err) => {
+      fs.access(mxlFilePath, fs.constants.F_OK, (err) => {
         if (err) {
-          console.error(`Error: ${outputFilePath} does not exist`);
+          console.error(`Error: ${mxlFilePath} does not exist`);
           return res.status(500).json({ message: 'Error: .mxl file was not created' });
         }
 
-        console.log(`Success: ${outputFilePath} exists`);
-        res.json({ filePath: `/uploads/${req.file.filename}`, mxlFilePath: `/uploads/${path.parse(req.file.filename).name}/${path.parse(req.file.filename).name}.mxl` });
+        console.log(`Success: ${mxlFilePath} exists`);
+
+        // Full path to the MuseScore executable
+        const musescorePath = "C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe"; // Adjust this path if needed
+
+        // Convert .mxl to .xml using MuseScore CLI
+        const musescoreCommand = `"${musescorePath}" "${mxlFilePath}" -o "${xmlFilePath}"`;
+
+        exec(musescoreCommand, (musescoreError, musescoreStdout, musescoreStderr) => {
+          console.log(`MuseScore command: ${musescoreCommand}`);
+
+          if (musescoreError) {
+            console.error(`Error executing MuseScore: ${musescoreError.message}`);
+            console.error(`Error details: ${musescoreStderr}`);
+            return res.status(500).json({ message: 'Error converting .mxl to .xml with MuseScore', error: musescoreError.message });
+          }
+
+          console.log(`MuseScore stdout: ${musescoreStdout}`);
+          console.log(`MuseScore stderr: ${musescoreStderr}`);
+
+          // Verify the .xml file exists
+          fs.access(xmlFilePath, fs.constants.F_OK, (err) => {
+            if (err) {
+              console.error(`Error: ${xmlFilePath} does not exist`);
+              return res.status(500).json({ message: 'Error: .xml file was not created' });
+            }
+
+            console.log(`Success: ${xmlFilePath} exists`);
+
+            // Resolve the absolute path to xml2abc
+            const xml2abcPath = path.resolve(__dirname, 'node_modules/.bin/xml2abc');
+            // Convert .xml to .abc using xml2abc-js with absolute path
+            const xml2abcCommand = `"${xml2abcPath}" -o ${outputDir} ${xmlFilePath}`;
+
+            exec(xml2abcCommand, (xml2abcError, xml2abcStdout, xml2abcStderr) => {
+              console.log(`xml2abc command: ${xml2abcCommand}`);
+
+              if (xml2abcError) {
+                console.error(`Error executing xml2abc-js: ${xml2abcError.message}`);
+                console.error(`Error details: ${xml2abcStderr}`);
+                return res.status(500).json({ message: 'Error converting .xml to .abc with xml2abc-js', error: xml2abcError.message });
+              }
+
+              console.log(`xml2abc-js stdout: ${xml2abcStdout}`);
+              console.log(`xml2abc-js stderr: ${xml2abcStderr}`);
+
+              // Verify the .abc file exists
+              fs.access(abcFilePath, fs.constants.F_OK, (err) => {
+                if (err) {
+                  console.error(`Error: ${abcFilePath} does not exist`);
+                  return res.status(500).json({ message: 'Error: .abc file was not created' });
+                }
+
+                console.log(`Success: ${abcFilePath} exists`);
+                res.json({
+                  filePath: `/uploads/${req.file.filename}`,
+                  mxlFilePath: `/uploads/${path.parse(req.file.filename).name}/${path.parse(req.file.filename).name}.mxl`,
+                  xmlFilePath: `/uploads/${path.parse(req.file.filename).name}/${path.parse(req.file.filename).name}.xml`,
+                  abcFilePath: `/uploads/${path.parse(req.file.filename).name}/${path.parse(req.file.filename).name}.abc` // Return the abcFilePath
+                });
+              });
+            });
+          });
+        });
       });
     });
   });

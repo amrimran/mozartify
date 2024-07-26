@@ -1,23 +1,16 @@
 import React, { useState } from "react";
 import {
   Box,
-  List,
-  ListItemIcon,
-  ListItemText,
   Avatar,
   Typography,
-  ListItemButton,
   Button,
   CircularProgress,
+  LinearProgress,
 } from "@mui/material";
-import HomeIcon from "@mui/icons-material/Home";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import ExitToAppIcon from "@mui/icons-material/ExitToApp";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
-import SidebarMozartifyLogo from "./assets/mozartify.png";
-import ImportIcon from "./assets/import-icon.png";
+import ClerkSidebar from "./ClerkSidebar"; // Make sure to adjust the path as needed
+import ImportIcon from "./assets/import-icon.png"; // Ensure this import is correct
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -30,12 +23,12 @@ const GlobalStyle = createGlobalStyle`
 const buttonStyles = {
   fontFamily: "Montserrat",
   fontWeight: "bold",
-  color: "#483C32",
-  borderColor: "#483C32",
+  color: "#3B3183",
+  borderColor: "#3B3183",
   "&:hover": {
-    backgroundColor: "#483C32",
+    backgroundColor: "#3B3183",
     color: "#FFFFFF",
-    borderColor: "#483C32",
+    borderColor: "#3B3183",
   },
 };
 
@@ -48,12 +41,12 @@ export default function MusicEntryClerkUpload() {
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
-    const acceptedFileTypes = ["image/jpeg", "image/png", "image/jpg"];
+    const acceptedFileTypes = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
     if (file && acceptedFileTypes.includes(file.type)) {
       setSelectedFile(file);
       setUploadMessage("");
     } else {
-      alert("Please select a valid image file (jpg, jpeg, png).");
+      alert("Please select a valid file (jpg, jpeg, png, pdf).");
       setSelectedFile(null);
     }
   };
@@ -88,44 +81,11 @@ export default function MusicEntryClerkUpload() {
       });
   };
 
-  const navigationItems = [
-    { path: "/clerk-homepage", label: "My Dashboard", icon: <HomeIcon /> },
-    { path: "/clerk-upload", label: "Upload", icon: <CloudUploadIcon /> },
-    { path: "/clerk-profile", label: "User Profile", icon: <AccountCircleIcon /> },
-    { path: "/login", label: "Logout", icon: <ExitToAppIcon /> },
-  ];
-
   return (
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh" }}>
-        <Box sx={{ width: 225, bgcolor: "#E4DCC8", p: 2 }}>
-          <Box
-            sx={{
-              textAlign: "center",
-              mb: 4,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              pt: 5,
-            }}
-          >
-            <img src={SidebarMozartifyLogo} alt="MozartifyIcon" style={{ maxWidth: "100%", maxHeight: "48px" }} />
-            <Typography variant="h6" sx={{ mt: 2, fontFamily: "Montserrat" }}>
-              Mozartify
-            </Typography>
-          </Box>
-          <List>
-            {navigationItems.map((item) => (
-              <ListItemButton key={item.path}>
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <Link to={item.path} style={{ textDecoration: "none", color: "inherit" }}>
-                  <ListItemText primary={item.label} />
-                </Link>
-              </ListItemButton>
-            ))}
-          </List>
-        </Box>
+        <ClerkSidebar />
         <Box sx={{ flexGrow: 1, p: 3 }}>
           <Box
             sx={{
@@ -174,7 +134,7 @@ export default function MusicEntryClerkUpload() {
                 </Typography>
                 <input
                   type="file"
-                  accept=".jpg,.jpeg,.png"
+                  accept=".jpg,.jpeg,.png,.pdf"
                   onChange={handleFileChange}
                   style={{ display: 'none' }}
                   id="upload-button"
@@ -186,7 +146,7 @@ export default function MusicEntryClerkUpload() {
                     component="span"
                     sx={{
                       mt: 5,
-                      px: 10,
+                      width: '100%',
                       ...buttonStyles,
                     }}
                   >
@@ -194,19 +154,26 @@ export default function MusicEntryClerkUpload() {
                   </Button>
                 </label>
                 {selectedFile && (
-                  <Button
-                    variant="outlined"
-                    size="large"
-                    sx={{
-                      mt: 2,
-                      px: 10,
-                      ...buttonStyles,
-                    }}
-                    onClick={handleUpload}
-                    disabled={isUploading}
-                  >
-                    {isUploading ? <CircularProgress size={24} /> : "Upload"}
-                  </Button>
+                  <>
+                    <Button
+                      variant="outlined"
+                      size="large"
+                      sx={{
+                        mt: 2,
+                        width: '100%',
+                        ...buttonStyles,
+                      }}
+                      onClick={handleUpload}
+                      disabled={isUploading}
+                    >
+                      Upload
+                    </Button>
+                    {isUploading && (
+                      <Box sx={{ width: '100%', mt: 2 }}>
+                        <LinearProgress />
+                      </Box>
+                    )}
+                  </>
                 )}
                 {uploadMessage && (
                   <Typography variant="body1" sx={{ mt: 2, color: 'red' }}>
