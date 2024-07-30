@@ -9,6 +9,7 @@ const MongoDBStore = require("connect-mongodb-session")(session);
 
 const UserModel = require("./models/User");
 const MusicScoreModel = require("./models/MusicScore");
+const DeletedUserModel = require('./models/DeletedUser');
 
 const app = express();
 app.use(express.json());
@@ -217,7 +218,7 @@ app.post("/login", async (req, res) => {
               .json({ message: "Session save error", error: err });
           }
           console.log("Session set successfully:", req.session.userId);
-          res.json({ message: "Success", userId: user._id, role: user.role, isActive: user.isActive});
+          res.json({ message: "Success", userId: user._id, role: user.role});
         });
       } else {
         res.status(400).json({ message: "The password is incorrect" });
@@ -281,7 +282,39 @@ app.post("/reset-password", async (req, res) => {
   }
 });
 
+app.delete("/user/delete", async (req, res) => {
+  const userId = req.session.userId;
+  
+  try {
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Create a new document in the DeletedUser collection
+    const deletedUser = new DeletedUserModel({
+      username: user.username,
+      email: user.email,
+      password: user.password,
+      role: user.role,
+      approval: user.approval,
+      favorites: user.favorites,
+      deletedAt: new Date(),
+    });
+
+    await deletedUser.save();
+
+    await UserModel.findByIdAndDelete(userId);
+
+    res.json({ message: "Account deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
+});
 
 app.get("/logout", (req, res) => {
   req.session.destroy((err) => {
@@ -346,27 +379,6 @@ app.delete("/user/delete", async (req, res) => {
     }
 
     res.json({ message: "Account deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err });
-  }
-});
-
-app.put("/user/deactivate", async (req, res) => {
-  const userId = req.session.userId;
-  
-  try {
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const user = await UserModel.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    user.isActive = false;  // Assuming you have an isActive field in your schema
-    await user.save();
-    res.json({ message: "Account deactivated successfully" });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err });
   }

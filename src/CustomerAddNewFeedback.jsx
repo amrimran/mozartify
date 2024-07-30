@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
   Box,
@@ -14,17 +14,23 @@ import {
   Grid,
   IconButton,
 } from "@mui/material";
-import HomeIcon from "@mui/icons-material/Home";
-import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import FeedbackIcon from "@mui/icons-material/Feedback";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import ExitToAppIcon from "@mui/icons-material/ExitToApp";
+import {
+  Home,
+  LibraryBooks,
+  Favorite,
+  ShoppingCart,
+  Feedback,
+  AccountCircle,
+  ExitToApp,
+} from "@mui/icons-material";
 import UploadIcon from "@mui/icons-material/Upload";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "./firebase";
+
+axios.defaults.withCredentials = true;
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -35,13 +41,75 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 export default function CustomerAddNewFeedback() {
-  const userId = "6663a93dd0f65edd4857eb95"; // Placeholder user ID
+  const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState(null);
   const [formData, setFormData] = useState({
-    username: "duwenago69",
+    username: "",
     title: "",
     detail: "",
     attachment: null,
   });
+  const [attachmentPreview, setAttachmentPreview] = useState(null);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/current-user");
+        setCurrentUser(response.data);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+        navigate("/login");
+      }
+    };
+
+    fetchCurrentUser();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (currentUser) {
+      setFormData((prevData) => ({
+        ...prevData,
+        username: currentUser.username,
+      }));
+    }
+  }, [currentUser]);
+
+  const handleReupload = (e) => {
+    const file = e.target.files[0];
+    setFormData((prevData) => ({ ...prevData, attachment: file }));
+    setAttachmentPreview(URL.createObjectURL(file));
+  };
+
+  const handleDelete = () => {
+    setFormData((prevData) => ({ ...prevData, attachment: null }));
+    setAttachmentPreview(null);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axios.get("http://localhost:3000/logout");
+      setCurrentUser(null);
+      if ("caches" in window) {
+        caches.keys().then((names) => {
+          names.forEach((name) => {
+            caches.delete(name);
+          });
+        });
+      }
+      window.history.pushState(null, null, window.location.href);
+      window.history.pushState(null, null, window.location.href);
+      window.history.go(-2);
+
+      window.onpopstate = function () {
+        window.history.go(1);
+      };
+
+      navigate("/login", { replace: true }); // Redirect to login page after logout
+    } catch (error) {
+      console.error("Error during logout:", error);
+      alert("An error occurred during logout. Please try again.");
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -49,57 +117,52 @@ export default function CustomerAddNewFeedback() {
   };
 
   const handleFileChange = (e) => {
-    setFormData((prevData) => ({ ...prevData, attachment: e.target.files[0] }));
+    const file = e.target.files[0];
+    setFormData((prevData) => ({ ...prevData, attachment: file }));
+    setAttachmentPreview(URL.createObjectURL(file));
   };
 
   const handleSubmit = async () => {
-    console.log("Form Data:", formData); // Log formData
     const data = new FormData();
     data.append("username", formData.username);
     data.append("title", formData.title);
     data.append("detail", formData.detail);
-    data.append("user_id", userId); // Add user_id to the form data
-
+    data.append("user_id", currentUser._id);
+  
     if (formData.attachment) {
-      data.append("attachment", formData.attachment, formData.attachment.name);
-    }
-
-    try {
-      const response = await axios.post(
-        "http://localhost:3002/api/feedback",
-        data,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+      const storageRef = ref(
+        storage,
+        `feedback_attachments/${Date.now()}_${formData.attachment.name}`
       );
-      console.log("Feedback submitted:", response.data);
+      try {
+        await uploadBytes(storageRef, formData.attachment);
+        const attachmentUrl = await getDownloadURL(storageRef);
+        data.append("attachment_url", String(attachmentUrl));
+      } catch (error) {
+        console.error("Error uploading file:", error);
+      }
+    }
+  
+    try {
+      await axios.post("http://localhost:3002/api/feedback", data);
+      navigate("/customer-inbox");
     } catch (error) {
       console.error("There was an error submitting the feedback!", error);
     }
   };
+  
 
   const navigationItems = [
-    { path: "/customer-homepage", label: "My Dashboard", icon: <HomeIcon /> },
-    {
-      path: "/customer-library",
-      label: "Libraries",
-      icon: <LibraryBooksIcon />,
-    },
-    {
-      path: "/customer-favourites",
-      label: "Favourites",
-      icon: <FavoriteIcon />,
-    },
-    { path: "/customer-mycart", label: "My Cart", icon: <ShoppingCartIcon /> },
-    { path: "/customer-inbox", label: "Inbox", icon: <FeedbackIcon /> },
+    { path: "/customer-homepage", label: "My Dashboard", icon: <Home /> },
+    { path: "/customer-library", label: "Libraries", icon: <LibraryBooks /> },
+    { path: "/customer-favourites", label: "Favourites", icon: <Favorite /> },
+    { path: "/customer-mycart", label: "My Cart", icon: <ShoppingCart /> },
+    { path: "/customer-inbox", label: "Inbox", icon: <Feedback /> },
     {
       path: "/customer-profile",
-      label: "Customer Profile",
-      icon: <AccountCircleIcon />,
+      label: "User Profile",
+      icon: <AccountCircle />,
     },
-    { path: "/login", label: "Logout", icon: <ExitToAppIcon /> },
   ];
 
   return (
@@ -139,6 +202,12 @@ export default function CustomerAddNewFeedback() {
                 </ListItemButton>
               </Link>
             ))}
+            <ListItemButton onClick={handleLogout}>
+              <ListItemIcon>
+                <ExitToApp />
+              </ListItemIcon>
+              <ListItemText primary="Logout" />
+            </ListItemButton>
           </List>
         </Box>
         <Box sx={{ flexGrow: 1, p: 3 }}>
@@ -172,6 +241,9 @@ export default function CustomerAddNewFeedback() {
                     value={formData.username}
                     onChange={handleInputChange}
                     InputLabelProps={{ shrink: true }}
+                    InputProps={{
+                      readOnly: true,
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -207,34 +279,85 @@ export default function CustomerAddNewFeedback() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      height: "100%",
+                      height: attachmentPreview? "50%": "100%",
                       p: 2,
                     }}
                   >
-                    <Typography
-                      variant="body2"
-                      color="textSecondary"
-                      align="center"
-                      sx={{ mr: 2 }}
+                    {attachmentPreview ? (
+                      <Box sx={{ mt: 2 }}>
+                        <img
+                          src={attachmentPreview}
+                          alt="Attachment Preview"
+                          style={{ maxWidth: "100%", maxHeight: "200px" }}
+                        />
+                      </Box>
+                    ) : (
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          height: "100%",
+                          p: 2,
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ mr: 2 }}
+                        >
+                          Attachment (if any)
+                        </Typography>
+                        <IconButton component="label">
+                          <UploadIcon />
+                          <input
+                            type="file"
+                            hidden
+                            onChange={handleFileChange}
+                          />
+                        </IconButton>
+                      </Box>
+                    )}
+                  </Box>
+                  {attachmentPreview && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        mt: 2,
+                      }}
                     >
-                      Attachment (if any)
-                    </Typography>
-                    <IconButton component="label">
-                      <UploadIcon />
-                      <input type="file" hidden onChange={handleFileChange} />
-                    </IconButton>
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        component="label"
+                        sx={{ mr: 2 }}
+                      >
+                        Reupload
+                        <input type="file" hidden onChange={handleReupload} />
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="error"
+                        onClick={handleDelete}
+                      >
+                        Delete
+                      </Button>
+                    </Box>
+                  )}
+                  <Box
+                    sx={{ mt: 5, display: "flex", justifyContent: "center" }}
+                  >
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleSubmit}
+                    >
+                      Send Feedback
+                    </Button>
                   </Box>
                 </Grid>
               </Grid>
-              <Box sx={{ mt: 5, display: "flex", justifyContent: "center" }}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleSubmit}
-                >
-                  Send Feedback
-                </Button>
-              </Box>
             </Box>
           </Box>
         </Box>

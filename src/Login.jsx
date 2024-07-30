@@ -90,34 +90,21 @@ export default function Login() {
       .post("http://localhost:3000/login", { username_or_email, password })
       .then((result) => {
         if (result.data.message === "Success") {
-          if(result.data.isActive === false){
-            if (window.confirm("Are you sure you want to reactivate your account?")) {
-              if(result.data.role === "customer"){
-                navigate("/customer-homepage");
-              }
-              if(result.data.role === "music_entry_clerk"){
-                navigate("/clerk-homepage");
-              }
-            }
-            else{
-              return;
-            }
-          }
-          else{
+    
             if(result.data.role === "customer"){
               navigate("/customer-homepage");
             }
             if(result.data.role === "music_entry_clerk"){
               navigate("/clerk-homepage");
             }
-          }        
+         
         } else {
           setErrorMessage("Invalid username/email or password");
         }
       })
       .catch((err) => {
         console.log(err);
-        setErrorMessage("An error occurred. Please try again.");
+        setErrorMessage("Error accessing user database.");
       });
   };
 

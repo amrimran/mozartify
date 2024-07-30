@@ -16,20 +16,26 @@ import {
   TableHead,
   TableRow,
   Paper,
+  IconButton
 } from "@mui/material";
-import HomeIcon from "@mui/icons-material/Home";
-import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import FeedbackIcon from "@mui/icons-material/Feedback";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import ExitToAppIcon from "@mui/icons-material/ExitToApp";
+import {
+  Home,
+  LibraryBooks,
+  Favorite,
+  ShoppingCart,
+  Feedback,
+  AccountCircle,
+  ExitToApp,
+} from "@mui/icons-material";
+import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from "@mui/icons-material/Add";
 import { Link, useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 import { styled } from "@mui/material/styles";
 import axios from "axios";
+import ScrollableCell from "./ScrollableCell";
+axios.defaults.withCredentials = true;
 
 const CustomAddIcon = styled(AddIcon)(({ theme }) => ({
   backgroundColor: "#c44131",
@@ -38,64 +44,105 @@ const CustomAddIcon = styled(AddIcon)(({ theme }) => ({
   padding: theme.spacing(0.5),
 }));
 
+const GlobalStyle = createGlobalStyle`
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Montserrat', sans-serif;
+}
+`;
+
 export default function CustomerInbox() {
   const [feedbackData, setFeedbackData] = useState([]);
-  const [username, setUsername] = useState("");
-  
-  const userId = "6663a93dd0f65edd4857eb95";
 
   const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:3000/user/${userId}`)
-      .then((response) => {
-        setUsername(response.data.username);
-      })
-      .catch((error) => {
-        console.error("Error fetching user details:", error);
-      });
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/current-user");
+        setCurrentUser(response.data);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+        navigate("/login");
+      }
+    };
 
-      axios
-      .get(`http://localhost:3002/api/feedback`)
-      .then((response) => {
-        const userFeedbacks = response.data.filter(feedback => feedback.user_id === userId);
+    fetchCurrentUser();
+  }, [navigate]);
+
+  const fetchFeedbackData = async () => {
+    axios
+    .get(`http://localhost:3002/api/feedback`)
+    .then((response) => {
+      const userFeedbacks = response.data.filter(
+        (feedback) => feedback.user_id === currentUser._id
+      );
+      if (userFeedbacks.length === 0) {
+        console.log("No feedback data found for the current user.");
+      } else {
         setFeedbackData(userFeedbacks);
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      });
-  }, [userId]);
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching data:", error);
+    });
+  };
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchFeedbackData();      
+    }
+  }, [currentUser]);
+
+  const handleLogout = async () => {
+    try {
+      await axios.get("http://localhost:3000/logout");
+      setCurrentUser(null);
+      if ("caches" in window) {
+        caches.keys().then((names) => {
+          names.forEach((name) => {
+            caches.delete(name);
+          });
+        });
+      }
+      window.history.pushState(null, null, window.location.href);
+      window.history.pushState(null, null, window.location.href);
+      window.history.go(-2);
+
+      window.onpopstate = function () {
+        window.history.go(1);
+      };
+
+      navigate("/login", { replace: true }); // Redirect to login page after logout
+    } catch (error) {
+      console.error("Error during logout:", error);
+      alert("An error occurred during logout. Please try again.");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`http://localhost:3002/api/feedback/${id}`);
+      fetchFeedbackData();
+    } catch (error) {
+      console.error("There was an error deleting the feedback!", error);
+    }
+  };
 
   const navigationItems = [
-    { path: "/customer-homepage", label: "My Dashboard", icon: <HomeIcon /> },
-    {
-      path: "/customer-library",
-      label: "Libraries",
-      icon: <LibraryBooksIcon />,
-    },
-    {
-      path: "/customer-favourites",
-      label: "Favourites",
-      icon: <FavoriteIcon />,
-    },
-    { path: "/customer-mycart", label: "My Cart", icon: <ShoppingCartIcon /> },
-    { path: "/customer-inbox", label: "Inbox", icon: <FeedbackIcon /> },
+    { path: "/customer-homepage", label: "My Dashboard", icon: <Home /> },
+    { path: "/customer-library", label: "Libraries", icon: <LibraryBooks /> },
+    { path: "/customer-favourites", label: "Favourites", icon: <Favorite /> },
+    { path: "/customer-mycart", label: "My Cart", icon: <ShoppingCart /> },
+    { path: "/customer-inbox", label: "Inbox", icon: <Feedback /> },
     {
       path: "/customer-profile",
-      label: "Customer Profile",
-      icon: <AccountCircleIcon />,
+      label: "User Profile",
+      icon: <AccountCircle />,
     },
-    { path: "/login", label: "Logout", icon: <ExitToAppIcon /> },
   ];
-
-  const GlobalStyle = createGlobalStyle`
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Montserrat', sans-serif;
-  }
-`;
 
   return (
     <>
@@ -135,6 +182,12 @@ export default function CustomerInbox() {
                 </ListItemButton>
               </Link>
             ))}
+            <ListItemButton onClick={handleLogout}>
+              <ListItemIcon>
+                <ExitToApp />
+              </ListItemIcon>
+              <ListItemText primary="Logout" />
+            </ListItemButton>
           </List>
         </Box>
         <Box sx={{ flexGrow: 1, p: 3 }}>
@@ -148,10 +201,21 @@ export default function CustomerInbox() {
           >
             <Typography variant="h4">Inbox</Typography>
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="body1" sx={{ mr: 2 }}>
-                {username}
-              </Typography>
-              <Avatar>{username[0]}</Avatar>
+              {currentUser ? (
+                <>
+                  <Typography variant="body1" sx={{ mr: 2 }}>
+                    {currentUser.username}
+                  </Typography>
+                  <Avatar>{currentUser.username.charAt(0)}</Avatar>
+                </>
+              ) : (
+                <>
+                  <Typography variant="body1" sx={{ mr: 2 }}>
+                    Loading...
+                  </Typography>
+                  <Avatar></Avatar>
+                </>
+              )}
             </Box>
           </Box>
 
@@ -185,31 +249,42 @@ export default function CustomerInbox() {
                     sx={{ color: "black", backgroundColor: "#E4DCC8" }}
                   >
                     <TableRow>
-                      <TableCell>ID</TableCell>
-                      <TableCell>Username</TableCell>
+                      <TableCell>No.</TableCell>
                       <TableCell>Title</TableCell>
                       <TableCell>Detail</TableCell>
                       <TableCell>Attachment</TableCell>
+                      <TableCell></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {feedbackData.map((row) => (
+                    {feedbackData.map((row, index) => (
                       <TableRow key={row._id}>
                         <TableCell component="th" scope="row">
-                          {row._id}
+                          {index + 1}
                         </TableCell>
-                        <TableCell>{row.username}</TableCell>
                         <TableCell>{row.title}</TableCell>
-                        <TableCell>{row.detail}</TableCell>
+                        <ScrollableCell content={row.detail} />
                         <TableCell>
-                          {row.attachment && (
+                          {row.attachment_url ? (
                             <a
-                              href={`#${row.attachment}`}
+                              href={row.attachment_url}
                               style={{ color: "red" }}
+                              target="_blank"
+                              rel="noopener noreferrer"
                             >
-                              {row.attachment}
+                              View Attachment
                             </a>
+                          ) : (
+                            <span style={{ color: "grey" }}>No attachment</span>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <IconButton
+                            aria-label="delete"
+                            onClick={() => handleDelete(row._id)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
                         </TableCell>
                       </TableRow>
                     ))}

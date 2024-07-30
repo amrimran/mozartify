@@ -71,19 +71,7 @@ export default function CustomerProfile() {
     }
   };
 
-  const handleDeactivateAccount = async () => {
-    if (!window.confirm("Are you sure you want to deactivate your account?")) {
-      return;
-    }
-    try {
-      await axios.put("http://localhost:3000/user/deactivate");
-      alert("Account deactivated successfully.");
-      navigate("/login");
-    } catch (error) {
-      console.error("Error deactivating account:", error);
-      alert("Failed to deactivate account.");
-    }
-  };
+  
 
   const handleDeleteAccount = async () => {
     if (!window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
@@ -280,15 +268,6 @@ export default function CustomerProfile() {
                   Save Changes
                 </Button>
               </form>
-              <Button
-                variant="contained"
-                color="secondary"
-                fullWidth
-                sx={{ mt: 2 }}
-                onClick={handleDeactivateAccount}
-              >
-                Deactivate Account
-              </Button>
               <Button
                 variant="contained"
                 color="error"
