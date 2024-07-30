@@ -2,12 +2,8 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import {
   Box,
-  List,
-  ListItemIcon,
-  ListItemText,
   Avatar,
   Typography,
-  ListItemButton,
 } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
@@ -15,7 +11,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ExitToApp from "@mui/icons-material/ExitToApp";
 import { Link, useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
-import SidebarMozartifyLogo from "./assets/mozartify.png";
+import ClerkSidebar from "./ClerkSidebar"; // Make sure to adjust the path as needed
 
 axios.defaults.withCredentials = true;
 
@@ -85,44 +81,7 @@ export default function MusicEntryClerkHomepage() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh" }}>
-        <Box sx={{ width: 225, bgcolor: "#E4DCC8", p: 2 }}>
-          <Box
-            sx={{
-              textAlign: "center",
-              mb: 4,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              pt: 5
-            }}
-          >
-            <img src={SidebarMozartifyLogo} alt="MozartifyIcon" style={{ maxWidth: "100%", maxHeight: "48px" }} />
-
-            <Typography variant="h6" sx={{ mt: 2, fontFamily: "Montserrat" }}>
-              Mozartify
-            </Typography>
-          </Box>
-          <List>
-            {navigationItems.map((item) => (
-              <Link
-                to={item.path}
-                style={{ textDecoration: "none" }}
-                key={item.path}
-              >
-                <ListItemButton>
-                  <ListItemIcon>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.label} />
-                </ListItemButton>
-              </Link>
-            ))}
-            <ListItemButton onClick={handleLogout}>
-              <ListItemIcon>
-                <ExitToApp />
-              </ListItemIcon>
-              <ListItemText primary="Logout" />
-            </ListItemButton>
-          </List>
-        </Box>
+        <ClerkSidebar />
         <Box sx={{ flexGrow: 1, p: 3 }}>
           <Box
             sx={{
