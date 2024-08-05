@@ -29,21 +29,20 @@ const FormContainer = styled(Box)(({ theme }) => ({
   justifyContent: "center",
   alignItems: "center",
   fontFamily: "Montserrat",
+  maxWidth: 500,
 }));
 
 const BackgroundContainer = styled(Box)(() => ({
-  backgroundColor: "#f5f5f5",
   backgroundImage: `url(${backgroundImage})`,
   backgroundSize: "cover",
   backgroundRepeat: "no-repeat",
-  backgroundAttachment: "fixed",
-  backgroundPosition: "top",
+  backgroundPosition: "left top",
   minHeight: "100vh",
   width: "100vw",
   display: "flex",
   justifyContent: "center",
-  alignItems: "flex-start",
-  flexDirection: "row",
+  alignItems: "center",
+  flexDirection: "column",
   margin: 0,
   overflow: "hidden",
   fontFamily: "Montserrat",
@@ -123,56 +122,6 @@ export default function Login() {
     <>
       <GlobalStyle />
       <BackgroundContainer>
-        <Grid
-          container
-          spacing={2}
-          sx={{ height: "100%", width: "100%", margin: 0 }}
-        >
-          <Grid
-            item
-            xs={12}
-            md={4}
-            sx={{
-              height: "100vh",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              flexDirection: "column",
-            }}
-            style={{ padding: 0 }}
-          >
-            <LeftContainer>
-              <img src={Image} alt="Mozartify" style={{ width: "50%" }} />
-              <Typography
-                variant="h3"
-                fontWeight="bold"
-                sx={{
-                  fontFamily: "Montserrat",
-                  ml: 6,
-                  mt: -3,
-                  color: "#FFFFFF",
-                }}
-              >
-                Welcome
-                <br />
-                Back!
-              </Typography>
-              <HandMusicImage src={Image2} alt="Hand Music" />
-            </LeftContainer>
-          </Grid>
-
-          <Grid
-            item
-            xs={12}
-            md={8}
-            sx={{
-              height: "100vh",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-            style={{ padding: 0 }}
-          >
             <FormContainer component="form" onSubmit={handleLogin}>
               <Typography
                 variant="h5"
@@ -250,7 +199,7 @@ export default function Login() {
                 sx={{
                   width: "100%",
                   display: "flex",
-                  justifyContent: "space-between",
+                  justifyContent: "end",
                   alignItems: "center",
                   mt: 2,
                 }}
@@ -300,8 +249,8 @@ export default function Login() {
                 </Link>
               </Typography>
             </FormContainer>
-          </Grid>
-        </Grid>
+
+
       </BackgroundContainer>
     </>
   );

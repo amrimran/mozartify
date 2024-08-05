@@ -17,7 +17,8 @@ import MusicEntryClerkUpload from "./MusicEntryClerkUpload";
 import MusicEntryClerkPreview from "./MusicEntryClerkPreview";
 import MusicEntryClerkCatalog from "./MusicEntryClerkCatalog";
 import CustomerInbox from "./CustomerInbox";
-import MusicEntryClerkEdit from "./MusicEntryClerkEdit"; // Ensure this matches the actual file name exactly
+import MusicEntryClerkEdit from "./MusicEntryClerkEdit";
+import MusicEntryClerkProfile from "./MusicEntryClerkProfile";
 import TestSession from "./TestSession";
 
 
@@ -46,7 +47,8 @@ function App() {
         <Route path="/clerk-upload" element={<MusicEntryClerkUpload />} />
         <Route path="/clerk-preview" element={<MusicEntryClerkPreview />} />
         <Route path="/clerk-catalog" element={<MusicEntryClerkCatalog />} />
-        <Route path="/clerk-edit" element={<MusicEntryClerkEdit />} /> {/* Update route for the MusicEntryClerkEdit component */}
+        <Route path="/clerk-edit" element={<MusicEntryClerkEdit />} />
+        <Route path="/clerk-profile" element={<MusicEntryClerkProfile />} />
 
         <Route path="/test-session" element={<TestSession />} />
 
