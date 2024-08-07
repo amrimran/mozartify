@@ -15,7 +15,7 @@ const GlobalStyle = createGlobalStyle`
 
 export default function MusicEntryClerkPreview() {
   const navigate = useNavigate();
-  const abcFileUrl = "http://localhost:3002/uploads/1721966224740-IMG_20240723_0005/1721966224740-IMG_20240723_0005.abc"; // Hardcoded ABC file URL
+  const abcFileUrl = "http://localhost:3002/uploads/1722996882597-12/1722996882597-12.abc"; // Hardcoded ABC file URL
   const fileName = "dr_nasir_1.abc"; // Hardcoded file name
   const username = "Nifail Amsyar";
   const [abcContent, setAbcContent] = useState('');

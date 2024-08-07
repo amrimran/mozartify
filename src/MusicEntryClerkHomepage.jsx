@@ -13,7 +13,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./ClerkSidebar"; // Make sure to adjust the path as needed
 
-axios.defaults.withCredentials = true;
+axios.defaults.withCredentials = true; //tambah ni 1
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -42,7 +42,7 @@ export default function MusicEntryClerkHomepage() {
     fetchCurrentUser();
   }, [navigate]);
 
-  const handleLogout = async () => {
+  const handleLogout = async () => { //2
     try {
       await axios.get("http://localhost:3000/logout");
       setCurrentUser(null);
