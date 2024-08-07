@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Button, Avatar } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
-import ClerkSidebar from "./ClerkSidebar"; // Import the ClerkSidebar component
+import ClerkSidebar from "./ClerkSidebar";
 import ABCJS from "abcjs";
 
 const GlobalStyle = createGlobalStyle`
@@ -15,21 +15,29 @@ const GlobalStyle = createGlobalStyle`
 
 export default function MusicEntryClerkPreview() {
   const navigate = useNavigate();
-  const abcFileUrl = "http://localhost:3002/uploads/1722996882597-12/1722996882597-12.abc"; // Hardcoded ABC file URL
-  const fileName = "dr_nasir_1.abc"; // Hardcoded file name
-  const username = "Nifail Amsyar";
+  const location = useLocation();
+  const { fileName, username } = location.state || {};
   const [abcContent, setAbcContent] = useState('');
 
   useEffect(() => {
-    console.log("abcFileUrl:", abcFileUrl); // Log the abcFileUrl
-    fetch(abcFileUrl)
-      .then(response => response.text())
-      .then(data => {
-        console.log("Fetched ABC Content:", data); // Log the fetched ABC content
-        setAbcContent(data);
-      })
-      .catch(error => console.error('Error fetching ABC file:', error));
-  }, [abcFileUrl]);
+    if (fileName) {
+      const fetchABCFileContent = async () => {
+        try {
+          const response = await fetch(`http://localhost:3001/abc-file/${fileName}`);
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          const data = await response.json();
+          console.log("Fetched ABC Content:", data.content); // Log the fetched ABC content
+          setAbcContent(data.content);
+        } catch (error) {
+          console.error('Error fetching ABC file content:', error);
+        }
+      };
+
+      fetchABCFileContent();
+    }
+  }, [fileName]);
 
   useEffect(() => {
     if (abcContent) {
@@ -39,19 +47,19 @@ export default function MusicEntryClerkPreview() {
   }, [abcContent]);
 
   const handleEdit = () => {
-    navigate("/clerk-edit", { state: { abcFileUrl: abcFileUrl, fileName: fileName } });
+    navigate("/clerk-edit", { state: { fileName } });
   };
 
   const handleProceed = () => {
     alert("Digitization completed. Please fill the metadata on next page.");
-    navigate("/clerk-catalog", { state: { abcFileUrl: abcFileUrl, fileName: fileName } });
+    navigate("/clerk-catalog", { state: { fileName } });
   };
 
   return (
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", minHeight: "100vh" }}>
-        <ClerkSidebar /> {/* Use the ClerkSidebar component */}
+        <ClerkSidebar />
         <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column" }}>
           <Box
             sx={{
@@ -66,9 +74,9 @@ export default function MusicEntryClerkPreview() {
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography variant="body1" sx={{ mr: 2 }}>
-                {username}
+                {username || 'User'}
               </Typography>
-              <Avatar>{username[0]}</Avatar>
+              <Avatar>{username ? username[0] : 'U'}</Avatar>
             </Box>
           </Box>
           <Box
