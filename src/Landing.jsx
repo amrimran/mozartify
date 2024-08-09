@@ -7,53 +7,144 @@ import {
   Typography,
   Button,
   Container,
-  Grid,
-  Paper,
   Box,
   IconButton,
 } from "@mui/material";
-import Icon from "./assets/mozartify.png";
-import LP1image from "./assets/LP1image.png";
-import Why1 from "./assets/why1.png";
-import Why2 from "./assets/why2.png";
-import Why3 from "./assets/why3.png";
-import Why4 from "./assets/why4.png";
-import Why5 from "./assets/why5.png";
-import Why6 from "./assets/why6.png";
-
+import { Carousel } from "react-responsive-carousel";
+import "react-responsive-carousel/lib/styles/carousel.min.css";
+import UMLogo from "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/src/assets/UMLogo.png";
+import slide1 from "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/src/assets/slide1.png";
+import slide2 from "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/src/assets/slide2.png";
+import slide3 from "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/src/assets/slide3.png";
+import slide4 from "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/src/assets/slide4.png";
+import features from "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/src/assets/features.png";
+import searchmusic from "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/src/assets/searchmusic.png";
 
 const GlobalStyle = createGlobalStyle`
   body {
     margin: 0;
     padding: 0;
+    font-family: 'Montserrat', sans-serif;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+  }
+
+  .header-button {
+    font-family: 'Montserrat', sans-serif;
+    text-transform: none;
+    color: #000000;
+    font-weight: 500;
+    position: relative;
+    transition: color 0.3s ease;
+    border: none;
+    background: none;
+    box-shadow: none;
+  }
+
+  .header-button::after {
+    content: '';
+    position: absolute;
+    width: 0%;
+    height: 4px; /* Thicker line */
+    background: #F5D128;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: width 0.3s ease;
+  }
+
+  .header-button:hover {
+    color: #F5D128;
+  }
+
+  .header-button:hover::after {
+    width: 100%;
+  }
+
+  .footer-text {
+    font-family: 'Montserrat', sans-serif;
+    color: #000000;
+  }
+
+  .custom-carousel .control-arrow {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .custom-carousel:hover .control-arrow {
+    opacity: 1;
+  }
+
+  .custom-carousel .control-next.control-arrow:before,
+  .custom-carousel .control-prev.control-arrow:before {
+    content: '';
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    display: inline-block;
+    padding: 10px;
+  }
+
+  .custom-carousel .control-next.control-arrow:before {
+    transform: rotate(-45deg);
+  }
+
+  .custom-carousel .control-prev.control-arrow:before {
+    transform: rotate(135deg);
   }
 `;
 
 export default function Landing() {
+  const scrollToSection = (id) => {
+    const section = document.getElementById(id);
+    if (section) {
+      const headerOffset = 69; // Adjust this value to match your header height
+      const elementPosition = section.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+    }
+  };
+
   return (
     <>
       <GlobalStyle />
       <AppBar
         position="sticky"
-        elevation={0}
+        elevation={2}
         sx={{
-          height: "8vh",
-          background: "linear-gradient(to right, #c44131, #483C32)",
+          height: "10vh", /* Slightly bigger header */
+          background: "#ffffff",
+          fontFamily: "Montserrat",
+          boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)", /* Thicker shadow */
         }}
       >
         <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
           <Box display="flex" alignItems="center">
             <IconButton>
-              <img src={Icon} alt="Mozartify logo" style={{ height: 40 }} />{" "}
+              <img src={UMLogo} alt="UM logo" style={{ height: 50 }} /> {/* Adjust logo size if needed */}
             </IconButton>
-            <Typography variant="h6">Mozartify</Typography>
           </Box>
           <Box>
-            <Button component={Link} to="/signup" color="inherit">
-              Register
+            <Button
+              onClick={() => scrollToSection("features")}
+              className="header-button"
+            >
+              Features
             </Button>
-            <Button component={Link} to="/login" color="inherit">
-              Login
+            <Button
+              onClick={() => scrollToSection("search")}
+              className="header-button"
+            >
+              Search
+            </Button>
+            <Button
+              component={Link}
+              to="/signup"
+              className="header-button"
+            >
+              Get Started
             </Button>
           </Box>
         </Toolbar>
@@ -61,182 +152,118 @@ export default function Landing() {
 
       <Box
         sx={{
-          background: "linear-gradient(to right, #c44131, #483C32)",
           height: "93vh",
           width: "100vw",
           display: "flex",
           flexDirection: "row",
           alignItems: "flex-start",
           margin: 0,
-          overflow: "hidden", 
+          overflow: "hidden",
         }}
       >
-        <Grid container spacing={2} sx={{ height: "100%", margin: 0 }}>
-          <Grid
-            item
-            xs={12}
-            sm={6}
-            sx={{ display: "flex", alignItems: "center", padding: 0 }}
-            style={{ padding: 0 }}
-          >
-            <Box
-              sx={{
-                textAlign: "left",
-                width: "100%",
-                paddingLeft: 10,
-                paddingRight: 10,
-              }}
-            >
-              <Typography
-                color="#ffffff"
-                component="h1"
-                variant="h2"
-                gutterBottom
-                fontFamily="Montserrat"
-                fontWeight="bold"
-              >
-                Access digital <br />
-                music scores by <br />
-                Universiti Malaya <br />
-                composers, <br />
-                anywhere, anytime, <br />
-                all in one place.
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid
-            item
-            xs={12}
-            sm={6}
-            sx={{ display: "flex", alignItems: "center", padding: 0 }}
-            style={{ padding: 0 }}
-          >
-            <Box
-              sx={{
-                position: "relative",
-                width: "100%",
-                height: "100%",
-              }}
-            >
-              <img
-                src={LP1image}
-                alt="Music scores"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                }}
-              />
-            </Box>
-          </Grid>
-        </Grid>
+        <Carousel
+          showThumbs={false}
+          showStatus={false}
+          infiniteLoop
+          autoPlay
+          interval={5000}
+          className="custom-carousel"
+        >
+          <div>
+            <img src={slide1} alt="Slide 1" />
+          </div>
+          <div>
+            <img src={slide2} alt="Slide 2" />
+          </div>
+          <div>
+            <img src={slide3} alt="Slide 3" />
+          </div>
+          <div>
+            <img src={slide4} alt="Slide 4" />
+          </div>
+        </Carousel>
       </Box>
 
       <Box
+        id="features"
         sx={{
           background: "#ffffff",
-          height: "100vh",
-          width: "100vw",
+          height: "auto",
+          width: "100%", /* Ensure it doesn't exceed viewport width */
           display: "flex",
           flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
           margin: 0,
           overflow: "hidden",
-          pt: 8,
-          pb: 8,
-          alignItems: "center",
         }}
       >
         <Typography
-          color="#c44131"
+          color="#3B3183"
           component="h1"
-          variant="h2"
+          variant="h3"
           gutterBottom
           fontFamily="Montserrat"
           fontWeight="bold"
           align="center"
+          sx={{ marginTop: 4 }}
         >
-          Why Mozartify?
+          Features
         </Typography>
+        <img src={features} alt="Features" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      </Box>
 
-        <Box sx={{ margin: 4, px: 20 }}>
-          <Grid container spacing={10}>
-            {[
-              {
-                text: "Instant access to music scores",
-                imageUrl: Why1,
-              },
-              {
-                text: "Browse diverse UM composers' collections",
-                imageUrl: Why2,
-              },
-              {
-                text: "Interactively view digital music scores",
-                imageUrl: Why3,
-              },
-              {
-                text: "Purchase digital music scores seamlessly",
-                imageUrl: Why4,
-              },
-              {
-                text: "Explore with tailored music recommendations",
-                imageUrl: Why5,
-              },
-              {
-                text: "Export music scores to various formats with ease",
-                imageUrl: Why6,
-              },
-            ].map((item, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
-                <Paper
-                  sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    p: 2,
-                    boxShadow: "none", 
-                    border: "none", 
-                  }}
-                >
-                  <img
-                    src={item.imageUrl}
-                    alt={item.text}
-                    style={{
-                      width: "35%",
-                      height: "auto",
-                      marginBottom: 16,
-                    }}
-                  />
-                  <Typography
-                    color="#483C32"
-                    component="h1"
-                    variant="h5"
-                    gutterBottom
-                    fontFamily="Montserrat"
-                    align="center"
-                  >
-                    {item.text}
-                  </Typography>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
+      <Box
+        id="search"
+        sx={{
+          background: "#ffffff",
+          height: "auto",
+          width: "100%", /* Ensure it doesn't exceed viewport width */
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          margin: 0,
+          overflow: "hidden",
+        }}
+      >
+        <Typography
+          color="#3B3183"
+          component="h1"
+          variant="h3"
+          gutterBottom
+          fontFamily="Montserrat"
+          fontWeight="bold"
+          align="center"
+          sx={{ marginTop: 4 }}
+        >
+          Search Music Scores
+        </Typography>
+        <Typography
+          color="#3B3183"
+          component="h2"
+          variant="h6"
+          fontFamily="Montserrat"
+          align="center"
+          sx={{ marginBottom: 2 }}
+        >
+          based on these categories
+        </Typography>
+        <img src={searchmusic} alt="Search Music" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       </Box>
 
       <Box
         sx={{
-          background: "#c44131",
-          height: "100vh",
-          width: "100vw",
+          background: "#3B3183",
+          height: "auto",
+          width: "100%", /* Ensure it doesn't exceed viewport width */
           display: "flex",
           flexDirection: "column",
+          justifyContent: "center",
           alignItems: "center",
           margin: 0,
           overflow: "hidden",
-          borderBottom: "2px solid white",
-          pt: 8,
+          py: 8,
         }}
       >
         <Typography
@@ -248,68 +275,57 @@ export default function Landing() {
           fontWeight="bold"
           align="center"
         >
-          Browse Music Scores <br /> based on
+          DIGITIZE YOUR MUSIC
         </Typography>
-        <Box
+        <Typography
+          color="#ffffff"
+          component="h1"
+          variant="h3"
+          gutterBottom
+          fontFamily="Montserrat"
+          fontWeight="bold"
+          align="center"
+        >
+          EXPERIENCE TODAY
+        </Typography>
+        <Button
+          component={Link}
+          to="/signup"
+          variant="outlined"
+          size="large"
           sx={{
-            flexGrow: 0.5,
-            width: "100%",
-            display: "flex",
-            pt: 3,
-            margin: 10,
+            fontFamily: "Montserrat",
+            fontWeight: "normal",
+            backgroundColor: "transparent",
+            color: "#ffffff",
+            borderColor: "#ffffff",
+            "&:hover": {
+              fontWeight: "bold",
+              backgroundColor: "transparent",
+              color: "#DB2226",
+              borderColor: "#DB2226",
+              boxShadow: "none", /* Remove any box shadow on hover */
+            },
+            boxShadow: "none", /* Ensure no box shadow is present */
           }}
         >
-          <Grid
-            container
-            spacing={8}
-            justifyContent="center"
-            sx={{ py: 3, px: 10 }}
-          >
-            {["Artist", "Title", "Composer", "Instrumentation", "Genre"].map(
-              (text, index) => (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <Button
-                    variant="contained"
-                    sx={{
-                      width: "100%",
-                      minHeight: "160px", 
-                      backgroundColor: "white",
-                      color: "black",
-                      border: "2px solid black",
-                      borderRadius: 15,
-                      textTransform: "none",
-                      fontFamily: "Montserrat",
-                      fontSize: "2.5rem",
-                      padding: "20px 20px",
-                      overflow: "hidden",
-                      whiteSpace: "nowrap",
-                      textOverflow: "ellipsis",
-                      "&:hover": {
-                        backgroundColor: "white",
-                      },
-                    }}
-                  >
-                    {text}
-                  </Button>
-                </Grid>
-              )
-            )}
-          </Grid>
-        </Box>
+          Get Started
+        </Button>
       </Box>
 
       <Box
         component="footer"
         sx={{
-          py: 3,
-          background: "#E4DCC8",
+          py: 1,
+          background: "#F5D128",
+          width: "100%", /* Ensure it doesn't exceed viewport width */
         }}
       >
         <Container maxWidth="md">
           <Typography
             variant="body2"
             align="center"
-            color="inherit"
+            className="footer-text"
             component="p"
           >
             &copy; 2024 Universiti Malaya. All Rights Reserved.
