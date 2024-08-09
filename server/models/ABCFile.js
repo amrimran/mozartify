@@ -244,6 +244,9 @@ const ABCFileSchema = new mongoose.Schema({
   yearDateOfComposition: {
     type: String,
   },
+  coverImageUrl: {
+    type: String,
+  },
 });
 
 const ABCFile = mongoose.model('ABCFile', ABCFileSchema);

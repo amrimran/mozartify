@@ -24,7 +24,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
-    "firebase": "^10.12.4",
+    "firebase": "^10.12.5",
     "firebase-admin": "^12.1.1",
     "fuse.js": "^7.0.0",
     "idb": "^8.0.0",

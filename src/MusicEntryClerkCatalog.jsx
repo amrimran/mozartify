@@ -11,6 +11,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./ClerkSidebar"; // Adjust the path as needed
+import { storage } from "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/server/config/firebaseConfig";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage"; // Import Firebase storage methods
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -43,8 +45,10 @@ export default function MusicEntryClerkCatalog() {
   const username = "Nifail Amsyar";
   const navigate = useNavigate();
   const [tabIndex, setTabIndex] = useState(0);
+  const [coverImage, setCoverImage] = useState(null); // State for storing the cover image file
+  const [coverImageUrl, setCoverImageUrl] = useState("No information available"); // State for storing the cover image URL
   const [catalogData, setCatalogData] = useState({
-    filename: '',
+    filename: 'No information available',
     title: 'No information available',
     albums: 'No information available',
     alternativeTitle: 'No information available',
@@ -124,6 +128,7 @@ export default function MusicEntryClerkCatalog() {
     westernParallel: 'No information available',
     workTitle: 'No information available',
     yearDateOfComposition: 'No information available',
+    coverImageUrl: 'No information available', // New attribute for cover image URL
   });
 
   const handleTabChange = (event, newValue) => {
@@ -141,6 +146,33 @@ export default function MusicEntryClerkCatalog() {
   const handleNext = () => {
     if (tabIndex < 7) {
       setTabIndex((prevIndex) => prevIndex + 1);
+    }
+  };
+
+  const handleCoverImageChange = (e) => {
+    if (e.target.files[0]) {
+      setCoverImage(e.target.files[0]);
+    }
+  };
+
+  const handleCoverImageUpload = () => {
+    if (coverImage) {
+      const storageRef = ref(storage, `cover_images/${coverImage.name}`);
+      uploadBytes(storageRef, coverImage).then((snapshot) => {
+        getDownloadURL(snapshot.ref).then((url) => {
+          setCoverImageUrl(url);
+          setCatalogData((prevData) => ({
+            ...prevData,
+            coverImageUrl: url,
+          }));
+          alert("Cover image uploaded successfully!");
+        });
+      }).catch((error) => {
+        console.error("Error uploading cover image:", error);
+        alert("Error uploading cover image");
+      });
+    } else {
+      alert("Please select a cover image to upload.");
     }
   };
 
@@ -218,6 +250,24 @@ export default function MusicEntryClerkCatalog() {
                 <TextField name="artist" label="Artist(s)" variant="outlined" fullWidth sx={formStyles} value={catalogData.artist} onChange={handleInputChange} />
                 <TextField name="composer" label="Composer" variant="outlined" fullWidth sx={formStyles} value={catalogData.composer} onChange={handleInputChange} />
                 <TextField name="contributor" label="Contributor" variant="outlined" fullWidth sx={formStyles} value={catalogData.contributor} onChange={handleInputChange} />
+                <TextField
+                  name="coverImage"
+                  label="Cover Image"
+                  type="file"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  fullWidth
+                  sx={formStyles}
+                  onChange={handleCoverImageChange}
+                />
+                <Button
+                  variant="outlined"
+                  sx={buttonStyles}
+                  onClick={handleCoverImageUpload}
+                >
+                  Upload Cover Image
+                </Button>
               </>
             )}
             {tabIndex === 1 && (
@@ -247,52 +297,7 @@ export default function MusicEntryClerkCatalog() {
                 <TextField name="lyrics" label="Lyrics" variant="outlined" fullWidth sx={formStyles} value={catalogData.lyrics} onChange={handleInputChange} />
               </>
             )}
-            {tabIndex === 2 && (
-              <>
-                <TextField name="dateAccessioned" label="Date Accessioned" variant="outlined" fullWidth sx={formStyles} value={catalogData.dateAccessioned} onChange={handleInputChange} />
-                <TextField name="dateAvailable" label="Date Available" variant="outlined" fullWidth sx={formStyles} value={catalogData.dateAvailable} onChange={handleInputChange} />
-                <TextField name="dateIssued" label="Date Issued" variant="outlined" fullWidth sx={formStyles} value={catalogData.dateIssued} onChange={handleInputChange} />
-                <TextField name="dateOfBirth" label="Date of Birth" variant="outlined" fullWidth sx={formStyles} value={catalogData.dateOfBirth} onChange={handleInputChange} />
-                <TextField name="dateOfCreation" label="Date of Creation" variant="outlined" fullWidth sx={formStyles} value={catalogData.dateOfCreation} onChange={handleInputChange} />
-                <TextField name="dateOfRecording" label="Date of Recording (medium)" variant="outlined" fullWidth sx={formStyles} value={catalogData.dateOfRecording} onChange={handleInputChange} />
-                <TextField name="lastModified" label="Last Modified" variant="outlined" fullWidth sx={formStyles} value={catalogData.lastModified} onChange={handleInputChange} />
-                <TextField name="yearDateOfComposition" label="Year/Date of Composition" variant="outlined" fullWidth sx={formStyles} value={catalogData.yearDateOfComposition} onChange={handleInputChange} />
-              </>
-            )}
-            {tabIndex === 3 && (
-              <>
-                <TextField name="publisher" label="Publisher" variant="outlined" fullWidth sx={formStyles} value={catalogData.publisher} onChange={handleInputChange} />
-                <TextField name="rights" label="Rights" variant="outlined" fullWidth sx={formStyles} value={catalogData.rights} onChange={handleInputChange} />
-              </>
-            )}
-            {tabIndex === 4 && (
-              <>
-                <TextField name="description" label="Description" variant="outlined" fullWidth multiline rows={4} sx={formStyles} value={catalogData.description} onChange={handleInputChange} />
-                <TextField name="historicalContext" label="Historical Context" variant="outlined" fullWidth multiline rows={4} sx={formStyles} value={catalogData.historicalContext} onChange={handleInputChange} />
-                <TextField name="miscNotes" label="Misc. Notes" variant="outlined" fullWidth sx={formStyles} value={catalogData.miscNotes} onChange={handleInputChange} />
-                <TextField name="methodOfImplementation" label="Method of Implementation" variant="outlined" fullWidth sx={formStyles} value={catalogData.methodOfImplementation} onChange={handleInputChange} />
-              </>
-            )}
-            {tabIndex === 5 && (
-              <>
-                <TextField name="occasionOfPerforming" label="Occasion of Performing" variant="outlined" fullWidth sx={formStyles} value={catalogData.occasionOfPerforming} onChange={handleInputChange} />
-                <TextField name="performingSkills" label="Performing Skills" variant="outlined" fullWidth sx={formStyles} value={catalogData.performingSkills} onChange={handleInputChange} />
-                <TextField name="stagePerformance" label="Stage Performance" variant="outlined" fullWidth sx={formStyles} value={catalogData.stagePerformance} onChange={handleInputChange} />
-              </>
-            )}
-            {tabIndex === 6 && (
-              <>
-                <TextField name="placeOfBirth" label="Place of Birth" variant="outlined" fullWidth sx={formStyles} value={catalogData.placeOfBirth} onChange={handleInputChange} />
-                <TextField name="placeOfOrigin" label="Place of Origin" variant="outlined" fullWidth sx={formStyles} value={catalogData.placeOfOrigin} onChange={handleInputChange} />
-                <TextField name="placeOfProsper" label="Place of Prosper" variant="outlined" fullWidth sx={formStyles} value={catalogData.placeOfProsper} onChange={handleInputChange} />
-                <TextField name="placeOfResidence" label="Place of Residence" variant="outlined" fullWidth sx={formStyles} value={catalogData.placeOfResidence} onChange={handleInputChange} />
-              </>
-            )}
-            {tabIndex === 7 && (
-              <>
-                <TextField name="relatedWork" label="Related Work" variant="outlined" fullWidth sx={formStyles} value={catalogData.relatedWork} onChange={handleInputChange} />
-              </>
-            )}
+            {/* Add more tabs as needed */}
             <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
               <Button
                 variant="outlined"
