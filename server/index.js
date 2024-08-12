@@ -6,17 +6,20 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
+const { MongoClient, ObjectId } = require('mongodb');
 
 const UserModel = require("./models/User");
 const MusicScoreModel = require("./models/MusicScore");
-const DeletedUserModel = require('./models/DeletedUser');
+const DeletedUserModel = require("./models/DeletedUser");
 
 const app = express();
 app.use(express.json());
-app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 const store = new MongoDBStore({
   uri: process.env.DB_URI,
@@ -218,7 +221,7 @@ app.post("/login", async (req, res) => {
               .json({ message: "Session save error", error: err });
           }
           console.log("Session set successfully:", req.session.userId);
-          res.json({ message: "Success", userId: user._id, role: user.role});
+          res.json({ message: "Success", userId: user._id, role: user.role, first_timer: user.first_timer});
         });
       } else {
         res.status(400).json({ message: "The password is incorrect" });
@@ -228,6 +231,51 @@ app.post("/login", async (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err });
+  }
+});
+
+
+app.post('/preferences', async (req, res) => {
+  const { composer_preferences, genre_preferences, emotion_preferences } = req.body;
+  const userId = req.session.userId;
+  let client;
+  const dbName = "mozartify";
+  const collectionName = "users";
+
+  if (!ObjectId.isValid(userId)) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+
+  try {
+    client = new MongoClient(process.env.DB_URI);
+    await client.connect();
+    const db = client.db(dbName);
+    const collection = db.collection(collectionName);
+
+    const updateResult = await collection.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          composer_preferences,
+          genre_preferences,
+          emotion_preferences,
+          first_timer: false
+        }
+      }
+    );
+
+    if (updateResult.modifiedCount === 0) {
+      return res.status(404).json({ error: 'User not found or preferences not updated' });
+    }
+
+    res.status(200).json({ message: 'Preferences updated successfully' });
+  } catch (err) {
+    console.error(`Error: ${err}`);
+    res.status(500).json({ error: 'Failed to update preferences' });
+  } finally {
+    if (client) {
+      await client.close();
+    }
   }
 });
 
@@ -284,7 +332,7 @@ app.post("/reset-password", async (req, res) => {
 
 app.delete("/user/delete", async (req, res) => {
   const userId = req.session.userId;
-  
+
   try {
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -316,19 +364,23 @@ app.delete("/user/delete", async (req, res) => {
   }
 });
 
-app.get("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ message: "Could not log out", error: err });
-    }
-    res.json({ message: "Logged out successfully" });
-    console.log("babyyy");
-  });
+app.get("/clearSession", (req, res) => {
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Failed to clear session", error: err });
+      }
+      res.json({ message: "Session Cleared" });
+    });
+  } else {
+    res.json({ message: "No active session to clear" });
+  }
 });
+
 
 app.put("/user/update", async (req, res) => {
   const { username, password } = req.body;
-  
+
   try {
     const userId = req.session.userId;
     if (!userId) {
@@ -367,7 +419,7 @@ app.get("/current-user", isAuthenticated, (req, res) => {
 
 app.delete("/user/delete", async (req, res) => {
   const userId = req.session.userId;
-  
+
   try {
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });

@@ -12,13 +12,13 @@ import {
 } from "@mui/material";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
-import UMLogo from "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/src/assets/UMLogo.png";
-import slide1 from "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/src/assets/slide1.png";
-import slide2 from "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/src/assets/slide2.png";
-import slide3 from "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/src/assets/slide3.png";
-import slide4 from "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/src/assets/slide4.png";
-import features from "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/src/assets/features.png";
-import searchmusic from "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/src/assets/searchmusic.png";
+import UMLogo from "./assets/UMLogo.png";
+import slide1 from "./assets/slide1.png";
+import slide2 from "./assets/slide2.png";
+import slide3 from "./assets/slide3.png";
+import slide4 from "./assets/slide4.png";
+import features from "./assets/features.png";
+import searchmusic from "./assets/searchmusic.png";
 
 const GlobalStyle = createGlobalStyle`
   body {

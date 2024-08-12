@@ -10,6 +10,8 @@ import {
   ListItemText
 } from '@mui/material';
 
+axios.defaults.withCredentials = true;
+
 export default function CustomerMusicScoreView(){
   const { id } = useParams();
   const [musicScore, setMusicScore] = useState(null);

@@ -11,7 +11,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./ClerkSidebar"; // Adjust the path as needed
-import { storage } from "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/server/config/firebaseConfig";
+import { storage } from "./firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"; // Import Firebase storage methods
 
 const GlobalStyle = createGlobalStyle`

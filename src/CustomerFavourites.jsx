@@ -37,6 +37,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 
+axios.defaults.withCredentials = true;
+
 const options = {
   keys: [
     "ms_title",

@@ -14,8 +14,6 @@ import { styled } from "@mui/system";
 import { createGlobalStyle } from "styled-components";
 import Visibility from "@mui/icons-material/VisibilityOff";
 import VisibilityOff from "@mui/icons-material/Visibility";
-import Image from "./assets/mozartify.png";
-import Image2 from "./assets/handmusic.png";
 import backgroundImage from "./assets/loginWP.png";
 
 const FormContainer = styled(Box)(({ theme }) => ({
@@ -83,19 +81,39 @@ export default function Login() {
 
   const navigate = useNavigate();
 
+  
+  useEffect(() => {
+    axios
+      .get("http://localhost:3000/clearSession")
+      .then((response) => {
+        console.log(response.data.message);
+      })
+      .catch((error) => {
+        console.error("Error clearing session:", error);
+      });
+
+    window.history.pushState(null, null, window.location.href);
+    window.onpopstate = function () {
+      window.history.go(1);
+    };
+  }, []);
+
+  
+
   const handleLogin = (e) => {
     e.preventDefault();
     axios
       .post("http://localhost:3000/login", { username_or_email, password })
       .then((result) => {
         if (result.data.message === "Success") {
-    
-            if(result.data.role === "customer"){
-              navigate("/customer-homepage");
-            }
-            if(result.data.role === "music_entry_clerk"){
-              navigate("/clerk-homepage");
-            }
+
+          if (result.data.first_timer === true) {
+            navigate("/first-time-login");
+          } else if (result.data.role === "customer") {
+            navigate("/customer-homepage");
+          } else if (result.data.role === "music_entry_clerk") {
+            navigate("/clerk-homepage");
+          }
          
         } else {
           setErrorMessage("Invalid username/email or password");
@@ -110,13 +128,6 @@ export default function Login() {
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
-
-  useEffect(() => {
-    window.history.pushState(null, null, window.location.href);
-    window.onpopstate = function () {
-      window.history.go(1);
-    };
-  }, []);
 
   return (
     <>

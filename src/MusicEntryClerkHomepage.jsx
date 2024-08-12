@@ -8,8 +8,7 @@ import {
 import HomeIcon from "@mui/icons-material/Home";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import ExitToApp from "@mui/icons-material/ExitToApp";
-import { Link, useNavigate } from "react-router-dom";
+import {useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./ClerkSidebar"; // Make sure to adjust the path as needed
 
@@ -41,41 +40,6 @@ export default function MusicEntryClerkHomepage() {
 
     fetchCurrentUser();
   }, [navigate]);
-
-  const handleLogout = async () => { //2
-    try {
-      await axios.get("http://localhost:3000/logout");
-      setCurrentUser(null);
-      if ('caches' in window) {
-        caches.keys().then((names) => {
-          names.forEach((name) => {
-            caches.delete(name);
-          });
-        });
-      }
-
-      window.history.pushState(null, null, window.location.href);
-      window.history.pushState(null, null, window.location.href);
-      window.history.go(-2);
-
-      window.onpopstate = function () {
-        window.history.go(1);
-      };
-
-      navigate("/login", { replace: true });
-    } catch (error) {
-      console.error("Error during logout:", error);
-      alert("An error occurred during logout. Please try again.");
-    }
-  };
-
-  const username = "Clerk Name";
-
-  const navigationItems = [
-    { path: "/clerk-homepage", label: "My Dashboard", icon: <HomeIcon /> },
-    { path: "/clerk-upload", label: "Upload", icon: <CloudUploadIcon /> },
-    { path: "/clerk-profile", label: "User Profile", icon: <AccountCircleIcon /> },
-  ];
 
   return (
     <>

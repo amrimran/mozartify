@@ -35,6 +35,7 @@ import SidebarMozartifyLogo from "./assets/mozartify.png";
 import { styled } from "@mui/material/styles";
 import axios from "axios";
 import ScrollableCell from "./ScrollableCell";
+
 axios.defaults.withCredentials = true;
 
 const CustomAddIcon = styled(AddIcon)(({ theme }) => ({

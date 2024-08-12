@@ -1,24 +1,26 @@
+require("dotenv").config();
 const { MongoClient } = require("mongodb");
 
-const uri = "mongodb://localhost:27017";
+const uri = process.env.DB_URI;
 const dbName = "mozartify";
-const collectionName = "musicscores";
+const collectionName = "users";
 
-async function addField() {
+async function addFields() {
   let client;
 
   try {
-    client = new MongoClient(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    client = new MongoClient(uri);
     await client.connect();
     const db = client.db(dbName);
     const collection = db.collection(collectionName);
 
     const updateResult = await collection.updateMany(
       {},
-      { $set: { ms_cover_image: "" } }
+      {
+        $set: {
+          first_timer: false,
+        }
+      }
     );
 
     console.log(`Documents updated: ${updateResult.modifiedCount}`);
@@ -31,4 +33,5 @@ async function addField() {
   }
 }
 
-addField();
+addFields();
+

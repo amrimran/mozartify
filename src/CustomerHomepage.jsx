@@ -48,7 +48,7 @@ import {
 } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
-import SidebarMozartifyLogo from "./assets/mozartify.png";
+import CustomerSidebar from "./CustomerSidebar";
 
 axios.defaults.withCredentials = true;
 
@@ -137,7 +137,7 @@ export default function CustomerHomepage() {
     const fetchImagePaths = async () => {
       const updatedMusicScores = await Promise.all(
         musicScores.map(async (score) => {
-          const imageUrl = await fetchImagePath(score.ms_cover_image);
+          const imageUrl = await fetchImage(score.ms_cover_image);
           return { ...score, imageUrl };
         })
       );
@@ -149,7 +149,7 @@ export default function CustomerHomepage() {
     }
   }, [musicScores]);
 
-  const fetchImagePath = async (imagePath) => {
+  const fetchImage = async (imagePath) => {
     try {
       const storageRef = ref(storage, imagePath);
       const url = await getDownloadURL(storageRef);
@@ -165,20 +165,19 @@ export default function CustomerHomepage() {
       const notOwnedScores = musicScores.filter(
         (score) => !score.ownerIds.includes(currentUser._id)
       );
-  
+
       const ownedScores = musicScores.filter((score) =>
         score.ownerIds.includes(currentUser._id)
       );
       const userGenres = new Set(ownedScores.map((score) => score.ms_genre));
-  
+
       const recommendedScores = notOwnedScores.filter((score) =>
         userGenres.has(score.ms_genre)
       );
-  
+
       setForYouScores(recommendedScores);
     }
   }, [musicScores, currentUser]);
-  
 
   const NextArrow = (props) => {
     const { onClick } = props;
@@ -214,35 +213,6 @@ export default function CustomerHomepage() {
         <ArrowBack />
       </IconButton>
     );
-  };
-
-  const handleLogout = async () => {
-    try {
-      await axios.get("http://localhost:3000/logout");
-      setCurrentUser(null);
-      // Clear the browser's cache
-      if ('caches' in window) {
-        caches.keys().then((names) => {
-          names.forEach((name) => {
-            caches.delete(name);
-          });
-        });
-      }
-
-      // Manipulate browser history to prevent going back
-      window.history.pushState(null, null, window.location.href);
-      window.history.pushState(null, null, window.location.href);
-      window.history.go(-2);
-
-      window.onpopstate = function () {
-        window.history.go(1);
-      };
-
-      navigate("/login", { replace: true }); // Redirect to login page after logout
-    } catch (error) {
-      console.error("Error during logout:", error);
-      alert("An error occurred during logout. Please try again.");
-    }
   };
 
   const settings = {
@@ -314,19 +284,6 @@ export default function CustomerHomepage() {
     indexOfLastScore
   );
 
-  const navigationItems = [
-    { path: "/customer-homepage", label: "My Dashboard", icon: <Home /> },
-    { path: "/customer-library", label: "Libraries", icon: <LibraryBooks /> },
-    { path: "/customer-favourites", label: "Favourites", icon: <Favorite /> },
-    { path: "/customer-mycart", label: "My Cart", icon: <ShoppingCart /> },
-    { path: "/customer-inbox", label: "Inbox", icon: <Feedback /> },
-    {
-      path: "/customer-profile",
-      label: "User Profile",
-      icon: <AccountCircle />,
-    },
-  ];
-
   const GlobalStyle = createGlobalStyle`
     body {
       margin: 0;
@@ -339,54 +296,17 @@ export default function CustomerHomepage() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh" }}>
-        <Box sx={{ width: 225, bgcolor: "#E4DCC8", p: 2, flexShrink: 0 }}>
-          <Box
-            sx={{
-              textAlign: "center",
-              mb: 4,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              pt: 5,
-            }}
-          >
-            <img
-              src={SidebarMozartifyLogo}
-              alt="MozartifyIcon"
-              style={{ maxWidth: "100%", maxHeight: "48px" }}
-            />
-            <Typography variant="h6" sx={{ mt: 2, fontFamily: "Montserrat" }}>
-              Mozartify
-            </Typography>
-          </Box>
-          <List>
-            {navigationItems.map((item) => (
-              <Link
-                to={item.path}
-                style={{ textDecoration: "none" }}
-                key={item.path}
-              >
-                <ListItemButton>
-                  <ListItemIcon>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.label} />
-                </ListItemButton>
-              </Link>
-            ))}
-            <ListItemButton onClick={handleLogout}>
-              <ListItemIcon>
-                <ExitToApp />
-              </ListItemIcon>
-              <ListItemText primary="Logout" />
-            </ListItemButton>
-          </List>
+        <Box sx={{ display: "flex", height: "100vh" }}>
+          <CustomerSidebar />
         </Box>
+
         <Box
           sx={{
             flexGrow: 1,
-            display: "flex",
-            flexDirection: "column",
+            // display: "flex",
+            // flexDirection: "column",
             overflow: "hidden",
-            padding: 5,
+            padding: 3,
           }}
         >
           <Box

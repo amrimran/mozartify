@@ -1,4 +1,5 @@
 import React from "react";
+import axios from "axios";
 import {
   Box,
   List,
@@ -19,6 +20,8 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import { Link } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
+
+axios.defaults.withCredentials = true;
 
 export default function CustomerMyCart() {
   const username = "Nifail Amsyar";

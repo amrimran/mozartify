@@ -19,6 +19,7 @@ import MusicEntryClerkCatalog from "./MusicEntryClerkCatalog";
 import CustomerInbox from "./CustomerInbox";
 import MusicEntryClerkEdit from "./MusicEntryClerkEdit";
 import MusicEntryClerkProfile from "./MusicEntryClerkProfile";
+import FirstTimeLogin from './FirstTimeLogin';
 import TestSession from "./TestSession";
 
 
@@ -29,6 +30,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/first-time-login" element={<FirstTimeLogin />} />
         <Route path="/home" element={<Home />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
