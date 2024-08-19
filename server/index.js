@@ -6,7 +6,9 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
-const { MongoClient, ObjectId } = require('mongodb');
+const { MongoClient, ObjectId } = require("mongodb");
+const { PythonShell } = require("python-shell");
+const path = require("path");
 
 const UserModel = require("./models/User");
 const MusicScoreModel = require("./models/MusicScore");
@@ -221,7 +223,12 @@ app.post("/login", async (req, res) => {
               .json({ message: "Session save error", error: err });
           }
           console.log("Session set successfully:", req.session.userId);
-          res.json({ message: "Success", userId: user._id, role: user.role, first_timer: user.first_timer});
+          res.json({
+            message: "Success",
+            userId: user._id,
+            role: user.role,
+            first_timer: user.first_timer,
+          });
         });
       } else {
         res.status(400).json({ message: "The password is incorrect" });
@@ -234,16 +241,16 @@ app.post("/login", async (req, res) => {
   }
 });
 
-
-app.post('/preferences', async (req, res) => {
-  const { composer_preferences, genre_preferences, emotion_preferences } = req.body;
+app.post("/preferences", async (req, res) => {
+  const { composer_preferences, genre_preferences, emotion_preferences } =
+    req.body;
   const userId = req.session.userId;
   let client;
   const dbName = "mozartify";
   const collectionName = "users";
 
   if (!ObjectId.isValid(userId)) {
-    return res.status(400).json({ error: 'Invalid user ID' });
+    return res.status(400).json({ error: "Invalid user ID" });
   }
 
   try {
@@ -259,19 +266,21 @@ app.post('/preferences', async (req, res) => {
           composer_preferences,
           genre_preferences,
           emotion_preferences,
-          first_timer: false
-        }
+          first_timer: false,
+        },
       }
     );
 
     if (updateResult.modifiedCount === 0) {
-      return res.status(404).json({ error: 'User not found or preferences not updated' });
+      return res
+        .status(404)
+        .json({ error: "User not found or preferences not updated" });
     }
 
-    res.status(200).json({ message: 'Preferences updated successfully' });
+    res.status(200).json({ message: "Preferences updated successfully" });
   } catch (err) {
     console.error(`Error: ${err}`);
-    res.status(500).json({ error: 'Failed to update preferences' });
+    res.status(500).json({ error: "Failed to update preferences" });
   } finally {
     if (client) {
       await client.close();
@@ -368,7 +377,9 @@ app.get("/clearSession", (req, res) => {
   if (req.session) {
     req.session.destroy((err) => {
       if (err) {
-        return res.status(500).json({ message: "Failed to clear session", error: err });
+        return res
+          .status(500)
+          .json({ message: "Failed to clear session", error: err });
       }
       res.json({ message: "Session Cleared" });
     });
@@ -376,7 +387,6 @@ app.get("/clearSession", (req, res) => {
     res.json({ message: "No active session to clear" });
   }
 });
-
 
 app.put("/user/update", async (req, res) => {
   const { username, password } = req.body;
@@ -465,6 +475,18 @@ app.get("/music-scores", async (req, res) => {
   }
 });
 
+app.get("/popular-music-scores", async (req, res) => {
+  try {
+    const popularScores = await MusicScoreModel.find()
+      .sort({ view_count: -1 })
+      .limit(10);
+
+    res.json(popularScores);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
+});
+
 app.post("/favourites", async (req, res) => {
   const { userId, musicScoreId } = req.body;
 
@@ -515,6 +537,59 @@ app.get("/api/image-path", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
+let cachedRecommendations = {};
+
+app.get("/recommendations", async (req, res) => {
+  try {
+    const sessionId = req.sessionID; // Use session ID instead of user ID
+    console.log("Session ID:", sessionId);
+
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "User not logged in" });
+    }
+
+    // Check if recommendations for this session are already cached
+    if (cachedRecommendations[sessionId]) {
+      return res.json(cachedRecommendations[sessionId]);
+    }
+
+    const user = await UserModel.findById(req.session.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const { genre_preferences, composer_preferences, emotion_preferences } = user;
+
+    // Fetch music scores based on user's preferences
+    let allScores = await MusicScoreModel.find({
+      $or: [
+        { ms_genre: { $in: genre_preferences } },
+        { ms_composer: { $in: composer_preferences } },
+        { ms_emotion: { $in: emotion_preferences } },
+      ],
+    });
+
+    // Randomly pick up to 10 music scores from the matched results
+    const limit = Math.min(allScores.length, 10);
+    let recommendedScores = [];
+
+    for (let i = 0; i < limit; i++) {
+      const randomIndex = Math.floor(Math.random() * allScores.length);
+      recommendedScores.push(allScores[randomIndex]);
+      allScores.splice(randomIndex, 1);
+    }
+
+    // Cache the recommendations for this session
+    cachedRecommendations[sessionId] = recommendedScores;
+
+    res.json(recommendedScores);
+  } catch (error) {
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");

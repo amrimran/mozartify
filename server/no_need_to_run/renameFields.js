@@ -37,6 +37,7 @@ async function renameFields() {
           "mss_date_uploaded": "ms_date_uploaded",
           "mss_price": "ms_price",
           "mss_audio": "ms_audio"
+          
         }
       }
     );

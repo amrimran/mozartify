@@ -301,8 +301,8 @@ export default function Landing() {
             borderColor: "#ffffff",
             "&:hover": {
               fontWeight: "bold",
-              backgroundColor: "transparent",
-              color: "#DB2226",
+              backgroundColor: "#DB2226",
+              color: "#FFFFFF",
               borderColor: "#DB2226",
               boxShadow: "none", /* Remove any box shadow on hover */
             },

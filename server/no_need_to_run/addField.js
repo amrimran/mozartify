@@ -3,7 +3,7 @@ const { MongoClient } = require("mongodb");
 
 const uri = process.env.DB_URI;
 const dbName = "mozartify";
-const collectionName = "users";
+const collectionName = "musicscores"; // Use the musicscores collection
 
 async function addFields() {
   let client;
@@ -16,11 +16,13 @@ async function addFields() {
 
     const updateResult = await collection.updateMany(
       {},
-      {
-        $set: {
-          first_timer: false,
+      [
+        {
+          $set: {
+            view_count: { $toInt: { $floor: { $multiply: [{ $rand: {} }, 500] } } }
+          }
         }
-      }
+      ]
     );
 
     console.log(`Documents updated: ${updateResult.modifiedCount}`);
@@ -34,4 +36,5 @@ async function addFields() {
 }
 
 addFields();
+
 

@@ -14,6 +14,10 @@ const MusicScoreSchema = new mongoose.Schema({
     required: true,
   },
   ms_composer: {
+    type: String, 
+    required: true,
+  },
+  ms_emotion: {
     type: String,
     required: true,
   },
@@ -63,8 +67,9 @@ const MusicScoreSchema = new mongoose.Schema({
   },
   ms_cover_image: {
     type: String,
-    required: false
+    required: false,
   },
+  
   ownerIds: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

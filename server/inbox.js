@@ -47,9 +47,7 @@ mongoose.connect(process.env.DB_URI);
 
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
-db.once("open", () => {
-  console.log("Connected to MongoDB");
-});
+db.once("open", () => {});
 
 app.post("/api/feedback", upload.none(), async (req, res) => {
   const { username, title, detail, user_id } = req.body;
@@ -70,7 +68,6 @@ app.post("/api/feedback", upload.none(), async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
-
 
 app.get("/api/feedback", async (req, res) => {
   const { userId } = req.query;

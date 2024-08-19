@@ -27,7 +27,7 @@ const FormContainer = styled(Box)(({ theme }) => ({
   padding: theme.spacing(4,10),
   width: "50%",
   maxWidth: "400px", // Made the form smaller
-  height: "450px", // Allow height to adjust based on content
+  height: "600px", // Allow height to adjust based on content
   display: "flex",
   flexDirection: "column",
   justifyContent: "center",
