@@ -10,10 +10,18 @@ const ABCFileModel = require('./models/ABCFile'); // Import the ABCFile model
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+
+// Configure CORS with specific origin and credentials
+app.use(cors({
+  origin: 'http://localhost:5173', // Replace with your frontend origin
+  credentials: true,               // Allow credentials (cookies, authorization headers, etc.)
+}));
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-mongoose.connect(process.env.DB_URI);
+mongoose.connect(process.env.DB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -159,6 +167,16 @@ app.post('/upload', upload.single('file'), (req, res) => {
   });
 });
 
+// New endpoint to get all ABC files
+app.get('/abc-files', async (req, res) => {
+  try {
+    const abcFiles = await ABCFileModel.find({});
+    res.status(200).json(abcFiles);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching files', error: err.message });
+  }
+});
+
 app.get('/abc-file/:filename', async (req, res) => {
   try {
     const abcFile = await ABCFileModel.findOne({ filename: req.params.filename });
@@ -271,6 +289,7 @@ app.post('/catalog', async (req, res) => {
       westernParallel,
       workTitle,
       yearDateOfComposition,
+      coverImageUrl,
     } = req.body;
 
     const abcFile = await ABCFileModel.findOneAndUpdate(
@@ -355,6 +374,7 @@ app.post('/catalog', async (req, res) => {
         westernParallel,
         workTitle,
         yearDateOfComposition,
+        coverImageUrl,
       },
       { new: true }
     );

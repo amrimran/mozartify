@@ -1,87 +1,61 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
   Box,
-  Avatar,
   Typography,
+  Card,
+  CardContent,
+  CardMedia,
+  Grid,
 } from "@mui/material";
-import HomeIcon from "@mui/icons-material/Home";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import {useNavigate } from "react-router-dom";
-import { createGlobalStyle } from "styled-components";
-import ClerkSidebar from "./ClerkSidebar"; // Make sure to adjust the path as needed
-
-axios.defaults.withCredentials = true; //tambah ni 1
-
-const GlobalStyle = createGlobalStyle`
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Montserrat', sans-serif;
-  }
-`;
 
 export default function MusicEntryClerkHomepage() {
-
-  const [currentUser, setCurrentUser] = useState(null);
-  const navigate = useNavigate();
+  const [musicScores, setMusicScores] = useState([]);
 
   useEffect(() => {
-    const fetchCurrentUser = async () => {
+    const fetchMusicScores = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
-        setCurrentUser(response.data);
+        const response = await axios.get("http://localhost:3001/abc-files");
+        setMusicScores(response.data);
       } catch (error) {
-        console.error("Error fetching current user:", error);
-        navigate("/login");
+        console.error("Error fetching music scores:", error);
       }
     };
 
-    fetchCurrentUser();
-  }, [navigate]);
+    fetchMusicScores();
+  }, []);
 
   return (
-    <>
-      <GlobalStyle />
-      <Box sx={{ display: "flex", height: "100vh" }}>
-        <ClerkSidebar />
-        <Box sx={{ flexGrow: 1, p: 3 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-            }}
-          >
-            <Typography variant="h6">Welcome to Mozartify</Typography>
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              {currentUser ? (
-                <>
-                  <Typography variant="body1" sx={{ mr: 2 }}>
-                    {currentUser.username}
+    <Box sx={{ padding: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        Music Scores
+      </Typography>
+      <Grid container spacing={2}>
+        {musicScores.length > 0 ? (
+          musicScores.map((score) => (
+            <Grid item xs={12} sm={6} md={4} key={score._id}>
+              <Card sx={{ display: "flex", flexDirection: "column" }}>
+                <CardMedia
+                  component="img"
+                  image={score.coverImageUrl || "default_image_url.jpg"}
+                  alt={score.title}
+                  sx={{ height: 200 }}
+                />
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    {score.title}
                   </Typography>
-                  <Avatar>{currentUser.username.charAt(0)}</Avatar>
-                </>
-              ) : (
-                <>
-                  <Typography variant="body1" sx={{ mr: 2 }}>
-                    Loading...
+                  <Typography variant="body2" color="textSecondary">
+                    Composer: {score.composer}
                   </Typography>
-                  <Avatar></Avatar>
-                </>
-              )}
-            </Box>
-          </Box>
-          <Box>
-            <Typography variant="h4">Dashboard</Typography>
-            <Typography variant="body1" sx={{ mt: 2 }}>
-              Welcome to your dashboard. Here you can manage your uploads, profile, and more.
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
-    </>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))
+        ) : (
+          <Typography variant="body2">No scores found</Typography>
+        )}
+      </Grid>
+    </Box>
   );
 }
