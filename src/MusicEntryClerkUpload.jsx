@@ -1,16 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios"; // Import axios
 import {
   Box,
   Avatar,
   Typography,
   Button,
-  CircularProgress,
   LinearProgress,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
-import ClerkSidebar from "./ClerkSidebar"; // Make sure to adjust the path as needed
-import ImportIcon from "./assets/import-icon.png"; // Ensure this import is correct
+import ClerkSidebar from "./ClerkSidebar";
+import ImportIcon from "./assets/import-icon.png";
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -33,11 +33,25 @@ const buttonStyles = {
 };
 
 export default function MusicEntryClerkUpload() {
-  const username = "Nifail Amsyar";
+  const [user, setUser] = useState(null); // State to store user data
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/current-user");
+        setUser(response.data); // Assuming the response contains user data with a `username` field
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+        navigate("/login"); // Redirect to login if there's an error
+      }
+    };
+
+    fetchUser(); // Call the fetchUser function when the component mounts
+  }, [navigate]);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -95,12 +109,14 @@ export default function MusicEntryClerkUpload() {
               mb: 3,
             }}
           >
-            <Typography variant="h6">Music Entry Clerk</Typography>
+            <Typography variant="h4" gutterBottom sx={{ fontFamily: 'Montserrat', fontWeight: 'bold', mt: 4, ml:1 }}>
+            Digitize Music Scores
+          </Typography>
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="body1" sx={{ mr: 2 }}>
-                {username}
+              <Typography variant="body1" sx={{ mr: 2, fontFamily: 'Montserrat' }}>
+                {user ? user.username : "Loading..."}
               </Typography>
-              <Avatar>{username[0]}</Avatar>
+              <Avatar>{user ? user.username[0] : "?"}</Avatar>
             </Box>
           </Box>
           <Box
@@ -109,6 +125,7 @@ export default function MusicEntryClerkUpload() {
               justifyContent: "center",
               alignItems: "center",
               height: "calc(100% - 64px)",
+              mt: -5
             }}
           >
             <Box

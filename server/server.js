@@ -44,6 +44,7 @@ const upload = multer({
   }
 });
 
+// Upload endpoint
 app.post('/upload', upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
@@ -167,8 +168,8 @@ app.post('/upload', upload.single('file'), (req, res) => {
   });
 });
 
-// New endpoint to get all ABC files
-app.get('/abc-files', async (req, res) => {
+// New endpoint to get all ABC files (dashboard)
+app.get('/abc-file', async (req, res) => {
   try {
     const abcFiles = await ABCFileModel.find({});
     res.status(200).json(abcFiles);
@@ -177,35 +178,59 @@ app.get('/abc-files', async (req, res) => {
   }
 });
 
-app.get('/abc-file/:filename', async (req, res) => {
+// Combined Endpoint to fetch a single ABC file by filename or _id (clerkmusicscoreview & preview)
+app.get('/abc-file/:identifier', async (req, res) => {
   try {
-    const abcFile = await ABCFileModel.findOne({ filename: req.params.filename });
+    const { identifier } = req.params;
+
+    let abcFile;
+    if (mongoose.Types.ObjectId.isValid(identifier)) {
+      // Query by _id if the identifier is a valid ObjectId
+      abcFile = await ABCFileModel.findById(identifier);
+    } else {
+      // Otherwise, query by filename
+      abcFile = await ABCFileModel.findOne({ filename: identifier });
+    }
+
     if (!abcFile) {
       return res.status(404).json({ message: 'File not found' });
     }
-    res.status(200).json({ content: abcFile.content });
+
+    res.status(200).json(abcFile);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching file', error: err.message });
   }
 });
 
-app.put('/abc-file/:filename', async (req, res) => {
+// New endpoint to update ABC content by filename (edit)
+app.put('/abc-file/:filename/content', async (req, res) => {
   try {
-    const { title, composer, genre, artist, instrumentation } = req.body;
+    const { filename } = req.params;
+    const { content } = req.body;
+
+    console.log(`Attempting to update ABC content for filename: ${filename}`);
+
     const abcFile = await ABCFileModel.findOneAndUpdate(
-      { filename: req.params.filename },
-      { title, composer, genre, artist, instrumentation },
+      { filename },
+      { content },
       { new: true }
     );
+
     if (!abcFile) {
+      console.error(`File not found: ${filename}`);
       return res.status(404).json({ message: 'File not found' });
     }
-    res.status(200).json({ message: 'File updated successfully' });
+
+    console.log('ABC content updated successfully:', abcFile);
+
+    res.status(200).json({ message: 'ABC content updated successfully', abcFile });
   } catch (err) {
-    res.status(500).json({ message: 'Error updating file', error: err.message });
+    console.error('Error updating ABC content:', err);
+    res.status(500).json({ message: 'Error updating ABC content', error: err.message });
   }
 });
 
+// Endpoint to save catalog metadata (catalog)
 app.post('/catalog', async (req, res) => {
   try {
     const {

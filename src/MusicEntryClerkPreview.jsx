@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./ClerkSidebar";
 import ABCJS from "abcjs";
+import axios from "axios";
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -16,9 +17,26 @@ const GlobalStyle = createGlobalStyle`
 export default function MusicEntryClerkPreview() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { fileName, username } = location.state || {};
+  const { fileName } = location.state || {};
   const [abcContent, setAbcContent] = useState('');
+  const [user, setUser] = useState(null);
 
+  // Fetch current user data
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/current-user");
+        setUser(response.data);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+        navigate("/login");
+      }
+    };
+
+    fetchUser();
+  }, [navigate]);
+
+  // Fetch ABC file content
   useEffect(() => {
     if (fileName) {
       const fetchABCFileContent = async () => {
@@ -28,7 +46,7 @@ export default function MusicEntryClerkPreview() {
             throw new Error('Network response was not ok');
           }
           const data = await response.json();
-          console.log("Fetched ABC Content:", data.content); // Log the fetched ABC content
+          console.log("Fetched ABC Content:", data.content);
           setAbcContent(data.content);
         } catch (error) {
           console.error('Error fetching ABC file content:', error);
@@ -39,9 +57,10 @@ export default function MusicEntryClerkPreview() {
     }
   }, [fileName]);
 
+  // Render ABC content
   useEffect(() => {
     if (abcContent) {
-      console.log("Rendering ABC Content:", abcContent); // Log the abcContent before rendering
+      console.log("Rendering ABC Content:", abcContent);
       ABCJS.renderAbc("abc-render", abcContent);
     }
   }, [abcContent]);
@@ -59,7 +78,7 @@ export default function MusicEntryClerkPreview() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", minHeight: "100vh" }}>
-        <ClerkSidebar />
+        <ClerkSidebar active="upload" /> {/* Pass the active prop to make the upload tab active */}
         <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column" }}>
           <Box
             sx={{
@@ -69,14 +88,14 @@ export default function MusicEntryClerkPreview() {
               mb: 3,
             }}
           >
-            <Typography variant="h4" sx={{ fontFamily: "Montserrat" }}>
-              Music Score Preview
+            <Typography variant="h4" gutterBottom sx={{ fontFamily: 'Montserrat', fontWeight: 'bold', mt: 4, ml:1 }}>
+              Preview Music Scores
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="body1" sx={{ mr: 2 }}>
-                {username || 'User'}
+              <Typography variant="body1" sx={{ mr: 2, fontFamily: "Montserrat" }}>
+                {user ? user.username : 'Loading...'}
               </Typography>
-              <Avatar>{username ? username[0] : 'U'}</Avatar>
+              <Avatar>{user ? user.username[0] : 'U'}</Avatar>
             </Box>
           </Box>
           <Box

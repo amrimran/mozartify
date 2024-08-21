@@ -7,13 +7,13 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 
-const ClerkSidebar = () => {
+const ClerkSidebar = ({ active }) => {
   const location = useLocation();
   const navigationItems = [
-    { path: "/clerk-homepage", label: "My Dashboard", icon: <HomeIcon /> },
-    { path: "/clerk-upload", label: "Upload", icon: <CloudUploadIcon /> },
-    { path: "/clerk-profile", label: "User Profile", icon: <AccountCircleIcon /> },
-    { path: "/login", label: "Logout", icon: <ExitToAppIcon /> },
+    { path: "/clerk-homepage", label: "My Dashboard", icon: <HomeIcon />, key: "dashboard" },
+    { path: "/clerk-upload", label: "Upload", icon: <CloudUploadIcon />, key: "upload" },
+    { path: "/clerk-profile", label: "User Profile", icon: <AccountCircleIcon />, key: "profile" },
+    { path: "/login", label: "Logout", icon: <ExitToAppIcon />, key: "logout" },
   ];
 
   return (
@@ -37,10 +37,10 @@ const ClerkSidebar = () => {
             component={Link}
             to={item.path}
             sx={{
-              bgcolor: location.pathname === item.path ? "#DB2226" : "inherit",
+              bgcolor: active === item.key || location.pathname === item.path ? "#DB2226" : "inherit",
               color: "#FFFFFF",
               "&:hover": {
-                bgcolor: location.pathname === item.path ? "#DB2226" : "#4c41a3",
+                bgcolor: active === item.key || location.pathname === item.path ? "#DB2226" : "#4c41a3",
               },
               padding: 0,
             }}
