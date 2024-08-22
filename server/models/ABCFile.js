@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const ABCFileSchema = new mongoose.Schema({
+  // Identification
   filename: {
     type: String,
   },
@@ -10,19 +11,33 @@ const ABCFileSchema = new mongoose.Schema({
   title: {
     type: String,
   },
-  albums: {
-    type: String,
-  },
   alternativeTitle: {
     type: String,
   },
+  identifier: {
+    type: String,
+  },
+  permalink: {
+    type: String,
+  },
+  uri: {
+    type: String,
+  },
+  coverImageUrl: {
+    type: String,
+  },
+  element: {
+    type: String,
+  },
+  type: {
+    type: String,
+  },
+
+  // Creators
   artist: {
     type: String,
   },
-  backgroundResources: {
-    type: String,
-  },
-  callNumber: {
+  albums: {
     type: String,
   },
   composer: {
@@ -34,97 +49,59 @@ const ABCFileSchema = new mongoose.Schema({
   contributor: {
     type: String,
   },
-  copyright: {
-    type: String,
-  },
-  cosmeticsAndProp: {
-    type: String,
-  },
-  county: {
-    type: String,
-  },
   creator: {
-    type: String,
-  },
-  dateAccessioned: {
-    type: String,
-  },
-  dateAvailable: {
-    type: String,
-  },
-  dateIssued: {
-    type: String,
-  },
-  dateOfBirth: {
-    type: String,
-  },
-  dateOfCreation: {
-    type: String,
-  },
-  dateOfRecording: {
-    type: String,
-  },
-  description: {
-    type: String,
-  },
-  digitalCollection: {
-    type: String,
-  },
-  edition: {
     type: String,
   },
   editor: {
     type: String,
   },
-  ethnicGroup: {
+  librettist: {
     type: String,
   },
-  firstPublication: {
+  recordingPerson: {
     type: String,
   },
-  format: {
-    type: String,
+
+  // Dates
+  dateAccessioned: {
+    type: Date,
   },
-  gamutScale: {
+  dateAvailable: {
+    type: Date,
+  },
+  dateIssued: {
+    type: Date,
+  },
+  dateOfBirth: {
+    type: Date,
+  },
+  dateOfComposition: {
+    type: Date,
+  },
+  dateOfCreation: {
+    type: Date,
+  },
+  dateOfRecording: {
+    type: Date,
+  },
+  lastModified: {
+    type: Date,
+  },
+
+  // Content
+  description: {
     type: String,
   },
   genre: {
     type: String,
   },
+  subject: {
+    type: String,
+  },
   historicalContext: {
     type: String,
   },
-  identifier: {
-    type: String,
-  },
-  instrumentation: {
-    type: String,
-  },
-  intention: {
-    type: String,
-  },
-  key: {
-    type: String,
-  },
-  language: {
-    type: String,
-  },
-  lastModified: {
-    type: String,
-  },
-  length: {
-    type: String,
-  },
-  librettist: {
-    type: String,
-  },
-  lyrics: {
-    type: String,
-  },
-  melodicClassification: {
-    type: String,
-  },
-  melodyDescriptions: {
+  backgroundResources: {
     type: String,
   },
   methodOfImplementation: {
@@ -133,91 +110,108 @@ const ABCFileSchema = new mongoose.Schema({
   miscNotes: {
     type: String,
   },
-  movementsSections: {
+  melodicClassification: {
+    type: String,
+  },
+  melodyDescriptions: {
+    type: String,
+  },
+  lyrics: { // Added missing field
+    type: String,
+  },
+  movementsSections: { // Added missing field
+    type: String,
+  },
+
+  // Format
+  format: {
+    type: String,
+  },
+  edition: {
+    type: String,
+  },
+  length: {
+    type: String,
+  },
+  gamutScale: {
+    type: String,
+  },
+  digitalCollection: {
     type: String,
   },
   notation: {
     type: String,
   },
+  cosmeticsAndProp: {
+    type: String,
+  },
+
+  // Rights
+  copyright: {
+    type: String,
+  },
+  rights: {
+    type: String,
+  },
+  sponsor: {
+    type: String,
+  },
+  publisher: {
+    type: String,
+  },
+  firstPublication: {
+    type: String,
+  },
+  callNumber: {
+    type: String,
+  },
   numberInPublication: {
     type: String,
   },
-  objectCollections: {
-    type: String,
-  },
-  occasionOfPerforming: {
-    type: String,
-  },
-  performingSkills: {
-    type: String,
-  },
-  permalink: {
-    type: String,
-  },
-  pieceStyle: {
-    type: String,
-  },
+
+  // Geography
   placeOfBirth: {
     type: String,
   },
   placeOfOrigin: {
     type: String,
   },
-  placeOfProsper: {
-    type: String,
-  },
   placeOfResidence: {
     type: String,
   },
-  position: {
-    type: String,
-  },
-  prevalence: {
-    type: String,
-  },
-  publisher: {
-    type: String,
-  },
-  purposeOfCreation: {
-    type: String,
-  },
-  recordingPerson: {
+  placeOfProsper: {
     type: String,
   },
   region: {
     type: String,
   },
-  relatedArtists: {
+  country: {
     type: String,
   },
-  relatedWork: {
-    type: String,
-  },
-  rights: {
-    type: String,
-  },
-  sheetMusic: {
-    type: String,
-  },
-  sponsor: {
-    type: String,
-  },
-  stagePerformance: {
-    type: String,
-  },
-  subject: {
+  ethnicGroup: {
     type: String,
   },
   targetAudience: {
     type: String,
   },
-  temperament: {
+  language: { // Added missing field
     type: String,
   },
-  timeOfOrigin: {
+
+  // Performance
+  performingSkills: {
     type: String,
   },
-  timeOfProsper: {
+  pieceStyle: {
+    type: String,
+  },
+  occasionOfPerforming: {
+    type: String,
+  },
+  stagePerformance: {
+    type: String,
+  },
+  vocalStyle: {
     type: String,
   },
   trackFunction: {
@@ -226,25 +220,51 @@ const ABCFileSchema = new mongoose.Schema({
   tracks: {
     type: String,
   },
-  type: {
+  objectCollections: {
     type: String,
   },
-  uri: {
+  instrumentation: {
     type: String,
   },
-  vocalStyle: {
+  key: {
     type: String,
   },
-  westernParallel: {
+  intonation: {
+    type: String,
+  },
+  sheetMusic: { // Added missing field
+    type: String,
+  },
+
+  // Related Work
+  relatedArtists: {
+    type: String,
+  },
+  relatedWork: {
     type: String,
   },
   workTitle: {
     type: String,
   },
-  yearDateOfComposition: {
+  temperament: {
     type: String,
   },
-  coverImageUrl: {
+  westernParallel: {
+    type: String,
+  },
+  prevalence: {
+    type: String,
+  },
+  purposeOfCreation: {
+    type: String,
+  },
+  position: {
+    type: String,
+  },
+  timeOfOrigin: { // Added missing field
+    type: String,
+  },
+  timeOfProsper: { // Added missing field
     type: String,
   },
 });

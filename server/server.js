@@ -19,7 +19,7 @@ app.use(cors({
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-mongoose.connect(process.env.DB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.DB_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
 
@@ -139,11 +139,6 @@ app.post('/upload', upload.single('file'), (req, res) => {
                     const abcFile = new ABCFileModel({
                       filename: req.file.filename,
                       content: data,
-                      title: '',
-                      composer: '',
-                      genre: '',
-                      artist: '',
-                      instrumentation: ''
                     });
                     await abcFile.save();
 
@@ -171,12 +166,14 @@ app.post('/upload', upload.single('file'), (req, res) => {
 // New endpoint to get all ABC files (dashboard)
 app.get('/abc-file', async (req, res) => {
   try {
-    const abcFiles = await ABCFileModel.find({});
+    // Fetch all ABC files sorted in descending order by _id (latest entries first)
+    const abcFiles = await ABCFileModel.find({}).sort({ _id: -1 });
     res.status(200).json(abcFiles);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching files', error: err.message });
   }
 });
+
 
 // Combined Endpoint to fetch a single ABC file by filename or _id (clerkmusicscoreview & preview)
 app.get('/abc-file/:identifier', async (req, res) => {
@@ -221,7 +218,7 @@ app.put('/abc-file/:filename/content', async (req, res) => {
       return res.status(404).json({ message: 'File not found' });
     }
 
-    console.log('ABC content updated successfully:', abcFile);
+    console.log('ABC content updated successfully.');
 
     res.status(200).json({ message: 'ABC content updated successfully', abcFile });
   } catch (err) {
@@ -230,12 +227,25 @@ app.put('/abc-file/:filename/content', async (req, res) => {
   }
 });
 
+// Endpoint to get catalog data by filename
+app.get('/catalog/:fileName', async (req, res) => {
+  try {
+    const catalogData = await ABCFileModel.findOne({ filename: req.params.fileName });
+    if (!catalogData) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+    res.status(200).json(catalogData);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching catalog data', error: err.message });
+  }
+});
+
+
 // Endpoint to save catalog metadata (catalog)
 app.post('/catalog', async (req, res) => {
   try {
     const {
       filename,
-      title,
       albums,
       alternativeTitle,
       artist,
@@ -246,18 +256,21 @@ app.post('/catalog', async (req, res) => {
       contributor,
       copyright,
       cosmeticsAndProp,
-      county,
+      country,
+      coverImageUrl,
       creator,
       dateAccessioned,
       dateAvailable,
       dateIssued,
       dateOfBirth,
+      dateOfComposition,
       dateOfCreation,
       dateOfRecording,
       description,
       digitalCollection,
       edition,
       editor,
+      element,
       ethnicGroup,
       firstPublication,
       format,
@@ -266,7 +279,7 @@ app.post('/catalog', async (req, res) => {
       historicalContext,
       identifier,
       instrumentation,
-      intention,
+      intonation,
       key,
       language,
       lastModified,
@@ -306,100 +319,100 @@ app.post('/catalog', async (req, res) => {
       temperament,
       timeOfOrigin,
       timeOfProsper,
+      title,
       trackFunction,
       tracks,
       type,
       uri,
       vocalStyle,
       westernParallel,
-      workTitle,
-      yearDateOfComposition,
-      coverImageUrl,
+      workTitle
     } = req.body;
 
     const abcFile = await ABCFileModel.findOneAndUpdate(
       { filename },
       {
-        title,
-        albums,
-        alternativeTitle,
-        artist,
-        backgroundResources,
-        callNumber,
-        composer,
-        composerTimePeriod,
-        contributor,
-        copyright,
-        cosmeticsAndProp,
-        county,
-        creator,
-        dateAccessioned,
-        dateAvailable,
-        dateIssued,
-        dateOfBirth,
-        dateOfCreation,
-        dateOfRecording,
-        description,
-        digitalCollection,
-        edition,
-        editor,
-        ethnicGroup,
-        firstPublication,
-        format,
-        gamutScale,
-        genre,
-        historicalContext,
-        identifier,
-        instrumentation,
-        intention,
-        key,
-        language,
-        lastModified,
-        length,
-        librettist,
-        lyrics,
-        melodicClassification,
-        melodyDescriptions,
-        methodOfImplementation,
-        miscNotes,
-        movementsSections,
-        notation,
-        numberInPublication,
-        objectCollections,
-        occasionOfPerforming,
-        performingSkills,
-        permalink,
-        pieceStyle,
-        placeOfBirth,
-        placeOfOrigin,
-        placeOfProsper,
-        placeOfResidence,
-        position,
-        prevalence,
-        publisher,
-        purposeOfCreation,
-        recordingPerson,
-        region,
-        relatedArtists,
-        relatedWork,
-        rights,
-        sheetMusic,
-        sponsor,
-        stagePerformance,
-        subject,
-        targetAudience,
-        temperament,
-        timeOfOrigin,
-        timeOfProsper,
-        trackFunction,
-        tracks,
-        type,
-        uri,
-        vocalStyle,
-        westernParallel,
-        workTitle,
-        yearDateOfComposition,
-        coverImageUrl,
+      albums,
+      alternativeTitle,
+      artist,
+      backgroundResources,
+      callNumber,
+      composer,
+      composerTimePeriod,
+      contributor,
+      copyright,
+      cosmeticsAndProp,
+      country,
+      coverImageUrl,
+      creator,
+      dateAccessioned,
+      dateAvailable,
+      dateIssued,
+      dateOfBirth,
+      dateOfComposition,
+      dateOfCreation,
+      dateOfRecording,
+      description,
+      digitalCollection,
+      edition,
+      editor,
+      element,
+      ethnicGroup,
+      firstPublication,
+      format,
+      gamutScale,
+      genre,
+      historicalContext,
+      identifier,
+      instrumentation,
+      intonation,
+      key,
+      language,
+      lastModified,
+      length,
+      librettist,
+      lyrics,
+      melodicClassification,
+      melodyDescriptions,
+      methodOfImplementation,
+      miscNotes,
+      movementsSections,
+      notation,
+      numberInPublication,
+      objectCollections,
+      occasionOfPerforming,
+      performingSkills,
+      permalink,
+      pieceStyle,
+      placeOfBirth,
+      placeOfOrigin,
+      placeOfProsper,
+      placeOfResidence,
+      position,
+      prevalence,
+      publisher,
+      purposeOfCreation,
+      recordingPerson,
+      region,
+      relatedArtists,
+      relatedWork,
+      rights,
+      sheetMusic,
+      sponsor,
+      stagePerformance,
+      subject,
+      targetAudience,
+      temperament,
+      timeOfOrigin,
+      timeOfProsper,
+      title,
+      trackFunction,
+      tracks,
+      type,
+      uri,
+      vocalStyle,
+      westernParallel,
+      workTitle
       },
       { new: true }
     );

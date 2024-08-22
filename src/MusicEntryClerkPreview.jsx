@@ -5,6 +5,8 @@ import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./ClerkSidebar";
 import ABCJS from "abcjs";
 import axios from "axios";
+import { Divider } from "@mui/material";
+
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -98,6 +100,7 @@ export default function MusicEntryClerkPreview() {
               <Avatar>{user ? user.username[0] : 'U'}</Avatar>
             </Box>
           </Box>
+          <Divider sx={{ my: 2 }} />  {/* This is the line for the divider */}
           <Box
             sx={{
               mb: 3,

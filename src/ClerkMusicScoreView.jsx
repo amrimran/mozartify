@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Box, Typography, Button, Card, CardContent, List, ListItem, ListItemText, Avatar } from "@mui/material";
+import { Box, Typography, Button, Card, CardContent, List, ListItem, ListItemText, Avatar, Divider } from "@mui/material";
 import ClerkSidebar from "./ClerkSidebar";
 import abcjs from "abcjs";
 
@@ -18,7 +18,8 @@ export default function ClerkMusicScoreView() {
     fontWeight: "bold",
     color: "#3B3183",
     borderColor: "#3B3183",
-    width: "150px", // Fixed width for uniform button sizes
+    width: "250px",
+    height: "40px",
     "&:hover": {
       backgroundColor: "#3B3183",
       color: "#FFFFFF",
@@ -31,14 +32,14 @@ export default function ClerkMusicScoreView() {
     fontWeight: "bold",
     color: "#DB2226",
     borderColor: "#DB2226",
-    width: "150px", // Fixed width for uniform button sizes
+    width: "250px",
+    height: "40px",
     "&:hover": {
       backgroundColor: "#DB2226",
       color: "#FFFFFF",
       borderColor: "#DB2226",
     },
   };
-  
 
   useEffect(() => {
     const fetchUserSession = async () => {
@@ -72,11 +73,15 @@ export default function ClerkMusicScoreView() {
   };
 
   const handleBackClick = () => {
-    navigate("/clerk-homepage"); // Navigate back to the dashboard
+    navigate("/clerk-homepage");
   };
 
-  const handleEditClick = () => {
-    // Handle edit action
+  const handleEditMusicScoreClick = () => {
+    if (metadata && metadata.filename) {
+      navigate("/clerk-edit", { state: { fileName: metadata.filename } });
+    } else {
+      console.error("Filename is not available");
+    }
   };
 
   const handleDeleteClick = () => {
@@ -91,7 +96,7 @@ export default function ClerkMusicScoreView() {
           bgcolor: "#3B3183",
           flexShrink: 0,
           overflowY: "auto",
-          position: "fixed", // Sidebar is fixed without gaps
+          position: "fixed",
           left: 0,
           top: 0,
           bottom: 0,
@@ -99,7 +104,7 @@ export default function ClerkMusicScoreView() {
       >
         <ClerkSidebar />
       </Box>
-      <Box sx={{ flexGrow: 1, p: 3, pl: 31 }}> {/* Increased padding-left to 31 to accommodate the sidebar */}
+      <Box sx={{ flexGrow: 1, p: 3, pl: 31 }}>
         <Box
           sx={{
             display: "flex",
@@ -108,16 +113,17 @@ export default function ClerkMusicScoreView() {
             mb: 3,
           }}
         >
-          <Typography variant="h4" sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}>
+          <Typography variant="h4" gutterBottom sx={{ fontFamily: 'Montserrat', fontWeight: 'bold', mt: 2, ml:1 }}>
             Manage Music Scores
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <Typography variant="body1" sx={{ mr: 2, fontFamily: "Montserrat" }}>
-              {user ? user.username : "Guest"} {/* Display the username or "Guest" if not logged in */}
+              {user ? user.username : "Guest"}
             </Typography>
-            <Avatar>{user ? user.username.charAt(0) : "G"}</Avatar> {/* Avatar shows the first letter of the username or "G" */}
+            <Avatar>{user ? user.username.charAt(0) : "G"}</Avatar>
           </Box>
         </Box>
+        <Divider sx={{ my: 2 }} />
 
         <Box sx={{ display: "flex", gap: 4 }}>
           {/* Music Score Preview */}
@@ -137,13 +143,14 @@ export default function ClerkMusicScoreView() {
 
           {/* Music Score Details */}
           {metadata ? (
-            <Card sx={{ width: 300, p: 2, bgcolor: "#F2F2F5", borderRadius: 2 }}>
-              <CardContent sx={{ bgcolor: "#FFFFFF", borderRadius: 2, p: 2 }}>
+            <Card sx={{ width: 200, p: 2, bgcolor: "#F2F2F5", borderRadius: 2, height: "auto", maxHeight: "500px", overflowY: "auto", flexGrow: 1 }}>
+              <CardContent sx={{ bgcolor: "#FFFFFF", borderRadius: 2, p: 0, pl: -1 }}>
                 <List>
+                  {/* Reordered Fields */}
                   <ListItem>
                     <ListItemText
-                      primary="Title:"
-                      secondary={metadata.title}
+                      primary="Title"
+                      secondary={metadata.title || 'N/A'}
                       primaryTypographyProps={{ sx: { fontFamily: "Montserrat", fontWeight: "bold" } }}
                       secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
                       sx={{ p: 1 }}
@@ -151,8 +158,8 @@ export default function ClerkMusicScoreView() {
                   </ListItem>
                   <ListItem>
                     <ListItemText
-                      primary="Artist(s):"
-                      secondary={metadata.artist}
+                      primary="Artist"
+                      secondary={metadata.artist || 'N/A'}
                       primaryTypographyProps={{ sx: { fontFamily: "Montserrat", fontWeight: "bold" } }}
                       secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
                       sx={{ p: 1 }}
@@ -160,8 +167,8 @@ export default function ClerkMusicScoreView() {
                   </ListItem>
                   <ListItem>
                     <ListItemText
-                      primary="Composer(s):"
-                      secondary={metadata.composer}
+                      primary="Composer"
+                      secondary={metadata.composer || 'N/A'}
                       primaryTypographyProps={{ sx: { fontFamily: "Montserrat", fontWeight: "bold" } }}
                       secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
                       sx={{ p: 1 }}
@@ -169,8 +176,8 @@ export default function ClerkMusicScoreView() {
                   </ListItem>
                   <ListItem>
                     <ListItemText
-                      primary="Genre(s):"
-                      secondary={metadata.genre}
+                      primary="Genre"
+                      secondary={metadata.genre || 'N/A'}
                       primaryTypographyProps={{ sx: { fontFamily: "Montserrat", fontWeight: "bold" } }}
                       secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
                       sx={{ p: 1 }}
@@ -178,31 +185,28 @@ export default function ClerkMusicScoreView() {
                   </ListItem>
                   <ListItem>
                     <ListItemText
-                      primary="Instrumentation(s):"
-                      secondary={metadata.instrumentation}
+                      primary="Instrumentation"
+                      secondary={metadata.instrumentation || 'N/A'}
                       primaryTypographyProps={{ sx: { fontFamily: "Montserrat", fontWeight: "bold" } }}
                       secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
                       sx={{ p: 1 }}
                     />
                   </ListItem>
-                  <ListItem>
-                    <ListItemText
-                      primary="Copyright:"
-                      secondary={metadata.copyright}
-                      primaryTypographyProps={{ sx: { fontFamily: "Montserrat", fontWeight: "bold" } }}
-                      secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
-                      sx={{ p: 1 }}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText
-                      primary="Key:"
-                      secondary={metadata.key}
-                      primaryTypographyProps={{ sx: { fontFamily: "Montserrat", fontWeight: "bold" } }}
-                      secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
-                      sx={{ p: 1 }}
-                    />
-                  </ListItem>
+
+                  {/* Remaining Fields */}
+                  {Object.keys(metadata).map((key) => (
+                    !['title', 'artist', 'composer', 'genre', 'instrumentation', 'content', '__v', '_id', 'filename', 'coverImageUrl'].includes(key) && (
+                      <ListItem key={key}>
+                        <ListItemText
+                          primary={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                          secondary={metadata[key] || 'N/A'}
+                          primaryTypographyProps={{ sx: { fontFamily: "Montserrat", fontWeight: "bold" } }}
+                          secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
+                          sx={{ p: 1 }}
+                        />
+                      </ListItem>
+                    )
+                  ))}
                 </List>
               </CardContent>
             </Card>
@@ -213,27 +217,14 @@ export default function ClerkMusicScoreView() {
           )}
         </Box>
 
-        {/* Buttons in a row, centered */}
         <Box sx={{ mt: 4, display: "flex", justifyContent: "center", gap: 2 }}>
-          <Button
-            variant="outlined"
-            onClick={handleBackClick}
-            sx={buttonStyles}
-          >
+          <Button variant="outlined" onClick={handleBackClick} sx={buttonStyles}>
             Back
           </Button>
-          <Button
-            variant="outlined"
-            onClick={handleEditClick}
-            sx={buttonStyles}
-          >
-            Edit Data
+          <Button variant="outlined" onClick={handleEditMusicScoreClick} sx={buttonStyles}>
+            Edit
           </Button>
-          <Button
-            variant="outlined"
-            onClick={handleDeleteClick}
-            sx={deleteButtonStyles}
-          >
+          <Button variant="outlined" onClick={handleDeleteClick} sx={deleteButtonStyles}>
             Delete
           </Button>
         </Box>

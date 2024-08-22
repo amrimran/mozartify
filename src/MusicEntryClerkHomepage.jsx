@@ -315,30 +315,47 @@ export default function MusicEntryClerkHomepage() {
                     }}
                   />
                   <CardContent
-                    sx={{
-                      flexGrow: 1,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center", // Center the text
-                      justifyContent: "center",
-                      fontFamily: 'Montserrat',
-                    }}
-                  >
-                    <Typography
-                      variant="h6"
-                      noWrap
-                      sx={{ textAlign: "center", mb: 1, fontFamily: 'Montserrat' }}
-                    >
-                      {score.title}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="textSecondary"
-                      sx={{ textAlign: "center", fontFamily: 'Montserrat' }}
-                    >
-                      {score.artist}
-                    </Typography>
-                  </CardContent>
+  sx={{
+    flexGrow: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center", // Center the text
+    justifyContent: "center",
+    fontFamily: 'Montserrat',
+    width: '100%', // Ensure the content spans the full width
+    textAlign: 'center',
+  }}
+>
+  <Typography
+    variant="h6"
+    noWrap
+    sx={{
+      mb: 1,
+      fontFamily: 'Montserrat',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      width: '100%', // Ensures the ellipsis effect works
+    }}
+  >
+    {score.title || "N/A"}
+  </Typography>
+  <Typography
+    variant="body2"
+    color="textSecondary"
+    noWrap
+    sx={{
+      fontFamily: 'Montserrat',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      width: '100%', // Ensures the ellipsis effect works
+    }}
+  >
+    {score.artist || "N/A"}
+  </Typography>
+</CardContent>
+
                 </Card>
               ))
             ) : (

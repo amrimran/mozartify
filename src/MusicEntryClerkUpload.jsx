@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./ClerkSidebar";
 import ImportIcon from "./assets/import-icon.png";
+import { Divider } from "@mui/material";
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -119,6 +120,7 @@ export default function MusicEntryClerkUpload() {
               <Avatar>{user ? user.username[0] : "?"}</Avatar>
             </Box>
           </Box>
+          <Divider sx={{ my: 2 }} />  {/* This is the line for the divider */}
           <Box
             sx={{
               display: "flex",
