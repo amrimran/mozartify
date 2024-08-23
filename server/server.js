@@ -166,13 +166,14 @@ app.post('/upload', upload.single('file'), (req, res) => {
 // New endpoint to get all ABC files (dashboard)
 app.get('/abc-file', async (req, res) => {
   try {
-    // Fetch all ABC files sorted in descending order by _id (latest entries first)
-    const abcFiles = await ABCFileModel.find({}).sort({ _id: -1 });
+    // Fetch all ABC files where deleted is false, sorted in descending order by _id (latest entries first)
+    const abcFiles = await ABCFileModel.find({ deleted: false }).sort({ _id: -1 });
     res.status(200).json(abcFiles);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching files', error: err.message });
   }
 });
+
 
 
 // Combined Endpoint to fetch a single ABC file by filename or _id (clerkmusicscoreview & preview)
@@ -241,179 +242,48 @@ app.get('/catalog/:fileName', async (req, res) => {
 });
 
 
-// Endpoint to save catalog metadata (catalog)
 app.post('/catalog', async (req, res) => {
   try {
-    const {
-      filename,
-      albums,
-      alternativeTitle,
-      artist,
-      backgroundResources,
-      callNumber,
-      composer,
-      composerTimePeriod,
-      contributor,
-      copyright,
-      cosmeticsAndProp,
-      country,
-      coverImageUrl,
-      creator,
-      dateAccessioned,
-      dateAvailable,
-      dateIssued,
-      dateOfBirth,
-      dateOfComposition,
-      dateOfCreation,
-      dateOfRecording,
-      description,
-      digitalCollection,
-      edition,
-      editor,
-      element,
-      ethnicGroup,
-      firstPublication,
-      format,
-      gamutScale,
-      genre,
-      historicalContext,
-      identifier,
-      instrumentation,
-      intonation,
-      key,
-      language,
-      lastModified,
-      length,
-      librettist,
-      lyrics,
-      melodicClassification,
-      melodyDescriptions,
-      methodOfImplementation,
-      miscNotes,
-      movementsSections,
-      notation,
-      numberInPublication,
-      objectCollections,
-      occasionOfPerforming,
-      performingSkills,
-      permalink,
-      pieceStyle,
-      placeOfBirth,
-      placeOfOrigin,
-      placeOfProsper,
-      placeOfResidence,
-      position,
-      prevalence,
-      publisher,
-      purposeOfCreation,
-      recordingPerson,
-      region,
-      relatedArtists,
-      relatedWork,
-      rights,
-      sheetMusic,
-      sponsor,
-      stagePerformance,
-      subject,
-      targetAudience,
-      temperament,
-      timeOfOrigin,
-      timeOfProsper,
-      title,
-      trackFunction,
-      tracks,
-      type,
-      uri,
-      vocalStyle,
-      westernParallel,
-      workTitle
-    } = req.body;
+    const fields = [
+      // All your existing fields
+      'albums', 'alternativeTitle', 'artist', 'backgroundResources',
+      'callNumber', 'composer', 'composerTimePeriod', 'contributor',
+      'copyright', 'cosmeticsAndProp', 'country', 'coverImageUrl',
+      'creator', 'dateAccessioned', 'dateAvailable', 'dateIssued',
+      'dateOfBirth', 'dateOfComposition', 'dateOfCreation', 'dateOfRecording',
+      'description', 'digitalCollection', 'edition', 'editor', 'element',
+      'ethnicGroup', 'firstPublication', 'format', 'gamutScale', 'genre',
+      'historicalContext', 'identifier', 'instrumentation', 'intonation',
+      'key', 'language', 'lastModified', 'length', 'librettist', 'lyrics',
+      'melodicClassification', 'melodyDescriptions', 'methodOfImplementation',
+      'miscNotes', 'movementsSections', 'notation', 'numberInPublication',
+      'objectCollections', 'occasionOfPerforming', 'performingSkills', 'permalink',
+      'pieceStyle', 'placeOfBirth', 'placeOfOrigin', 'placeOfProsper',
+      'placeOfResidence', 'position', 'prevalence', 'publisher',
+      'purposeOfCreation', 'recordingPerson', 'region', 'relatedArtists',
+      'relatedWork', 'rights', 'sheetMusic', 'sponsor', 'stagePerformance',
+      'subject', 'targetAudience', 'temperament', 'timeOfOrigin', 'timeOfProsper',
+      'title', 'trackFunction', 'tracks', 'type', 'uri', 'vocalStyle',
+      'westernParallel', 'workTitle'
+    ];
+
+    // Initialize updateData as empty object
+    const updateData = {};
+
+    // Handle the case when a deletion request is made
+    if (req.body.deleted === true) {
+      // Only set `deleted` to true, don't touch other fields
+      updateData.deleted = true;
+    } else {
+      // Normal metadata update logic
+      fields.forEach(field => {
+        updateData[field] = req.body[field] || ""; // Set to empty string if undefined
+      });
+    }
 
     const abcFile = await ABCFileModel.findOneAndUpdate(
-      { filename },
-      {
-      albums,
-      alternativeTitle,
-      artist,
-      backgroundResources,
-      callNumber,
-      composer,
-      composerTimePeriod,
-      contributor,
-      copyright,
-      cosmeticsAndProp,
-      country,
-      coverImageUrl,
-      creator,
-      dateAccessioned,
-      dateAvailable,
-      dateIssued,
-      dateOfBirth,
-      dateOfComposition,
-      dateOfCreation,
-      dateOfRecording,
-      description,
-      digitalCollection,
-      edition,
-      editor,
-      element,
-      ethnicGroup,
-      firstPublication,
-      format,
-      gamutScale,
-      genre,
-      historicalContext,
-      identifier,
-      instrumentation,
-      intonation,
-      key,
-      language,
-      lastModified,
-      length,
-      librettist,
-      lyrics,
-      melodicClassification,
-      melodyDescriptions,
-      methodOfImplementation,
-      miscNotes,
-      movementsSections,
-      notation,
-      numberInPublication,
-      objectCollections,
-      occasionOfPerforming,
-      performingSkills,
-      permalink,
-      pieceStyle,
-      placeOfBirth,
-      placeOfOrigin,
-      placeOfProsper,
-      placeOfResidence,
-      position,
-      prevalence,
-      publisher,
-      purposeOfCreation,
-      recordingPerson,
-      region,
-      relatedArtists,
-      relatedWork,
-      rights,
-      sheetMusic,
-      sponsor,
-      stagePerformance,
-      subject,
-      targetAudience,
-      temperament,
-      timeOfOrigin,
-      timeOfProsper,
-      title,
-      trackFunction,
-      tracks,
-      type,
-      uri,
-      vocalStyle,
-      westernParallel,
-      workTitle
-      },
+      { filename: req.body.filename },
+      updateData,
       { new: true }
     );
 
@@ -426,6 +296,8 @@ app.post('/catalog', async (req, res) => {
     res.status(500).json({ message: 'Error saving metadata', error: err.message });
   }
 });
+
+
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

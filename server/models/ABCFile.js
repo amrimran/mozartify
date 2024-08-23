@@ -267,6 +267,10 @@ const ABCFileSchema = new mongoose.Schema({
   timeOfProsper: { // Added missing field
     type: String,
   },
+  deleted: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const ABCFile = mongoose.model('ABCFile', ABCFileSchema);

@@ -145,7 +145,6 @@ const MusicEntryClerkEdit = () => {
   };
   
   const handleProceed = () => {
-    alert("Digitization completed. Please fill the metadata on next page.");
     navigate("/clerk-catalog", { state: { fileName } });
   };
 

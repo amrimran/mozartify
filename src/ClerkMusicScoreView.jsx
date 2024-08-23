@@ -4,6 +4,8 @@ import axios from "axios";
 import { Box, Typography, Button, Card, CardContent, List, ListItem, ListItemText, Avatar, Divider } from "@mui/material";
 import ClerkSidebar from "./ClerkSidebar";
 import abcjs from "abcjs";
+import { format } from 'date-fns';
+
 
 export default function ClerkMusicScoreView() {
   const { scoreId } = useParams();
@@ -51,6 +53,8 @@ export default function ClerkMusicScoreView() {
       }
     };
 
+    
+
     const fetchAbcFileAndMetadata = async () => {
       try {
         const response = await axios.get(`http://localhost:3001/abc-file/${scoreId}`);
@@ -85,8 +89,46 @@ export default function ClerkMusicScoreView() {
   };
 
   const handleDeleteClick = () => {
-    // Handle delete action
+    if (!metadata || !metadata.filename) {
+      console.error('No metadata or filename available');
+      return;
+    }
+  
+    const confirmDelete = window.confirm('Are you sure you want to delete this music score?');
+    if (!confirmDelete) {
+      return; // Exit if the user cancels the action
+    }
+  
+    fetch('http://localhost:3001/catalog', { // Replace with the correct backend URL
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filename: metadata.filename, // Use metadata to get the filename
+        deleted: true, // Mark the file as deleted
+      }),
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json(); // Parse the JSON from the response
+    })
+    .then(data => {
+      if (data.message === 'Metadata saved successfully') {
+        // Redirect or update the UI after successful deletion
+        navigate('/clerk-homepage'); // Redirect to the homepage or handle UI update
+      }
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
   };
+  
+  
+  
+
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
@@ -194,19 +236,30 @@ export default function ClerkMusicScoreView() {
                   </ListItem>
 
                   {/* Remaining Fields */}
-                  {Object.keys(metadata).map((key) => (
-                    !['title', 'artist', 'composer', 'genre', 'instrumentation', 'content', '__v', '_id', 'filename', 'coverImageUrl'].includes(key) && (
+                  {Object.keys(metadata).map((key) => {
+                    // Exclude certain fields and format date fields
+                    if (['title', 'artist', 'composer', 'genre', 'instrumentation', 'content', '__v', '_id', 'filename', 'coverImageUrl','deleted'].includes(key)) {
+                      return null;
+                    }
+
+                    // Format date fields
+                    let value = metadata[key];
+                    if (['dateAccessioned', 'dateAvailable', 'dateIssued','dateOfBirth', 'dateOfComposition', 'dateOfCreation', 'dateOfRecording','lastModified'].includes(key) && value) {
+                      value = new Date(value).toLocaleDateString('en-GB'); // Format to dd/MM/yyyy
+                    }
+
+                    return (
                       <ListItem key={key}>
                         <ListItemText
                           primary={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                          secondary={metadata[key] || 'N/A'}
+                          secondary={value || 'N/A'}
                           primaryTypographyProps={{ sx: { fontFamily: "Montserrat", fontWeight: "bold" } }}
                           secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
                           sx={{ p: 1 }}
                         />
                       </ListItem>
-                    )
-                  ))}
+                    );
+                  })}    
                 </List>
               </CardContent>
             </Card>
@@ -224,9 +277,14 @@ export default function ClerkMusicScoreView() {
           <Button variant="outlined" onClick={handleEditMusicScoreClick} sx={buttonStyles}>
             Edit
           </Button>
-          <Button variant="outlined" onClick={handleDeleteClick} sx={deleteButtonStyles}>
+          <Button 
+          variant="outlined" 
+          onClick={handleDeleteClick}  // Directly call the delete handler
+          sx={deleteButtonStyles}
+          >
             Delete
           </Button>
+
         </Box>
       </Box>
     </Box>

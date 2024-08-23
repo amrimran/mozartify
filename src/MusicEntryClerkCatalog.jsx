@@ -53,6 +53,7 @@ const buttonStyles = {
   },
 };
 
+
 export default function MusicEntryClerkCatalog() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -190,9 +191,9 @@ export default function MusicEntryClerkCatalog() {
     const { name, value } = e.target;
     setCatalogData((prevData) => ({
       ...prevData,
-      [name]: value || "", // Ensure empty fields are sent as empty strings
+      [name]: value, // Ensure empty fields are sent as empty strings
     }));
-  };
+  };  
 
   const handleDateChange = (name, newValue) => {
     setCatalogData((prevData) => ({
@@ -200,6 +201,11 @@ export default function MusicEntryClerkCatalog() {
       [name]: newValue ? newValue.toISOString() : '',
     }));
   };
+
+  const handleEmotion = () => {
+    alert("Emotion.pkl called! (soon)");
+  };
+  
 
   const handleNext = () => {
     if (tabIndex <= 8) {
@@ -234,28 +240,20 @@ export default function MusicEntryClerkCatalog() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Ensure all fields in catalogData are filled with an empty string if they are not already populated
-    const filledCatalogData = { ...catalogData };
-    for (const key in filledCatalogData) {
-        if (!filledCatalogData[key]) {
-            filledCatalogData[key] = "";
-        }
-    }
-
+    
     try {
       const response = await fetch("http://localhost:3001/catalog", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(filledCatalogData),
+        body: JSON.stringify(catalogData),
       });
-
+  
       if (!response.ok) {
         throw new Error("Failed to save data");
       }
-
+  
       alert("Data saved successfully");
       navigate("/clerk-homepage");
     } catch (error) {
@@ -263,7 +261,7 @@ export default function MusicEntryClerkCatalog() {
       alert("Error saving data");
     }
   };
-
+  
   return (
 
     <>
@@ -585,11 +583,11 @@ export default function MusicEntryClerkCatalog() {
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
                 label="Date of Composition"
-                value={catalogData.DateOfComposition ? new Date(catalogData.DateOfComposition) : null}
+                value={catalogData.dateOfComposition ? new Date(catalogData.dateOfComposition) : null}
                 onChange={(newValue) => {
                   handleInputChange({
                     target: {
-                      name: 'DateOfComposition',
+                      name: 'dateOfComposition',
                       value: newValue.toISOString(),
                     },
                   });
@@ -778,6 +776,39 @@ export default function MusicEntryClerkCatalog() {
                   onChange={handleInputChange}
                 />
               </Grid>
+              <Grid item xs={12} sm={6}>
+              <TextField
+                name="emotion"
+                label="Emotion"
+                variant="outlined"
+                fullWidth
+                sx={formStyles}
+                value={catalogData.emotion} // Assuming you have this in your catalogData state
+                onChange={handleInputChange}
+              />
+            </Grid>
+            <Grid item xs={12} display="flex" justifyContent="flex-end">
+            <Button
+              variant="contained"
+              component="label"
+              sx={{
+                fontFamily: "Montserrat",
+                fontWeight: "bold",
+                color: "#FFFFFF",
+                backgroundColor: "#3B3183",
+                borderRadius: 2,
+                width: '180px',
+                mt: -3, // Adjust the margin-top
+                "&:hover": {
+                  backgroundColor: "#2C2657",
+                },
+                transition: 'background-color 0.3s ease', // Smooth transition for hover
+              }}
+              onClick={handleEmotion}
+            >
+              Handle Emotion
+            </Button>
+          </Grid>
             </>
           )}
           {tabIndex === 4 && (
