@@ -25,6 +25,7 @@ import {
   Favorite,
   FilterAlt,
 } from "@mui/icons-material";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import CustomerSidebar from "./CustomerSidebar";
@@ -43,17 +44,17 @@ const options = {
   threshold: 0.3,
 };
 
-export default function CustomerLibrary() {
+export default function CustomerFavorites() {
   const [user, setUser] = useState(null);
 
   const [currentScores, setCurrentScores] = useState([]);
   const [unfilteredScores, setUnfilteredScores] = useState([]);
+  const [purchasedScores, setPurchasedScores] = useState([]);
+  const [addedToCartScores, setAddedToCartScores] = useState([]);
   const [searchedScores, setSearchedScores] = useState([]);
-  const [filteredScores, setFilteredScores] = useState([]);
-  const [isFiltered, setIsFiltered] = useState(false);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState([]);
+  const [isFiltered, setIsFiltered] = useState(false);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [genre, setGenre] = useState("");
@@ -78,36 +79,72 @@ export default function CustomerLibrary() {
   }, []);
 
   useEffect(() => {
-    const fetchOwnedScores = async () => {
+    const fetchFavoriteScores = async () => {
       try {
-        const purchaseResponse = await axios.get(
-          "http://localhost:3000/user-purchases"
+        const likedScores = await axios.get(
+          "http://localhost:3000/user-liked-scores"
         );
 
-        const purchasedScoreIds = purchaseResponse.data.map(
-          (purchase) => purchase.score_id
-        );
-
-        if (purchasedScoreIds.length > 0) {
-          const response = await axios.get(
-            "http://localhost:3000/music-scores",
-            {
-              params: { scoreIds: purchasedScoreIds },
-            }
-          );
-
-          setUnfilteredScores(response.data);
-          setCurrentScores(response.data);
+        if (likedScores.data.length > 0) {
+          setUnfilteredScores(likedScores.data);
+          setCurrentScores(likedScores.data);
         } else {
           setUnfilteredScores([]);
         }
       } catch (error) {
-        console.error("Error fetching owned scores:", error);
+        console.error("Error fetching favorite scores:", error);
       }
     };
 
-    fetchOwnedScores();
+    fetchFavoriteScores();
   }, []);
+
+  useEffect(() => {
+    const fetchPurchasedScores = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:3000/user-purchases"
+        );
+
+        const purchasedScoreIds = response.data.map(
+          (purchase) => purchase.score_id
+        );
+
+        setPurchasedScores(purchasedScoreIds);
+      } catch (error) {
+        console.error("Error fetching user's purchased scores:", error);
+        navigate("/login");
+      }
+    };
+    fetchPurchasedScores();
+  }, []);
+
+  useEffect(() => {
+    const fetchAddedToCartScores = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/user-cart");
+
+        const AddedScoreIds = response.data.map((added) => added.score_id);
+
+        setAddedToCartScores(AddedScoreIds);
+      } catch (error) {
+        console.error("Error fetching user's cart:", error);
+        navigate("/login");
+      }
+    };
+    fetchAddedToCartScores();
+  }, []);
+
+  const addToCart = async (scoreId) => {
+    try {
+      await axios.post("http://localhost:3000/add-to-cart", {
+        musicScoreId: scoreId,
+      });
+      setAddedToCartScores([...addedToCartScores, scoreId]);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+    }
+  };
 
   useEffect(() => {
     if (searchQuery) {
@@ -165,7 +202,6 @@ export default function CustomerLibrary() {
         if (!searchQuery) {
           const filteredOnlySearchResults = applyFilters(unfilteredScores);
           setCurrentScores(filteredOnlySearchResults);
-
         } else {
           const filteredSearchedSearchResults = applyFilters(searchedScores);
           setCurrentScores(filteredSearchedSearchResults);
@@ -233,7 +269,7 @@ export default function CustomerLibrary() {
               >
                 <InputBase
                   sx={{ ml: 1, flex: 1 }}
-                  placeholder="Look for your music scores here..."
+                  placeholder="Look for your liked music scores here..."
                   inputProps={{ "aria-label": "search music scores" }}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -276,7 +312,7 @@ export default function CustomerLibrary() {
                       <MenuItem value="Classical">Classical</MenuItem>
                       <MenuItem value="Jazz">Jazz</MenuItem>
                       <MenuItem value="Pop">Pop</MenuItem>
-                      <MenuItem value="Ragtim">Ragtime</MenuItem>
+                      <MenuItem value="Ragtime">Ragtime</MenuItem>
                     </Select>
                   </FormControl>
 
@@ -372,7 +408,7 @@ export default function CustomerLibrary() {
                   </Button>
                 </Box>
 
-                <Box sx={{ mt: "auto" ,p: 2}}>
+                <Box sx={{ mt: "auto", p: 2 }}>
                   <Button
                     variant="contained"
                     fullWidth
@@ -413,7 +449,7 @@ export default function CustomerLibrary() {
 
           <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
             <Box display="flex" alignItems="center" mb={2}>
-              <Typography variant="h4">Library</Typography>
+              <Typography variant="h4">Favorites</Typography>
               <Box ml={2}>
                 <Box
                   sx={{
@@ -440,7 +476,7 @@ export default function CustomerLibrary() {
                   key={item._id}
                   onClick={() =>
                     navigate(
-                      `/customer-library/customer-music-score-view/${item._id}`
+                      `/customer-favorites/customer-music-score-view/${item._id}`
                     )
                   }
                 >
@@ -449,6 +485,12 @@ export default function CustomerLibrary() {
                     secondary={`Genre: ${item.ms_genre} | Composer: ${item.ms_composer} | Artist: ${item.ms_artist}`}
                   />
                   <ListItemIcon>
+                    {!purchasedScores.includes(item._id) &&
+                      !addedToCartScores.includes(item._id) && (
+                        <IconButton onClick={() => addToCart(score._id)}>
+                          <ShoppingCartIcon />
+                        </IconButton>
+                      )}
                     <IconButton
                       onClick={(e) => {
                         e.stopPropagation(); // Prevents the ListItemButton onClick from firing
@@ -465,8 +507,7 @@ export default function CustomerLibrary() {
                   <ListItemIcon>
                     <IconButton
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevents the ListItemButton onClick from firing
-                        // Handle play button action here
+                        e.stopPropagation();
                       }}
                     >
                       <PlayArrow />

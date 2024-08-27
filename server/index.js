@@ -11,8 +11,11 @@ const { PythonShell } = require("python-shell");
 const path = require("path");
 
 const UserModel = require("./models/User");
+const PurchaseModel = require("./models/Purchase");
+const CartModel = require("./models/Cart");
 const MusicScoreModel = require("./models/MusicScore");
 const DeletedUserModel = require("./models/DeletedUser");
+
 
 const app = express();
 app.use(express.json());
@@ -222,7 +225,6 @@ app.post("/login", async (req, res) => {
               .status(500)
               .json({ message: "Session save error", error: err });
           }
-          console.log("Session set successfully:", req.session.userId);
           res.json({
             message: "Success",
             userId: user._id,
@@ -446,32 +448,195 @@ app.delete("/user/delete", async (req, res) => {
   }
 });
 
-app.get("/user/:id", async (req, res) => {
-  const userId = req.params.id;
+app.get("/search-music-scores", async (req, res) => {
+  const { query } = req.query;
+
   try {
-    const user = await UserModel.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    let musicScores;
+
+    if (query) {
+      musicScores = await MusicScoreModel.find({
+        $or: [
+          { ms_title: { $regex: query, $options: "i" } },
+          { ms_genre: { $regex: query, $options: "i" } },
+          { ms_emotion: { $regex: query, $options: "i" } },
+          { ms_composer: { $regex: query, $options: "i" } },
+          { ms_artist: { $regex: query, $options: "i" } },
+          { ms_instrumentation: { $regex: query, $options: "i" } },
+        ],
+      });
     }
-    res.json(user);
+
+    res.json(musicScores);
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err });
   }
 });
 
-app.get("/music-scores", async (req, res) => {
-  const { userId } = req.query;
+app.get("/filter-music-scores", async (req, res) => {
+  const { genre, composer, emotion, instrumentation } = req.query;
 
   try {
-    let musicScores;
-    if (userId) {
-      musicScores = await MusicScoreModel.find({ ownerIds: userId });
-    } else {
-      musicScores = await MusicScoreModel.find();
+    const filter = {};
+
+    if (genre) {
+      filter.ms_genre = genre;
     }
-    res.json(musicScores);
+
+    if (composer) {
+      filter.ms_composer = { $regex: composer, $options: "i" };
+    }
+
+    if (instrumentation) {
+      filter.ms_instrumentation = { $regex: instrumentation, $options: "i" };
+    }
+
+    if (emotion) {
+      filter.ms_emotion = { $regex: emotion, $options: "i" };
+    }
+
+    const filteredScores = await MusicScoreModel.find(filter);
+
+    res.json(filteredScores);
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err });
+  }
+});
+
+app.get("/user-purchases", async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    const purchases = await PurchaseModel.find({ user_id: userId }).select(
+      "score_id"
+    );
+
+    res.json(purchases);
+  } catch (error) {
+    console.error("Error fetching purchases for the user:", error);
+    res.status(500).send("Error fetching purchases for the user.");
+  }
+});
+
+app.get("/user-cart", async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    const cart = await CartModel.findOne({ user_id: userId });
+
+    if (!cart || cart.score_ids.length === 0) {
+      return res.status(404).json({ message: "No items found in the user's cart." });
+    }
+
+    const cartItems = cart.score_ids.map(scoreId => ({ score_id: scoreId }));
+
+    res.json(cartItems);
+  } catch (error) {
+    console.error("Error fetching cart items for the user:", error);
+    res.status(500).send("Error fetching cart items for the user.");
+  }
+});
+
+
+
+
+app.post("/add-to-cart", async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const { musicScoreId } = req.body;
+
+    let cart = await CartModel.findOne({ user_id: userId });
+
+    if (!cart) {
+      cart = new CartModel({ user_id: userId, score_ids: [musicScoreId] });
+    } else {
+      // If the cart exists, append the new music score ID
+      if (!cart.score_ids.includes(musicScoreId)) {
+        cart.score_ids.push(musicScoreId);
+      }
+    }
+
+    await cart.save();
+    res.status(200).json({ message: "Score added to cart" });
+  } catch (error) {
+    console.error("Error updating cart:", error);
+    res.status(500).send("Error updating cart.");
+  }
+});
+
+app.delete('/remove-item-from-cart/:id', async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const scoreId = req.params.id;
+
+    // Find the user's cart and remove the scoreId from the score_ids array
+    const cart = await CartModel.findOneAndUpdate(
+      { user_id: userId },
+      { $pull: { score_ids: scoreId } },
+      { new: true } // Return the updated cart
+    );
+
+    if (!cart) {
+      return res.status(404).json({ message: "No cart found for the user." });
+    }
+
+    res.json(cart);
+  } catch (error) {
+    console.error("Error removing item from cart:", error);
+    res.status(500).send("Error removing item from cart.");
+  }
+});
+
+
+app.get('/music-score/:id', async (req, res) => {
+  try {
+    const scoreId = req.params.id;
+
+    // Find the music score by its ID
+    const musicScore = await MusicScoreModel.findById(scoreId);
+
+    if (!musicScore) {
+      return res.status(404).json({ message: "Music score not found" });
+    }
+
+    res.json(musicScore);
+  } catch (error) {
+    console.error("Error fetching music score:", error);
+    res.status(500).send("Error fetching music score.");
+  }
+});
+
+
+app.get("/music-scores", async (req, res) => {
+  try {
+    const scoreIds = req.query.scoreIds;
+
+    if (!scoreIds) {
+      return res.status(400).json({ message: "No score IDs provided" });
+    }
+
+    let scoreIdArray;
+
+    if (Array.isArray(scoreIds)) {
+      scoreIdArray = scoreIds;
+    } else if (typeof scoreIds === "string") {
+      scoreIdArray = scoreIds.split(",");
+    } else {
+      return res.status(400).json({ message: "Invalid score IDs format" });
+    }
+
+    const musicScores = await MusicScoreModel.find({
+      _id: { $in: scoreIdArray },
+    });
+
+    if (musicScores.length === 0) {
+      return res.status(404).json({ message: "No music scores found" });
+    }
+
+    res.json(musicScores);
+  } catch (error) {
+    console.error("Error fetching music scores:", error);
+    res.status(500).send("Error fetching music scores.");
   }
 });
 
@@ -487,8 +652,32 @@ app.get("/popular-music-scores", async (req, res) => {
   }
 });
 
-app.post("/favourites", async (req, res) => {
-  const { userId, musicScoreId } = req.body;
+app.get("/user-liked-scores", async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    
+
+    const user = await UserModel.findById(userId);
+
+    
+
+    if (!user || !user.favorites || user.favorites.length === 0) {
+      return res.status(404).json({ message: "No liked scores found" });
+    }
+
+    const likedScores = await MusicScoreModel.find({ _id: { $in: user.favorites } });
+
+    res.json(likedScores);
+  } catch (error) {
+    console.error("Error fetching liked music scores:", error);
+    res.status(500).json({ message: "Error fetching liked music scores." });
+  }
+});
+
+app.post("/set-favorites", async (req, res) => {
+  const userId = req.session.userId;
+  const { musicScoreId } = req.body;
 
   try {
     const user = await UserModel.findById(userId);
@@ -542,8 +731,7 @@ let cachedRecommendations = {};
 
 app.get("/recommendations", async (req, res) => {
   try {
-    const sessionId = req.sessionID; // Use session ID instead of user ID
-    console.log("Session ID:", sessionId);
+    const sessionId = req.sessionID;
 
     if (!req.session.userId) {
       return res.status(401).json({ error: "User not logged in" });
@@ -560,7 +748,8 @@ app.get("/recommendations", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const { genre_preferences, composer_preferences, emotion_preferences } = user;
+    const { genre_preferences, composer_preferences, emotion_preferences } =
+      user;
 
     // Fetch music scores based on user's preferences
     let allScores = await MusicScoreModel.find({
@@ -589,7 +778,6 @@ app.get("/recommendations", async (req, res) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");

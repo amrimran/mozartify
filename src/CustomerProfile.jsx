@@ -1,32 +1,20 @@
 import React, { useEffect, useState } from "react";
 import {
   Box,
-  List,
-  ListItemIcon,
-  ListItemText,
   Avatar,
   Typography,
-  ListItemButton,
   Container,
   IconButton,
   TextField,
   Button,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import {
-  Home as HomeIcon,
-  LibraryBooks as LibraryBooksIcon,
-  Favorite as FavoriteIcon,
-  ShoppingCart as ShoppingCartIcon,
-  Feedback as FeedbackIcon,
-  AccountCircle as AccountCircleIcon,
-  ExitToApp as ExitToAppIcon,
-} from "@mui/icons-material";
 
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
-import SidebarMozartifyLogo from "./assets/mozartify.png";
+import CustomerSidebar from "./CustomerSidebar";
+
 
 axios.defaults.withCredentials = true;
 
@@ -87,28 +75,6 @@ export default function CustomerProfile() {
     }
   };
 
-  const navigationItems = [
-    { path: "/customer-homepage", label: "My Dashboard", icon: <HomeIcon /> },
-    {
-      path: "/customer-library",
-      label: "Libraries",
-      icon: <LibraryBooksIcon />,
-    },
-    {
-      path: "/customer-favourites",
-      label: "Favourites",
-      icon: <FavoriteIcon />,
-    },
-    { path: "/customer-mycart", label: "My Cart", icon: <ShoppingCartIcon /> },
-    { path: "/customer-inbox", label: "Inbox", icon: <FeedbackIcon /> },
-    {
-      path: "/customer-profile",
-      label: "User Profile",
-      icon: <AccountCircleIcon />,
-    },
-    { path: "/login", label: "Logout", icon: <ExitToAppIcon /> },
-  ];
-
   const GlobalStyle = createGlobalStyle`
   body {
     margin: 0;
@@ -121,42 +87,7 @@ export default function CustomerProfile() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh" }}>
-        <Box sx={{ width: 225, bgcolor: "#E4DCC8", p: 2 }}>
-          <Box
-            sx={{
-              textAlign: "center",
-              mb: 4,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              pt: 5,
-            }}
-          >
-            <img
-              src={SidebarMozartifyLogo}
-              alt="MozartifyIcon"
-              style={{ maxWidth: "100%", maxHeight: "48px" }}
-            />
-
-            <Typography variant="h6" sx={{ mt: 2, fontFamily: "Montserrat" }}>
-              Mozartify
-            </Typography>
-          </Box>
-          <List>
-            {navigationItems.map((item) => (
-              <Link
-                to={item.path}
-                style={{ textDecoration: "none" }}
-                key={item.path}
-              >
-                <ListItemButton>
-                  <ListItemIcon>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.label} />
-                </ListItemButton>
-              </Link>
-            ))}
-          </List>
-        </Box>
+      <CustomerSidebar />
         <Box sx={{ flexGrow: 1, p: 3 }}>
           <Box
             sx={{

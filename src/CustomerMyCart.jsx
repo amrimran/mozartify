@@ -1,52 +1,81 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
-import {
-  Box,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Avatar,
-  Typography,
-  ListItemButton,
-} from "@mui/material";
-import HomeIcon from "@mui/icons-material/Home";
-import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import FeedbackIcon from "@mui/icons-material/Feedback";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import ExitToAppIcon from "@mui/icons-material/ExitToApp";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { Box, Divider, Typography, Avatar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Button, Paper } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import CustomerSidebar from './CustomerSidebar';
 import { createGlobalStyle } from "styled-components";
-import SidebarMozartifyLogo from "./assets/mozartify.png";
 
 axios.defaults.withCredentials = true;
 
 export default function CustomerMyCart() {
-  const username = "Nifail Amsyar";
+  const [user, setUser] = useState(null);
+  const [cartItemIDs, setCartItemIDs] = useState([]);
+  const [cartItems, setCartItems] = useState([]);
+  const navigate = useNavigate();
 
-  const navigationItems = [
-    { path: "/customer-homepage", label: "My Dashboard", icon: <HomeIcon /> },
-    {
-      path: "/customer-library",
-      label: "Libraries",
-      icon: <LibraryBooksIcon />,
-    },
-    {
-      path: "/customer-favourites",
-      label: "Favourites",
-      icon: <FavoriteIcon />,
-    },
-    { path: "/customer-mycart", label: "My Cart", icon: <ShoppingCartIcon /> },
-    { path: "/customer-inbox", label: "Inbox", icon: <FeedbackIcon /> },
-    {
-      path: "/customer-profile",
-      label: "Customer Profile",
-      icon: <AccountCircleIcon />,
-    },
-    { path: "/login", label: "Logout", icon: <ExitToAppIcon /> },
-  ];
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/current-user");
+        setUser(response.data);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+        navigate("/login");
+      }
+    };
+    fetchUser();
+  }, [navigate]);
+
+  const fetchCartItemIDs = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/user-cart");
+      const CartScoreIds = response.data.map((items) => items.score_id);
+      setCartItemIDs(CartScoreIds);
+    } catch (error) {
+      console.error("Error fetching user's cart:", error);
+      navigate("/login");
+    }
+  };
+
+  useEffect(() => {
+    fetchCartItemIDs();
+  }, []);
+
+  const fetchCartItems = async () => {
+    try {
+      if (cartItemIDs.length > 0) {
+        const detailsPromises = cartItemIDs.map((scoreId) =>
+          axios.get(`http://localhost:3000/music-score/${scoreId}`)
+        );
+        const detailsResponses = await Promise.all(detailsPromises);
+        const cartScores = detailsResponses.map((response) => response.data);
+        setCartItems(cartScores);
+      } else {
+        setCartItems([]); // Clear the cart items if no IDs
+      }
+    } catch (error) {
+      console.error("Error fetching user's cart items:", error);
+      navigate("/login");
+    }
+  };
+
+  useEffect(() => {
+    fetchCartItems();
+  }, [cartItemIDs]);
+
+  const subtotal = cartItems.length > 0
+    ? cartItems.reduce((sum, item) => sum + item.ms_price, 0)
+    : 0;
+
+  const handleRemoveItem = async (id) => {
+    try {
+      await axios.delete(`http://localhost:3000/remove-item-from-cart/${id}`);
+      await fetchCartItemIDs(); // Re-fetch cart IDs after removal
+    } catch (error) {
+      console.error("Error removing item from cart:", error);
+    }
+  };
 
   const GlobalStyle = createGlobalStyle`
   body {
@@ -59,66 +88,61 @@ export default function CustomerMyCart() {
   return (
     <>
       <GlobalStyle />
-      <Box sx={{ display: "flex", height: "100vh" }}>
-        <Box sx={{ width: 225, bgcolor: "#E4DCC8", p: 2 }}>
-          <Box
-            sx={{
-              textAlign: "center",
-              mb: 4,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              pt: 5,
-            }}
-          >
-            <img
-              src={SidebarMozartifyLogo}
-              alt="MozartifyIcon"
-              style={{ maxWidth: "100%", maxHeight: "48px" }}
-            />
-
-            <Typography variant="h6" sx={{ mt: 2, fontFamily: "Montserrat" }}>
-              Mozartify
-            </Typography>
-          </Box>
-          <List>
-            {navigationItems.map((item) => (
-              <Link
-                to={item.path}
-                style={{ textDecoration: "none" }}
-                key={item.path}
-              >
-                <ListItemButton>
-                  <ListItemIcon>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.label} />
-                </ListItemButton>
-              </Link>
-            ))}
-          </List>
-        </Box>
-        <Box sx={{ flexGrow: 1, p: 3 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-            }}
-          >
-            <Typography variant="h6">Welcome to Mozartify</Typography>
+      <Box display="flex">
+        <CustomerSidebar />
+        <Box flex={1} padding={2}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Typography variant="h5">My Cart</Typography>
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="body1" sx={{ mr: 2 }}>
-                {username}
-              </Typography>
-              <Avatar>{username[0]}</Avatar>
+              {user ? (
+                <>
+                  <Typography variant="body1" sx={{ mr: 2 }}>
+                    {user.username}
+                  </Typography>
+                  <Avatar>{user.username.charAt(0)}</Avatar>
+                </>
+              ) : (
+                <>
+                  <Typography variant="body1" sx={{ mr: 2 }}>
+                    Loading...
+                  </Typography>
+                  <Avatar></Avatar>
+                </>
+              )}
             </Box>
           </Box>
-          <Box>
-            <Typography variant="h4">My Cart</Typography>
-            <Typography variant="body1" sx={{ mt: 2 }}>
-              Welcome to your dashboard. Here you can manage your libraries,
-              favourites, cart, and more.
-            </Typography>
+          <Divider />
+          <TableContainer component={Paper} sx={{ mt: 2 }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>Title</TableCell>
+                  <TableCell>Composer</TableCell>
+                  <TableCell>Price</TableCell>
+                  <TableCell>Action</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {cartItems.map((item, index) => (
+                  <TableRow key={item._id}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{item.ms_title}</TableCell>
+                    <TableCell>{item.ms_composer}</TableCell>
+                    <TableCell>RM {item.ms_price.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <IconButton onClick={() => handleRemoveItem(item._id)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
+            <Typography variant="h6">Subtotal: ${subtotal.toFixed(2)}</Typography>
+            <Button variant="contained" color="primary">Pay</Button>
           </Box>
         </Box>
       </Box>

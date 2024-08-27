@@ -155,7 +155,7 @@ export default function CustomerAddNewFeedback() {
   const navigationItems = [
     { path: "/customer-homepage", label: "My Dashboard", icon: <Home /> },
     { path: "/customer-library", label: "Libraries", icon: <LibraryBooks /> },
-    { path: "/customer-favourites", label: "Favourites", icon: <Favorite /> },
+    { path: "/customer-favorites", label: "Favorites", icon: <Favorite /> },
     { path: "/customer-mycart", label: "My Cart", icon: <ShoppingCart /> },
     { path: "/customer-inbox", label: "Inbox", icon: <Feedback /> },
     {

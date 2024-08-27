@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import Fuse from "fuse.js";
 import { ref, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebase";
 import "slick-carousel/slick/slick.css";
@@ -22,16 +21,15 @@ import {
   Card,
   CardContent,
   CardMedia,
-  Tooltip,
-  Grid,
 } from "@mui/material";
-
+import Favorite from "@mui/icons-material/Favorite";
 import {
   PlayArrow,
   FilterAlt,
   ArrowBack,
   ArrowForward,
 } from "@mui/icons-material";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { Link, useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import CustomerSidebar from "./CustomerSidebar";
@@ -41,75 +39,167 @@ axios.defaults.withCredentials = true;
 export default function CustomerHomepage() {
   const [user, setUser] = useState(null);
 
+  const [unfilteredSearchedScores, setUnfilteredSearchedScores] = useState([]);
+  const [purchasedScores, setPurchasedScores] = useState([]);
+  const [addedToCartScores, setAddedToCartScores] = useState([]);
+  const [searchedScores, setSearchedScores] = useState([]);
+  const [filteredScores, setFilteredScores] = useState([]);
+  const [isFiltered, setIsFiltered] = useState(false);
+
   const [popularScores, setPopularScores] = useState([]);
   const [recommendedScores, setRecommendations] = useState([]);
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [favorites, setFavorites] = useState([]);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [genre, setGenre] = useState("");
   const [composer, setComposer] = useState("");
   const [instrumentation, setInstrumentation] = useState("");
-  const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(100);
+  const [emotion, setEmotion] = useState("");
 
   const navigate = useNavigate();
   const scrollContainerRef = useRef(null);
   const scrollContainerRef2 = useRef(null);
-
-  const options = {
-    keys: [
-      "ms_title",
-      "ms_genre",
-      "ms_composer",
-      "ms_artist",
-      "ms_instrumentation",
-    ],
-    threshold: 0.3,
-  };
-
-  const EllipsisTypography = ({ title }) => {
-    const [isOverflowed, setIsOverflowed] = useState(false);
-    const textRef = useRef(null);
-
-    useEffect(() => {
-      const element = textRef.current;
-      if (element) {
-        setIsOverflowed(element.scrollWidth > element.clientWidth);
-      }
-    }, [title]);
-
-    return (
-      <Tooltip title={title} disableHoverListener={!isOverflowed}>
-        <Typography
-          ref={textRef}
-          variant="body1"
-          sx={{
-            textAlign: "center",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {title}
-        </Typography>
-      </Tooltip>
-    );
-  };
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const response = await axios.get("http://localhost:3000/current-user");
         setUser(response.data);
+        setFavorites(response.data.favorites);
       } catch (error) {
         console.error("Error fetching current user:", error);
         navigate("/login");
       }
     };
-
     fetchUser();
   }, []);
+
+  useEffect(() => {
+    const fetchPurchasedScores = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:3000/user-purchases"
+        );
+
+        const purchasedScoreIds = response.data.map(
+          (purchase) => purchase.score_id
+        );
+
+        setPurchasedScores(purchasedScoreIds);
+      } catch (error) {
+        console.error("Error fetching user's purchased scores:", error);
+        navigate("/login");
+      }
+    };
+    fetchPurchasedScores();
+  }, []);
+
+  useEffect(() => {
+    const fetchAddedToCartScores = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/user-cart");
+
+        const AddedScoreIds = response.data.map(
+          (added) => added.score_id
+        );
+
+        setAddedToCartScores(AddedScoreIds);
+      } catch (error) {
+        console.error("Error fetching user's cart:", error);
+        navigate("/login");
+      }
+    };
+    fetchAddedToCartScores();
+  }, []);
+
+  const addToCart = async (scoreId) => {
+    try {
+      await axios.post("http://localhost:3000/add-to-cart", {
+        musicScoreId: scoreId,
+      });
+      setAddedToCartScores([...addedToCartScores, scoreId]);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (searchQuery) {
+      const fetchSearchedScores = async () => {
+        try {
+          const response = await axios.get(
+            "http://localhost:3000/search-music-scores",
+            {
+              params: { query: searchQuery },
+            }
+          );
+          setUnfilteredSearchedScores(response.data);
+          setSearchedScores(response.data);
+        } catch (error) {
+          console.error("Error fetching searched scores:", error);
+        }
+      };
+
+      fetchSearchedScores();
+    } else {
+      setUnfilteredSearchedScores([]);
+      setSearchedScores([]);
+    }
+  }, [searchQuery]);
+
+  const applyFilters = (scores) => {
+    return scores.filter((score) => {
+      return (
+        (!genre || score.ms_genre === genre) &&
+        (!composer ||
+          score.ms_composer.toLowerCase().includes(composer.toLowerCase())) &&
+        (!emotion ||
+          score.ms_emotion.toLowerCase().includes(composer.toLowerCase())) &&
+        (!instrumentation ||
+          score.ms_instrumentation
+            .toLowerCase()
+            .includes(instrumentation.toLowerCase()))
+      );
+    });
+  };
+
+  const clearFilters = () => {
+    setGenre("");
+    setComposer("");
+    setEmotion("");
+    setInstrumentation("");
+    setIsFiltered(false);
+    setSearchedScores(unfilteredSearchedScores);
+  };
+
+  const handleFilterRequest = async () => {
+    const hasFilter = genre || composer || instrumentation || emotion;
+
+    if (hasFilter) {
+      setIsFiltered(true);
+
+      try {
+        if (!searchQuery) {
+          const response = await axios.get(
+            "http://localhost:3000/filter-music-scores",
+            {
+              params: { genre, composer, instrumentation, emotion },
+            }
+          );
+          setFilteredScores(response.data);
+        } else {
+          const filteredSearchResults = applyFilters(searchedScores);
+          setSearchedScores(filteredSearchResults);
+        }
+      } catch (error) {
+        console.error("Error fetching filtered scores:", error);
+      }
+    } else {
+      setIsFiltered(false);
+    }
+  };
 
   useEffect(() => {
     axios
@@ -176,57 +266,16 @@ export default function CustomerHomepage() {
     }
   };
 
-
-  const fuse = new Fuse(popularScores, options);
-
-  const filteredScores = searchQuery
-    ? fuse.search(searchQuery).map((result) => result.item)
-    : popularScores;
-
-  const filterByGenre = (score) => {
-    const result = !genre || score.ms_genre === genre;
-    return result;
+  const toggleFavorite = async (musicScoreId) => {
+    try {
+      const response = await axios.post("http://localhost:3000/set-favorites", {
+        musicScoreId,
+      });
+      setFavorites(response.data.favorites);
+    } catch (error) {
+      console.error("Error updating favorites:", error);
+    }
   };
-
-  const filterByComposer = (score) => {
-    const result =
-      !composer ||
-      score.ms_composer.toLowerCase().includes(composer.toLowerCase());
-    return result;
-  };
-
-  const filterByInstrumentation = (score) => {
-    const result =
-      !instrumentation ||
-      score.ms_instrumentation
-        .toLowerCase()
-        .includes(instrumentation.toLowerCase());
-    return result;
-  };
-
-  const filterByPrice = (score) =>
-    score.ms_price >= minPrice && score.ms_price <= maxPrice;
-
-  const applyFilters = (scores) => {
-    return scores.filter((score) => {
-      return (
-        filterByGenre(score) &&
-        filterByComposer(score) &&
-        filterByInstrumentation(score) &&
-        filterByPrice(score)
-      );
-    });
-  };
-
-  const clearFilters = () => {
-    setGenre("");
-    setComposer("");
-    setInstrumentation("");
-    setMinPrice(0);
-    setMaxPrice(100);
-  };
-
-  const filteredAndSearchedScores = applyFilters(filteredScores);
 
   const GlobalStyle = createGlobalStyle`
     body {
@@ -239,7 +288,7 @@ export default function CustomerHomepage() {
   const scrollLeft = () => {
     const container = scrollContainerRef.current;
     if (container.scrollLeft === 0) {
-      container.scrollLeft = container.scrollWidth / 3; // Move to the end of the second set of items
+      container.scrollLeft = container.scrollWidth / 3;
     }
     container.scrollBy({
       left: -300,
@@ -317,7 +366,7 @@ export default function CustomerHomepage() {
               >
                 <InputBase
                   sx={{ ml: 1, flex: 1 }}
-                  placeholder="Look for music scores here..."
+                  placeholder="Look for all music scores here..."
                   inputProps={{ "aria-label": "search music scores" }}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -336,115 +385,143 @@ export default function CustomerHomepage() {
                 open={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
               >
-                <Box sx={{ width: 400, p: 2 }}>
-                  <Typography variant="h6" sx={{ mb: 2 }}>
-                    Filter Options
-                  </Typography>
+                <Box
+                  sx={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    p: 2,
+                    width: 300,
+                  }}
+                >
+                  <Box>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      Filter Options
+                    </Typography>
 
-                  {/* Genre Filter */}
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Genre</InputLabel>
-                    <Select
-                      label="Genre"
-                      value={genre}
-                      onChange={(e) => setGenre(e.target.value)}
+                    <FormControl fullWidth sx={{ mb: 2 }}>
+                      <InputLabel>Genre</InputLabel>
+                      <Select
+                        label="Genre"
+                        value={genre}
+                        onChange={(e) => setGenre(e.target.value)}
+                      >
+                        <MenuItem value="All">All</MenuItem>
+                        <MenuItem value="Classical">Classical</MenuItem>
+                        <MenuItem value="Jazz">Jazz</MenuItem>
+                        <MenuItem value="Pop">Pop</MenuItem>
+                        <MenuItem value="Ragtime">Ragtime</MenuItem>
+                      </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth sx={{ mb: 2 }}>
+                      <InputLabel>Composer</InputLabel>
+                      <Select
+                        label="Composer"
+                        value={composer}
+                        onChange={(e) => setComposer(e.target.value)}
+                      >
+                        <MenuItem value="All">All</MenuItem>
+                        <MenuItem value="Mozart">Mozart</MenuItem>
+                        <MenuItem value="Beethoven">Beethoven</MenuItem>
+                        <MenuItem value="Gershwin">Gershwin</MenuItem>
+                        <MenuItem value="Chopin">Chopin</MenuItem>
+                        <MenuItem value="Debussy">Debussy</MenuItem>
+                        <MenuItem value="Scott Joplin">Scott Joplin</MenuItem>
+                        <MenuItem value="Erik Satie">Erik Satie</MenuItem>
+                        <MenuItem value="Vivaldi">Vivaldi</MenuItem>
+                        <MenuItem value="Pacheibel">Pacheibel</MenuItem>
+                        <MenuItem value="Ravel">Ravel</MenuItem>
+                        <MenuItem value="Liszt">Liszt</MenuItem>
+                        <MenuItem value="Rimsky-Korsakov">
+                          Rimsky-Korsakov
+                        </MenuItem>
+                        <MenuItem value="Tchaikovsky">Tchaikovsky</MenuItem>
+                        <MenuItem value="Holst">Holst</MenuItem>
+                      </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth sx={{ mb: 2 }}>
+                      <InputLabel>Emotion</InputLabel>
+                      <Select
+                        label="Emotion"
+                        value={emotion}
+                        onChange={(e) => setEmotion(e.target.value)}
+                      >
+                        <MenuItem value="All">All</MenuItem>
+                        <MenuItem value="Happy">Happy</MenuItem>
+                        <MenuItem value="Relaxed">Relaxed</MenuItem>
+                        <MenuItem value="Melancholic">Melancholic</MenuItem>
+                        <MenuItem value="Peaceful">Peaceful</MenuItem>
+                        <MenuItem value="Energetic">Energetic</MenuItem>
+                        <MenuItem value="Joyful">Joyful</MenuItem>
+                        <MenuItem value="Majestic">Majestic</MenuItem>
+                      </Select>
+                    </FormControl>
+
+                    <TextField
+                      label="Instrumentation"
+                      variant="outlined"
+                      fullWidth
+                      sx={{ mb: 2 }}
+                      value={instrumentation}
+                      onChange={(e) => setInstrumentation(e.target.value)}
+                    />
+
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        mt: 2,
+                        borderColor: "#3B3183",
+                        color: "#3B3183",
+                        "&:hover": {
+                          borderColor: "#3B3183",
+                          color: "#FFFFFF",
+                          backgroundColor: "#3B3183",
+                        },
+                      }}
+                      onClick={handleFilterRequest}
                     >
-                      <MenuItem value="">All</MenuItem>
-                      <MenuItem value="Classical">Classical</MenuItem>
-                      <MenuItem value="Jazz">Jazz</MenuItem>
-                      <MenuItem value="Pop">Pop</MenuItem>
-                      {/* Add more genres as needed */}
-                    </Select>
-                  </FormControl>
+                      APPLY FILTERS
+                    </Button>
 
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Composer</InputLabel>
-                    <Select
-                      label="Composer"
-                      value={composer}
-                      onChange={(e) => setComposer(e.target.value)}
-                    >
-                      <MenuItem value="">All</MenuItem>
-                      <MenuItem value="Mozart">Mozart</MenuItem>
-                      <MenuItem value="Beethoven">Beethoven</MenuItem>
-                      <MenuItem value="Gershwin">Gershwin</MenuItem>
-                      <MenuItem value="Chopin">Chopin</MenuItem>
-                      <MenuItem value="Debussy">Debussy</MenuItem>
-                      <MenuItem value="Scott Joplin">Scott Joplin</MenuItem>
-                      <MenuItem value="Erik Satie">Erik Satie</MenuItem>
-                      <MenuItem value="Vivaldi">Vivaldi</MenuItem>
-                      <MenuItem value="Pacheibel">Pacheibel</MenuItem>
-                      <MenuItem value="Ravel">Ravel</MenuItem>
-                      <MenuItem value="Liszt">Liszt</MenuItem>
-                      <MenuItem value="Rimsky-Korsakov">
-                        Rimsky-Korsakov
-                      </MenuItem>
-                      <MenuItem value="Tchaikovsky">Tchaikovsky</MenuItem>
-                      <MenuItem value="Holst">Holst</MenuItem>
-                    </Select>
-                  </FormControl>
-
-                  <TextField
-                    label="Instrumentation"
-                    variant="outlined"
-                    fullWidth
-                    sx={{ mb: 2 }}
-                    value={instrumentation}
-                    onChange={(e) => setInstrumentation(e.target.value)}
-                  />
-
-                  <TextField
-                    label="Min Price"
-                    variant="outlined"
-                    fullWidth
-                    type="number"
-                    sx={{ mb: 2 }}
-                    value={minPrice}
-                    onChange={(e) => setMinPrice(e.target.value)}
-                  />
-                  <TextField
-                    label="Max Price"
-                    variant="outlined"
-                    fullWidth
-                    type="number"
-                    sx={{ mb: 2 }}
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
-                  />
-
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    sx={{
-                      mt: 4,
-                      backgroundColor: "#483C32",
-                      color: "#fff",
-                      "&:hover": {
-                        backgroundColor: "#3c312a",
-                      },
-                    }}
-                    onClick={() => setIsDrawerOpen(false)}
-                  >
-                    CLOSE FILTERS
-                  </Button>
-
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    sx={{
-                      mt: 2,
-                      borderColor: "#C44131",
-                      color: "#C44131",
-                      "&:hover": {
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        mt: 2,
                         borderColor: "#C44131",
-                        color: "#FFFFFF",
-                        backgroundColor: "#C44131",
-                      },
-                    }}
-                    onClick={clearFilters}
-                  >
-                    CLEAR FILTERS
-                  </Button>
+                        color: "#C44131",
+                        "&:hover": {
+                          borderColor: "#C44131",
+                          color: "#FFFFFF",
+                          backgroundColor: "#C44131",
+                        },
+                      }}
+                      onClick={clearFilters}
+                    >
+                      CLEAR FILTERS
+                    </Button>
+                  </Box>
+
+                  <Box sx={{ mt: "auto" }}>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      sx={{
+                        mb: 2, // Margin at the bottom
+                        backgroundColor: "#483C32",
+                        color: "#fff",
+                        "&:hover": {
+                          backgroundColor: "#3c312a",
+                        },
+                      }}
+                      onClick={() => setIsDrawerOpen(false)}
+                    >
+                      CLOSE FILTERS
+                    </Button>
+                  </Box>
                 </Box>
               </Drawer>
             </Box>
@@ -471,13 +548,13 @@ export default function CustomerHomepage() {
           <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
             <Box display="flex" alignItems="center" mb={2}>
               <Typography variant="h4">
-                {searchQuery ? "Search Result" : "Dashboard"}
+                {searchQuery || isFiltered ? "Search Result" : "Dashboard"}
               </Typography>
             </Box>
             {searchQuery ? (
               <Box>
-                {filteredAndSearchedScores.length > 0 ? (
-                  filteredAndSearchedScores.map((score) => (
+                {searchedScores.length > 0 ? (
+                  searchedScores.map((score) => (
                     <Box
                       key={score._id}
                       sx={{ display: "flex", alignItems: "center", mb: 2 }}
@@ -489,7 +566,46 @@ export default function CustomerHomepage() {
                           {score.ms_composer} | Artist: {score.ms_artist}
                         </Typography>
                       </Box>
+
+                      {!purchasedScores.includes(score._id) &&
+                        !addedToCartScores.includes(score._id) && (
+                          <IconButton onClick={() => addToCart(score._id)}>
+                            <ShoppingCartIcon />
+                          </IconButton>
+                        )}
+
+                      <IconButton onClick={() => toggleFavorite(score._id)}>
+                        <Favorite
+                          color={
+                            favorites.includes(score._id) ? "error" : "disabled"
+                          }
+                        />
+                      </IconButton>
                       <IconButton>
+                        <PlayArrow />
+                      </IconButton>
+                    </Box>
+                  ))
+                ) : (
+                  <Typography variant="body2">No results found</Typography>
+                )}
+              </Box>
+            ) : isFiltered ? (
+              <Box>
+                {filteredScores.length > 0 ? (
+                  filteredScores.map((score) => (
+                    <Box
+                      key={score._id}
+                      sx={{ display: "flex", alignItems: "center", mb: 2 }}
+                    >
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="h6">{score.ms_title}</Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          Genre: {score.ms_genre} | Composer:{" "}
+                          {score.ms_composer} | Artist: {score.ms_artist}
+                        </Typography>
+                      </Box>
+                      <IconButton onClick={() => toggleFavorite(score._id)}>
                         <Favorite
                           color={
                             favorites.includes(score._id) ? "error" : "disabled"
@@ -642,7 +758,7 @@ export default function CustomerHomepage() {
                       }}
                     >
                       <Box sx={{ width: "calc(100% - 60px)" }}>
-                      <Box
+                        <Box
                           sx={{
                             position: "relative",
                             display: "flex",

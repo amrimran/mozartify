@@ -7,7 +7,7 @@ import ResetPassword from "./ResetPassword";
 import Home from "./Home";
 import CustomerHomepage from "./CustomerHomepage";
 import CustomerLibrary from "./CustomerLibrary";
-import CustomerFavourites from "./CustomerFavourites";
+import CustomerFavorites from "./CustomerFavorites";
 import CustomerMyCart from "./CustomerMyCart";
 import CustomerAddNewFeedback from "./CustomerAddNewFeedback";
 import CustomerProfile from "./CustomerProfile";
@@ -38,12 +38,12 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/customer-homepage" element={<CustomerHomepage />} />
         <Route path="/customer-library" element={<CustomerLibrary />} />
-        <Route path="/customer-favourites" element={<CustomerFavourites />} />
+        <Route path="/customer-favorites" element={<CustomerFavorites />} />
         <Route path="/customer-mycart" element={<CustomerMyCart />} />
         <Route path="/customer-inbox" element={<CustomerInbox />} />
         <Route path="/customer-profile" element={<CustomerProfile />} />
         <Route path="/customer-library/customer-music-score-view/:id" element={<CustomerMusicScoreView />} />
-        <Route path="/customer-favourites/customer-music-score-view/:id" element={<CustomerMusicScoreView />} />
+        <Route path="/customer-favorites/customer-music-score-view/:id" element={<CustomerMusicScoreView />} />
         <Route path="/customer-music-score-view/:id" element={<CustomerMusicScoreView />} />
         <Route path="/customer-inbox/customer-add-new-feedback" element={<CustomerAddNewFeedback />} />
         <Route path="/customer-profile" element={<CustomerProfile />} />

@@ -3,9 +3,9 @@ const { MongoClient } = require("mongodb");
 
 const uri = process.env.DB_URI;
 const dbName = "mozartify";
-const collectionName = "musicscores"
+const collectionName = "carts";
 
-async function addFields() {
+async function addCollection() {
   let client;
 
   try {
@@ -14,18 +14,16 @@ async function addFields() {
     const db = client.db(dbName);
     const collection = db.collection(collectionName);
 
-    const updateResult = await collection.updateMany(
-      {},
-      [
-        {
-          $set: {
-            view_count: { $toInt: { $floor: { $multiply: [{ $rand: {} }, 500] } } }
-          }
-        }
-      ]
-    );
+    const cartDocuments = [
+      {
+        user_id: "66a06ee509c9d52ac842087f",
+        music_score_ids: ["66642542f38eab64210f9ada", "66642542f38eab64210f9ae0"]
+      },
+    ];
 
-    console.log(`Documents updated: ${updateResult.modifiedCount}`);
+    const insertResult = await collection.insertMany(cartDocuments);
+
+    console.log(`Documents inserted: ${insertResult.insertedCount}`);
   } catch (err) {
     console.error(`Error: ${err}`);
   } finally {
@@ -35,6 +33,5 @@ async function addFields() {
   }
 }
 
-addFields();
-
+addCollection();
 
