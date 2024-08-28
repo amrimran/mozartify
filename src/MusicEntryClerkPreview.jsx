@@ -78,29 +78,40 @@ export default function MusicEntryClerkPreview() {
   return (
     <>
       <GlobalStyle />
-      <Box sx={{ display: "flex", minHeight: "100vh" }}>
-        <ClerkSidebar active="upload" /> {/* Pass the active prop to make the upload tab active */}
-        <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column" }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-            }}
-          >
-            <Typography variant="h4" gutterBottom sx={{ fontFamily: 'Montserrat', fontWeight: 'bold', mt: 4, ml:1 }}>
-              Preview Music Scores
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="body1" sx={{ mr: 2, fontFamily: "Montserrat" }}>
-                {user ? user.username : 'Loading...'}
-              </Typography>
-              <Avatar>{user ? user.username[0] : 'U'}</Avatar>
-            </Box>
-          </Box>
-          <Divider sx={{ my: 2 }} />  {/* This is the line for the divider */}
-          <Box
+<Box sx={{ display: "flex", minHeight: "100vh" }}>
+  <Box
+    sx={{
+      width: 225,
+      bgcolor: "#3B3183",
+      flexShrink: 0, // Prevent shrinking
+      overflowY: "auto", // Add scroll if content overflows
+    }}
+  >
+    <ClerkSidebar active="upload" /> {/* Sidebar with fixed width and scroll */}
+  </Box>
+  <Box sx={{ flexGrow: 1, p: 3, pl: 5, display: "flex", flexDirection: "column" }}>
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        mb: 3,
+      }}
+    >
+      <Typography variant="h4" gutterBottom sx={{ fontFamily: 'Montserrat', fontWeight: 'bold', mt: 4, ml:1 }}>
+        Preview Music Scores
+      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center" }}>
+        <Typography variant="body1" sx={{ mr: 2, fontFamily: "Montserrat" }}>
+          {user ? user.username : 'Loading...'}
+        </Typography>
+        <Avatar>{user ? user.username[0] : 'U'}</Avatar>
+      </Box>
+    </Box>
+    <Divider sx={{ my: 2 }} />  {/* This is the line for the divider */}
+    <Box
+
+
             sx={{
               mb: 3,
               textAlign: "center",

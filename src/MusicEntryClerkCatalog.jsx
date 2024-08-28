@@ -208,7 +208,7 @@ export default function MusicEntryClerkCatalog() {
   
 
   const handleNext = () => {
-    if (tabIndex <= 8) {
+    if (tabIndex <= 9) {
       setTabIndex((prevIndex) => prevIndex + 1);
     }
   };
@@ -316,6 +316,8 @@ export default function MusicEntryClerkCatalog() {
         <Tab label="Performance" sx={{ fontFamily: "Montserrat" }} />
         <Tab label="Related Work" sx={{ fontFamily: "Montserrat" }} />
         <Tab label="Cover Image" sx={{ fontFamily: "Montserrat" }} />
+        <Tab label="MP3 File" sx={{ fontFamily: "Montserrat" }} />
+
 
       </Tabs>
       <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
@@ -1418,6 +1420,75 @@ export default function MusicEntryClerkCatalog() {
     </Grid>
   </>
 )}
+{tabIndex === 10 && (
+  <>
+    <Grid item xs={12} sm={8}>
+      <Card
+        variant="outlined"
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          p: 3,
+          borderRadius: 2,
+          borderColor: "#999",
+          boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)', // Subtle shadow for depth
+        }}
+      >
+        <Box 
+          sx={{ 
+            width: 180, 
+            height: 180, 
+            bgcolor: "#F0F0F0", 
+            borderRadius: '12px', 
+            marginBottom: '15px', 
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)', // Slight shadow for placeholder
+          }} 
+        >
+          <Typography
+            variant="body2"
+            sx={{ 
+              fontFamily: "Montserrat", 
+              color: "#555",
+            }}
+          >
+            No MP3 File
+          </Typography>
+        </Box>
+
+        <Button
+          variant="contained"
+          component="label"
+          sx={{
+            fontFamily: "Montserrat",
+            fontWeight: "bold",
+            color: "#FFF",
+            backgroundColor: "#3B3183",
+            borderRadius: 2,
+            width: '180px',
+            "&:hover": {
+              backgroundColor: "#444",
+            },
+            transition: 'background-color 0.3s ease', // Smooth transition for hover
+          }}
+        >
+          Upload MP3 File
+          <input
+            type="file"
+            accept=".mp3"
+            hidden
+            onChange={() => alert('MP3 file uploaded!')}
+          />
+        </Button>
+      </Card>
+    </Grid>
+  </>
+)}
+
 
 
 
@@ -1431,7 +1502,7 @@ export default function MusicEntryClerkCatalog() {
           >
             Save Metadata
           </Button>
-          {tabIndex < 9 && (
+          {tabIndex < 10 && (
             <Button
               variant="outlined"
               size="large"
