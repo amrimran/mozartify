@@ -108,6 +108,8 @@ export default function MusicEntryClerkCatalog() {
     methodOfImplementation: "",
     miscNotes: "",
     movementsSections: "",
+    mp3FileUrl: "",
+    mp3FileName: "",
     notation: "",
     numberInPublication: "",
     objectCollections: "",
@@ -202,11 +204,6 @@ export default function MusicEntryClerkCatalog() {
     }));
   };
 
-  const handleEmotion = () => {
-    alert("Emotion.pkl called! (soon)");
-  };
-  
-
   const handleNext = () => {
     if (tabIndex <= 9) {
       setTabIndex((prevIndex) => prevIndex + 1);
@@ -237,6 +234,52 @@ export default function MusicEntryClerkCatalog() {
       alert("Please select a cover image to upload.");
     }
   };
+
+  // Handle MP3 file upload and prediction
+const handleMp3FileChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) {
+    alert("Please select an MP3 file.");
+    return;
+  }
+
+  try {
+    // Clear the old emotion value immediately when a new file is selected
+    setCatalogData((prevData) => ({
+      ...prevData,
+      emotion: "", // Clear previous emotion
+    }));
+
+    // Upload file to Firebase Storage
+    const storageRef = ref(storage, `mp3_file/${file.name}`);
+    await uploadBytes(storageRef, file);
+    const fileUrl = await getDownloadURL(storageRef);
+
+    // Update catalogData with Firebase URL and filename
+    setCatalogData((prevData) => ({
+      ...prevData,
+      mp3FileUrl: fileUrl,
+      mp3FileName: file.name,
+    }));
+
+    // Call prediction API with the uploaded file URL
+    const response = await axios.post("http://127.0.0.1:5173/predictFromURL", { fileUrl });
+
+    // Update catalogData with the new emotion
+    setCatalogData((prevData) => ({
+      ...prevData,
+      emotion: response.data.predicted_mood, // Update with new prediction as emotion
+    }));
+    alert("Prediction successful!");
+
+  } catch (error) {
+    console.error("Error uploading MP3 or predicting mood:", error);
+    alert("Error uploading MP3 or predicting mood");
+  }
+};
+
+  
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -304,7 +347,9 @@ export default function MusicEntryClerkCatalog() {
         value={tabIndex}
         onChange={handleTabChange}
         aria-label="catalog tabs"
-        sx={{ mb: 3, fontFamily: "Montserrat" }}
+        sx={{ mb: 3, fontFamily: "Montserrat", overflowX: "auto" }} // Enable horizontal scrolling
+        variant="scrollable" // Makes the tabs scrollable
+        scrollButtons="auto" // Shows scroll buttons when needed
       >
         <Tab label="Identification" sx={{ fontFamily: "Montserrat" }} />
         <Tab label="Creators" sx={{ fontFamily: "Montserrat" }} />
@@ -320,7 +365,8 @@ export default function MusicEntryClerkCatalog() {
 
 
       </Tabs>
-      <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+      <Box component="form" onSubmit={handleSubmit}
+       sx={{ mt: 2 }}>
         <Grid container spacing={2}>
           {tabIndex === 0 && (
             <>
@@ -778,39 +824,6 @@ export default function MusicEntryClerkCatalog() {
                   onChange={handleInputChange}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
-              <TextField
-                name="emotion"
-                label="Emotion"
-                variant="outlined"
-                fullWidth
-                sx={formStyles}
-                value={catalogData.emotion} // Assuming you have this in your catalogData state
-                onChange={handleInputChange}
-              />
-            </Grid>
-            <Grid item xs={12} display="flex" justifyContent="flex-end">
-            <Button
-              variant="contained"
-              component="label"
-              sx={{
-                fontFamily: "Montserrat",
-                fontWeight: "bold",
-                color: "#FFFFFF",
-                backgroundColor: "#3B3183",
-                borderRadius: 2,
-                width: '180px',
-                mt: -3, // Adjust the margin-top
-                "&:hover": {
-                  backgroundColor: "#2C2657",
-                },
-                transition: 'background-color 0.3s ease', // Smooth transition for hover
-              }}
-              onClick={handleEmotion}
-            >
-              Handle Emotion
-            </Button>
-          </Grid>
             </>
           )}
           {tabIndex === 4 && (
@@ -1421,44 +1434,52 @@ export default function MusicEntryClerkCatalog() {
   </>
 )}
 {tabIndex === 10 && (
-  <>
-    <Grid item xs={12} sm={8}>
+  <Grid container spacing={4} justifyContent="center">
+    {/* MP3 Upload Card */}
+    <Grid item xs={12} sm={5} md={4}>
       <Card
         variant="outlined"
         sx={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
-          p: 3,
-          borderRadius: 2,
-          borderColor: "#999",
-          boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)', // Subtle shadow for depth
+          p: 4,
+          borderRadius: 3,
+          borderColor: "#3B3183",
+          boxShadow: '0px 6px 15px rgba(0, 0, 0, 0.15)',
+          textAlign: "center",
         }}
       >
-        <Box 
-          sx={{ 
-            width: 180, 
-            height: 180, 
-            bgcolor: "#F0F0F0", 
-            borderRadius: '12px', 
-            marginBottom: '15px', 
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)', // Slight shadow for placeholder
-          }} 
-        >
-          <Typography
-            variant="body2"
-            sx={{ 
-              fontFamily: "Montserrat", 
-              color: "#555",
+        {catalogData.mp3FileUrl ? (
+          <>
+            <Typography variant="body1" sx={{ fontFamily: "Montserrat", mb: 2 }}>
+              <strong>Uploaded MP3:</strong> {catalogData.mp3FileName}
+            </Typography>
+            <audio
+              controls
+              src={catalogData.mp3FileUrl}
+              style={{ width: "100%", borderRadius: "8px", marginBottom: "15px" }}
+            />
+          </>
+        ) : (
+          <Box
+            sx={{
+              width: "100%",
+              height: 120,
+              bgcolor: "#F3F3F3",
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mb: 2,
+              boxShadow: 'inset 0px 4px 10px rgba(0, 0, 0, 0.1)',
+              fontFamily: "Montserrat",
+              color: "#7D7D7D",
             }}
           >
-            No MP3 File
-          </Typography>
-        </Box>
+            No MP3 File Uploaded
+          </Box>
+        )}
 
         <Button
           variant="contained"
@@ -1466,28 +1487,42 @@ export default function MusicEntryClerkCatalog() {
           sx={{
             fontFamily: "Montserrat",
             fontWeight: "bold",
-            color: "#FFF",
+            color: "#FFFFFF",
             backgroundColor: "#3B3183",
             borderRadius: 2,
-            width: '180px',
-            "&:hover": {
-              backgroundColor: "#444",
-            },
-            transition: 'background-color 0.3s ease', // Smooth transition for hover
+            width: '200px',
+            my: 2,
+            "&:hover": { backgroundColor: "#2C2657" },
+            transition: 'background-color 0.3s ease',
           }}
         >
-          Upload MP3 File
+          {catalogData.mp3FileUrl ? "Change MP3" : "Upload MP3"}
           <input
             type="file"
-            accept=".mp3"
             hidden
-            onChange={() => alert('MP3 file uploaded!')}
+            accept="audio/mp3"
+            onChange={handleMp3FileChange}
           />
         </Button>
       </Card>
     </Grid>
-  </>
+    <Grid item xs={12} sm={6}>
+  <TextField
+    name="emotion"
+    label="Emotion"
+    variant="outlined"
+    fullWidth
+    sx={formStyles}
+    value={catalogData.emotion || ""}
+    onChange={handleInputChange} // Allows editing
+  />
+</Grid>
+  </Grid>
 )}
+
+
+            
+
 
 
 

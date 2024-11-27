@@ -271,6 +271,13 @@ const ABCFileSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  mp3FileUrl: {
+    type: String,
+  },
+  emotion: {
+    type: String,
+  },
+
 });
 
 const ABCFile = mongoose.model('ABCFile', ABCFileSchema);

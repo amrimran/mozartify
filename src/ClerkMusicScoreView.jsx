@@ -238,7 +238,7 @@ export default function ClerkMusicScoreView() {
                   {/* Remaining Fields */}
                   {Object.keys(metadata).map((key) => {
                     // Exclude certain fields and format date fields
-                    if (['title', 'artist', 'composer', 'genre', 'instrumentation', 'content', '__v', '_id', 'filename', 'coverImageUrl','deleted'].includes(key)) {
+                    if (['title', 'artist', 'composer', 'genre', 'instrumentation', 'content', '__v', '_id', 'filename', 'coverImageUrl','deleted', 'mp3FileName', 'mp3FileUrl'].includes(key)) {
                       return null;
                     }
 
