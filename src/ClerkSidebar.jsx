@@ -19,16 +19,28 @@ const ClerkSidebar = ({ active }) => {
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
       <Box
-        sx={{
-          width: 225,
-          bgcolor: "#3B3183",
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
-          position: "relative",  // Ensure the yellow line stays aligned
-
-        }}
-      >
+  sx={{
+    width: 225,
+    bgcolor: "#3B3183",
+    display: "flex",
+    flexDirection: "column",
+    height: "100%", // Change this to
+    minHeight: "100vh", // This ensures the sidebar stretches to full viewport height
+    position: "fixed", // This keeps the sidebar in place when scrolling
+    left: 0,
+    top: 0,
+  }}
+>
+<Box 
+        sx={{ 
+          width: "4px", 
+          bgcolor: "#FFD700", 
+          height: "100%", 
+          position: "fixed", 
+          left: "225px", // Position right after the sidebar
+          top: 0,
+        }} 
+      />
         <Box
           sx={{
             textAlign: "center",
@@ -69,8 +81,6 @@ const ClerkSidebar = ({ active }) => {
           ))}
         </List>
       </Box>
-      {/* Thin yellow line on the right */}
-      <Box sx={{ width: "4px", bgcolor: "#FFD700", height: "auto" }} />
     </Box>
   );
 };

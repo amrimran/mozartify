@@ -9,7 +9,10 @@ import {
   Tab,
   Divider,
   Grid,
-  Card
+  Card,
+  CircularProgress,
+  Backdrop,
+  Skeleton
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
@@ -26,8 +29,13 @@ const GlobalStyle = createGlobalStyle`
     margin: 0;
     padding: 0;
     font-family: 'Montserrat', sans-serif;
+    overflow-x: hidden; // Prevent horizontal scrolling
+    
+
   }
 `;
+
+
 
 const formStyles = {
   mb: 2,
@@ -38,6 +46,19 @@ const formStyles = {
   "& .MuiFormLabel-root": {
     fontFamily: "Montserrat",
   },
+  "& .MuiOutlinedInput-root": {
+    borderRadius: 2, // Slightly rounded corners
+    "& fieldset": {
+      borderColor: "rgba(0,0,0,0.23)", // Soft border color
+    },
+    "&:hover fieldset": {
+      borderColor: "#3B3183", // Match sidebar color on hover
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#3B3183", // Focused state matches sidebar color
+    },
+  },
+  width: '90%', // Full width within grid item
 };
 
 const buttonStyles = {
@@ -148,6 +169,8 @@ export default function MusicEntryClerkCatalog() {
     workTitle: "",
   });
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);  // Define loading state
+
 
   // Fetch current user data
   useEffect(() => {
@@ -235,48 +258,99 @@ export default function MusicEntryClerkCatalog() {
     }
   };
 
-  // Handle MP3 file upload and prediction
-const handleMp3FileChange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) {
-    alert("Please select an MP3 file.");
-    return;
-  }
+  const handleMp3FileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      alert("Please select an MP3 file.");
+      return;
+    }
+  
+    try {
+      // Set loading state to true (show loading spinner)
+      setLoading(true);
+  
+      // Clear previous values when mp3 changed
+      setCatalogData((prevData) => ({
+        ...prevData,
+        emotion: "",  // Clear previous emotion
+        genre: "",    // Clear previous genre
+        instrumentation: "",  // Clear previous instrument predictions
+        gender: "",
+      }));
+  
+      // Upload file to Firebase Storage
+      const storageRef = ref(storage, `mp3_file/${file.name}`);
+      await uploadBytes(storageRef, file);
+      const fileUrl = await getDownloadURL(storageRef);
+  
+      // Update catalogData with Firebase URL and filename
+      setCatalogData((prevData) => ({
+        ...prevData,
+        mp3FileUrl: fileUrl,
+        mp3FileName: file.name,
+      }));
+  
+      // Call emotion prediction API
+      const emotionResponse = await axios.post("http://127.0.0.1:5173/predict-emotion", { fileUrl });
+  
+      // Update catalogData with the new emotion
+      setCatalogData((prevData) => ({
+        ...prevData,
+        emotion: emotionResponse.data.predicted_mood,  // Update emotion field
+      }));
 
-  try {
-    // Clear the old emotion value immediately when a new file is selected
-    setCatalogData((prevData) => ({
-      ...prevData,
-      emotion: "", // Clear previous emotion
-    }));
+      
+      // Call gender prediction API
+      const genderResponse = await axios.post("http://127.0.0.1:9000/predict-gender", { file_url: fileUrl });
 
-    // Upload file to Firebase Storage
-    const storageRef = ref(storage, `mp3_file/${file.name}`);
-    await uploadBytes(storageRef, file);
-    const fileUrl = await getDownloadURL(storageRef);
+      // Update catalogData with the predicted gender
+      setCatalogData((prevData) => ({
+        ...prevData,
+        gender: genderResponse.data.gender,  // Assuming the prediction is an array, e.g., ['male', 'female', ...]
+      }));
 
-    // Update catalogData with Firebase URL and filename
-    setCatalogData((prevData) => ({
-      ...prevData,
-      mp3FileUrl: fileUrl,
-      mp3FileName: file.name,
-    }));
+  
+      // Call genre prediction API
+      const genreResponse = await axios.post("http://127.0.0.1:8001/predict-genre", { fileUrl });
+  
+      // Update catalogData with the new genre
+      setCatalogData((prevData) => ({
+        ...prevData,
+        genre: genreResponse.data.genre,  // Update genre field
+      }));
 
-    // Call prediction API with the uploaded file URL
-    const response = await axios.post("http://127.0.0.1:5173/predictFromURL", { fileUrl });
 
-    // Update catalogData with the new emotion
-    setCatalogData((prevData) => ({
-      ...prevData,
-      emotion: response.data.predicted_mood, // Update with new prediction as emotion
-    }));
-    alert("Prediction successful!");
-
-  } catch (error) {
-    console.error("Error uploading MP3 or predicting mood:", error);
-    alert("Error uploading MP3 or predicting mood");
-  }
+       // Call instrument prediction API
+       const instrumentResponse = await axios.post("http://127.0.0.1:8000/predict-instrument", {
+        fileUrl: fileUrl, // The URL of the MP3 file from Firebase
+      });
+  
+      // Update catalogData with the predicted instrumentation
+      setCatalogData((prevData) => ({
+        ...prevData,
+        instrumentation: instrumentResponse.data.top_instruments,  // Update instrumentation field
+      }));
+  
+    } catch (error) {
+      console.error("Error uploading MP3 or predicting emotion/gender/genre/instrument:", error);
+  
+      // Handle different types of errors gracefully
+      if (error.response) {
+        // If the error has a response from the backend (e.g., 500, 422)
+        alert(`Backend error: ${error.response.data.detail || error.response.statusText}`);
+      } else if (error.request) {
+        // If the request was made but no response was received
+        alert("Error communicating with the backend. Please try again later.");
+      } else {
+        // Other errors
+        alert(`An error occurred: ${error.message}`);
+      }
+    } finally {
+      // Set loading state to false (hide loading spinner)
+      setLoading(false);
+    }
 };
+
 
   
   
@@ -347,7 +421,7 @@ const handleMp3FileChange = async (e) => {
         value={tabIndex}
         onChange={handleTabChange}
         aria-label="catalog tabs"
-        sx={{ mb: 3, fontFamily: "Montserrat", overflowX: "auto" }} // Enable horizontal scrolling
+        sx={{ mb: 3 , fontFamily: "Montserrat", overflowX: "auto" }} // Enable horizontal scrolling
         variant="scrollable" // Makes the tabs scrollable
         scrollButtons="auto" // Shows scroll buttons when needed
       >
@@ -366,8 +440,8 @@ const handleMp3FileChange = async (e) => {
 
       </Tabs>
       <Box component="form" onSubmit={handleSubmit}
-       sx={{ mt: 2 }}>
-        <Grid container spacing={2}>
+       sx={{ mt: 2,   pl: 4,}}>
+        <Grid container spacing={1}>
           {tabIndex === 0 && (
             <>
               <Grid item xs={12} sm={6}>
@@ -711,17 +785,6 @@ const handleMp3FileChange = async (e) => {
                   fullWidth
                   sx={formStyles}
                   value={catalogData.description}
-                  onChange={handleInputChange}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  name="genre"
-                  label="Genre"
-                  variant="outlined"
-                  fullWidth
-                  sx={formStyles}
-                  value={catalogData.genre}
                   onChange={handleInputChange}
                 />
               </Grid>
@@ -1183,17 +1246,6 @@ const handleMp3FileChange = async (e) => {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  name="instrumentation"
-                  label="Instrumentation"
-                  variant="outlined"
-                  fullWidth
-                  sx={formStyles}
-                  value={catalogData.instrumentation}
-                  onChange={handleInputChange}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
                   name="key"
                   label="Key"
                   variant="outlined"
@@ -1435,90 +1487,162 @@ const handleMp3FileChange = async (e) => {
 )}
 {tabIndex === 10 && (
   <Grid container spacing={4} justifyContent="center">
-    {/* MP3 Upload Card */}
-    <Grid item xs={12} sm={5} md={4}>
-      <Card
-        variant="outlined"
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          p: 4,
-          borderRadius: 3,
-          borderColor: "#3B3183",
-          boxShadow: '0px 6px 15px rgba(0, 0, 0, 0.15)',
-          textAlign: "center",
-        }}
-      >
-        {catalogData.mp3FileUrl ? (
-          <>
-            <Typography variant="body1" sx={{ fontFamily: "Montserrat", mb: 2 }}>
-              <strong>Uploaded MP3:</strong> {catalogData.mp3FileName}
-            </Typography>
-            <audio
-              controls
-              src={catalogData.mp3FileUrl}
-              style={{ width: "100%", borderRadius: "8px", marginBottom: "15px" }}
-            />
-          </>
-        ) : (
-          <Box
-            sx={{
-              width: "100%",
-              height: 120,
-              bgcolor: "#F3F3F3",
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mb: 2,
-              boxShadow: 'inset 0px 4px 10px rgba(0, 0, 0, 0.1)',
-              fontFamily: "Montserrat",
-              color: "#7D7D7D",
-            }}
-          >
-            No MP3 File Uploaded
-          </Box>
-        )}
-
-        <Button
-          variant="contained"
-          component="label"
+  {/* MP3 Upload Card on the Left */}
+  <Grid item xs={12} sm={5} md={4}>
+    <Card
+      variant="outlined"
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        p: 3,
+        borderRadius: 3,
+        borderColor: "#3B3183",
+        boxShadow: '0px 6px 15px rgba(0, 0, 0, 0.1)',
+        textAlign: "center",
+        position: "relative", // Important for overlay positioning
+      }}
+    >
+      {catalogData.mp3FileUrl ? (
+        <>
+          <Typography variant="body1" sx={{ fontFamily: "Montserrat", mb: 2 }}>
+            <strong>Uploaded MP3:</strong>
+            <br />
+            {catalogData.mp3FileName}
+          </Typography>
+          <audio
+            controls
+            src={catalogData.mp3FileUrl}
+            style={{ width: "100%", borderRadius: "8px", marginBottom: "15px" }}
+          />
+        </>
+      ) : (
+        <Box
           sx={{
+            width: "100%",
+            height: 120,
+            bgcolor: "#F3F3F3",
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mb: 2,
+            boxShadow: 'inset 0px 4px 10px rgba(0, 0, 0, 0.1)',
             fontFamily: "Montserrat",
-            fontWeight: "bold",
-            color: "#FFFFFF",
-            backgroundColor: "#3B3183",
-            borderRadius: 2,
-            width: '200px',
-            my: 2,
-            "&:hover": { backgroundColor: "#2C2657" },
-            transition: 'background-color 0.3s ease',
+            color: "#7D7D7D",
+            textAlign: "center"
           }}
         >
-          {catalogData.mp3FileUrl ? "Change MP3" : "Upload MP3"}
-          <input
-            type="file"
-            hidden
-            accept="audio/mp3"
-            onChange={handleMp3FileChange}
-          />
-        </Button>
-      </Card>
-    </Grid>
-    <Grid item xs={12} sm={6}>
-  <TextField
-    name="emotion"
-    label="Emotion"
-    variant="outlined"
-    fullWidth
-    sx={formStyles}
-    value={catalogData.emotion || ""}
-    onChange={handleInputChange} // Allows editing
-  />
-</Grid>
+              {loading ? <Skeleton variant="rectangular" width="100%" height={120} /> : 'No MP3 File Uploaded'}
+                </Box>
+      )}
+
+      <Button
+        variant="contained"
+        component="label"
+        sx={{
+          fontFamily: "Montserrat",
+          fontWeight: "bold",
+          color: "#FFFFFF",
+          backgroundColor: "#3B3183",
+          borderRadius: 2,
+          width: '200px',
+          my: 2,
+          "&:hover": { backgroundColor: "#2C2657" },
+          transition: 'background-color 0.3s ease',
+        }}
+      >
+        {catalogData.mp3FileUrl ? "Change MP3" : "Upload MP3"}
+        <input
+          type="file"
+          hidden
+          accept="audio/mp3"
+          onChange={handleMp3FileChange}
+        />
+      </Button>
+
+      {/* Backdrop for loading spinner */}
+      <Backdrop
+      open={loading}
+      sx={{
+        color: "#fff",
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        bgcolor: "rgba(0, 0, 0, 0.6)", // Darker backdrop with opacity
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        flexDirection: "column",
+      }}
+    >
+      <CircularProgress size={60} color="inherit" sx={{ mb: 2 }} />
+      <Typography variant="h6" sx={{ color: "#fff", fontFamily: "Montserrat", fontWeight: "bold" }}>
+        Getting the prediction...
+      </Typography>
+    </Backdrop>
+    </Card>
   </Grid>
-)}
+
+
+   {/* Form Fields on the Right (Stacked Vertically) */}
+      <Grid item xs={12} sm={7} md={4}>
+        <Grid container direction="column" spacing={2}>
+          <Grid item xs={12}>
+            <TextField
+              name="emotion"
+              label="Emotion"
+              variant="outlined"
+              fullWidth
+              sx={formStyles}
+              value={catalogData.emotion || ""}
+              onChange={handleInputChange}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <TextField
+              name="gender"
+              label="Gender"
+              variant="outlined"
+              fullWidth
+              sx={formStyles}
+              value={catalogData.gender || ""}
+              onChange={handleInputChange}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <TextField
+              name="genre"
+              label="Genre"
+              variant="outlined"
+              fullWidth
+              sx={formStyles}
+              value={catalogData.genre || ""}
+              onChange={handleInputChange}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <TextField
+              name="instrumentation"
+              label="Instrumentation"
+              variant="outlined"
+              fullWidth
+              sx={formStyles}
+              value={catalogData.instrumentation || ""}
+              onChange={handleInputChange}
+            />
+          </Grid>
+        </Grid>
+      </Grid>
+    </Grid>
+  )
+}
 
 
             

@@ -127,8 +127,8 @@ app.post('/upload', upload.single('file'), (req, res) => {
   });
 });
 
-// Endpoint to handle prediction request based on Firebase URL
-app.post('/predictFromURL', async (req, res) => {
+// Endpoint to handle emotion prediction request based on Firebase URL
+app.post('/predictEmotion', async (req, res) => {
   const { fileUrl } = req.body;
   if (!fileUrl) {
     console.error("No file URL provided");
@@ -137,11 +137,74 @@ app.post('/predictFromURL', async (req, res) => {
 
   try {
     console.log("Sending Firebase file URL to FastAPI server:", fileUrl);
-    const response = await axios.post('http://127.0.0.1:5173/predictFromURL', { fileUrl });
+    const response = await axios.post('http://127.0.0.1:5173/predict-emotion', { fileUrl });
     res.json(response.data);
   } catch (error) {
-    console.error("Error while sending to FastAPI:", error.message);
-    res.status(500).send("Error while predicting mood");
+    console.error("Error while predicting emotion:", error.message);
+    res.status(500).send("Error while predicting emotion");
+  }
+});
+
+// Endpoint to handle gender prediction request based on Firebase URL
+app.post('/predictGender', async (req, res) => {
+  const { fileUrl } = req.body;
+  if (!fileUrl) {
+    console.error("No file URL provided");
+    return res.status(400).send("No file URL provided.");
+  }
+
+  try {
+    console.log("Sending Firebase file URL to FastAPI gender server:", fileUrl);
+    const genderResponse = await axios.post('http://127.0.0.1:9000/predict-gender', { fileUrl });
+
+    // Return the gender prediction
+    res.json({ gender: genderResponse.data.gender });
+  } catch (error) {
+    console.error("Error while predicting gender:", error.message);
+    res.status(500).send("Error while predicting gender");
+  }
+});
+
+// Endpoint to handle genre prediction request based on Firebase URL
+app.post('/predictGenre', async (req, res) => {
+  const { fileUrl } = req.body;
+  if (!fileUrl) {
+    console.error("No file URL provided");
+    return res.status(400).send("No file URL provided.");
+  }
+
+  try {
+    console.log("Sending Firebase file URL to FastAPI genre server:", fileUrl);
+    const genreResponse = await axios.post('http://127.0.0.1:8001/predict-genre', { fileUrl });
+
+    // Return the genre prediction
+    res.json({ genre: genreResponse.data.genre });
+  } catch (error) {
+    console.error("Error while predicting genre:", error.message);
+    res.status(500).send("Error while predicting genre");
+  }
+});
+
+
+// Endpoint for instrument prediction from URL
+app.post('/predictInstrument', async (req, res) => {
+  const { fileUrl } = req.body;
+  if (!fileUrl) {
+    return res.status(400).json({ message: 'No file URL provided.' });
+  }
+
+  try {
+    // Forward the file URL to FastAPI for instrument prediction
+    const genderResponse = await axios.post('http://127.0.0.1:8000/predict-instrument', { fileUrl });
+    
+    // Return the response from FastAPI (list of top instruments) to the frontend
+    res.json({
+      instrumentation: response.data.top_instruments,
+    });
+
+  } catch (error) {
+    console.error('Error predicting instrument:', error);
+    res.status(500).json({ message: 'Error predicting instrument', error: error.message });
   }
 });
 
@@ -227,13 +290,19 @@ app.post('/catalog', async (req, res) => {
       'publisher', 'purposeOfCreation', 'recordingPerson', 'region', 'relatedArtists', 'relatedWork', 
       'rights', 'sheetMusic', 'sponsor', 'stagePerformance', 'subject', 'targetAudience', 'temperament', 
       'timeOfOrigin', 'timeOfProsper', 'title', 'trackFunction', 'tracks', 'type', 'uri', 'vocalStyle',
-      'westernParallel', 'workTitle', 'emotion'
+      'westernParallel', 'workTitle', 'emotion', 'gender'
     ];
 
     const updateData = {};
-    fields.forEach(field => {
-      updateData[field] = req.body[field] || "";
-    });
+    if (req.body.deleted === true) {
+      // Only set `deleted` to true, don't touch other fields
+      updateData.deleted = true;
+    } else {
+      // Normal metadata update logic
+      fields.forEach(field => {
+        updateData[field] = req.body[field] || ""; // Set to empty string if undefined
+      });
+    }
 
     const abcFile = await ABCFileModel.findOneAndUpdate(
       { filename: req.body.filename },

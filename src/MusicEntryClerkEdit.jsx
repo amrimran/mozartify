@@ -153,7 +153,8 @@ const MusicEntryClerkEdit = () => {
       <GlobalStyle />
       <Box sx={{ display: "flex", minHeight: "100vh" }}>
         <ClerkSidebar active="upload" />
-        <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column" }}>
+        {/* <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column" }}> */}
+        <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column", marginLeft: "225px", minHeight: "100vh"}}>
           <Box
             sx={{
               display: "flex",
@@ -161,6 +162,7 @@ const MusicEntryClerkEdit = () => {
               alignItems: "center",
               mb: 3,
             }}
+
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Typography variant="h4" gutterBottom sx={{ fontFamily: 'Montserrat', fontWeight: 'bold', mt: 4, ml:1 }}>
@@ -206,6 +208,10 @@ const MusicEntryClerkEdit = () => {
                   border: '1px solid #ccc',
                   borderRadius: '5px',
                   backgroundColor: '#f8f8f8',
+                  display: 'flex',        // Add flexbox to center content
+                  justifyContent: 'center', // Center horizontally
+                  alignItems: 'center',    // Center vertically
+                  height: 'auto',         // You can adjust this height as needed
                 }}
               />
             </Grid>

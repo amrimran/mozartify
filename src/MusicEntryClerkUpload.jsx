@@ -101,7 +101,7 @@ export default function MusicEntryClerkUpload() {
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh" }}>
         <ClerkSidebar />
-        <Box sx={{ flexGrow: 1, p: 3 }}>
+        <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column", marginLeft: "225px", minHeight: "100vh"}}>
           <Box
             sx={{
               display: "flex",

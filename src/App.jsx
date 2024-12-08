@@ -22,7 +22,6 @@ import MusicEntryClerkProfile from "./MusicEntryClerkProfile";
 import FirstTimeLogin from './FirstTimeLogin';
 import TestSession from "./TestSession";
 import ClerkMusicScoreView from './ClerkMusicScoreView';
-import Predict from './Predict';
 import Play from './Play';
 
 
@@ -59,7 +58,6 @@ function App() {
         <Route path="/clerk-profile" element={<MusicEntryClerkProfile />} />
         <Route path="/clerk-music-score-view/:scoreId" element={<ClerkMusicScoreView />} />
         <Route path="/test-session" element={<TestSession />} />
-        <Route path="/predict" element={<Predict />} />
         <Route path="/play" element={<Play />} />
 
 

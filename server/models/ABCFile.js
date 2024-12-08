@@ -274,7 +274,13 @@ const ABCFileSchema = new mongoose.Schema({
   mp3FileUrl: {
     type: String,
   },
+  mp3FileName: {
+    type: String,
+  },
   emotion: {
+    type: String,
+  },
+  gender: {
     type: String,
   },
 

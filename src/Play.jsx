@@ -1,50 +1,63 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import abcjs from "abcjs";
 import "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/src/abcjs-audio.css";
 
 const Play = () => {
   const abcNotation = `
-    X: 1
-    T: Cooley's
-    M: 4/4
-    L: 1/8
-    R: reel
-    K: Emin
-    |:D2|EB{c}Bb B2 EB|~B2 AB dBAG|FDAD BDAD|FDAD dAFD|
-    EBBA B2 EB|B2 Ab defg|afe^c dBAF|DEFD E2:|
-    |:gf|eB B2 efge|eB B2 gedB|A2 FA DAFA|A2 FA defg|
-    eB B2 eBgB|eB B2 defg|afe^c dBAF|DEFD E2:|
+    X:1
+    T:Piano Sonata KV 331, Theme of Mvmt. 1
+    C:Wolfgang Amadeus Mozart
+    Z:free-scores.com
+    %%score { ( 1 2 ) | ( 3 4 ) }
+    L:1/4
+    M:6/4
+    I:linebreak $
+    K:G
+    V:1 treble nm="Piano" snm="Piano"
+    V:2 treble 
+    V:3 bass 
+    V:4 bass 
+    V:1
+    !<(! (B3/2 c/!<)! B!>(! d2)!>)! (d |!<(! A3/2!<)! B/ A!>(! c2)!>)! (c |!<(! G2 G A2!<)! A | %3
+    B2 d/c/!>(! B2!>)! A) |$!<(! (B3/2 c/!<)! B!>(! d2)!>)! (d |!<(! A3/2!<)! B/ A!>(! c2)!>)! c | %6
+    !<(! G2 A B2!<)! [Ac] |!p! [GB]2 [DFA] G2 z ::$!p! (d3/2 e/ d e2) (e | (e/4 g3/2) f/ e) (e d) .d | %10
+    (d B) .G (d c) .A |$ (d B) .G ([GB]2 [FA]) | (B3/2 c/ B d2) (d x/ |$ A3/2 B/ A c2) c | %14
+    !<(! G2 A B2!<)! [Ac] |!p! [GB]2 [FA] ([FA]2 [GB]) |!f! [GB]2 [Gc] [Gd]2 (e/f/4g/4) |$ %17
+    G2 (B/A/) G2 z :| %18
   `;
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentPosition, setCurrentPosition] = useState(null);
-  let synthControl = null;
-  let visualObj = null;
+  const visualRef = useRef(null); // Reference for ABC rendering
+  const synthControlRef = useRef(null); // Reference for SynthController
 
+  // Initializing visual object and synth controller
   useEffect(() => {
-    // Render the ABC notation
-    visualObj = abcjs.renderAbc("notation-container", abcNotation, {
-      responsive: "resize",
-    });
+    if (visualRef.current) {
+      const renderResult = abcjs.renderAbc(visualRef.current, abcNotation, {
+        responsive: "resize",
+      });
 
-    // Initialize SynthController for playback controls
-    synthControl = new abcjs.synth.SynthController();
-    synthControl.load("#controls", {
-      displayPlay: false, // Hide the default play button
-      displayProgress: false,
-    });
+      // Initialize SynthController with ABC notation
+      synthControlRef.current = new abcjs.synth.SynthController();
+      synthControlRef.current.load("#controls", {
+        displayPlay: false,
+        displayProgress: false,
+      });
 
-    // Load the tune into the SynthController
-    synthControl.setTune(visualObj[0], false);
+      synthControlRef.current.setTune(renderResult[0], false);
+    }
 
     // Cleanup on unmount
     return () => {
-      if (synthControl) synthControl.pause();
+      if (synthControlRef.current) synthControlRef.current.pause();
     };
   }, [abcNotation]);
 
+  // Function to start playback
   const startPlayback = async () => {
     try {
+      // Create or resume audio context
       if (!abcjs.synth.audioContext) {
         abcjs.synth.audioContext = new (window.AudioContext || window.webkitAudioContext)();
       } else if (abcjs.synth.audioContext.state === "suspended") {
@@ -52,16 +65,18 @@ const Play = () => {
       }
 
       setIsPlaying(true);
-      synthControl.play({
+
+      // Start playback and highlight notes
+      synthControlRef.current.play({
         onEvent: (event) => {
           if (event && event.midiPitches) {
             // Clear previous highlights
-            visualObj[0].unhighlight();
+            visualRef.current[0].unhighlight();
 
-            // Highlight the current note
-            visualObj[0].highlight(event.startChar, event.endChar, { color: "#ff0000" });
+            // Highlight current note
+            visualRef.current[0].highlight(event.startChar, event.endChar, { color: "#ff0000" });
 
-            // Update the current position for the playback indicator
+            // Update current position of playback
             setCurrentPosition(event.startChar);
           }
         },
@@ -71,8 +86,9 @@ const Play = () => {
     }
   };
 
+  // Function to pause playback
   const pausePlayback = () => {
-    synthControl.pause();
+    synthControlRef.current.pause();
     setIsPlaying(false);
   };
 
@@ -82,8 +98,8 @@ const Play = () => {
       <p style={styles.description}>
         Convert and play ABC notation as MIDI with synchronized note highlighting. Use the play and pause buttons to control playback.
       </p>
-      
-      <div id="notation-container" style={styles.notationContainer}>
+
+      <div id="notation-container" ref={visualRef} style={styles.notationContainer}>
         {/* Line indicating current playback position */}
         {currentPosition !== null && (
           <div
@@ -94,7 +110,7 @@ const Play = () => {
           />
         )}
       </div>
-      
+
       <div id="controls" style={styles.controls}>
         {/* Play and Pause buttons */}
         {!isPlaying ? (
@@ -107,6 +123,7 @@ const Play = () => {
   );
 };
 
+// Styles for the component
 const styles = {
   container: {
     maxWidth: "800px",
