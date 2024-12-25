@@ -66,7 +66,7 @@ def load_and_preprocess_data(audio_data: np.ndarray, sample_rate: int, target_sh
 def model_prediction(X_test: np.ndarray) -> str:
     y_pred = model.predict(X_test)
     avg_pred = np.mean(y_pred, axis=0)  # Average predictions across chunks
-    print(f"First probabilities: {avg_pred}")
+    # print(f"First probabilities: {avg_pred}")
     np.random.shuffle(avg_pred)
     print(f"Prediction probabilities: {avg_pred}")
 

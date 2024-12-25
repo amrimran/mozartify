@@ -1,33 +1,21 @@
 import React, { useEffect, useState } from "react";
 import {
   Box,
-  List,
-  ListItemIcon,
-  ListItemText,
   Avatar,
   Typography,
-  ListItemButton,
   Container,
   IconButton,
   TextField,
   Button,
-  Grid 
+  Grid,
+  Divider
 } from "@mui/material";
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import EditIcon from "@mui/icons-material/Edit";
-import {
-  Home as HomeIcon,
-  LibraryBooks as LibraryBooksIcon,
-  Favorite as FavoriteIcon,
-  ShoppingCart as ShoppingCartIcon,
-  Feedback as FeedbackIcon,
-  AccountCircle as AccountCircleIcon,
-  ExitToApp as ExitToAppIcon,
-} from "@mui/icons-material";
 
 import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
-import SidebarMozartifyLogo from "./assets/mozartify.png";
 import ClerkSidebar from "./ClerkSidebar";
 
 axios.defaults.withCredentials = true;
@@ -38,6 +26,49 @@ export default function ClerkProfile() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
+
+  // Button styles
+  const buttonStyles = {
+    px: 10,
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#3B3183",
+    borderColor: "#3B3183",
+    "&:hover": {
+      backgroundColor: "#3B3183",
+      color: "#FFFFFF",
+      borderColor: "#3B3183",
+    },
+  };
+
+  // Create a custom theme
+  const theme = createTheme({
+    typography: {
+      fontFamily: 'Montserrat, Arial, sans-serif',
+    },
+    components: {
+      MuiTextField: {
+        styleOverrides: {
+          root: {
+            '& label': {
+              fontFamily: 'Montserrat',
+            },
+            '& input': {
+              fontFamily: 'Montserrat',
+            },
+          },
+        },
+      },
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            fontFamily: 'Montserrat',
+            textTransform: 'none',
+          },
+        },
+      },
+    },
+  });
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -74,11 +105,7 @@ export default function ClerkProfile() {
   };
 
   const handleDeleteAccount = async () => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete your account? This action cannot be undone."
-      )
-    ) {
+    if (!window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
       return;
     }
     try {
@@ -92,32 +119,32 @@ export default function ClerkProfile() {
   };
 
   const GlobalStyle = createGlobalStyle`
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Montserrat', sans-serif;
-  }
-`;
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Montserrat', sans-serif;
+      background-color: #FFFFFF;  /* Set background to white */
+    }
+  `;
 
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <GlobalStyle />
-      <Box sx={{ display: "flex", height: "100vh" }}>
+      <Box sx={{ display: "flex", height: "100vh", backgroundColor: "#FFFFFF" }}> {/* Set the root Box background to white */}
         <ClerkSidebar />
-        <Box sx={{ flexGrow: 1, p: 3 }}>
+        <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column", marginLeft: "225px", minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
+          {/* Updated Header Section with Bold User Profile */}
           <Box
             sx={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
               mb: 3,
+              mt: 3,
             }}
           >
-            <Box>
-              <Typography variant="h4">User Profile</Typography>
-              <Typography variant="body1" sx={{ mt: 2 }}>
-                Here you can manage your account information.
-              </Typography>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Typography variant="h4" sx={{ fontWeight: 700 }}>User Profile</Typography> {/* Bold the header */}
             </Box>
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography variant="body1" sx={{ mr: 2 }}>
@@ -126,28 +153,50 @@ export default function ClerkProfile() {
               <Avatar>{username[0]}</Avatar>
             </Box>
           </Box>
+          <Divider sx={{ ml: 2 }} />
+
           <Container maxWidth="sm">
-            <Box display="flex" flexDirection="column" alignItems="center">
-              <Box position="relative">
+            {/* Removed the card around the profile details */}
+            <Box 
+              display="flex" 
+              flexDirection="column" 
+              alignItems="center"
+              sx={{ 
+                backgroundColor: "#FFFFFF",  /* Set the background of the profile box to white */
+                borderRadius: 2, 
+                p: 4, 
+                boxShadow: 'none'  /* Remove the box shadow */
+              }}
+            >
+              <Box position="relative" sx={{ mb: 3 }}>
                 <Avatar
                   alt={username}
                   src="path/to/profile-picture.jpg"
-                  sx={{ width: 150, height: 150 }}
+                  sx={{ 
+                    width: 150, 
+                    height: 150, 
+                    border: '4px solid #3B3183',
+                    boxShadow: 'none'  /* Removed box shadow */
+                  }}
                 />
                 <IconButton
                   sx={{
                     position: "absolute",
                     bottom: 0,
                     right: 0,
-                    bgcolor: "background.paper",
+                    bgcolor: "#3B3183",
+                    color: "white",
+                    "&:hover": {
+                      bgcolor: "#2A2462",
+                    }
                   }}
                   size="small"
                 >
                   <EditIcon />
                 </IconButton>
               </Box>
-              <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>
-                Profile
+              <Typography variant="h6" sx={{ mt: 2, mb: 2, fontWeight: 700 }}>
+                Profile Details
               </Typography>
               <form onSubmit={handleSaveChanges} style={{ width: "100%" }}>
                 <Grid container spacing={2}>
@@ -171,7 +220,7 @@ export default function ClerkProfile() {
                         margin="normal"
                         value={currentUser.email}
                         InputProps={{
-                          readOnly: true,
+                          readOnly: false,
                         }}
                         required
                       />
@@ -216,27 +265,41 @@ export default function ClerkProfile() {
                 </Grid>
                 <Button
                   type="submit"
-                  variant="contained"
-                  color="primary"
+                  variant="outlined"
                   fullWidth
-                  sx={{ mt: 2 }}
+                  sx={{
+                    ...buttonStyles,
+                    mt: 2,
+                    py: 1.5,
+                  }}
                 >
-                  Save Changes
+                  SAVE CHANGES
                 </Button>
               </form>
               <Button
-                variant="contained"
+                variant="outlined"
                 color="error"
                 fullWidth
-                sx={{ mt: 2 }}
+                sx={{
+                  mt: 2,
+                  py: 1.5,
+                  fontFamily: "Montserrat",
+                  fontWeight: "bold",
+                  borderColor: "#D32F2F",
+                  color: "#D32F2F",
+                  "&:hover": {
+                    backgroundColor: "#D32F2F",
+                    color: "#FFFFFF",
+                  },
+                }}
                 onClick={handleDeleteAccount}
               >
-                Delete Account
+                DELETE ACCOUNT
               </Button>
             </Box>
           </Container>
         </Box>
       </Box>
-    </>
+    </ThemeProvider>
   );
 }

@@ -21,7 +21,7 @@ const ClerkSidebar = ({ active }) => {
       <Box
   sx={{
     width: 225,
-    bgcolor: "#3B3183",
+    bgcolor: "#8BD3E6",
     display: "flex",
     flexDirection: "column",
     height: "100%", // Change this to
@@ -34,7 +34,7 @@ const ClerkSidebar = ({ active }) => {
 <Box 
         sx={{ 
           width: "4px", 
-          bgcolor: "#FFD700", 
+          bgcolor: "#FFEE8C", 
           height: "100%", 
           position: "fixed", 
           left: "225px", // Position right after the sidebar
@@ -60,10 +60,10 @@ const ClerkSidebar = ({ active }) => {
               component={Link}
               to={item.path}
               sx={{
-                bgcolor: active === item.key || location.pathname === item.path ? "#DB2226" : "inherit",
+                bgcolor: active === item.key || location.pathname === item.path ? "#67ADC1" : "inherit",
                 color: "#FFFFFF",
                 "&:hover": {
-                  bgcolor: active === item.key || location.pathname === item.path ? "#DB2226" : "#4c41a3",
+                  bgcolor: active === item.key || location.pathname === item.path ? "#67ADC1" : "#78BBCC",
                 },
                 padding: 0,
               }}
