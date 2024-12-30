@@ -24,6 +24,7 @@ import MusicEntryClerkProfile from "./MusicEntryClerkProfile";
 import FirstTimeLogin from './FirstTimeLogin';
 import TestSession from "./TestSession";
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import MusicEntryClerkView from './MusicEntryClerkView';
 import Play from './Play';
 import AdminDashboard from './AdminDashboard';
@@ -37,6 +38,8 @@ import AdminCatalog from "./AdminCatalog";
 
 
 =======
+=======
+>>>>>>> Stashed changes
 import TestSearch from "./testSearch";
 import ClerkMusicScoreView from './ClerkMusicScoreView';
 import FileDownloaderPage from './FileDownloaderPage';
@@ -44,6 +47,9 @@ import FileDownloaderPage from './FileDownloaderPage';
 
 import Success from "./Success";
 import Cancel from "./Cancel";
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 
@@ -108,6 +114,9 @@ function App() {
 
         <Route path="/test-session" element={<TestSession />} />
         <Route path="/test-search" element={<TestSearch />} />
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 
