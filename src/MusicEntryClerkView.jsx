@@ -236,30 +236,67 @@ export default function ClerkMusicScoreView() {
                   </ListItem>
 
                   {/* Remaining Fields */}
-                  {Object.keys(metadata).map((key) => {
-                    // Exclude certain fields and format date fields
-                    if (['title', 'artist', 'composer', 'genre', 'instrumentation', 'content', '__v', '_id', 'filename', 'coverImageUrl','deleted', 'mp3FileName', 'mp3FileUrl'].includes(key)) {
-                      return null;
-                    }
+                  {Object.keys(metadata)
+  .filter(
+    (key) =>
+      ![
+        "title",
+        "artist",
+        "composer",
+        "genre",
+        "instrumentation",
+        "content",
+        "__v",
+        "_id",
+        "filename",
+        "coverImageUrl",
+        "deleted",
+        "mp3FileName",
+        "mp3FileUrl",
+      ].includes(key)
+  )
+  .sort((a, b) => a.localeCompare(b)) // Sort keys alphabetically
+  .map((key) => {
+    // Format date fields
+    let value = metadata[key];
+    if (
+      [
+        "dateAccessioned",
+        "dateAvailable",
+        "dateIssued",
+        "dateOfBirth",
+        "dateOfComposition",
+        "dateOfCreation",
+        "dateOfRecording",
+        "lastModified",
+      ].includes(key) &&
+      value
+    ) {
+      value = new Date(value).toLocaleDateString("en-GB"); // Format to dd/MM/yyyy
+    }
 
-                    // Format date fields
-                    let value = metadata[key];
-                    if (['dateAccessioned', 'dateAvailable', 'dateIssued','dateOfBirth', 'dateOfComposition', 'dateOfCreation', 'dateOfRecording','lastModified'].includes(key) && value) {
-                      value = new Date(value).toLocaleDateString('en-GB'); // Format to dd/MM/yyyy
-                    }
+    // Prepend "RM" for price-related fields
+    if (["price"].includes(key.toLowerCase()) && value) {
+      value = `RM ${value}`;
+    }
 
-                    return (
-                      <ListItem key={key}>
-                        <ListItemText
-                          primary={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                          secondary={value || 'N/A'}
-                          primaryTypographyProps={{ sx: { fontFamily: "Montserrat", fontWeight: "bold" } }}
-                          secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
-                          sx={{ p: 1 }}
-                        />
-                      </ListItem>
-                    );
-                  })}    
+    return (
+      <ListItem key={key}>
+        <ListItemText
+          primary={key
+            .replace(/([A-Z])/g, " $1")
+            .replace(/^./, (str) => str.toUpperCase())}
+          secondary={value || "N/A"}
+          primaryTypographyProps={{
+            sx: { fontFamily: "Montserrat", fontWeight: "bold" },
+          }}
+          secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
+          sx={{ p: 1 }}
+        />
+      </ListItem>
+    );
+  })}
+
                 </List>
               </CardContent>
             </Card>

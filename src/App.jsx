@@ -32,11 +32,8 @@ import AdminProfile from './AdminProfile';
 import AdminManageUsers from './AdminManageUsers';
 import AdminEdit from "./AdminEdit";
 import AdminCatalog from "./AdminCatalog";
-
 import TestSearch from "./testSearch";
 import FileDownloaderPage from './FileDownloaderPage';
-
-
 import Success from "./Success";
 import Cancel from "./Cancel";
 
@@ -53,7 +50,6 @@ function App() {
         <Route path="/first-time-login" element={<FirstTimeLogin />} />
         <Route path="/home" element={<Home />} />
         <Route path="/downloader" element={<FileDownloaderPage />} />
-
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/customer-homepage" element={<CustomerHomepage />} />
@@ -75,7 +71,6 @@ function App() {
         <Route path="/clerk-catalog" element={<MusicEntryClerkCatalog />} />
         <Route path="/clerk-edit" element={<MusicEntryClerkEdit />} />
         <Route path="/clerk-profile" element={<MusicEntryClerkProfile />} />
-
         <Route path="/clerk-music-score-view/:scoreId" element={<MusicEntryClerkView />} />
         <Route path="/test-session" element={<TestSession />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
@@ -86,10 +81,8 @@ function App() {
         <Route path="/admin-manage-users" element={<AdminManageUsers />} />
         <Route path="/admin-edit" element={<AdminEdit />} />
         <Route path="/admin-catalog" element={<AdminCatalog />} />
-
         <Route path="/success" element={<Success />} />
         <Route path="/cancel" element={<Cancel />} />
-
         <Route path="/test-session" element={<TestSession />} />
         <Route path="/test-search" element={<TestSearch />} />
 

@@ -12,7 +12,8 @@ import {
   Card,
   CircularProgress,
   Backdrop,
-  Skeleton
+  Skeleton,
+  InputAdornment
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
@@ -23,6 +24,7 @@ import axios from "axios";
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -89,6 +91,7 @@ export default function MusicEntryClerkCatalog() {
     artist: "",
     backgroundResources: "",
     callNumber: "",
+    collection: "",
     composer: "",
     composerTimePeriod: "",
     contributor: "",
@@ -144,6 +147,7 @@ export default function MusicEntryClerkCatalog() {
     placeOfResidence: "",
     position: "",
     prevalence: "",
+    price: "",
     publisher: "",
     purposeOfCreation: "",
     recordingPerson: "",
@@ -643,6 +647,17 @@ export default function MusicEntryClerkCatalog() {
                   onChange={handleInputChange}
                 />
               </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  name="collection"
+                  label="Collection"
+                  variant="outlined"
+                  fullWidth
+                  sx={formStyles}
+                  value={catalogData.collection}
+                  onChange={handleInputChange}
+                />
+              </Grid>
             </>
           )}
       {tabIndex === 2 && (
@@ -1113,6 +1128,22 @@ export default function MusicEntryClerkCatalog() {
                   onChange={handleInputChange}
                 />
               </Grid>
+
+<Grid item xs={12} sm={6}>
+  <TextField
+    name="price"
+    label="Price"
+    variant="outlined"
+    fullWidth
+    sx={formStyles}
+    value={catalogData.price}
+    onChange={handleInputChange}
+    InputProps={{
+      startAdornment: <InputAdornment position="start">RM</InputAdornment>,
+    }}
+  />
+</Grid>
+
             </>
           )}
           {tabIndex === 6 && (

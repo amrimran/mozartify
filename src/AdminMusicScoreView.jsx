@@ -248,6 +248,11 @@ export default function AdminMusicScoreView() {
                       value = new Date(value).toLocaleDateString('en-GB'); // Format to dd/MM/yyyy
                     }
 
+                    // Prepend "RM" for price-related fields
+                    if (['price'].includes(key.toLowerCase()) && value) {
+                      value = `RM ${value}`;
+                    }
+
                     return (
                       <ListItem key={key}>
                         <ListItemText

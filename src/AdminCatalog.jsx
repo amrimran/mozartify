@@ -12,7 +12,8 @@ import {
   Card,
   CircularProgress,
   Backdrop,
-  Skeleton
+  Skeleton,
+  InputAdornment
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
@@ -89,6 +90,7 @@ export default function AdminCatalog() {
     artist: "",
     backgroundResources: "",
     callNumber: "",
+    collection: "",
     composer: "",
     composerTimePeriod: "",
     contributor: "",
@@ -144,6 +146,7 @@ export default function AdminCatalog() {
     placeOfResidence: "",
     position: "",
     prevalence: "",
+    price: "",
     publisher: "",
     purposeOfCreation: "",
     recordingPerson: "",
@@ -642,6 +645,17 @@ export default function AdminCatalog() {
                   onChange={handleInputChange}
                 />
               </Grid>
+              <Grid item xs={12} sm={6}>
+                              <TextField
+                                name="collection"
+                                label="Collection"
+                                variant="outlined"
+                                fullWidth
+                                sx={formStyles}
+                                value={catalogData.collection}
+                                onChange={handleInputChange}
+                              />
+                            </Grid>
             </>
           )}
       {tabIndex === 2 && (
@@ -1077,6 +1091,20 @@ export default function AdminCatalog() {
                   onChange={handleInputChange}
                 />
               </Grid>
+              <Grid item xs={12} sm={6}>
+  <TextField
+    name="price"
+    label="Price"
+    variant="outlined"
+    fullWidth
+    sx={formStyles}
+    value={catalogData.price}
+    onChange={handleInputChange}
+    InputProps={{
+      startAdornment: <InputAdornment position="start">RM</InputAdornment>,
+    }}
+  />
+</Grid>
             </>
           )}
           {tabIndex === 6 && (

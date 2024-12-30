@@ -290,7 +290,7 @@ app.post('/catalog', async (req, res) => {
       'publisher', 'purposeOfCreation', 'recordingPerson', 'region', 'relatedArtists', 'relatedWork', 
       'rights', 'sheetMusic', 'sponsor', 'stagePerformance', 'subject', 'targetAudience', 'temperament', 
       'timeOfOrigin', 'timeOfProsper', 'title', 'trackFunction', 'tracks', 'type', 'uri', 'vocalStyle',
-      'westernParallel', 'workTitle', 'emotion', 'gender'
+      'westernParallel', 'workTitle', 'emotion', 'gender', 'price', 'collection'
     ];
 
     const updateData = {};

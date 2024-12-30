@@ -283,6 +283,12 @@ const ABCFileSchema = new mongoose.Schema({
   gender: {
     type: String,
   },
+  price: {
+    type: String,
+  },
+  collection: {
+    type: String,
+  },
 
 });
 
