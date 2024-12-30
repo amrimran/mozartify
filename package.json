@@ -17,16 +17,9 @@
     "@mui/lab": "^5.0.0-alpha.173",
     "@mui/material": "^5.16.7",
     "@mui/x-date-pickers": "^7.14.0",
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    "abcjs": "^6.4.4",
-=======
-=======
->>>>>>> Stashed changes
     "@stripe/react-stripe-js": "^2.8.0",
     "@stripe/stripe-js": "^4.3.0",
-    "abcjs": "^6.4.1",
->>>>>>> Stashed changes
+    "abcjs": "^6.4.4",
     "adm-zip": "^0.5.14",
     "axios": "^1.7.2",
     "chart.js": "^4.4.7",

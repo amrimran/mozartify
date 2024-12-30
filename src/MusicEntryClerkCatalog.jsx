@@ -905,8 +905,7 @@ export default function MusicEntryClerkCatalog() {
                   onChange={handleInputChange}
                 />
               </Grid>
-<<<<<<< Updated upstream
-=======
+
               <Grid item xs={12} sm={6}>
               <TextField
                 name="emotion"
@@ -940,7 +939,7 @@ export default function MusicEntryClerkCatalog() {
               Handle Emotion
             </Button> */}
           </Grid>
->>>>>>> Stashed changes
+
             </>
           )}
           {tabIndex === 4 && (

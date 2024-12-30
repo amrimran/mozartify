@@ -23,10 +23,7 @@ import MusicEntryClerkEdit from "./MusicEntryClerkEdit";
 import MusicEntryClerkProfile from "./MusicEntryClerkProfile";
 import FirstTimeLogin from './FirstTimeLogin';
 import TestSession from "./TestSession";
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 import MusicEntryClerkView from './MusicEntryClerkView';
-import Play from './Play';
 import AdminDashboard from './AdminDashboard';
 import AdminInbox from './AdminInbox';
 import AdminManageScore from './AdminManageScores';
@@ -36,21 +33,13 @@ import AdminManageUsers from './AdminManageUsers';
 import AdminEdit from "./AdminEdit";
 import AdminCatalog from "./AdminCatalog";
 
-
-=======
-=======
->>>>>>> Stashed changes
 import TestSearch from "./testSearch";
-import ClerkMusicScoreView from './ClerkMusicScoreView';
 import FileDownloaderPage from './FileDownloaderPage';
 
 
 import Success from "./Success";
 import Cancel from "./Cancel";
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+
 
 
 
@@ -86,10 +75,9 @@ function App() {
         <Route path="/clerk-catalog" element={<MusicEntryClerkCatalog />} />
         <Route path="/clerk-edit" element={<MusicEntryClerkEdit />} />
         <Route path="/clerk-profile" element={<MusicEntryClerkProfile />} />
-<<<<<<< Updated upstream
+
         <Route path="/clerk-music-score-view/:scoreId" element={<MusicEntryClerkView />} />
         <Route path="/test-session" element={<TestSession />} />
-        <Route path="/play" element={<Play />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin-inbox" element={<AdminInbox />} />
         <Route path="/admin-manage-scores" element={<AdminManageScore />} />
@@ -99,25 +87,13 @@ function App() {
         <Route path="/admin-edit" element={<AdminEdit />} />
         <Route path="/admin-catalog" element={<AdminCatalog />} />
 
-
-
-
-
-
-
-
-=======
-        <Route path="/clerk-music-score-view/:scoreId" element={<ClerkMusicScoreView />} />
-
         <Route path="/success" element={<Success />} />
         <Route path="/cancel" element={<Cancel />} />
 
         <Route path="/test-session" element={<TestSession />} />
         <Route path="/test-search" element={<TestSearch />} />
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+
+
 
 
 
