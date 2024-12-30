@@ -26,7 +26,7 @@ const FormContainer = styled(Box)(({ theme }) => ({
   boxShadow: "0px 3px 6px rgba(0,0,0,1)",
   padding: theme.spacing(4,10),
   width: "50%",
-  maxWidth: "400px", // Made the form smaller
+  maxWidth: "450px", // Made the form smaller
   height: "600px", // Allow height to adjust based on content
   display: "flex",
   flexDirection: "column",
@@ -74,17 +74,63 @@ const ModalContainer = styled(Box)(() => ({
 
 const CustomButton = styled(Button)(({ theme }) => ({
   marginTop: theme.spacing(1),
-  padding: theme.spacing(1, 6), // Adjusted padding for width
+  padding: theme.spacing(1, 23), // Adjusted padding for width
   fontFamily: "Montserrat",
   fontWeight: "bold",
   color: "#FFFFFF",
-  backgroundColor: "#3B3183",
-  borderColor: "#3B3183",
+  backgroundColor: "#8BD3E6",
+  border: "1px solid #8BD3E6", // Explicitly define the border
+  borderColor: "#8BD3E6",
   "&:hover": {
-    backgroundColor: "#F5D128",
-    borderColor: "#3B3183",
+    backgroundColor: "#3B3183",
+    color: "#FFFFFF",
+    border: "1px solid #3B3183", // Ensure border remains visible on hover 
   },
 }));
+
+const textFieldStyles = {
+  "& label.Mui-focused": { 
+    color: "#5A67D8", // Vibrant indigo for focus
+    fontWeight: "bold", // Adds emphasis to the label on focus
+  },
+  fontFamily: "Montserrat",
+  "& .MuiInputBase-root": {
+    fontFamily: "Montserrat",
+    borderRadius: "12px", // Slightly more rounded corners for a modern feel
+    boxShadow: "0px 4px 6px rgba(90, 103, 216, 0.2)", // Subtle indigo shadow for depth
+    backgroundColor: "rgba(243, 244, 255, 0.8)", // Light gradient-inspired background
+    transition: "box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease", // Smooth animations
+  },
+  "& .MuiFormLabel-root": {
+    fontFamily: "Montserrat",
+    fontSize: "15px", // Slightly larger for readability
+    color: "#4A5568", // Neutral gray for a clean appearance
+    transition: "color 0.3s ease", // Smooth color change
+  },
+  "& .MuiInput-underline:after": {
+    borderBottomColor: "#5A67D8", // Matches the focus label color
+    transform: "scaleX(1)", // Smooth underline animation
+    transition: "transform 0.3s ease, border-color 0.3s ease",
+    borderWidth: "2px", // Slightly thicker for better visibility
+  },
+  "& .MuiOutlinedInput-root": {
+    "& fieldset": {
+      borderColor: "#CBD5E0", // Soft gray for the default border
+      transition: "border-color 0.3s ease", // Smooth hover/focus animation
+    },
+    "&:hover fieldset": {
+      borderColor: "#7F9CF5", // Softer indigo for hover
+      boxShadow: "0px 6px 16px rgba(127, 156, 245, 0.4)", // Glow effect on hover
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#5A67D8", // Vibrant indigo for focus
+      boxShadow: "0px 8px 20px rgba(90, 103, 216, 0.6)", // Stronger shadow for focus
+    },
+    borderRadius: "12px", // Matches the input base for consistent design
+    backgroundColor: "rgba(255, 255, 255, 0.9)", // Slightly opaque white for contrast
+  },
+};
+
 
 export default function Signup() {
   const [username, setUsername] = useState("");
@@ -146,6 +192,10 @@ export default function Signup() {
     setShowConfirmPassword(!showConfirmPassword);
   };
 
+  
+  
+  
+
   return (
     <>
       <GlobalStyle />
@@ -168,7 +218,7 @@ export default function Signup() {
             gutterBottom
             sx={{ marginBottom: 2 }}
           >
-            Please fill this form to create an account.
+            Please fill this form to create an account
           </Typography>
 
           <TextField
@@ -178,18 +228,8 @@ export default function Signup() {
             required
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            sx={{
-              "& label.Mui-focused": { color: "#3B3183" },
-              "& .MuiInput-underline:after": {
-                borderBottomColor: "#3B3183",
-              },
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": { borderColor: "#3B3183" },
-                "&:hover fieldset": { borderColor: "#3B3183" },
-                "&.Mui-focused fieldset": { borderColor: "#3B3183" },
-              },
-            }}
-          />
+            sx={textFieldStyles}
+            />
 
           <TextField
             fullWidth
@@ -199,17 +239,8 @@ export default function Signup() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            sx={{
-              "& label.Mui-focused": { color: "#3B3183" },
-              "& .MuiInput-underline:after": {
-                borderBottomColor: "#3B3183",
-              },
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": { borderColor: "#3B3183" },
-                "&:hover fieldset": { borderColor: "#3B3183" },
-                "&.Mui-focused fieldset": { borderColor: "#3B3183" },
-              },
-            }}
+            sx={textFieldStyles}
+
           />
 
           <TextField
@@ -225,22 +256,12 @@ export default function Signup() {
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton onClick={handleClickShowPassword} edge="end">
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                    {showPassword ? <Visibility /> : <VisibilityOff />}
                   </IconButton>
                 </InputAdornment>
               ),
             }}
-            sx={{
-              "& label.Mui-focused": { color: "#3B3183" },
-              "& .MuiInput-underline:after": {
-                borderBottomColor: "#3B3183",
-              },
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": { borderColor: "#3B3183" },
-                "&:hover fieldset": { borderColor: "#3B3183" },
-                "&.Mui-focused fieldset": { borderColor: "#3B3183" },
-              },
-            }}
+            sx={textFieldStyles}
           />
 
           <TextField
@@ -259,60 +280,66 @@ export default function Signup() {
                     onClick={handleClickShowConfirmPassword}
                     edge="end"
                   >
-                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                    {showConfirmPassword ? <Visibility /> : <VisibilityOff />}
                   </IconButton>
                 </InputAdornment>
               ),
             }}
-            sx={{
-              "& label.Mui-focused": { color: "#3B3183" },
-              "& .MuiInput-underline:after": {
-                borderBottomColor: "#3B3183",
-              },
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": { borderColor: "#3B3183" },
-                "&:hover fieldset": { borderColor: "#3B3183" },
-                "&.Mui-focused fieldset": { borderColor: "#3B3183" },
-              },
-            }}
+            sx={textFieldStyles}
+
           />
 
-          <FormControl component="fieldset" sx={{ mt: 2 }}>
-            <RadioGroup
-              aria-label="role"
-              name="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              row
-            >
-              <FormControlLabel
-                value="customer"
-                control={
-                  <Radio
-                    required
-                    sx={{
-                      color: "#3B3183",
-                      "&.Mui-checked": { color: "#3B3183" },
-                    }}
-                  />
-                }
-                label="Customer"
-              />
-              <FormControlLabel
-                value="music_entry_clerk"
-                control={
-                  <Radio
-                    required
-                    sx={{
-                      color: "#3B3183",
-                      "&.Mui-checked": { color: "#3B3183" },
-                    }}
-                  />
-                }
-                label="Music Entry Clerk"
-              />
-            </RadioGroup>
-          </FormControl>
+<Typography sx={{ fontFamily: "Montserrat", mt: 2 }}>
+    Choose one:
+  </Typography>
+
+<FormControl component="fieldset" sx={{ mt: 0 }}>
+  <RadioGroup
+    aria-label="role"
+    name="role"
+    value={role}
+    onChange={(e) => setRole(e.target.value)}
+    row
+  >
+    <FormControlLabel
+      value="customer"
+      control={
+        <Radio
+          required
+          sx={{
+            color: "#8BD3E6",
+            "&.Mui-checked": { color: "#3B3183" },
+          }}
+        />
+      }
+      label="Customer"
+      componentsProps={{
+        typography: {
+          sx: { fontFamily: "Montserrat" },
+        },
+      }}
+    />
+    <FormControlLabel
+      value="music_entry_clerk"
+      control={
+        <Radio
+          required
+          sx={{
+            color: "#8BD3E6",
+            "&.Mui-checked": { color: "#3B3183" },
+          }}
+        />
+      }
+      label="Music Entry Clerk"
+      componentsProps={{
+        typography: {
+          sx: { fontFamily: "Montserrat" },
+        },
+      }}
+    />
+  </RadioGroup>
+</FormControl>
+
 
           {errorMessage && (
             <Typography
@@ -339,7 +366,7 @@ export default function Signup() {
               to="/login"
               style={{
                 textDecoration: "none",
-                color: "#DB2226",
+                color: "#3B3183",
                 fontWeight: "bold",
               }}
             >

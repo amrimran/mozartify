@@ -3,7 +3,7 @@ import { Box, Typography, Avatar, Button, Grid, Divider, IconButton } from "@mui
 import { HelpOutline } from "@mui/icons-material"; // Import the HelpOutline icon
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createGlobalStyle } from "styled-components";
-import ClerkSidebar from "./MusicEntryClerkSidebar";
+import AdminSidebar from "./AdminSidebar";
 import ABCJS from 'abcjs';
 import axios from 'axios';
 
@@ -25,7 +25,7 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-const MusicEntryClerkEdit = () => {
+const AdminEdit = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { fileName } = location.state || {};
@@ -145,14 +145,14 @@ const MusicEntryClerkEdit = () => {
   };
   
   const handleProceed = () => {
-    navigate("/clerk-catalog", { state: { fileName } });
+    navigate("/admin-catalog", { state: { fileName } });
   };
 
   return (
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", minHeight: "100vh" }}>
-        <ClerkSidebar active="upload" />
+        <AdminSidebar active="upload" />
         {/* <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column" }}> */}
         <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column", marginLeft: "225px", minHeight: "100vh"}}>
           <Box
@@ -265,4 +265,4 @@ const MusicEntryClerkEdit = () => {
   );
 };
 
-export default MusicEntryClerkEdit;
+export default AdminEdit;

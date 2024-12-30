@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
-import ClerkSidebar from "./MusicEntryClerkSidebar";
+import AdminSidebar from "./AdminSidebar";
 import { storage } from "./firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import axios from "axios"; 
@@ -75,7 +75,7 @@ const buttonStyles = {
 };
 
 
-export default function MusicEntryClerkCatalog() {
+export default function AdminCatalog() {
   const navigate = useNavigate();
   const location = useLocation();
   const { fileName } = location.state || {}; 
@@ -372,7 +372,7 @@ export default function MusicEntryClerkCatalog() {
       }
   
       alert("Data saved successfully");
-      navigate("/clerk-homepage");
+      navigate("/admin-manage-scores");
     } catch (error) {
       console.error("Error saving data:", error);
       alert("Error saving data");
@@ -394,7 +394,7 @@ export default function MusicEntryClerkCatalog() {
             backgroundColor: "#3B3183",
             overflowY: "auto" 
           }}>
-          <ClerkSidebar active="upload" />
+          <AdminSidebar active="upload" />
         </Box>
         <Box sx={{ flexGrow: 1, ml: "225px", p: 3 }}>
           <Box
@@ -417,46 +417,45 @@ export default function MusicEntryClerkCatalog() {
           </Box>
           <Divider sx={{ mb: 3 }} />
 
-          <Tabs
-  value={tabIndex}
-  onChange={handleTabChange}
-  aria-label="catalog tabs"
-  sx={{
-    mb: 3,
-    fontFamily: "Montserrat",
-    overflowX: "auto",
-    "& .MuiTab-root": {
-      fontFamily: "Montserrat",
-      textTransform: "none", // Prevents all caps
-      color: "#666", // Default color for tabs
-      "&:hover": {
-        color: "#8BD3E6", // Hover color
-      },
-    },
-    "& .Mui-selected": {
-      color: "#8BD3E6 !important", // Force the active color to override defaults
-      fontWeight: "normal", // Ensures the active tab is not bold
-    },
-    "& .MuiTabs-indicator": {
-      backgroundColor: "#8BD3E6", // Active tab indicator color
-    },
-  }}
-  variant="scrollable" // Enables scrolling for tabs
-  scrollButtons="auto" // Shows scroll buttons when needed
->
-  <Tab label="Identification" />
-  <Tab label="Creators" />
-  <Tab label="Dates" />
-  <Tab label="Content" />
-  <Tab label="Format" />
-  <Tab label="Rights" />
-  <Tab label="Geography" />
-  <Tab label="Performance" />
-  <Tab label="Related Work" />
-  <Tab label="Cover Image" />
-  <Tab label="MP3 File" />
-</Tabs>
-
+           <Tabs
+            value={tabIndex}
+            onChange={handleTabChange}
+            aria-label="catalog tabs"
+            sx={{
+              mb: 3,
+              fontFamily: "Montserrat",
+              overflowX: "auto",
+              "& .MuiTab-root": {
+                fontFamily: "Montserrat",
+                textTransform: "none", // Prevents all caps
+                color: "#666", // Default color for tabs
+                "&:hover": {
+                  color: "#8BD3E6", // Hover color
+                },
+              },
+              "& .Mui-selected": {
+                color: "#8BD3E6 !important", // Force the active color to override defaults
+                fontWeight: "normal", // Ensures the active tab is not bold
+              },
+              "& .MuiTabs-indicator": {
+                backgroundColor: "#8BD3E6", // Active tab indicator color
+              },
+            }}
+            variant="scrollable" // Enables scrolling for tabs
+            scrollButtons="auto" // Shows scroll buttons when needed
+          >
+            <Tab label="Identification" />
+            <Tab label="Creators" />
+            <Tab label="Dates" />
+            <Tab label="Content" />
+            <Tab label="Format" />
+            <Tab label="Rights" />
+            <Tab label="Geography" />
+            <Tab label="Performance" />
+            <Tab label="Related Work" />
+            <Tab label="Cover Image" />
+            <Tab label="MP3 File" />
+          </Tabs>
       <Box component="form" onSubmit={handleSubmit}
        sx={{ mt: 2,   pl: 4,}}>
         <Grid container spacing={1}>

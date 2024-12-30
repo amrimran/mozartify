@@ -6,7 +6,6 @@ import {
   Typography,
   TextField,
   Button,
-  Grid,
   InputAdornment,
   IconButton,
 } from "@mui/material";
@@ -54,24 +53,49 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-const LeftContainer = styled(Box)(() => ({
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "center",
-  alignItems: "center",
-  textAlign: "center",
-  padding: 20,
+const textFieldStyles = {
+  "& label.Mui-focused": { 
+    color: "#5A67D8", // Vibrant indigo for focus
+    fontWeight: "bold", // Adds emphasis to the label on focus
+  },
   fontFamily: "Montserrat",
-  position: "relative",
-}));
+  "& .MuiInputBase-root": {
+    fontFamily: "Montserrat",
+    borderRadius: "12px", // Slightly more rounded corners for a modern feel
+    boxShadow: "0px 4px 6px rgba(90, 103, 216, 0.2)", // Subtle indigo shadow for depth
+    backgroundColor: "rgba(243, 244, 255, 0.8)", // Light gradient-inspired background
+    transition: "box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease", // Smooth animations
+  },
+  "& .MuiFormLabel-root": {
+    fontFamily: "Montserrat",
+    fontSize: "15px", // Slightly larger for readability
+    color: "#4A5568", // Neutral gray for a clean appearance
+    transition: "color 0.3s ease", // Smooth color change
+  },
+  "& .MuiInput-underline:after": {
+    borderBottomColor: "#5A67D8", // Matches the focus label color
+    transform: "scaleX(1)", // Smooth underline animation
+    transition: "transform 0.3s ease, border-color 0.3s ease",
+    borderWidth: "2px", // Slightly thicker for better visibility
+  },
+  "& .MuiOutlinedInput-root": {
+    "& fieldset": {
+      borderColor: "#CBD5E0", // Soft gray for the default border
+      transition: "border-color 0.3s ease", // Smooth hover/focus animation
+    },
+    "&:hover fieldset": {
+      borderColor: "#7F9CF5", // Softer indigo for hover
+      boxShadow: "0px 6px 16px rgba(127, 156, 245, 0.4)", // Glow effect on hover
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#5A67D8", // Vibrant indigo for focus
+      boxShadow: "0px 8px 20px rgba(90, 103, 216, 0.6)", // Stronger shadow for focus
+    },
+    borderRadius: "12px", // Matches the input base for consistent design
+    backgroundColor: "rgba(255, 255, 255, 0.9)", // Slightly opaque white for contrast
+  },
+};
 
-const HandMusicImage = styled("img")(({ theme }) => ({
-  position: "bottom",
-  bottom: 0,
-  left: 0,
-  width: "150%",
-  maxWidth: "450px",
-}));
 
 export default function Login() {
   const [username_or_email, setUsernameOrEmail] = useState("");
@@ -113,6 +137,8 @@ export default function Login() {
             navigate("/customer-homepage");
           } else if (result.data.role === "music_entry_clerk") {
             navigate("/clerk-homepage");
+          } else if (result.data.role === "admin") {
+            navigate("/admin-dashboard");
           }
          
         } else {
@@ -159,17 +185,8 @@ export default function Login() {
                 required
                 value={username_or_email}
                 onChange={(e) => setUsernameOrEmail(e.target.value)}
-                sx={{
-                  "& label.Mui-focused": { color: "#483C32" },
-                  "& .MuiInput-underline:after": {
-                    borderBottomColor: "#483C32",
-                  },
-                  "& .MuiOutlinedInput-root": {
-                    "& fieldset": { borderColor: "#483C32" },
-                    "&:hover fieldset": { borderColor: "#483C32" },
-                    "&.Mui-focused fieldset": { borderColor: "#483C32" },
-                  },
-                }}
+                sx={textFieldStyles}
+
               />
               <TextField
                 fullWidth
@@ -189,17 +206,8 @@ export default function Login() {
                     </InputAdornment>
                   ),
                 }}
-                sx={{
-                  "& label.Mui-focused": { color: "#483C32" },
-                  "& .MuiInput-underline:after": {
-                    borderBottomColor: "#483C32",
-                  },
-                  "& .MuiOutlinedInput-root": {
-                    "& fieldset": { borderColor: "#483C32" },
-                    "&:hover fieldset": { borderColor: "#483C32" },
-                    "&.Mui-focused fieldset": { borderColor: "#483C32" },
-                  },
-                }}
+                sx={textFieldStyles}
+
               />
               {errorMessage && (
                 <Typography color="error" variant="body2" sx={{ mt: 2 }}>
@@ -227,16 +235,18 @@ export default function Login() {
                 size="large"
                 type="submit"
                 sx={{
-                  mt: 5,
+                  mt: 3,
                   px: 10,
                   fontFamily: "Montserrat",
                   fontWeight: "bold",
-                  color: "#483C32",
-                  borderColor: "#483C32",
+                  color: "#FFFFFF",
+                  backgroundColor: "#8BD3E6",
+                  border: "1px solid #8BD3E6", // Explicitly define the border
+                  borderColor: "#8BD3E6",
                   "&:hover": {
-                    backgroundColor: "#483C32",
+                    backgroundColor: "#3B3183",
                     color: "#FFFFFF",
-                    borderColor: "#483C32",
+                    border: "1px solid #3B3183", // Ensure border remains visible on hover  
                   },
                 }}
               >
@@ -245,14 +255,14 @@ export default function Login() {
               <Typography
                 variant="body2"
                 align="center"
-                sx={{ mt: 2, fontFamily: "Montserrat", color: "#483C32" }}
+                sx={{ mt: 2, fontFamily: "Montserrat", color: "#00000" }}
               >
                 Don’t have an account?{" "}
                 <Link
                   to="/signup"
                   style={{
                     textDecoration: "none",
-                    color: "#C44131",
+                    color: "#3B3183",
                     fontWeight: "bold",
                   }}
                 >

@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
-import ClerkSidebar from "./ClerkSidebar";
+import ClerkSidebar from "./MusicEntryClerkSidebar";
 import ImportIcon from "./assets/import-icon.png";
 import { Divider } from "@mui/material";
 

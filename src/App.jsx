@@ -21,8 +21,16 @@ import MusicEntryClerkEdit from "./MusicEntryClerkEdit";
 import MusicEntryClerkProfile from "./MusicEntryClerkProfile";
 import FirstTimeLogin from './FirstTimeLogin';
 import TestSession from "./TestSession";
-import ClerkMusicScoreView from './ClerkMusicScoreView';
+import MusicEntryClerkView from './MusicEntryClerkView';
 import Play from './Play';
+import AdminDashboard from './AdminDashboard';
+import AdminInbox from './AdminInbox';
+import AdminManageScore from './AdminManageScores';
+import AdminMusicScoreView from './AdminMusicScoreView';
+import AdminProfile from './AdminProfile';
+import AdminManageUsers from './AdminManageUsers';
+import AdminEdit from "./AdminEdit";
+import AdminCatalog from "./AdminCatalog";
 
 
 
@@ -56,9 +64,24 @@ function App() {
         <Route path="/clerk-catalog" element={<MusicEntryClerkCatalog />} />
         <Route path="/clerk-edit" element={<MusicEntryClerkEdit />} />
         <Route path="/clerk-profile" element={<MusicEntryClerkProfile />} />
-        <Route path="/clerk-music-score-view/:scoreId" element={<ClerkMusicScoreView />} />
+        <Route path="/clerk-music-score-view/:scoreId" element={<MusicEntryClerkView />} />
         <Route path="/test-session" element={<TestSession />} />
         <Route path="/play" element={<Play />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/admin-inbox" element={<AdminInbox />} />
+        <Route path="/admin-manage-scores" element={<AdminManageScore />} />
+        <Route path="/admin-music-score-view/:scoreId" element={<AdminMusicScoreView />} />
+        <Route path="/admin-profile" element={<AdminProfile />} />
+        <Route path="/admin-manage-users" element={<AdminManageUsers />} />
+        <Route path="/admin-edit" element={<AdminEdit />} />
+        <Route path="/admin-catalog" element={<AdminCatalog />} />
+
+
+
+
+
+
+
 
 
 

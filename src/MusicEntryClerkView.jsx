@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Box, Typography, Button, Card, CardContent, List, ListItem, ListItemText, Avatar, Divider } from "@mui/material";
-import ClerkSidebar from "./ClerkSidebar";
+import ClerkSidebar from "./MusicEntryClerkSidebar";
 import abcjs from "abcjs";
 import { format } from 'date-fns';
 

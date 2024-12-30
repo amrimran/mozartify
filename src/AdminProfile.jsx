@@ -16,11 +16,11 @@ import EditIcon from "@mui/icons-material/Edit";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
-import ClerkSidebar from "./MusicEntryClerkSidebar";
+import AdminSidebar from "./AdminSidebar";
 
 axios.defaults.withCredentials = true;
 
-export default function ClerkProfile() {
+export default function AdminProfile() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -97,7 +97,7 @@ export default function ClerkProfile() {
         password,
       });
       alert("Profile updated successfully!");
-      navigate("/clerk-homepage");
+      navigate("/admin-dashboard");
     } catch (error) {
       console.error("Error updating profile:", error);
       alert("Failed to update profile.");
@@ -131,7 +131,7 @@ export default function ClerkProfile() {
     <ThemeProvider theme={theme}>
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh", backgroundColor: "#FFFFFF" }}> {/* Set the root Box background to white */}
-        <ClerkSidebar />
+        <AdminSidebar />
         <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column", marginLeft: "225px", minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
           {/* Updated Header Section with Bold User Profile */}
           <Box
@@ -139,12 +139,13 @@ export default function ClerkProfile() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              mb: 3,
-              mt: 3,
+              mb: 2,
+              mt: 2,
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="h4" sx={{ fontWeight: 700 }}>User Profile</Typography> {/* Bold the header */}
+            <Typography variant="h4" gutterBottom sx={{ fontFamily: 'Montserrat', fontWeight: 'bold', mt: 4, ml:1 }}>
+                User Profile</Typography> {/* Bold the header */}
             </Box>
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography variant="body1" sx={{ mr: 2 }}>
@@ -153,7 +154,7 @@ export default function ClerkProfile() {
               <Avatar>{username[0]}</Avatar>
             </Box>
           </Box>
-          <Divider sx={{ ml: 2 }} />
+          <Divider sx={{ my: 1 }} />
 
           <Container maxWidth="sm">
             {/* Removed the card around the profile details */}

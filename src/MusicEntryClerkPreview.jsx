@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Typography, Button, Avatar } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
-import ClerkSidebar from "./ClerkSidebar";
+import ClerkSidebar from "./MusicEntryClerkSidebar";
 import ABCJS from "abcjs";
 import axios from "axios";
 import { Divider } from "@mui/material";

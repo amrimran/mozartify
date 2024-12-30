@@ -20,7 +20,7 @@ import {
   Pagination,
 } from "@mui/material";
 import { FilterAlt } from "@mui/icons-material";
-import ClerkSidebar from "./MusicEntryClerkSidebar";
+import AdminSidebar from "./AdminSidebar";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 
@@ -36,7 +36,7 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-export default function MusicEntryClerkHomepage() {
+export default function AdminManageScore() {
   const [musicScores, setMusicScores] = useState([]);
   const [user, setUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -92,7 +92,7 @@ export default function MusicEntryClerkHomepage() {
   };
 
   const handleCardClick = (scoreId) => {
-    navigate(`/clerk-music-score-view/${scoreId}`);
+    navigate(`/admin-music-score-view/${scoreId}`);
   };
 
   const paginatedMusicScores = musicScores.slice(
@@ -114,7 +114,7 @@ export default function MusicEntryClerkHomepage() {
             overflowY: "auto", // Add scroll if content overflows
           }}
         >
-          <ClerkSidebar />
+          <AdminSidebar />
         </Box>
         <Box sx={{ flexGrow: 1, p: 3, pl: 5 }}>
           <Box
