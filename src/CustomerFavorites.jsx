@@ -34,12 +34,12 @@ axios.defaults.withCredentials = true;
 
 const options = {
   keys: [
-    "ms_title",
-    "ms_genre",
-    "ms_composer",
-    "ms_artist",
-    "ms_instrumentation",
-    "ms_emotion",
+    "title",
+    "genre",
+    "composer",
+    "artist",
+    "instrumentation",
+    "emotion",
   ],
   threshold: 0.3,
 };
@@ -150,12 +150,12 @@ export default function CustomerFavorites() {
     if (searchQuery) {
       const searchResult = unfilteredScores.filter((score) =>
         [
-          score.ms_title,
-          score.ms_genre,
-          score.ms_emotion,
-          score.ms_composer,
-          score.ms_artist,
-          score.ms_instrumentation,
+          score.title,
+          score.genre,
+          score.emotion,
+          score.composer,
+          score.artist,
+          score.instrumentation,
         ].some((field) =>
           field.toLowerCase().includes(searchQuery.toLowerCase())
         )
@@ -170,13 +170,13 @@ export default function CustomerFavorites() {
   const applyFilters = (scores) => {
     return scores.filter((score) => {
       return (
-        (!genre || score.ms_genre === genre) &&
+        (!genre || score.genre === genre) &&
         (!composer ||
-          score.ms_composer.toLowerCase().includes(composer.toLowerCase())) &&
+          score.composer.toLowerCase().includes(composer.toLowerCase())) &&
         (!emotion ||
-          score.ms_emotion.toLowerCase().includes(composer.toLowerCase())) &&
+          score.emotion.toLowerCase().includes(composer.toLowerCase())) &&
         (!instrumentation ||
-          score.ms_instrumentation
+          score.instrumentation
             .toLowerCase()
             .includes(instrumentation.toLowerCase()))
       );
@@ -253,6 +253,7 @@ export default function CustomerFavorites() {
               justifyContent: "space-between",
               alignItems: "center",
               mb: 3,
+              mt:3
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -276,7 +277,7 @@ export default function CustomerFavorites() {
                 />
               </Paper>
               <IconButton
-                sx={{ p: "10px", ml: 2 }}
+                sx={{ p: "10px", ml: 2}}
                 aria-label="filter"
                 onClick={() => setIsDrawerOpen(true)}
               >
@@ -428,7 +429,7 @@ export default function CustomerFavorites() {
               </Drawer>
             </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Box sx={{ display: "flex", alignItems: "center"}}>
               {user ? (
                 <>
                   <Typography variant="body1" sx={{ mr: 2 }}>
@@ -447,33 +448,33 @@ export default function CustomerFavorites() {
             </Box>
           </Box>
 
-          <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
-            <Box display="flex" alignItems="center" mb={2}>
-              <Typography variant="h4">Favorites</Typography>
-              <Box ml={2}>
-                <Box
-                  sx={{
-                    minWidth: 50,
-                    height: 50,
-                    backgroundColor: "#D3D3D3",
-                    borderRadius: "50%",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    padding: "0 10px",
-                  }}
-                >
-                  <Typography variant="h5" sx={{ color: "#4B4B4B" }}>
-                    {currentScores.length > 99 ? "99+" : currentScores.length}
-                  </Typography>
-                </Box>
+          <Box display="flex" alignItems="center">
+            <Typography variant="h4">Favorites</Typography>
+            <Box ml={2}>
+              <Box
+                sx={{
+                  minWidth: 50,
+                  height: 50,
+                  backgroundColor: "#D3D3D3",
+                  borderRadius: "50%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: "0 10px",
+                }}
+              >
+                <Typography variant="h5" sx={{ color: "#4B4B4B" }}>
+                  {currentScores.length > 99 ? "99+" : currentScores.length}
+                </Typography>
               </Box>
             </Box>
-
+          </Box>
+          <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
             <List>
-              {currentScores.map((item, index) => (
+              {currentScores.map((item) => (
                 <ListItemButton
                   key={item._id}
+                  sx={{ display: "flex", alignItems: "center" }}
                   onClick={() =>
                     navigate(
                       `/customer-favorites/customer-music-score-view/${item._id}`
@@ -481,19 +482,25 @@ export default function CustomerFavorites() {
                   }
                 >
                   <ListItemText
-                    primary={item.ms_title}
-                    secondary={`Genre: ${item.ms_genre} | Composer: ${item.ms_composer} | Artist: ${item.ms_artist}`}
+                    primary={item.title}
+                    secondary={`Genre: ${item.genre} | Composer: ${item.composer} | Artist: ${item.artist}`}
                   />
+
                   <ListItemIcon>
                     {!purchasedScores.includes(item._id) &&
                       !addedToCartScores.includes(item._id) && (
-                        <IconButton onClick={() => addToCart(score._id)}>
+                        <IconButton onClick={(e) => {
+                          e.stopPropagation();
+                          addToCart(item._id);}}>
                           <ShoppingCartIcon />
                         </IconButton>
                       )}
+                  </ListItemIcon>
+
+                  <ListItemIcon>
                     <IconButton
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevents the ListItemButton onClick from firing
+                        e.stopPropagation();
                         toggleFavorite(item._id);
                       }}
                     >

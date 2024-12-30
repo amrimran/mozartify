@@ -209,7 +209,7 @@ export default function Signup() {
             gutterBottom
             sx={{ marginBottom: 2 }}
           >
-            Sign up to <span style={{ color: "#3B3183" }}>Mozartify</span>
+            Sign up to <span style={{ color: "#3B3183" }}>N.A.S.I.R</span>
           </Typography>
           <Typography
             variant="body1"

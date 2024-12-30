@@ -26,9 +26,9 @@ import {
 import UploadIcon from "@mui/icons-material/Upload";
 import { Link, useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
-import SidebarMozartifyLogo from "./assets/mozartify.png";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebase";
+import CustomerSidebar from "./CustomerSidebar";
 
 axios.defaults.withCredentials = true;
 
@@ -83,32 +83,6 @@ export default function CustomerAddNewFeedback() {
   const handleDelete = () => {
     setFormData((prevData) => ({ ...prevData, attachment: null }));
     setAttachmentPreview(null);
-  };
-
-  const handleLogout = async () => {
-    try {
-      await axios.get("http://localhost:3000/logout");
-      setCurrentUser(null);
-      if ("caches" in window) {
-        caches.keys().then((names) => {
-          names.forEach((name) => {
-            caches.delete(name);
-          });
-        });
-      }
-      window.history.pushState(null, null, window.location.href);
-      window.history.pushState(null, null, window.location.href);
-      window.history.go(-2);
-
-      window.onpopstate = function () {
-        window.history.go(1);
-      };
-
-      navigate("/login", { replace: true }); // Redirect to login page after logout
-    } catch (error) {
-      console.error("Error during logout:", error);
-      alert("An error occurred during logout. Please try again.");
-    }
   };
 
   const handleInputChange = (e) => {
@@ -169,47 +143,7 @@ export default function CustomerAddNewFeedback() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh" }}>
-        <Box sx={{ width: 225, bgcolor: "#E4DCC8", p: 2 }}>
-          <Box
-            sx={{
-              textAlign: "center",
-              mb: 4,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              pt: 5,
-            }}
-          >
-            <img
-              src={SidebarMozartifyLogo}
-              alt="MozartifyIcon"
-              style={{ maxWidth: "100%", maxHeight: "48px" }}
-            />
-            <Typography variant="h6" sx={{ mt: 2, fontFamily: "Montserrat" }}>
-              Mozartify
-            </Typography>
-          </Box>
-          <List>
-            {navigationItems.map((item) => (
-              <Link
-                to={item.path}
-                style={{ textDecoration: "none" }}
-                key={item.path}
-              >
-                <ListItemButton>
-                  <ListItemIcon>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.label} />
-                </ListItemButton>
-              </Link>
-            ))}
-            <ListItemButton onClick={handleLogout}>
-              <ListItemIcon>
-                <ExitToApp />
-              </ListItemIcon>
-              <ListItemText primary="Logout" />
-            </ListItemButton>
-          </List>
-        </Box>
+      <CustomerSidebar />
         <Box sx={{ flexGrow: 1, p: 3 }}>
           <Box
             sx={{

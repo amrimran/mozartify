@@ -905,6 +905,42 @@ export default function MusicEntryClerkCatalog() {
                   onChange={handleInputChange}
                 />
               </Grid>
+<<<<<<< Updated upstream
+=======
+              <Grid item xs={12} sm={6}>
+              <TextField
+                name="emotion"
+                label="Emotion"
+                variant="outlined"
+                fullWidth
+                sx={formStyles}
+                value={catalogData.emotion} // Assuming you have this in your catalogData state
+                onChange={handleInputChange}
+              />
+            </Grid>
+            <Grid item xs={12} display="flex" justifyContent="flex-end">
+            {/* <Button
+              variant="contained"
+              component="label"
+              sx={{
+                fontFamily: "Montserrat",
+                fontWeight: "bold",
+                color: "#FFFFFF",
+                backgroundColor: "#3B3183",
+                borderRadius: 2,
+                width: '180px',
+                mt: -3, // Adjust the margin-top
+                "&:hover": {
+                  backgroundColor: "#2C2657",
+                },
+                transition: 'background-color 0.3s ease', // Smooth transition for hover
+              }}
+              onClick={handleEmotion}
+            >
+              Handle Emotion
+            </Button> */}
+          </Grid>
+>>>>>>> Stashed changes
             </>
           )}
           {tabIndex === 4 && (

@@ -1,10 +1,25 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Box, Divider, Typography, Avatar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Button, Paper } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import CustomerSidebar from './CustomerSidebar';
+import {
+  Box,
+  Divider,
+  Typography,
+  Avatar,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Button,
+  Paper,
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import CustomerSidebar from "./CustomerSidebar";
 import { createGlobalStyle } from "styled-components";
+import { useStripe, useElements } from "@stripe/react-stripe-js";
 
 axios.defaults.withCredentials = true;
 
@@ -30,6 +45,10 @@ export default function CustomerMyCart() {
   const fetchCartItemIDs = async () => {
     try {
       const response = await axios.get("http://localhost:3000/user-cart");
+      if (response.data.length === 0) {
+        setCartItemIDs([]);
+        return;
+      }
       const CartScoreIds = response.data.map((items) => items.score_id);
       setCartItemIDs(CartScoreIds);
     } catch (error) {
@@ -65,16 +84,44 @@ export default function CustomerMyCart() {
   }, [cartItemIDs]);
 
   const subtotal = cartItems.length > 0
-    ? cartItems.reduce((sum, item) => sum + item.ms_price, 0)
+    ? cartItems.reduce((sum, item) => sum + parseFloat(item.price), 0)
     : 0;
 
   const handleRemoveItem = async (id) => {
     try {
       await axios.delete(`http://localhost:3000/remove-item-from-cart/${id}`);
-      await fetchCartItemIDs(); // Re-fetch cart IDs after removal
+      await fetchCartItemIDs();
     } catch (error) {
       console.error("Error removing item from cart:", error);
     }
+  };
+
+  const stripe = useStripe();
+  const elements = useElements();
+
+  const handleStripeCheckout = async () => {
+    if (!stripe || !elements) {
+      return;
+    }
+
+    const response = await axios.post(
+      "http://localhost:3000/create-checkout-session",
+      {
+        cartItems,
+      }
+    );
+
+    const { id } = response.data;
+
+    const { error } = await stripe.redirectToCheckout({ sessionId: id });
+
+    if (error) {
+      console.error("Stripe checkout error:", error);
+    }
+
+  console.log("Subtotal:", subtotal);
+  console.log("Data type of subtotal:", typeof subtotal);
+  
   };
 
   const GlobalStyle = createGlobalStyle`
@@ -90,9 +137,46 @@ export default function CustomerMyCart() {
       <GlobalStyle />
       <Box display="flex">
         <CustomerSidebar />
-        <Box flex={1} padding={2}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h5">My Cart</Typography>
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            padding: 5,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+              mt: 3,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Typography variant="h4">My Cart</Typography>
+              <Box ml={2}>
+                <Box
+                  sx={{
+                    minWidth: 50,
+                    height: 50,
+                    backgroundColor: "#D3D3D3",
+                    borderRadius: "50%",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    padding: "0 10px",
+                  }}
+                >
+                  <Typography variant="h5" sx={{ color: "#4B4B4B" }}>
+                    {cartItems.length > 99 ? "99+" : cartItems.length}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+
             <Box sx={{ display: "flex", alignItems: "center" }}>
               {user ? (
                 <>
@@ -112,38 +196,79 @@ export default function CustomerMyCart() {
             </Box>
           </Box>
           <Divider />
-          <TableContainer component={Paper} sx={{ mt: 2 }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Title</TableCell>
-                  <TableCell>Composer</TableCell>
-                  <TableCell>Price</TableCell>
-                  <TableCell>Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {cartItems.map((item, index) => (
-                  <TableRow key={item._id}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{item.ms_title}</TableCell>
-                    <TableCell>{item.ms_composer}</TableCell>
-                    <TableCell>RM {item.ms_price.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleRemoveItem(item._id)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
-            <Typography variant="h6">Subtotal: ${subtotal.toFixed(2)}</Typography>
-            <Button variant="contained" color="primary">Pay</Button>
-          </Box>
+          {cartItems.length === 0 ? (
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              height="300px"
+            >
+              <Typography variant="h6" color="textSecondary">
+                No music scores are added in the cart for now.
+              </Typography>
+            </Box>
+          ) : (
+            <>
+              <TableContainer component={Paper} sx={{ mt: 2 }}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>#</TableCell>
+                      <TableCell>Title</TableCell>
+                      <TableCell>Composer</TableCell>
+                      <TableCell>Price</TableCell>
+                      <TableCell>Action</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {cartItems.map((item, index) => (
+                      <TableRow
+                        key={item._id}
+                        sx={{
+                          "&:last-child td, &:last-child th": { border: 0 },
+                        }}
+                      >
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>{item.title}</TableCell>
+                        <TableCell>{item.composer}</TableCell>
+                        <TableCell>RM {item.price}</TableCell>
+                        <TableCell>
+                          <IconButton
+                            onClick={() => handleRemoveItem(item._id)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                mt={2}
+              >
+                <Typography variant="h6">
+                  Subtotal: RM {subtotal.toFixed(2)}
+                </Typography>
+                <Button
+                  variant="contained"
+                  onClick={handleStripeCheckout}
+                  sx={{
+                    backgroundColor: "#3b1830", // Set background color
+                    color: "#ffffff", // Set text color
+                    "&:hover": {
+                      backgroundColor: "#2e162b", // Darker shade for hover effect
+                    },
+                  }}
+                >
+                  Pay
+                </Button>
+              </Box>
+            </>
+          )}
         </Box>
       </Box>
     </>

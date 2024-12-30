@@ -5,6 +5,10 @@ import { storage } from "./firebase";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import {
+  List,
+  ListItemIcon,
+  ListItemText,
+  ListItemButton,
   Box,
   Avatar,
   Typography,
@@ -101,9 +105,12 @@ export default function CustomerHomepage() {
       try {
         const response = await axios.get("http://localhost:3000/user-cart");
 
-        const AddedScoreIds = response.data.map(
-          (added) => added.score_id
-        );
+        if (response.data.length === 0) {
+          setAddedToCartScores([]);
+          return;
+        }
+
+        const AddedScoreIds = response.data.map((added) => added.score_id);
 
         setAddedToCartScores(AddedScoreIds);
       } catch (error) {
@@ -111,8 +118,9 @@ export default function CustomerHomepage() {
         navigate("/login");
       }
     };
+
     fetchAddedToCartScores();
-  }, []);
+  }, [navigate]);
 
   const addToCart = async (scoreId) => {
     try {
@@ -152,13 +160,13 @@ export default function CustomerHomepage() {
   const applyFilters = (scores) => {
     return scores.filter((score) => {
       return (
-        (!genre || score.ms_genre === genre) &&
+        (!genre || score.genre === genre) &&
         (!composer ||
-          score.ms_composer.toLowerCase().includes(composer.toLowerCase())) &&
+          score.composer.toLowerCase().includes(composer.toLowerCase())) &&
         (!emotion ||
-          score.ms_emotion.toLowerCase().includes(composer.toLowerCase())) &&
+          score.emotion.toLowerCase().includes(composer.toLowerCase())) &&
         (!instrumentation ||
-          score.ms_instrumentation
+          score.instrumentation
             .toLowerCase()
             .includes(instrumentation.toLowerCase()))
       );
@@ -227,7 +235,7 @@ export default function CustomerHomepage() {
     const fetchPopularImagePaths = async () => {
       const updatedPopularScores = await Promise.all(
         popularScores.map(async (score) => {
-          const imageUrl = await fetchImage(score.ms_cover_image);
+          const imageUrl = await fetchImage(score.coverImageUrl);
           return { ...score, imageUrl };
         })
       );
@@ -242,9 +250,9 @@ export default function CustomerHomepage() {
   useEffect(() => {
     const fetchRecommendedImagePaths = async () => {
       const updatedRecommendedScores = await Promise.all(
-        recommendedScores.map(async (score2) => {
-          const imageUrl = await fetchImage(score2.ms_cover_image);
-          return { ...score2, imageUrl };
+        recommendedScores.map(async (score) => {
+          const imageUrl = await fetchImage(score.coverImageUrl);
+          return { ...score, imageUrl };
         })
       );
       setRecommendations(updatedRecommendedScores);
@@ -340,8 +348,10 @@ export default function CustomerHomepage() {
         <Box
           sx={{
             flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
             overflow: "hidden",
-            padding: 3,
+            padding: 5,
           }}
         >
           <Box
@@ -350,6 +360,7 @@ export default function CustomerHomepage() {
               justifyContent: "space-between",
               alignItems: "center",
               mb: 3,
+              mt:3
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -373,7 +384,7 @@ export default function CustomerHomepage() {
                 />
               </Paper>
               <IconButton
-                sx={{ p: "10px", ml: 2 }}
+                sx={{ p: "10px", ml: 2}}
                 aria-label="filter"
                 onClick={() => setIsDrawerOpen(true)}
               >
@@ -526,7 +537,7 @@ export default function CustomerHomepage() {
               </Drawer>
             </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Box sx={{ display: "flex", alignItems: "center"}}>
               {user ? (
                 <>
                   <Typography variant="body1" sx={{ mr: 2 }}>
@@ -545,323 +556,390 @@ export default function CustomerHomepage() {
             </Box>
           </Box>
 
-          <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
-            <Box display="flex" alignItems="center" mb={2}>
-              <Typography variant="h4">
-                {searchQuery || isFiltered ? "Search Result" : "Dashboard"}
-              </Typography>
-            </Box>
-            {searchQuery ? (
-              <Box>
-                {searchedScores.length > 0 ? (
-                  searchedScores.map((score) => (
-                    <Box
-                      key={score._id}
-                      sx={{ display: "flex", alignItems: "center", mb: 2 }}
-                    >
-                      <Box sx={{ flexGrow: 1 }}>
-                        <Typography variant="h6">{score.ms_title}</Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          Genre: {score.ms_genre} | Composer:{" "}
-                          {score.ms_composer} | Artist: {score.ms_artist}
-                        </Typography>
-                      </Box>
-
-                      {!purchasedScores.includes(score._id) &&
-                        !addedToCartScores.includes(score._id) && (
-                          <IconButton onClick={() => addToCart(score._id)}>
-                            <ShoppingCartIcon />
-                          </IconButton>
-                        )}
-
-                      <IconButton onClick={() => toggleFavorite(score._id)}>
-                        <Favorite
-                          color={
-                            favorites.includes(score._id) ? "error" : "disabled"
-                          }
-                        />
-                      </IconButton>
-                      <IconButton>
-                        <PlayArrow />
-                      </IconButton>
-                    </Box>
-                  ))
-                ) : (
-                  <Typography variant="body2">No results found</Typography>
-                )}
-              </Box>
-            ) : isFiltered ? (
-              <Box>
-                {filteredScores.length > 0 ? (
-                  filteredScores.map((score) => (
-                    <Box
-                      key={score._id}
-                      sx={{ display: "flex", alignItems: "center", mb: 2 }}
-                    >
-                      <Box sx={{ flexGrow: 1 }}>
-                        <Typography variant="h6">{score.ms_title}</Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          Genre: {score.ms_genre} | Composer:{" "}
-                          {score.ms_composer} | Artist: {score.ms_artist}
-                        </Typography>
-                      </Box>
-                      <IconButton onClick={() => toggleFavorite(score._id)}>
-                        <Favorite
-                          color={
-                            favorites.includes(score._id) ? "error" : "disabled"
-                          }
-                        />
-                      </IconButton>
-                      <IconButton>
-                        <PlayArrow />
-                      </IconButton>
-                    </Box>
-                  ))
-                ) : (
-                  <Typography variant="body2">No results found</Typography>
-                )}
-              </Box>
-            ) : (
-              <>
+          <Box display="flex" alignItems="center" mb={2} ml={2}>
+            <Typography variant="h4">
+              {searchQuery || isFiltered ? "Search Result" : "Dashboard"}
+            </Typography>
+            {(searchedScores.length > 0 ||
+              (searchedScores.length == 0 && searchQuery)) && (
+              <Box ml={2}>
                 <Box
                   sx={{
-                    height: "calc(70vh)",
-                    overflowY: "auto",
+                    minWidth: 50,
+                    height: 50,
+                    backgroundColor: "#D3D3D3",
+                    borderRadius: "50%",
                     display: "flex",
-                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    padding: "0 10px",
                   }}
                 >
-                  <Box>
-                    <Typography variant="h5" gutterBottom>
-                      Popular
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        position: "relative",
-                      }}
+                  <Typography variant="h5" sx={{ color: "#4B4B4B" }}>
+                    {searchedScores.length > 99 ? "99+" : searchedScores.length}
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+          </Box>
+
+          {searchQuery ? (
+            <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
+              {searchedScores.length > 0 ? (
+                <List>
+                  {searchedScores.map((score) => (
+                    <ListItemButton
+                      key={score._id}
+                      sx={{ display: "flex", alignItems: "center" }}
+                      onClick={() =>
+                        navigate(
+                          `/customer-library/customer-music-score-view/${score._id}`
+                        )
+                      }
                     >
-                      <Box sx={{ width: "calc(100% - 60px)" }}>
-                        <Box
-                          sx={{
-                            position: "relative",
-                            display: "flex",
-                            alignItems: "center",
+                      <ListItemText
+                        primary={score.title}
+                        secondary={`Genre: ${score.genre} | Composer: ${score.composer} | Artist: ${score.artist} | Emotion: ${score.emotion}`}
+                      />
+
+                      <ListItemIcon>
+                        {!purchasedScores.includes(score._id) &&
+                          !addedToCartScores.includes(score._id) && (
+                            <IconButton
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                addToCart(score._id);
+                              }}
+                            >
+                              <ShoppingCartIcon />
+                            </IconButton>
+                          )}
+                      </ListItemIcon>
+
+                      <ListItemIcon>
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(score._id);
                           }}
                         >
-                          <IconButton
-                            onClick={scrollLeft}
-                            sx={{
-                              position: "absolute",
-                              left: 0,
-                              zIndex: 1,
-                              backgroundColor: "#fff",
-                              "&:hover": { backgroundColor: "#f0f0f0" },
-                            }}
-                          >
-                            <ArrowBack />
-                          </IconButton>
-
-                          <Box
-                            ref={scrollContainerRef}
-                            sx={{
-                              display: "flex",
-                              overflowX: "auto",
-                              scrollBehavior: "smooth",
-                              whiteSpace: "nowrap",
-                              paddingLeft: "50px", // Add padding to the left to accommodate the arrow button
-                            }}
-                          >
-                            {popularScores.map((score, index) => (
-                              <Box
-                                key={index}
-                                sx={{ flex: "0 0 auto", margin: "0 20px" }}
-                              >
-                                <Link
-                                  to={`/customer-music-score-view/${score._id}`}
-                                  style={{ textDecoration: "none" }}
-                                >
-                                  <Card
-                                    sx={{
-                                      width: 200,
-                                      display: "flex",
-                                      flexDirection: "column",
-                                      justifyContent: "space-between",
-                                      border: "2px solid #000",
-                                      borderRadius: 10,
-                                    }}
-                                  >
-                                    <CardMedia
-                                      component="img"
-                                      height={280}
-                                      image={score.imageUrl}
-                                      alt={score.ms_title}
-                                    />
-                                    <CardContent
-                                      sx={{
-                                        flexGrow: 1,
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        justifyContent: "center",
-                                      }}
-                                    >
-                                      <Typography
-                                        variant="h6"
-                                        noWrap
-                                        sx={{ textAlign: "center", mb: 1 }}
-                                      >
-                                        {score.ms_title}
-                                      </Typography>
-                                      <Typography
-                                        variant="body2"
-                                        color="textSecondary"
-                                        sx={{ textAlign: "center" }}
-                                      >
-                                        {score.ms_artist}
-                                      </Typography>
-                                    </CardContent>
-                                  </Card>
-                                </Link>
-                              </Box>
-                            ))}
-                          </Box>
-
-                          <IconButton
-                            onClick={scrollRight}
-                            sx={{
-                              position: "absolute",
-                              right: 0,
-                              zIndex: 1,
-                              backgroundColor: "#fff",
-                              "&:hover": { backgroundColor: "#f0f0f0" },
-                            }}
-                          >
-                            <ArrowForward />
-                          </IconButton>
-                        </Box>
-                      </Box>
-                    </Box>
-                  </Box>
-
-                  <Box sx={{ mt: 4 }}>
-                    <Typography variant="h5" gutterBottom>
-                      For You
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        position: "relative",
-                      }}
-                    >
-                      <Box sx={{ width: "calc(100% - 60px)" }}>
-                        <Box
-                          sx={{
-                            position: "relative",
-                            display: "flex",
-                            alignItems: "center",
+                          <Favorite
+                            color={
+                              favorites.includes(score._id)
+                                ? "error"
+                                : "disabled"
+                            }
+                          />
+                        </IconButton>
+                      </ListItemIcon>
+                      <ListItemIcon>
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
                           }}
                         >
-                          <IconButton
-                            onClick={scrollLeft2}
-                            sx={{
-                              position: "absolute",
-                              left: 0,
-                              zIndex: 1,
-                              backgroundColor: "#fff",
-                              "&:hover": { backgroundColor: "#f0f0f0" },
-                            }}
-                          >
-                            <ArrowBack />
-                          </IconButton>
+                          <PlayArrow />
+                        </IconButton>
+                      </ListItemIcon>
+                    </ListItemButton>
+                  ))}
+                </List>
+              ) : (
+                <Typography variant="body2">No results found</Typography>
+              )}
+            </Box>
+          ) : isFiltered ? (
+            <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
+              {filteredScores.length > 0 ? (
+                <List>
+                  {filteredScores.map((score) => (
+                    <ListItemButton
+                      key={score._id}
+                      sx={{ display: "flex", alignItems: "center" }}
+                      onClick={() =>
+                        navigate(
+                          `/customer-library/customer-music-score-view/${score._id}`
+                        )
+                      }
+                    >
+                      <ListItemText
+                        primary={score.title}
+                        secondary={`Genre: ${score.genre} | Composer: ${score.composer} | Artist: ${score.artist} | Emotion: ${score.emotion}`}
+                      />
 
-                          <Box
-                            ref={scrollContainerRef2}
-                            sx={{
-                              display: "flex",
-                              overflowX: "auto",
-                              scrollBehavior: "smooth",
-                              whiteSpace: "nowrap",
-                              paddingLeft: "50px", // Add padding to the left to accommodate the arrow button
-                            }}
-                          >
-                            {recommendedScores.map((score, index) => (
-                              <Box
-                                key={index}
-                                sx={{ flex: "0 0 auto", margin: "0 20px" }}
+                      <ListItemIcon>
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(score._id);
+                          }}
+                        >
+                          <Favorite
+                            color={
+                              favorites.includes(score._id)
+                                ? "error"
+                                : "disabled"
+                            }
+                          />
+                        </IconButton>
+                      </ListItemIcon>
+                      <ListItemIcon>
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                        >
+                          <PlayArrow />
+                        </IconButton>
+                      </ListItemIcon>
+                    </ListItemButton>
+                  ))}
+                </List>
+              ) : (
+                <Typography variant="body2">No results found</Typography>
+              )}
+            </Box>
+          ) : (
+            <>
+              <Box
+                sx={{
+                  height: "calc(70vh)",
+                  overflowY: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <Box>
+                  <Typography variant="h5" gutterBottom sx={{ ml: 3 }}>
+                    Popular
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      position: "relative",
+                    }}
+                  >
+                    <Box sx={{ width: "calc(100% - 60px)" }}>
+                      <Box
+                        sx={{
+                          position: "relative",
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <IconButton
+                          onClick={scrollLeft}
+                          sx={{
+                            position: "absolute",
+                            left: 0,
+                            zIndex: 1,
+                            backgroundColor: "#fff",
+                            "&:hover": { backgroundColor: "#f0f0f0" },
+                          }}
+                        >
+                          <ArrowBack />
+                        </IconButton>
+
+                        <Box
+                          ref={scrollContainerRef}
+                          sx={{
+                            display: "flex",
+                            overflowX: "auto",
+                            scrollBehavior: "smooth",
+                            whiteSpace: "nowrap",
+                            paddingLeft: "50px", // Add padding to the left to accommodate the arrow button
+                          }}
+                        >
+                          {popularScores.map((score, index) => (
+                            <Box
+                              key={index}
+                              sx={{ flex: "0 0 auto", margin: "0 20px" }}
+                            >
+                              <Link
+                                to={`/customer-music-score-view/${score._id}`}
+                                style={{ textDecoration: "none" }}
                               >
-                                <Link
-                                  to={`/customer-music-score-view/${score._id}`}
-                                  style={{ textDecoration: "none" }}
+                                <Card
+                                  sx={{
+                                    width: 200,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "space-between",
+                                    border: "2px solid #000",
+                                    borderRadius: 10,
+                                  }}
                                 >
-                                  <Card
+                                  <CardMedia
+                                    component="img"
+                                    height={280}
+                                    image={score.imageUrl}
+                                    alt={score.title}
+                                  />
+                                  <CardContent
                                     sx={{
-                                      width: 200,
+                                      flexGrow: 1,
                                       display: "flex",
                                       flexDirection: "column",
-                                      justifyContent: "space-between",
-                                      border: "2px solid #000",
-                                      borderRadius: 10,
+                                      justifyContent: "center",
                                     }}
                                   >
-                                    <CardMedia
-                                      component="img"
-                                      height={280}
-                                      image={score.imageUrl}
-                                      alt={score.ms_title}
-                                    />
-                                    <CardContent
-                                      sx={{
-                                        flexGrow: 1,
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        justifyContent: "center",
-                                      }}
+                                    <Typography
+                                      variant="h6"
+                                      noWrap
+                                      sx={{ textAlign: "center", mb: 1 }}
                                     >
-                                      <Typography
-                                        variant="h6"
-                                        noWrap
-                                        sx={{ textAlign: "center", mb: 1 }}
-                                      >
-                                        {score.ms_title}
-                                      </Typography>
-                                      <Typography
-                                        variant="body2"
-                                        color="textSecondary"
-                                        sx={{ textAlign: "center" }}
-                                      >
-                                        {score.ms_artist}
-                                      </Typography>
-                                    </CardContent>
-                                  </Card>
-                                </Link>
-                              </Box>
-                            ))}
-                          </Box>
-
-                          <IconButton
-                            onClick={scrollRight2}
-                            sx={{
-                              position: "absolute",
-                              right: 0,
-                              zIndex: 1,
-                              backgroundColor: "#fff",
-                              "&:hover": { backgroundColor: "#f0f0f0" },
-                            }}
-                          >
-                            <ArrowForward />
-                          </IconButton>
+                                      {score.title}
+                                    </Typography>
+                                    <Typography
+                                      variant="body2"
+                                      color="textSecondary"
+                                      sx={{ textAlign: "center" }}
+                                    >
+                                      {score.artist}
+                                    </Typography>
+                                  </CardContent>
+                                </Card>
+                              </Link>
+                            </Box>
+                          ))}
                         </Box>
+
+                        <IconButton
+                          onClick={scrollRight}
+                          sx={{
+                            position: "absolute",
+                            right: 0,
+                            zIndex: 1,
+                            backgroundColor: "#fff",
+                            "&:hover": { backgroundColor: "#f0f0f0" },
+                          }}
+                        >
+                          <ArrowForward />
+                        </IconButton>
                       </Box>
                     </Box>
                   </Box>
                 </Box>
-              </>
-            )}
-          </Box>
+
+                <Box sx={{ mt: 4 }}>
+                  <Typography variant="h5" gutterBottom sx={{ ml: 3 }}>
+                    For You
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      position: "relative",
+                    }}
+                  >
+                    <Box sx={{ width: "calc(100% - 60px)" }}>
+                      <Box
+                        sx={{
+                          position: "relative",
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <IconButton
+                          onClick={scrollLeft2}
+                          sx={{
+                            position: "absolute",
+                            left: 0,
+                            zIndex: 1,
+                            backgroundColor: "#fff",
+                            "&:hover": { backgroundColor: "#f0f0f0" },
+                          }}
+                        >
+                          <ArrowBack />
+                        </IconButton>
+
+                        <Box
+                          ref={scrollContainerRef2}
+                          sx={{
+                            display: "flex",
+                            overflowX: "auto",
+                            scrollBehavior: "smooth",
+                            whiteSpace: "nowrap",
+                            paddingLeft: "50px", // Add padding to the left to accommodate the arrow button
+                          }}
+                        >
+                          {recommendedScores.map((score, index) => (
+                            <Box
+                              key={index}
+                              sx={{ flex: "0 0 auto", margin: "0 20px" }}
+                            >
+                              <Link
+                                to={`/customer-music-score-view/${score._id}`}
+                                style={{ textDecoration: "none" }}
+                              >
+                                <Card
+                                  sx={{
+                                    width: 200,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "space-between",
+                                    border: "2px solid #000",
+                                    borderRadius: 10,
+                                  }}
+                                >
+                                  <CardMedia
+                                    component="img"
+                                    height={280}
+                                    image={score.imageUrl}
+                                    alt={score.title}
+                                  />
+                                  <CardContent
+                                    sx={{
+                                      flexGrow: 1,
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      justifyContent: "center",
+                                    }}
+                                  >
+                                    <Typography
+                                      variant="h6"
+                                      noWrap
+                                      sx={{ textAlign: "center", mb: 1 }}
+                                    >
+                                      {score.title}
+                                    </Typography>
+                                    <Typography
+                                      variant="body2"
+                                      color="textSecondary"
+                                      sx={{ textAlign: "center" }}
+                                    >
+                                      {score.artist}
+                                    </Typography>
+                                  </CardContent>
+                                </Card>
+                              </Link>
+                            </Box>
+                          ))}
+                        </Box>
+
+                        <IconButton
+                          onClick={scrollRight2}
+                          sx={{
+                            position: "absolute",
+                            right: 0,
+                            zIndex: 1,
+                            backgroundColor: "#fff",
+                            "&:hover": { backgroundColor: "#f0f0f0" },
+                          }}
+                        >
+                          <ArrowForward />
+                        </IconButton>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            </>
+          )}
         </Box>
       </Box>
     </>

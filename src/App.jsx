@@ -7,6 +7,8 @@ import ResetPassword from "./ResetPassword";
 import Home from "./Home";
 import CustomerHomepage from "./CustomerHomepage";
 import CustomerLibrary from "./CustomerLibrary";
+import CustomerSearch from "./CustomerSearch";
+import CustomerAdvancedSearch from "./CustomerAdvancedSearch";
 import CustomerFavorites from "./CustomerFavorites";
 import CustomerMyCart from "./CustomerMyCart";
 import CustomerAddNewFeedback from "./CustomerAddNewFeedback";
@@ -21,6 +23,7 @@ import MusicEntryClerkEdit from "./MusicEntryClerkEdit";
 import MusicEntryClerkProfile from "./MusicEntryClerkProfile";
 import FirstTimeLogin from './FirstTimeLogin';
 import TestSession from "./TestSession";
+<<<<<<< Updated upstream
 import MusicEntryClerkView from './MusicEntryClerkView';
 import Play from './Play';
 import AdminDashboard from './AdminDashboard';
@@ -33,6 +36,15 @@ import AdminEdit from "./AdminEdit";
 import AdminCatalog from "./AdminCatalog";
 
 
+=======
+import TestSearch from "./testSearch";
+import ClerkMusicScoreView from './ClerkMusicScoreView';
+import FileDownloaderPage from './FileDownloaderPage';
+
+
+import Success from "./Success";
+import Cancel from "./Cancel";
+>>>>>>> Stashed changes
 
 
 
@@ -45,10 +57,14 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/first-time-login" element={<FirstTimeLogin />} />
         <Route path="/home" element={<Home />} />
+        <Route path="/downloader" element={<FileDownloaderPage />} />
+
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/customer-homepage" element={<CustomerHomepage />} />
         <Route path="/customer-library" element={<CustomerLibrary />} />
+        <Route path="/customer-search" element={<CustomerSearch />} />
+        <Route path="/customer-search/customer-advanced-search" element={<CustomerAdvancedSearch />} />
         <Route path="/customer-favorites" element={<CustomerFavorites />} />
         <Route path="/customer-mycart" element={<CustomerMyCart />} />
         <Route path="/customer-inbox" element={<CustomerInbox />} />
@@ -64,6 +80,7 @@ function App() {
         <Route path="/clerk-catalog" element={<MusicEntryClerkCatalog />} />
         <Route path="/clerk-edit" element={<MusicEntryClerkEdit />} />
         <Route path="/clerk-profile" element={<MusicEntryClerkProfile />} />
+<<<<<<< Updated upstream
         <Route path="/clerk-music-score-view/:scoreId" element={<MusicEntryClerkView />} />
         <Route path="/test-session" element={<TestSession />} />
         <Route path="/play" element={<Play />} />
@@ -83,6 +100,15 @@ function App() {
 
 
 
+=======
+        <Route path="/clerk-music-score-view/:scoreId" element={<ClerkMusicScoreView />} />
+
+        <Route path="/success" element={<Success />} />
+        <Route path="/cancel" element={<Cancel />} />
+
+        <Route path="/test-session" element={<TestSession />} />
+        <Route path="/test-search" element={<TestSearch />} />
+>>>>>>> Stashed changes
 
 
 

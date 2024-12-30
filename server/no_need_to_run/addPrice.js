@@ -3,9 +3,9 @@ const { MongoClient } = require("mongodb");
 
 const uri = process.env.DB_URI;
 const dbName = "mozartify";
-const collectionName = "musicscores"
+const collectionName = "abcfiles";
 
-async function addFields() {
+async function addPriceField() {
   let client;
 
   try {
@@ -19,13 +19,12 @@ async function addFields() {
       [
         {
           $set: {
-            ms_collection: {
-              $switch: {
-                branches: [
-                  { case: { $lte: [{ $rand: {} }, 0.33] }, then: "Lecturers" },
-                  { case: { $lte: [{ $rand: {} }, 0.66] }, then: "Students" },
-                ],
-                default: "Freelancers"
+            price: {
+              $toString: {
+                $round: [
+                  { $add: [20, { $multiply: [{ $rand: {} }, 30] }] }, // Generate value in range [20, 50)
+                  2 // Round to 2 decimal points
+                ]
               }
             }
           }
@@ -43,6 +42,4 @@ async function addFields() {
   }
 }
 
-addFields();
-
-
+addPriceField();

@@ -9,13 +9,14 @@ const MongoDBStore = require("connect-mongodb-session")(session);
 const { MongoClient, ObjectId } = require("mongodb");
 const { PythonShell } = require("python-shell");
 const path = require("path");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const bodyParser = require("body-parser");
 
 const UserModel = require("./models/User");
 const PurchaseModel = require("./models/Purchase");
 const CartModel = require("./models/Cart");
-const MusicScoreModel = require("./models/MusicScore");
 const DeletedUserModel = require("./models/DeletedUser");
-
+const ABCFileModel = require('./models/ABCFile'); 
 
 const app = express();
 app.use(express.json());
@@ -452,24 +453,181 @@ app.get("/search-music-scores", async (req, res) => {
   const { query } = req.query;
 
   try {
-    let musicScores;
+    let ABCFiles;
 
     if (query) {
-      musicScores = await MusicScoreModel.find({
+      ABCFiles= await ABCFileModel.find({
         $or: [
-          { ms_title: { $regex: query, $options: "i" } },
-          { ms_genre: { $regex: query, $options: "i" } },
-          { ms_emotion: { $regex: query, $options: "i" } },
-          { ms_composer: { $regex: query, $options: "i" } },
-          { ms_artist: { $regex: query, $options: "i" } },
-          { ms_instrumentation: { $regex: query, $options: "i" } },
+          { title: { $regex: query, $options: "i" } },
+          { genre: { $regex: query, $options: "i" } },
+          { emotion: { $regex: query, $options: "i" } },
+          { composer: { $regex: query, $options: "i" } },
+          { artist: { $regex: query, $options: "i" } },
+          { instrumentation: { $regex: query, $options: "i" } },
         ],
       });
     }
 
-    res.json(musicScores);
+    res.json(ABCFiles);
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err });
+  }
+});
+
+app.post("/advanced-search", async (req, res) => {
+  const { combinedQueries, selectedCollection } = req.body;
+
+  console.log("Received combinedQueries:", combinedQueries);
+  console.log("Received selectedCollection:", selectedCollection);
+
+  let query = {};
+
+  if (selectedCollection !== "All") {
+    query.collection = selectedCollection;
+  }
+
+  let searchConditions = [];
+
+  combinedQueries.forEach((row, index) => {
+    let condition = {};
+    let dbField;
+
+    if (row.searchCategory && row.searchText) {
+      switch (row.searchCategory) {
+        case "Title":
+          dbField = "title";
+          condition[dbField] = { $regex: row.searchText, $options: "i" };
+          break;
+        case "Genre":
+          dbField = "genre";
+          condition[dbField] = { $regex: row.searchText, $options: "i" };
+          break;
+        case "Composer":
+          dbField = "composer";
+          condition[dbField] = { $regex: row.searchText, $options: "i" };
+          break;
+        case "Instrumentation":
+          dbField = "instrumentation";
+          condition[dbField] = { $regex: row.searchText, $options: "i" };
+          break;
+        case "Emotion":
+          dbField = "emotion";
+          condition[dbField] = { $regex: row.searchText, $options: "i" };
+          break;
+        case "All":
+          searchConditions.push({
+            $or: [
+              { title: { $regex: row.searchText, $options: "i" } },
+              { genre: { $regex: row.searchText, $options: "i" } },
+              { composer: { $regex: row.searchText, $options: "i" } },
+              { instrumentation: { $regex: row.searchText, $options: "i" } },
+              { emotion: { $regex: row.searchText, $options: "i" } },
+            ],
+          });
+          return;
+        default:
+          return;
+      }
+    }
+
+    if (index > 0 && row.logic && row.logic !== "AND") {
+      if (row.logic === "OR") {
+        searchConditions.push({ [dbField]: condition[dbField] });
+      } else if (row.logic === "NOT") {
+        searchConditions.push({ [dbField]: { $not: condition[dbField] } });
+      }
+    } else {
+      searchConditions.push(condition);
+    }
+  });
+
+  if (searchConditions.length > 0) {
+    if (searchConditions.length === 1) {
+      query = searchConditions[0];
+    } else if (searchConditions.length > 1) {
+      query.$and = searchConditions;
+    }
+  }
+
+  try {
+    console.log(query);
+    const results = await ABCFileModel.find(query);
+    res.json(results);
+  } catch (error) {
+    console.error("Error searching music scores:", error);
+    res.status(500).json({ error: "Failed to search music scores" });
+  }
+});
+
+app.post("/search", async (req, res) => {
+  const { combinedQueries, selectedCollection } = req.body;
+
+  let query = {};
+
+  if (selectedCollection !== "All") {
+    query.collection = selectedCollection;
+  }
+
+  let searchConditions = [];
+
+  combinedQueries.forEach((row, index) => {
+    let condition = {};
+    let dbField;
+
+    if (row.category && row.text) {
+      switch (row.category) {
+        case "Title":
+          dbField = "title";
+          condition[dbField] = { $regex: row.text, $options: "i" };
+          break;
+        case "Genre":
+          dbField = "genre";
+          condition[dbField] = { $regex: row.text, $options: "i" };
+          break;
+        case "Composer":
+          dbField = "composer";
+          condition[dbField] = { $regex: row.text, $options: "i" };
+          break;
+        case "All":
+          searchConditions.push({
+            $or: [
+              { title: { $regex: row.text, $options: "i" } },
+              { genre: { $regex: row.text, $options: "i" } },
+              { composer: { $regex: row.text, $options: "i" } },
+            ],
+          });
+          return;
+        default:
+          return;
+      }
+    }
+
+    if (index > 0 && row.logic && row.logic !== "AND") {
+      if (row.logic === "OR") {
+        searchConditions.push({ [dbField]: condition[dbField] });
+      } else if (row.logic === "NOT") {
+        searchConditions.push({ [dbField]: { $not: condition[dbField] } });
+      }
+    } else {
+      searchConditions.push(condition);
+    }
+  });
+
+  if (searchConditions.length > 0) {
+    if (searchConditions.length === 1) {
+      query = searchConditions[0];
+    } else if (searchConditions.length > 1) {
+      query.$and = searchConditions;
+    }
+  }
+
+  try {
+    console.log(query);
+    const results = await ABCFileModel.find(query);
+    res.json(results);
+  } catch (error) {
+    console.error("Error searching music scores:", error);
+    res.status(500).json({ error: "Failed to search music scores" });
   }
 });
 
@@ -480,22 +638,22 @@ app.get("/filter-music-scores", async (req, res) => {
     const filter = {};
 
     if (genre) {
-      filter.ms_genre = genre;
+      filter.genre = genre;
     }
 
     if (composer) {
-      filter.ms_composer = { $regex: composer, $options: "i" };
+      filter.composer = { $regex: composer, $options: "i" };
     }
 
     if (instrumentation) {
-      filter.ms_instrumentation = { $regex: instrumentation, $options: "i" };
+      filter.instrumentation = { $regex: instrumentation, $options: "i" };
     }
 
     if (emotion) {
-      filter.ms_emotion = { $regex: emotion, $options: "i" };
+      filter.emotion = { $regex: emotion, $options: "i" };
     }
 
-    const filteredScores = await MusicScoreModel.find(filter);
+    const filteredScores = await ABCFileModel.find(filter);
 
     res.json(filteredScores);
   } catch (err) {
@@ -525,10 +683,10 @@ app.get("/user-cart", async (req, res) => {
     const cart = await CartModel.findOne({ user_id: userId });
 
     if (!cart || cart.score_ids.length === 0) {
-      return res.status(404).json({ message: "No items found in the user's cart." });
+      return res.json([]);
     }
 
-    const cartItems = cart.score_ids.map(scoreId => ({ score_id: scoreId }));
+    const cartItems = cart.score_ids.map((scoreId) => ({ score_id: scoreId }));
 
     res.json(cartItems);
   } catch (error) {
@@ -536,9 +694,6 @@ app.get("/user-cart", async (req, res) => {
     res.status(500).send("Error fetching cart items for the user.");
   }
 });
-
-
-
 
 app.post("/add-to-cart", async (req, res) => {
   try {
@@ -564,7 +719,7 @@ app.post("/add-to-cart", async (req, res) => {
   }
 });
 
-app.delete('/remove-item-from-cart/:id', async (req, res) => {
+app.delete("/remove-item-from-cart/:id", async (req, res) => {
   try {
     const userId = req.session.userId;
     const scoreId = req.params.id;
@@ -587,13 +742,11 @@ app.delete('/remove-item-from-cart/:id', async (req, res) => {
   }
 });
 
-
-app.get('/music-score/:id', async (req, res) => {
+app.get("/music-score/:id", async (req, res) => {
   try {
     const scoreId = req.params.id;
 
-    // Find the music score by its ID
-    const musicScore = await MusicScoreModel.findById(scoreId);
+    const musicScore = await ABCFileModel.findById(scoreId);
 
     if (!musicScore) {
       return res.status(404).json({ message: "Music score not found" });
@@ -605,7 +758,6 @@ app.get('/music-score/:id', async (req, res) => {
     res.status(500).send("Error fetching music score.");
   }
 });
-
 
 app.get("/music-scores", async (req, res) => {
   try {
@@ -625,7 +777,7 @@ app.get("/music-scores", async (req, res) => {
       return res.status(400).json({ message: "Invalid score IDs format" });
     }
 
-    const musicScores = await MusicScoreModel.find({
+    const musicScores = await ABCFileModel.find({
       _id: { $in: scoreIdArray },
     });
 
@@ -642,7 +794,7 @@ app.get("/music-scores", async (req, res) => {
 
 app.get("/popular-music-scores", async (req, res) => {
   try {
-    const popularScores = await MusicScoreModel.find()
+    const popularScores = await ABCFileModel.find()
       .sort({ view_count: -1 })
       .limit(10);
 
@@ -656,17 +808,15 @@ app.get("/user-liked-scores", async (req, res) => {
   try {
     const userId = req.session.userId;
 
-    
-
     const user = await UserModel.findById(userId);
-
-    
 
     if (!user || !user.favorites || user.favorites.length === 0) {
       return res.status(404).json({ message: "No liked scores found" });
     }
 
-    const likedScores = await MusicScoreModel.find({ _id: { $in: user.favorites } });
+    const likedScores = await ABCFileModel.find({
+      _id: { $in: user.favorites },
+    });
 
     res.json(likedScores);
   } catch (error) {
@@ -708,7 +858,7 @@ app.post("/set-favorites", async (req, res) => {
 
 app.get("/customer-music-score-view/:id", async (req, res) => {
   try {
-    const musicScore = await MusicScoreModel.findById(req.params.id);
+    const musicScore = await ABCFileModel.findById(req.params.id);
     if (!musicScore) {
       return res.status(404).json({ message: "Music score not found" });
     }
@@ -720,8 +870,8 @@ app.get("/customer-music-score-view/:id", async (req, res) => {
 
 app.get("/api/image-path", async (req, res) => {
   try {
-    const image = await MusicScoreModel.findOne();
-    res.json({ path: image.ms_cover_image });
+    const score = await ABCFileModel.findOne();
+    res.json({ path: score.coverImageUrl });
   } catch (error) {
     res.status(500).send("Server error");
   }
@@ -737,7 +887,6 @@ app.get("/recommendations", async (req, res) => {
       return res.status(401).json({ error: "User not logged in" });
     }
 
-    // Check if recommendations for this session are already cached
     if (cachedRecommendations[sessionId]) {
       return res.json(cachedRecommendations[sessionId]);
     }
@@ -751,16 +900,14 @@ app.get("/recommendations", async (req, res) => {
     const { genre_preferences, composer_preferences, emotion_preferences } =
       user;
 
-    // Fetch music scores based on user's preferences
-    let allScores = await MusicScoreModel.find({
+    let allScores = await ABCFileModel.find({
       $or: [
-        { ms_genre: { $in: genre_preferences } },
-        { ms_composer: { $in: composer_preferences } },
-        { ms_emotion: { $in: emotion_preferences } },
+        { genre: { $in: genre_preferences } },
+        { composer: { $in: composer_preferences } },
+        { emotion: { $in: emotion_preferences } },
       ],
     });
 
-    // Randomly pick up to 10 music scores from the matched results
     const limit = Math.min(allScores.length, 10);
     let recommendedScores = [];
 
@@ -776,6 +923,125 @@ app.get("/recommendations", async (req, res) => {
     res.json(recommendedScores);
   } catch (error) {
     return res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+const fulfillOrder = async (session) => {
+  const userId = session.client_reference_id; // Ensure this is passed during checkout creation
+  const cartItems = session.display_items;
+
+  const purchaseItems = cartItems.map((item) => ({
+    user_id: mongoose.Types.ObjectId(userId),
+    purchase_date: new Date(),
+    price: item.amount_total / 100,
+    score_id: mongoose.Types.ObjectId(item._id), // Assuming each item in cart has a `custom_id` representing the `score_id`
+  }));
+
+  // Add to purchases collection
+  await Purchase.insertMany(purchaseItems);
+
+  // Remove the purchased score_ids from the user's cart
+  await Cart.updateOne(
+    { user_id: mongoose.Types.ObjectId(userId) },
+    { $pull: { score_ids: { $in: purchaseItems.map((i) => i.score_id) } } }
+  );
+};
+
+app.post(
+  "/webhook",
+  bodyParser.raw({ type: "application/json" }),
+  async (req, res) => {
+    const sig = req.headers["stripe-signature"];
+
+    let event;
+
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+    } catch (err) {
+      res.status(400).send(`Webhook Error: ${err.message}`);
+      return;
+    }
+
+    // Handle the event
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+
+      await fulfillOrder(session);
+    }
+
+    res.json({ received: true });
+  }
+);
+
+app.post("/create-checkout-session", async (req, res) => {
+  let userId = req.session.userId;
+  userId = userId.toString();
+
+  const { cartItems } = req.body;
+
+  const lineItems = cartItems.map((item) => ({
+    price_data: {
+      currency: "myr",
+      product_data: {
+        name: item.title,
+      },
+      unit_amount: parseFloat(item.price) * 100,
+    },
+    quantity: 1,
+  }));
+
+  const paymentSession = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    line_items: lineItems,
+    mode: "payment",
+    success_url: `http://localhost:5173/success`,
+    cancel_url: `http://localhost:5173/cancel`,
+    client_reference_id: userId,
+  });
+
+  res.json({ id: paymentSession.id });
+});
+
+app.post("/complete-purchase", async (req, res) => {
+  const userId = req.session.userId;
+
+  try {
+    const cart = await CartModel.findOne({ user_id: userId });
+
+    if (!cart || cart.score_ids.length === 0) {
+      return res.status(400).json({ message: "Cart is empty" });
+    }
+
+    const purchaseItems = await Promise.all(
+      cart.score_ids.map(async (score_id) => {
+        const musicScore = await ABCFileModel.findById(score_id);
+        if (!musicScore) {
+          throw new Error(`Music score with ID ${score_id} not found`);
+        }
+    
+        return {
+          user_id: userId,
+          purchase_date: new Date(),
+          price: parseFloat(musicScore.price), // Convert string to number
+          score_id: score_id,
+        };
+      })
+    );
+    
+
+    await PurchaseModel.insertMany(purchaseItems);
+
+    cart.score_ids = [];
+    await cart.save();
+
+    res.json({ message: "Purchase completed successfully" });
+  } catch (error) {
+    console.error("Error completing purchase:", error);
+    res.status(500).json({ message: "Failed to complete purchase" });
   }
 });
 

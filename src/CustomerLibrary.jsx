@@ -33,12 +33,12 @@ axios.defaults.withCredentials = true;
 
 const options = {
   keys: [
-    "ms_title",
-    "ms_genre",
-    "ms_composer",
-    "ms_artist",
-    "ms_instrumentation",
-    "ms_emotion",
+    "title",
+    "genre",
+    "composer",
+    "artist",
+    "instrumentation",
+    "emotion",
   ],
   threshold: 0.3,
 };
@@ -46,6 +46,7 @@ const options = {
 export default function CustomerLibrary() {
   const [user, setUser] = useState(null);
 
+ 
   const [currentScores, setCurrentScores] = useState([]);
   const [unfilteredScores, setUnfilteredScores] = useState([]);
   const [searchedScores, setSearchedScores] = useState([]);
@@ -113,12 +114,12 @@ export default function CustomerLibrary() {
     if (searchQuery) {
       const searchResult = unfilteredScores.filter((score) =>
         [
-          score.ms_title,
-          score.ms_genre,
-          score.ms_emotion,
-          score.ms_composer,
-          score.ms_artist,
-          score.ms_instrumentation,
+          score.title,
+          score.genre,
+          score.emotion,
+          score.composer,
+          score.artist,
+          score.instrumentation,
         ].some((field) =>
           field.toLowerCase().includes(searchQuery.toLowerCase())
         )
@@ -133,13 +134,13 @@ export default function CustomerLibrary() {
   const applyFilters = (scores) => {
     return scores.filter((score) => {
       return (
-        (!genre || score.ms_genre === genre) &&
+        (!genre || score.genre === genre) &&
         (!composer ||
-          score.ms_composer.toLowerCase().includes(composer.toLowerCase())) &&
+          score.composer.toLowerCase().includes(composer.toLowerCase())) &&
         (!emotion ||
-          score.ms_emotion.toLowerCase().includes(composer.toLowerCase())) &&
+          score.emotion.toLowerCase().includes(composer.toLowerCase())) &&
         (!instrumentation ||
-          score.ms_instrumentation
+          score.instrumentation
             .toLowerCase()
             .includes(instrumentation.toLowerCase()))
       );
@@ -217,6 +218,7 @@ export default function CustomerLibrary() {
               justifyContent: "space-between",
               alignItems: "center",
               mb: 3,
+              mt:3
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -240,7 +242,7 @@ export default function CustomerLibrary() {
                 />
               </Paper>
               <IconButton
-                sx={{ p: "10px", ml: 2 }}
+                sx={{ p: "10px", ml: 2}}
                 aria-label="filter"
                 onClick={() => setIsDrawerOpen(true)}
               >
@@ -392,7 +394,7 @@ export default function CustomerLibrary() {
               </Drawer>
             </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Box sx={{ display: "flex", alignItems: "center"}}>
               {user ? (
                 <>
                   <Typography variant="body1" sx={{ mr: 2 }}>
@@ -411,8 +413,7 @@ export default function CustomerLibrary() {
             </Box>
           </Box>
 
-          <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
-            <Box display="flex" alignItems="center" mb={2}>
+            <Box display="flex" alignItems="center">
               <Typography variant="h4">Library</Typography>
               <Box ml={2}>
                 <Box
@@ -434,6 +435,7 @@ export default function CustomerLibrary() {
               </Box>
             </Box>
 
+            <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
             <List>
               {currentScores.map((item, index) => (
                 <ListItemButton
@@ -445,8 +447,8 @@ export default function CustomerLibrary() {
                   }
                 >
                   <ListItemText
-                    primary={item.ms_title}
-                    secondary={`Genre: ${item.ms_genre} | Composer: ${item.ms_composer} | Artist: ${item.ms_artist}`}
+                    primary={item.title}
+                    secondary={`Genre: ${item.genre} | Composer: ${item.composer} | Artist: ${item.artist}`}
                   />
                   <ListItemIcon>
                     <IconButton

@@ -3,9 +3,9 @@ const { MongoClient } = require("mongodb");
 
 const uri = process.env.DB_URI;
 const dbName = "mozartify";
-const collectionName = "musicscores"
+const collectionName = "abcfiles";
 
-async function addFields() {
+async function addCollectionField() {
   let client;
 
   try {
@@ -19,14 +19,11 @@ async function addFields() {
       [
         {
           $set: {
-            ms_collection: {
-              $switch: {
-                branches: [
-                  { case: { $lte: [{ $rand: {} }, 0.33] }, then: "Lecturers" },
-                  { case: { $lte: [{ $rand: {} }, 0.66] }, then: "Students" },
-                ],
-                default: "Freelancers"
-              }
+            collection: {
+              $arrayElemAt: [
+                ["Lecturers", "Students", "Freelancers"],
+                { $floor: { $multiply: [{ $rand: {} }, 3] } }
+              ]
             }
           }
         }
@@ -43,6 +40,4 @@ async function addFields() {
   }
 }
 
-addFields();
-
-
+addCollectionField();

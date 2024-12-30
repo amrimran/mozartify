@@ -12,9 +12,9 @@ import {
   TableHead,
   TableRow,
   Paper,
-  IconButton
+  IconButton,
 } from "@mui/material";
-import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
@@ -26,7 +26,6 @@ import CustomerSidebar from "./CustomerSidebar";
 axios.defaults.withCredentials = true;
 
 const CustomAddIcon = styled(AddIcon)(({ theme }) => ({
-  backgroundColor: "#c44131",
   color: "white",
   borderRadius: "50%",
   padding: theme.spacing(0.5),
@@ -62,25 +61,25 @@ export default function CustomerInbox() {
 
   const fetchFeedbackData = async () => {
     axios
-    .get(`http://localhost:3002/api/feedback`)
-    .then((response) => {
-      const userFeedbacks = response.data.filter(
-        (feedback) => feedback.user_id === currentUser._id
-      );
-      if (userFeedbacks.length === 0) {
-        console.log("No feedback data found for the current user.");
-      } else {
-        setFeedbackData(userFeedbacks);
-      }
-    })
-    .catch((error) => {
-      console.error("Error fetching data:", error);
-    });
+      .get(`http://localhost:3002/api/feedback`)
+      .then((response) => {
+        const userFeedbacks = response.data.filter(
+          (feedback) => feedback.user_id === currentUser._id
+        );
+        if (userFeedbacks.length === 0) {
+          console.log("No feedback data found for the current user.");
+        } else {
+          setFeedbackData(userFeedbacks);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      });
   };
 
   useEffect(() => {
     if (currentUser) {
-      fetchFeedbackData();      
+      fetchFeedbackData();
     }
   }, [currentUser]);
 
@@ -97,17 +96,29 @@ export default function CustomerInbox() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh" }}>
-      <CustomerSidebar />
-        <Box sx={{ flexGrow: 1, p: 3 }}>
+        <CustomerSidebar />
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            padding: 5,
+          }}
+        >
           <Box
             sx={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
               mb: 3,
+              mt: 3,
             }}
           >
-            <Typography variant="h4">Inbox</Typography>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Typography variant="h4">Inbox</Typography>
+            </Box>
+
             <Box sx={{ display: "flex", alignItems: "center" }}>
               {currentUser ? (
                 <>
@@ -130,38 +141,66 @@ export default function CustomerInbox() {
           <Box>
             <Divider />
 
-            <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+            <Box sx={{ mt: 4, display: "flex", justifyContent: "flex-end" }}>
               <Button
                 variant="contained"
                 onClick={() =>
                   navigate(`/customer-inbox/customer-add-new-feedback`)
                 }
                 sx={{
-                  backgroundColor: "#F4F7FE",
-                  color: "#000",
-                  "&:hover": {
-                    backgroundColor: "#E0E5F2",
-                  },
+                  backgroundColor: "#67ADC1", // Base background color
+                  color: "#fff", // White text color
                   fontFamily: "Montserrat, sans-serif",
                   textTransform: "none",
+                  padding: 0,
+                  "&:hover": {
+                    backgroundColor: "#FFEE8C",
+                    color: "#000000",
+                    "& .icon-box": {
+                      backgroundColor: "#67ADC1", // Change the box to the button's color
+                    },
+                    "& .MuiSvgIcon-root": {
+                      color: "#ffffff", // Change icon color to black on hover
+                    },
+                  },
                 }}
-                startIcon={<CustomAddIcon />}
               >
-                Add New Feedback
+                <Box
+                  className="icon-box"
+                  sx={{
+                    backgroundColor: "#FFEE8C", // Initial color of the box
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "40px",
+                    "&:hover": {
+                      backgroundColor: "#67ADC1", // Change to the button's color on hover
+                    },
+                    borderRadius: 1,
+                  }}
+                >
+                  <CustomAddIcon sx={{ color: "#000" }} />{" "}
+                </Box>
+
+                <Box sx={{ paddingLeft: "10px", paddingRight: "16px" }}>
+                  Add New Feedback
+                </Box>
               </Button>
             </Box>
             <Box sx={{ mt: 2 }}>
               <TableContainer component={Paper}>
                 <Table sx={{ minWidth: 650 }} aria-label="simple table">
                   <TableHead
-                    sx={{ color: "black", backgroundColor: "#E4DCC8" }}
+                    sx={{ color: "black", backgroundColor: "#67ADC1" }}
                   >
                     <TableRow>
-                      <TableCell>No.</TableCell>
-                      <TableCell>Title</TableCell>
-                      <TableCell>Detail</TableCell>
-                      <TableCell>Attachment</TableCell>
-                      <TableCell></TableCell>
+                      <TableCell sx={{ color: "#ffffff" }}>No.</TableCell>
+                      <TableCell sx={{ color: "#ffffff" }}>Title</TableCell>
+                      <TableCell sx={{ color: "#ffffff" }}>Detail</TableCell>
+                      <TableCell sx={{ color: "#ffffff" }}>
+                        Attachment
+                      </TableCell>
+                      <TableCell sx={{ color: "#ffffff" }}></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>

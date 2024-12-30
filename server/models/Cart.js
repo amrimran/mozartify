@@ -10,7 +10,7 @@ const CartSchema = new Schema({
   score_ids: [
     {
       type: Schema.Types.ObjectId,
-      ref: 'MusicScore'
+      ref: 'ABCFile'
     }
   ]
 });
