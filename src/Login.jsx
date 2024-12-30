@@ -64,24 +64,20 @@ const textFieldStyles = {
     borderRadius: "12px", // Slightly more rounded corners for a modern feel
     boxShadow: "0px 4px 6px rgba(90, 103, 216, 0.2)", // Subtle indigo shadow for depth
     backgroundColor: "rgba(243, 244, 255, 0.8)", // Light gradient-inspired background
-    transition: "box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease", // Smooth animations
   },
   "& .MuiFormLabel-root": {
     fontFamily: "Montserrat",
     fontSize: "15px", // Slightly larger for readability
     color: "#4A5568", // Neutral gray for a clean appearance
-    transition: "color 0.3s ease", // Smooth color change
   },
   "& .MuiInput-underline:after": {
     borderBottomColor: "#5A67D8", // Matches the focus label color
     transform: "scaleX(1)", // Smooth underline animation
-    transition: "transform 0.3s ease, border-color 0.3s ease",
     borderWidth: "2px", // Slightly thicker for better visibility
   },
   "& .MuiOutlinedInput-root": {
     "& fieldset": {
       borderColor: "#CBD5E0", // Soft gray for the default border
-      transition: "border-color 0.3s ease", // Smooth hover/focus animation
     },
     "&:hover fieldset": {
       borderColor: "#7F9CF5", // Softer indigo for hover
