@@ -16,6 +16,22 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
+const buttonStyles = {
+  px: 10,
+  fontFamily: "Montserrat",
+  fontWeight: "bold",
+  color: "#FFFFFF",
+  backgroundColor: "#8BD3E6",
+  border: "1px solid #8BD3E6", // Explicitly define the border
+  borderColor: "#8BD3E6",
+  "&:hover": {
+    backgroundColor: "#3B3183",
+    color: "#FFFFFF",
+    border: "1px solid #3B3183", // Ensure border remains visible on hover
+    borderColor: "#3B3183",
+  },
+};
+
 export default function MusicEntryClerkPreview() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -140,40 +156,25 @@ export default function MusicEntryClerkPreview() {
               sx={{
                 flexGrow: 1,
                 mx: 1,
-                fontFamily: "Montserrat",
-                fontWeight: "bold",
-                color: "#3B3183",
-                borderColor: "#3B3183",
-                "&:hover": {
-                  backgroundColor: "#3B3183",
-                  color: "#FFFFFF",
-                  borderColor: "#3B3183",
-                },
+                ...buttonStyles, // Apply consistent styles
               }}
               onClick={handleEdit}
             >
               Edit
             </Button>
             <Button
-              variant="outlined"
-              size="large"
-              sx={{
-                flexGrow: 1,
-                mx: 1,
-                fontFamily: "Montserrat",
-                fontWeight: "bold",
-                color: "#3B3183",
-                borderColor: "#3B3183",
-                "&:hover": {
-                  backgroundColor: "#3B3183",
-                  color: "#FFFFFF",
-                  borderColor: "#3B3183",
-                },
-              }}
-              onClick={handleProceed}
-            >
-              Proceed
-            </Button>
+  variant="outlined"
+  size="large"
+  sx={{
+    flexGrow: 1,
+    mx: 1,
+    ...buttonStyles, // Apply consistent styles
+  }}
+  onClick={handleProceed}
+>
+  Proceed
+</Button>
+
           </Box>
           <Box sx={{ flexGrow: 1, p: 3 }}>
           </Box>

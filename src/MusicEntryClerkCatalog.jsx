@@ -67,11 +67,14 @@ const buttonStyles = {
   px: 10,
   fontFamily: "Montserrat",
   fontWeight: "bold",
-  color: "#3B3183",
-  borderColor: "#3B3183",
+  color: "#FFFFFF",
+  backgroundColor: "#8BD3E6",
+  border: "1px solid #8BD3E6", // Explicitly define the border
+  borderColor: "#8BD3E6",
   "&:hover": {
     backgroundColor: "#3B3183",
     color: "#FFFFFF",
+    border: "1px solid #3B3183", // Ensure border remains visible on hover
     borderColor: "#3B3183",
   },
 };
@@ -107,6 +110,7 @@ export default function MusicEntryClerkCatalog() {
     dateOfComposition: "",
     dateOfCreation: "",
     dateOfRecording: "",
+    dateUploaded: "",
     description: "",
     digitalCollection: "",
     edition: "",
@@ -398,7 +402,7 @@ export default function MusicEntryClerkCatalog() {
             backgroundColor: "#3B3183",
             overflowY: "auto" 
           }}>
-          <ClerkSidebar active="upload" />
+          <ClerkSidebar active="catalogMetadata" />
         </Box>
         <Box sx={{ flexGrow: 1, ml: "225px", p: 3 }}>
           <Box
@@ -476,6 +480,7 @@ export default function MusicEntryClerkCatalog() {
                   value={catalogData.filename}
                   onChange={handleInputChange}
                   required
+                  disabled
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -544,6 +549,24 @@ export default function MusicEntryClerkCatalog() {
                   onChange={handleInputChange}
                 />
               </Grid>
+              <Grid item xs={12} sm={6}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Date Uploaded"
+                value={catalogData.dateUploaded ? new Date(catalogData.dateUploaded) : null}
+                onChange={(newValue) => {
+                  handleInputChange({
+                    target: {
+                      name: 'dateUploaded',
+                      value: newValue.toISOString(),
+                    },
+                  });
+                }}
+                slots={{ textField: TextField }}
+                slotProps={{ textField: { variant: 'outlined', fullWidth: true, sx: formStyles } }}
+              />
+            </LocalizationProvider>
+          </Grid>
             </>
           )}
           {tabIndex === 1 && (
@@ -1524,16 +1547,8 @@ export default function MusicEntryClerkCatalog() {
           variant="contained"
           component="label"
           sx={{
-            fontFamily: "Montserrat",
-            fontWeight: "bold",
-            color: "#FFFFFF",
-            backgroundColor: "#3B3183",
-            borderRadius: 2,
-            width: '180px',
-            "&:hover": {
-              backgroundColor: "#2C2657",
-            },
-            transition: 'background-color 0.3s ease', // Smooth transition for hover
+            ...buttonStyles,
+            boxShadow:"none"
           }}
         >
           {coverImageUrl ? "Change Image" : "Upload Image"}
@@ -1603,15 +1618,8 @@ export default function MusicEntryClerkCatalog() {
         variant="contained"
         component="label"
         sx={{
-          fontFamily: "Montserrat",
-          fontWeight: "bold",
-          color: "#FFFFFF",
-          backgroundColor: "#3B3183",
-          borderRadius: 2,
-          width: '200px',
-          my: 2,
-          "&:hover": { backgroundColor: "#2C2657" },
-          transition: 'background-color 0.3s ease',
+          ...buttonStyles,
+          boxShadow:"none"
         }}
       >
         {catalogData.mp3FileUrl ? "Change MP3" : "Upload MP3"}

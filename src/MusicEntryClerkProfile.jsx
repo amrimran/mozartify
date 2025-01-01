@@ -32,15 +32,17 @@ export default function ClerkProfile() {
     px: 10,
     fontFamily: "Montserrat",
     fontWeight: "bold",
-    color: "#3B3183",
-    borderColor: "#3B3183",
+    color: "#FFFFFF",
+    backgroundColor: "#8BD3E6",
+    border: "1px solid #8BD3E6", // Explicitly define the border
+    borderColor: "#8BD3E6",
     "&:hover": {
       backgroundColor: "#3B3183",
       color: "#FFFFFF",
+      border: "1px solid #3B3183", // Ensure border remains visible on hover
       borderColor: "#3B3183",
     },
   };
-
   // Create a custom theme
   const theme = createTheme({
     typography: {
@@ -285,11 +287,12 @@ export default function ClerkProfile() {
                   py: 1.5,
                   fontFamily: "Montserrat",
                   fontWeight: "bold",
+                  background: "#D32F2F",
                   borderColor: "#D32F2F",
-                  color: "#D32F2F",
+                  color: "#FFFFFF",
                   "&:hover": {
-                    backgroundColor: "#D32F2F",
-                    color: "#FFFFFF",
+                    backgroundColor: "#FFFFFF",
+                    color: "#D32F2F",
                   },
                 }}
                 onClick={handleDeleteAccount}

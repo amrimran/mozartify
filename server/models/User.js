@@ -12,7 +12,7 @@ const UserSchema = new mongoose.Schema({
   approval: {
     type: String,
     enum: ['approved', 'pending', 'denied'], // Updated approval field to string with predefined values
-    default: 'pending', // Default is 'false' for new users
+    default: 'pending', // Default is 'pending' for new users
   },
   favorites: [
     { type: mongoose.Schema.Types.ObjectId, ref: 'MusicScore' },
@@ -26,6 +26,10 @@ const UserSchema = new mongoose.Schema({
   genre_preferences: [{ type: String }], // List of preferred genres
   emotion_preferences: [{ type: String }], // List of preferred emotions
 });
+
+// // Add a compound index to ensure unique username + role and email + role
+// userSchema.index({ username: 1, role: 1 }, { unique: true });
+// userSchema.index({ email: 1, role: 1 }, { unique: true });
 
 const UserModel = mongoose.model('User', UserSchema);
 

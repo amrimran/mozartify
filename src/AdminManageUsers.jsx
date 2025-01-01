@@ -23,6 +23,7 @@ import {
   Radio,
   RadioGroup,
   FormControlLabel,
+  InputAdornment,
 } from "@mui/material";
 import {
   Edit as EditIcon,
@@ -34,6 +35,8 @@ import {
 import AdminSidebar from "./AdminSidebar";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+
 
 const textFieldStyles = {
   "& label.Mui-focused": { 
@@ -98,6 +101,16 @@ const AdminManageUsers = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [originalUser, setOriginalUser] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+    const handleTogglePasswordVisibility = () => {
+      setShowPassword(!showPassword);
+    };
+  
+    const handleToggleConfirmPasswordVisibility = () => {
+      setShowConfirmPassword(!showConfirmPassword);
+    };
 
   const formatRole = (role) => {
     const roleMapping = {
@@ -645,32 +658,60 @@ const hasChanges = () => {
     />
 
     {/* Password Field */}
-    <TextField
-      fullWidth
-      label="Password"
-      type="password"
-      margin="normal"
-      variant="outlined"
-      required
-      value={newUser.password}
-      onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-      sx={textFieldStyles}
-    />
+      <TextField
+        fullWidth
+        label="Password"
+        type={showPassword ? "text" : "password"}
+        margin="normal"
+        variant="outlined"
+        required
+        value={newUser.password}
+        onChange={(e) =>
+          setNewUser({ ...newUser, password: e.target.value })
+        }
+        sx={textFieldStyles}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                onClick={handleTogglePasswordVisibility}
+                edge="end"
+                aria-label="toggle password visibility"
+              >
+                {showPassword ? <Visibility /> : <VisibilityOff />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
 
-    {/* Confirm Password Field */}
-    <TextField
-      fullWidth
-      label="Confirm Password"
-      type="password"
-      margin="normal"
-      variant="outlined"
-      required
-      value={newUser.confirmPassword}
-      onChange={(e) =>
-        setNewUser({ ...newUser, confirmPassword: e.target.value })
-      }
-      sx={textFieldStyles}
-    />
+      {/* Confirm Password Field */}
+      <TextField
+        fullWidth
+        label="Confirm Password"
+        type={showConfirmPassword ? "text" : "password"}
+        margin="normal"
+        variant="outlined"
+        required
+        value={newUser.confirmPassword}
+        onChange={(e) =>
+          setNewUser({ ...newUser, confirmPassword: e.target.value })
+        }
+        sx={textFieldStyles}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                onClick={handleToggleConfirmPasswordVisibility}
+                edge="end"
+                aria-label="toggle confirm password visibility"
+              >
+                {showConfirmPassword ? <Visibility /> : <VisibilityOff />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
 
     {/* Role Selection */}
     <Typography sx={{ fontFamily: "Montserrat", mt: 2 }}>Select Role:</Typography>

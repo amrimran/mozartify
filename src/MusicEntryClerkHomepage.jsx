@@ -38,6 +38,7 @@ const GlobalStyle = createGlobalStyle`
 
 export default function MusicEntryClerkHomepage() {
   const [musicScores, setMusicScores] = useState([]);
+  const [searchedScores, setSearchedScores] = useState([]);
   const [user, setUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -49,8 +50,7 @@ export default function MusicEntryClerkHomepage() {
   const [page, setPage] = useState(1);
 
   const navigate = useNavigate();
-
-  const itemsPerPage = 12; // 3 rows of 4 cards each
+  const itemsPerPage = 12;
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -70,14 +70,48 @@ export default function MusicEntryClerkHomepage() {
     const fetchMusicScores = async () => {
       try {
         const response = await axios.get("http://localhost:3001/abc-file");
-        setMusicScores(response.data);
+        // Transform the data to ensure string IDs
+        const transformedScores = response.data.map(score => ({
+          ...score,
+          _id: score._id.$oid || score._id.toString() || score._id,
+          title: String(score.title || 'Untitled'),
+          artist: String(score.artist || 'Unknown Artist'),
+        }));
+        setMusicScores(transformedScores);
       } catch (error) {
         console.error("Error fetching music scores:", error);
       }
     };
-
     fetchMusicScores();
   }, []);
+
+  useEffect(() => {
+    const searchScores = async () => {
+      if (searchQuery) {
+        try {
+          const response = await axios.get(
+            "http://localhost:3000/search-music-scores",
+            {
+              params: { query: searchQuery }
+            }
+          );
+          // Transform search results the same way
+          const transformedResults = response.data.map(score => ({
+            ...score,
+            _id: score._id.$oid || score._id.toString() || score._id,
+            title: String(score.title || 'Untitled'),
+            artist: String(score.artist || 'Unknown Artist'),
+          }));
+          setSearchedScores(transformedResults);
+        } catch (error) {
+          console.error("Error searching scores:", error);
+        }
+      } else {
+        setSearchedScores([]);
+      }
+    };
+    searchScores();
+  }, [searchQuery]);
 
   const handlePageChange = (event, value) => {
     setPage(value);
@@ -95,12 +129,12 @@ export default function MusicEntryClerkHomepage() {
     navigate(`/clerk-music-score-view/${scoreId}`);
   };
 
-  const paginatedMusicScores = musicScores.slice(
+  const displayedScores = searchQuery ? searchedScores : musicScores;
+  const paginatedScores = displayedScores.slice(
     (page - 1) * itemsPerPage,
     page * itemsPerPage
   );
-
-  const pageCount = Math.ceil(musicScores.length / itemsPerPage);
+  const pageCount = Math.ceil(displayedScores.length / itemsPerPage);
 
   return (
     <>
@@ -114,8 +148,8 @@ export default function MusicEntryClerkHomepage() {
             overflowY: "auto", // Add scroll if content overflows
           }}
         >
-          <ClerkSidebar />
-        </Box>
+<ClerkSidebar active="dashboard" />
+</Box>
         <Box sx={{ flexGrow: 1, p: 3, pl: 5 }}>
           <Box
             sx={{
@@ -280,88 +314,102 @@ export default function MusicEntryClerkHomepage() {
           </Box>
 
           <Typography variant="h5" gutterBottom sx={{ fontFamily: 'Montserrat', fontWeight: 'bold', mt: 4, mb: 3 }}>
-            Uploaded Music Scores
+            {searchQuery ? 'Search Results' : 'Uploaded Music Scores'}
           </Typography>
+
+          {/* Display search result count if searching */}
+          {searchQuery && (
+            <Typography variant="body1" sx={{ mb: 2, fontFamily: "Montserrat" }}>
+            Found <Box component="span" sx={{ fontWeight: "bold", color: "#3B3183" }}>{searchedScores.length}</Box> results
+          </Typography>
+          
+          )}
+
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)", // Four columns per row
+              gridTemplateColumns: "repeat(4, 1fr)",
               gap: 3,
             }}
           >
-            {paginatedMusicScores.length > 0 ? (
-              paginatedMusicScores.map((score) => (
-                <Card
-                  key={score._id}
-                  sx={{
-                    width: 210, // Increase width slightly to ensure border visibility
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center", // Center content
-                    boxShadow: 'none', // Remove shadow
-                    cursor: 'pointer', // Indicate it's clickable
-                  }}
-                  onClick={() => handleCardClick(score._id)}
-                >
-                  <CardMedia
-                    component="img"
-                    height={280}
-                    image={score.coverImageUrl}
-                    alt={score.title}
-                    sx={{
-                      border: "2px solid #000", // Border only for the image
-                      borderRadius: 10,
-                      width: 200, // Adjust width to make border visible
-                    }}
-                  />
-                  <CardContent
-  sx={{
-    flexGrow: 1,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center", // Center the text
-    justifyContent: "center",
-    fontFamily: 'Montserrat',
-    width: '100%', // Ensure the content spans the full width
-    textAlign: 'center',
-  }}
->
-  <Typography
-    variant="h6"
-    noWrap
-    sx={{
-      mb: 1,
-      fontFamily: 'Montserrat',
-      textOverflow: 'ellipsis',
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
-      width: '100%', // Ensures the ellipsis effect works
-    }}
-  >
-    {score.title || "N/A"}
-  </Typography>
-  <Typography
-    variant="body2"
-    color="textSecondary"
-    noWrap
-    sx={{
-      fontFamily: 'Montserrat',
-      textOverflow: 'ellipsis',
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
-      width: '100%', // Ensures the ellipsis effect works
-    }}
-  >
-    {score.artist || "N/A"}
-  </Typography>
-</CardContent>
 
-                </Card>
-              ))
-            ) : (
-              <Typography variant="body2" sx={{ fontFamily: 'Montserrat' }}>No scores found</Typography>
-            )}
-          </Box>
+{paginatedScores.length > 0 ? (
+  paginatedScores.map((score) => (
+    <Card
+      key={score._id}
+      sx={{
+        width: 210,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        boxShadow: 'none',
+        cursor: 'pointer',
+      }}
+      onClick={() => handleCardClick(score._id)}
+    >
+      <CardMedia
+        component="img"
+        height={280}
+        image={score.coverImageUrl}
+        alt={score.title}
+        sx={{
+          border: "2px solid #000",
+          borderRadius: 10,
+          width: 200,
+        }}
+      />
+      <CardContent
+        sx={{
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: 'Montserrat',
+          width: '100%',
+          textAlign: 'center',
+        }}
+      >
+        <Typography
+          variant="h6"
+          noWrap
+          sx={{
+            mb: 1,
+            fontFamily: 'Montserrat',
+            textOverflow: 'ellipsis',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            width: '100%',
+          }}
+        >
+          {score.title}
+        </Typography>
+        <Typography
+          variant="body2"
+          color="textSecondary"
+          noWrap
+          sx={{
+            fontFamily: 'Montserrat',
+            textOverflow: 'ellipsis',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            width: '100%',
+          }}
+        >
+          {score.artist}
+        </Typography>
+      </CardContent>
+    </Card>
+  ))
+) : (
+  searchQuery ? null : (
+    <Typography variant="body2" sx={{ fontFamily: 'Montserrat' }}>
+      No scores found
+    </Typography>
+  )
+)}
+
+</Box>
 
           {/* Pagination component */}
           <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>

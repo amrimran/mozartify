@@ -2,6 +2,15 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const ABCFile = require("./models/ABCFile");
+const Feedback = require("./models/Feedback");
+const User= require("./models/User");
+const DeletedUser= require("./models/DeletedUser"); 
+
+
+
+
+
 
 const app = express();
 
@@ -28,37 +37,6 @@ mongoose
   .then(() => console.log("MongoDB connected successfully"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// Schemas and Models
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true },
-  email: { type: String, required: true },
-  password: { type: String, required: true },
-  role: { type: String, required: true }, // e.g., customer, music_entry_clerk, admin
-  approval: { type: String, enum: ["approved", "pending", "denied"], default: "approved" },
-  favorites: { type: [String], default: [] },
-  composer_preferences: { type: [String], default: [] },
-  emotion_preferences: { type: [String], default: [] },
-  genre_preferences: { type: [String], default: [] },
-  first_timer: { type: Boolean, default: true },
-});
-
-// Add a compound index to ensure unique username + role and email + role
-userSchema.index({ username: 1, role: 1 }, { unique: true });
-userSchema.index({ email: 1, role: 1 }, { unique: true });
-
-const User = mongoose.model("User", userSchema);
-
-
-const deletedUserSchema = new mongoose.Schema({
-  username: { type: String, required: true },
-  email: { type: String, required: true },
-  password: { type: String, required: true },
-  role: { type: String, required: true },
-  approval: { type: String, required: true },
-  deletedAt: { type: Date, default: Date.now },
-});
-
-const DeletedUser = mongoose.model("DeletedUser", deletedUserSchema);
 
 // Routes
 app.get("/", (req, res) => {
@@ -237,6 +215,79 @@ app.delete("/users/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete user" });
   }
 });
+
+
+// Fetch total statistics for dashboard
+app.get("/admin/stats", async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments({ role: "customer" }); // Filter by role
+    const totalUploads = await ABCFile.countDocuments();
+    const totalDownloads = await ABCFile.aggregate([{ $group: { _id: null, total: { $sum: "$downloads" } } }]);
+    const downloadCount = totalDownloads.length > 0 ? totalDownloads[0].total : 0;
+
+    // Aggregate uploads by month
+    const uploadsByMonth = await ABCFile.aggregate([
+      {
+        $group: {
+          _id: { $month: "$dateUploaded" }, // Group by month
+          count: { $sum: 1 }, // Count uploads per month
+        },
+      },
+      {
+        $sort: { _id: 1 }, // Sort by month
+      },
+    ]);
+
+    // Aggregate downloads by month
+    const downloadsByMonth = await ABCFile.aggregate([
+      { $unwind: "$downloadEvents" }, // Decompose the downloadEvents array
+      {
+        $group: {
+          _id: { $month: "$downloadEvents.timestamp" }, // Group by month
+          count: { $sum: 1 }, // Count downloads per month
+        },
+      },
+      {
+        $sort: { _id: 1 }, // Sort by month
+      },
+    ]);
+
+    // Prepare monthly stats for response
+    const monthlyUploads = Array(12).fill(0);
+    const monthlyDownloads = Array(12).fill(0);
+
+    uploadsByMonth.forEach((upload) => {
+      monthlyUploads[upload._id - 1] = upload.count; // _id is the month number (1-12)
+    });
+
+    downloadsByMonth.forEach((download) => {
+      monthlyDownloads[download._id - 1] = download.count; // _id is the month number (1-12)
+    });
+
+    res.json({
+      totalUsers,
+      totalUploads,
+      totalDownloads: downloadCount,
+      monthlyUploads,
+      monthlyDownloads,
+    });
+  } catch (error) {
+    console.error("Error fetching admin stats:", error);
+    res.status(500).json({ error: "Failed to fetch stats" });
+  }
+});
+
+app.get("/admin/feedbacks", async (req, res) => {
+  try {
+    const totalFeedbacks = await Feedback.countDocuments();
+    res.status(200).json({ totalFeedbacks });
+  } catch (error) {
+    console.error("Error fetching feedbacks:", error);
+    res.status(500).json({ error: "Failed to fetch feedbacks" });
+  }
+});
+
+
 
 // Handle invalid routes
 app.use((req, res) => {

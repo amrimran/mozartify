@@ -11,17 +11,35 @@ import SidebarMozartifyLogo from "./assets/mozartify.png";
 
 const AdminSidebar = ({ active }) => {
   const location = useLocation();
-  const navigationItems = [
+  const mainNavigationItems = [
     { path: "/admin-dashboard", label: "Dashboard", icon: <HomeIcon />, key: "dashboard" },
     { path: "/admin-inbox", label: "Inbox", icon: <MailIcon />, key: "inbox" },
     { path: "/admin-manage-users", label: "Manage User", icon: <GroupIcon />, key: "manage-users" },
     { path: "/admin-manage-scores", label: "Manage Scores", icon: <ScoreIcon />, key: "manage-scores" },
+  ];
+
+  const bottomNavigationItems = [
     { path: "/admin-profile", label: "User Profile", icon: <AccountCircleIcon />, key: "user-profile" },
     { path: "/login", label: "Logout", icon: <ExitToAppIcon />, key: "logout" },
   ];
 
+  // Define keyframes for the animation
+  const keyframes = `
+    @keyframes moveUpDown {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+      100% { 
+      transform: translateY(0) };
+    }
+  `;
+
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
+      <style>{keyframes}</style>
       <Box
         sx={{
           width: 225,
@@ -55,10 +73,18 @@ const AdminSidebar = ({ active }) => {
             pt: 5,
           }}
         >
-          <img src={SidebarMozartifyLogo} alt="MozartifyIcon" style={{ maxWidth: "100%", maxHeight: "90px" }} />
+          <img 
+            src={SidebarMozartifyLogo} 
+            alt="MozartifyIcon" 
+            style={{ 
+              maxWidth: "100%", 
+              maxHeight: "90px",
+              animation: "moveUpDown 2s ease-in-out infinite"
+            }} 
+          />
         </Box>
         <List sx={{ flexGrow: 1 }}>
-          {navigationItems.map((item) => (
+          {mainNavigationItems.map((item) => (
             <ListItemButton
               key={item.path}
               component={Link}
@@ -69,17 +95,47 @@ const AdminSidebar = ({ active }) => {
                 "&:hover": {
                   bgcolor: active === item.key || location.pathname === item.path ? "#67ADC1" : "#78BBCC",
                 },
-                padding: 0,
+                padding: "8px 16px",
+                display: "flex",
+                gap: 0,
               }}
             >
-              <ListItemIcon sx={{ color: "#FFFFFF", padding: "8px 16px" }}>{item.icon}</ListItemIcon>
+              <ListItemIcon sx={{ color: "#FFFFFF", minWidth: "40px", ml: 3, }}>{item.icon}</ListItemIcon>
               <ListItemText 
                 primary={
                   <Typography sx={{ fontFamily: "Montserrat" }}>
                     {item.label}
                   </Typography>
-                } 
-                sx={{ padding: "8px 0px" }} 
+                }
+              />
+            </ListItemButton>
+          ))}
+        </List>
+        <List>
+          {bottomNavigationItems.map((item) => (
+            <ListItemButton
+              key={item.path}
+              component={Link}
+              to={item.path}
+              sx={{
+                bgcolor: active === item.key || location.pathname === item.path ? "#67ADC1" : "inherit",
+                color: "#FFFFFF",
+                "&:hover": {
+                  bgcolor: active === item.key || location.pathname === item.path ? "#67ADC1" : "#78BBCC",
+                },
+                padding: "8px 16px",
+                display: "flex",
+                gap: 0,
+                
+              }}
+            >
+              <ListItemIcon sx={{ color: "#FFFFFF", minWidth: "40px", ml: 3, }}>{item.icon}</ListItemIcon>
+              <ListItemText 
+                primary={
+                  <Typography sx={{ fontFamily: "Montserrat" }}>
+                    {item.label}
+                  </Typography>
+                }
               />
             </ListItemButton>
           ))}

@@ -16,15 +16,17 @@ export default function ClerkMusicScoreView() {
   const navigate = useNavigate();
 
   const buttonStyles = {
+    px: 15,
     fontFamily: "Montserrat",
     fontWeight: "bold",
-    color: "#3B3183",
-    borderColor: "#3B3183",
-    width: "250px",
-    height: "40px",
+    color: "#FFFFFF",
+    backgroundColor: "#8BD3E6",
+    border: "1px solid #8BD3E6", // Explicitly define the border
+    borderColor: "#8BD3E6",
     "&:hover": {
       backgroundColor: "#3B3183",
       color: "#FFFFFF",
+      border: "1px solid #3B3183", // Ensure border remains visible on hover
       borderColor: "#3B3183",
     },
   };
@@ -32,13 +34,14 @@ export default function ClerkMusicScoreView() {
   const deleteButtonStyles = {
     fontFamily: "Montserrat",
     fontWeight: "bold",
-    color: "#DB2226",
+    color: "#FFFFFF",
     borderColor: "#DB2226",
+    backgroundColor: "#DB2226",
     width: "250px",
     height: "40px",
     "&:hover": {
-      backgroundColor: "#DB2226",
-      color: "#FFFFFF",
+      backgroundColor: "#FFFFFF",
+      color: "#DB2226",
       borderColor: "#DB2226",
     },
   };
@@ -144,8 +147,8 @@ export default function ClerkMusicScoreView() {
           bottom: 0,
         }}
       >
-        <ClerkSidebar />
-      </Box>
+<ClerkSidebar active="manageScore" disableActiveTab />
+</Box>
       <Box sx={{ flexGrow: 1, p: 3, pl: 31 }}>
         <Box
           sx={{
@@ -236,6 +239,7 @@ export default function ClerkMusicScoreView() {
                   </ListItem>
 
                   {/* Remaining Fields */}
+                  
                   {Object.keys(metadata)
   .filter(
     (key) =>
@@ -253,6 +257,7 @@ export default function ClerkMusicScoreView() {
         "deleted",
         "mp3FileName",
         "mp3FileUrl",
+        "downloadEvents",
       ].includes(key)
   )
   .sort((a, b) => a.localeCompare(b)) // Sort keys alphabetically
@@ -269,6 +274,7 @@ export default function ClerkMusicScoreView() {
         "dateOfCreation",
         "dateOfRecording",
         "lastModified",
+        "dateUploaded"
       ].includes(key) &&
       value
     ) {

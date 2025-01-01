@@ -22,16 +22,21 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 const buttonStyles = {
+  px: 10,
   fontFamily: "Montserrat",
   fontWeight: "bold",
-  color: "#3B3183",
-  borderColor: "#3B3183",
+  color: "#FFFFFF",
+  backgroundColor: "#8BD3E6",
+  border: "1px solid #8BD3E6", // Explicitly define the border
+  borderColor: "#8BD3E6",
   "&:hover": {
     backgroundColor: "#3B3183",
     color: "#FFFFFF",
+    border: "1px solid #3B3183", // Ensure border remains visible on hover
     borderColor: "#3B3183",
   },
 };
+
 
 export default function MusicEntryClerkUpload() {
   const [user, setUser] = useState(null); // State to store user data
@@ -100,7 +105,7 @@ export default function MusicEntryClerkUpload() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh" }}>
-        <ClerkSidebar />
+        <ClerkSidebar active={"upload"} />
         <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column", marginLeft: "225px", minHeight: "100vh"}}>
           <Box
             sx={{
@@ -141,7 +146,7 @@ export default function MusicEntryClerkUpload() {
               <Box
                 sx={{
                   textAlign: "center",
-                  border: "2px solid #ccc",
+                  border: "2px solid #8BD3E6",
                   borderRadius: 8,
                   padding: 4,
                   width: "40%",
@@ -181,6 +186,11 @@ export default function MusicEntryClerkUpload() {
                         mt: 2,
                         width: '100%',
                         ...buttonStyles,
+                        '&.Mui-disabled': {
+                          backgroundColor: '#D3D3D3', // Grey background for disabled state
+                          color: '#A9A9A9', // Optional: lighter grey text for disabled state
+                          border: '1px solid #D3D3D3', // Match the disabled border color
+                        },
                       }}
                       onClick={handleUpload}
                       disabled={isUploading}
@@ -188,10 +198,18 @@ export default function MusicEntryClerkUpload() {
                       Upload
                     </Button>
                     {isUploading && (
-                      <Box sx={{ width: '100%', mt: 2 }}>
-                        <LinearProgress />
-                      </Box>
-                    )}
+  <Box sx={{ width: '100%', mt: 2 }}>
+    <LinearProgress
+      sx={{
+        backgroundColor: '#D3D3D3', // Optional: color for the track
+        '& .MuiLinearProgress-bar': {
+          backgroundColor: '#3B3183', // Dark blue for the progress bar
+        },
+      }}
+    />
+  </Box>
+)}
+
                   </>
                 )}
                 {uploadMessage && (

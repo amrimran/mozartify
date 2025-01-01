@@ -289,6 +289,24 @@ const ABCFileSchema = new mongoose.Schema({
   collection: {
     type: String,
   },
+  dateUploaded: {
+    type: Date, // A Date object representing the timestamp of when the file was uploaded.
+  },
+  
+  downloads: {
+    type: Number, // An integer representing the total number of downloads for the file.
+  },
+  
+  downloadEvents: {
+    type: [ // An array of objects, where each object represents a download event.
+      {
+        timestamp: {
+          type: Date, // A Date object representing the timestamp of a specific download.
+        },
+      },
+    ],
+  },
+  
 
 });
 
