@@ -13,6 +13,10 @@ import {
   Button,
   Grid,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import {
   Home,
@@ -24,6 +28,7 @@ import {
   ExitToApp,
 } from "@mui/icons-material";
 import UploadIcon from "@mui/icons-material/Upload";
+import { Close } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -50,6 +55,7 @@ export default function CustomerAddNewFeedback() {
     attachment: null,
   });
   const [attachmentPreview, setAttachmentPreview] = useState(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -97,12 +103,17 @@ export default function CustomerAddNewFeedback() {
   };
 
   const handleSubmit = async () => {
+    if (!formData.title || !formData.detail) {
+      setIsDialogOpen(true);
+      return;
+    }
+
     const data = new FormData();
     data.append("username", formData.username);
     data.append("title", formData.title);
     data.append("detail", formData.detail);
     data.append("user_id", currentUser._id);
-  
+
     if (formData.attachment) {
       const storageRef = ref(
         storage,
@@ -115,16 +126,10 @@ export default function CustomerAddNewFeedback() {
       } catch (error) {
         console.error("Error uploading file:", error);
       }
+    } else {
+      data.append("attachment_url", "");
     }
 
-    if (!(formData.attachment)) {
-      try {
-        data.append("attachment_url", "");
-      } catch (error) {
-        console.error("Error uploading file:", error);
-      }
-    }
-  
     try {
       await axios.post("http://localhost:3002/api/feedback", data);
       navigate("/customer-inbox");
@@ -132,26 +137,16 @@ export default function CustomerAddNewFeedback() {
       console.error("There was an error submitting the feedback!", error);
     }
   };
-  
 
-  const navigationItems = [
-    { path: "/customer-homepage", label: "My Dashboard", icon: <Home /> },
-    { path: "/customer-library", label: "Libraries", icon: <LibraryBooks /> },
-    { path: "/customer-favorites", label: "Favorites", icon: <Favorite /> },
-    { path: "/customer-mycart", label: "My Cart", icon: <ShoppingCart /> },
-    { path: "/customer-inbox", label: "Inbox", icon: <Feedback /> },
-    {
-      path: "/customer-profile",
-      label: "User Profile",
-      icon: <AccountCircle />,
-    },
-  ];
+  const closeDialog = () => {
+    setIsDialogOpen(false);
+  };
 
   return (
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh" }}>
-      <CustomerSidebar />
+        <CustomerSidebar />
         <Box sx={{ flexGrow: 1, p: 3 }}>
           <Box
             sx={{
@@ -221,7 +216,7 @@ export default function CustomerAddNewFeedback() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      height: attachmentPreview? "50%": "100%",
+                      height: attachmentPreview ? "50%" : "100%",
                       p: 2,
                     }}
                   >
@@ -304,6 +299,45 @@ export default function CustomerAddNewFeedback() {
           </Box>
         </Box>
       </Box>
+
+      <Dialog
+        open={isDialogOpen}
+        onClose={closeDialog}
+        maxWidth="xs"
+        fullWidth
+        sx={{
+          "& .MuiPaper-root": {
+            borderRadius: "16px", // Add border radius to the Dialog
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            backgroundColor: "#ffcccc",
+            color: "red",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          Attention
+          <IconButton edge="end" onClick={closeDialog}>
+            <Close />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100px", // Adjust height as needed
+          }}
+        >
+          <Typography variant="body1" align="center">
+            Required fields are not filled.
+          </Typography>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

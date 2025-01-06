@@ -13,6 +13,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Snackbar
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import EditIcon from "@mui/icons-material/Edit";
@@ -32,6 +33,9 @@ export default function CustomerProfile() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   const [saveSuccessOpen, setSaveSuccessOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -143,8 +147,25 @@ export default function CustomerProfile() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setProfilePictureFile(file);
-    setProfilePictureUrl(URL.createObjectURL(file));
+
+    if (file) {
+      const validImageTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
+      if (!validImageTypes.includes(file.type)) {
+        setSnackbarMessage(
+          "Please upload a valid image file (JPEG, PNG, GIF, or WebP)."
+        );
+        setSnackbarOpen(true);
+        return;
+      }
+
+      setProfilePictureFile(file);
+      setProfilePictureUrl(URL.createObjectURL(file));
+    }
   };
 
   const handleDeleteProfilePicture = () => {
@@ -229,16 +250,16 @@ export default function CustomerProfile() {
                 {username}
               </Typography>
               <Avatar
-                  alt={username}
-                  src={
-                    currentUser && currentUser.profile_picture
-                      ? currentUser.profile_picture
-                      : null
-                  }
-                >
-                  {(!currentUser || !currentUser.profile_picture) &&
-                    username.charAt(0).toUpperCase()}
-                </Avatar>
+                alt={username}
+                src={
+                  currentUser && currentUser.profile_picture
+                    ? currentUser.profile_picture
+                    : null
+                }
+              >
+                {(!currentUser || !currentUser.profile_picture) &&
+                  username.charAt(0).toUpperCase()}
+              </Avatar>
             </Box>
           </Box>
           <Divider sx={{ my: 1 }} />
@@ -298,6 +319,32 @@ export default function CustomerProfile() {
                   <EditIcon />
                 </IconButton>
               </Box>
+              <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={4000}
+                onClose={() => setSnackbarOpen(false)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    bgcolor: "error.main",
+                    color: "white",
+                    px: 2,
+                    py: 1,
+                    borderRadius: 1,
+                    boxShadow: 3,
+                  }}
+                >
+                  <Typography
+                    sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
+                  >
+                    {snackbarMessage}
+                  </Typography>
+                </Box>
+              </Snackbar>
+
               <Dialog
                 open={editDialogOpen}
                 onClose={handleEditDialogClose}
