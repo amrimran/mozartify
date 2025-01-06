@@ -220,7 +220,7 @@ export default function AdminManageScore() {
             overflowY: "auto", // Add scroll if content overflows
           }}
         >
-          <AdminSidebar active="dashboard" />
+          <AdminSidebar />
         </Box>
         <Box sx={{ flexGrow: 1, p: 3, pl: 5 }}>
           <Box
