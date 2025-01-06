@@ -1,90 +1,40 @@
 require("dotenv").config();
-const { MongoClient } = require("mongodb");
+const mongoose = require("mongoose");
 
-const uri = process.env.DB_URI;
-const dbName = "mozartify";
-const collectionName = "abcfiles";
+// MongoDB connection URI from your .env file
+const DB_URI = process.env.DB_URI;
 
-async function addFields() {
-  let client;
+// Connect to MongoDB
+mongoose
+  .connect(DB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB connection error:", err));
 
+// Define Feedback schema
+const feedbackSchema = new mongoose.Schema({}, { strict: false });
+const Feedback = mongoose.model("Feedback", feedbackSchema);
+
+// Update all documents in the Feedback collection
+const updateFeedbackFields = async () => {
   try {
-    client = new MongoClient(uri);
-    await client.connect();
-    const db = client.db(dbName);
-    const collection = db.collection(collectionName);
-
-    const updateResult = await collection.updateMany(
+    const result = await Feedback.updateMany(
       {},
-      [
-        {
-          $set: {
-            downloads: {
-              $toInt: {
-                $add: [10, { $floor: { $multiply: [{ $rand: {} }, 91] } }],
-              },
-            },
-          },
+      {
+        $set: {
+          feedbackDate: new Date(), // Set feedbackDate to current date
+          replyMessage: null,      // Set replyMessage to null
+          replyDate: null,         // Set replyDate to null
         },
-        {
-          $set: {
-            downloadEvents: {
-              $map: {
-                input: { $range: [0, "$downloads"] },
-                as: "index",
-                in: {
-                  timestamp: {
-                    $dateFromParts: {
-                      year: {
-                        $add: [2024, { $floor: { $divide: [{ $add: ["$$index", 11] }, 12] } }],
-                      },
-                      month: {
-                        $add: [2, { $mod: ["$$index", 12] }],
-                      },
-                      day: {
-                        $add: [1, { $floor: { $multiply: [{ $rand: {} }, 27] } }],
-                      },
-                      hour: { $mod: [{ $floor: { $multiply: [{ $rand: {} }, 24] } }, 24] },
-                      minute: { $mod: [{ $floor: { $multiply: [{ $rand: {} }, 60] } }, 60] },
-                      second: { $mod: [{ $floor: { $multiply: [{ $rand: {} }, 60] } }, 60] },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        {
-          $set: {
-            dateUploaded: {
-              $dateFromParts: {
-                year: {
-                  $add: [2024, { $floor: { $divide: [{ $rand: {} }, 12] } }],
-                },
-                month: {
-                  $add: [2, { $mod: [{ $floor: { $multiply: [{ $rand: {} }, 12] } }, 12] }],
-                },
-                day: {
-                  $add: [1, { $floor: { $multiply: [{ $rand: {} }, 27] } }],
-                },
-                hour: { $mod: [{ $floor: { $multiply: [{ $rand: {} }, 24] } }, 24] },
-                minute: { $mod: [{ $floor: { $multiply: [{ $rand: {} }, 60] } }, 60] },
-                second: { $mod: [{ $floor: { $multiply: [{ $rand: {} }, 60] } }, 60] },
-              },
-            },
-          },
-        },
-      ]
+      }
     );
 
-    console.log(`Documents updated: ${updateResult.modifiedCount}`);
-  } catch (err) {
-    console.error(`Error: ${err}`);
+    console.log(`Updated ${result.nModified} documents`);
+  } catch (error) {
+    console.error("Error updating documents:", error);
   } finally {
-    if (client) {
-      await client.close();
-    }
+    mongoose.connection.close(); // Close the connection
   }
-}
+};
 
-addFields();
+// Execute the update function
+updateFeedbackFields();

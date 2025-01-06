@@ -18,13 +18,14 @@ import { styled } from "@mui/system";
 import { createGlobalStyle } from "styled-components";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import backgroundImage from "./assets/signupWP.png";
+import backgroundImage from "./assets/signupBG.png";
+import SidebarMozartifyLogo from "./assets/mozartify.png";
 
 const FormContainer = styled(Box)(({ theme }) => ({
   backgroundColor: "#FFFFFF",
   borderRadius: "20px",
   boxShadow: "0px 3px 6px rgba(0,0,0,1)",
-  padding: theme.spacing(4,10),
+  padding: theme.spacing(4, 10),
   width: "50%",
   maxWidth: "450px", // Made the form smaller
   height: "600px", // Allow height to adjust based on content
@@ -84,12 +85,12 @@ const CustomButton = styled(Button)(({ theme }) => ({
   "&:hover": {
     backgroundColor: "#3B3183",
     color: "#FFFFFF",
-    border: "1px solid #3B3183", // Ensure border remains visible on hover 
+    border: "1px solid #3B3183", // Ensure border remains visible on hover
   },
 }));
 
 const textFieldStyles = {
-  "& label.Mui-focused": { 
+  "& label.Mui-focused": {
     color: "#5A67D8", // Vibrant indigo for focus
     fontWeight: "bold", // Adds emphasis to the label on focus
   },
@@ -126,7 +127,6 @@ const textFieldStyles = {
     backgroundColor: "rgba(255, 255, 255, 0.9)", // Slightly opaque white for contrast
   },
 };
-
 
 export default function Signup() {
   const [username, setUsername] = useState("");
@@ -188,14 +188,36 @@ export default function Signup() {
     setShowConfirmPassword(!showConfirmPassword);
   };
 
-  
-  
-  
-
   return (
     <>
+      <style>
+        {`
+          @keyframes rotateLogo {
+            0% {
+              transform: rotate(0deg); // Start from 0 degrees
+            }
+            100% {
+              transform: rotate(360deg); // Rotate to 360 degrees
+            }
+          }
+        `}
+      </style>
       <GlobalStyle />
       <BackgroundContainer>
+        <img
+          src={SidebarMozartifyLogo}
+          alt="MozartifyIcon"
+          style={{
+            position: "fixed", // Fix the position relative to the viewport
+            top: 10, // Place it at the top of the screen
+            left: 10, // Place it at the left of the screen
+            maxWidth: "100%", // Ensure it scales properly
+            maxHeight: "90px", // Set a fixed height for the logo
+            zIndex: 10, // Ensure it's always on top of other elements
+            animation: "rotateLogo 5s linear infinite", // Apply the rotation animation
+          }}
+          onClick={() => window.location.replace("http://localhost:5173")} // Redirect on click
+        />
         <FormContainer component="form" onSubmit={handleSubmit}>
           <Typography
             variant="h5"
@@ -225,7 +247,7 @@ export default function Signup() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             sx={textFieldStyles}
-            />
+          />
 
           <TextField
             fullWidth
@@ -236,7 +258,6 @@ export default function Signup() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             sx={textFieldStyles}
-
           />
 
           <TextField
@@ -282,60 +303,58 @@ export default function Signup() {
               ),
             }}
             sx={textFieldStyles}
-
           />
 
-<Typography sx={{ fontFamily: "Montserrat", mt: 2 }}>
-    Choose one:
-  </Typography>
+          <Typography sx={{ fontFamily: "Montserrat", mt: 2 }}>
+            Choose one:
+          </Typography>
 
-<FormControl component="fieldset" sx={{ mt: 0 }}>
-  <RadioGroup
-    aria-label="role"
-    name="role"
-    value={role}
-    onChange={(e) => setRole(e.target.value)}
-    row
-  >
-    <FormControlLabel
-      value="customer"
-      control={
-        <Radio
-          required
-          sx={{
-            color: "#8BD3E6",
-            "&.Mui-checked": { color: "#3B3183" },
-          }}
-        />
-      }
-      label="Customer"
-      componentsProps={{
-        typography: {
-          sx: { fontFamily: "Montserrat" },
-        },
-      }}
-    />
-    <FormControlLabel
-      value="music_entry_clerk"
-      control={
-        <Radio
-          required
-          sx={{
-            color: "#8BD3E6",
-            "&.Mui-checked": { color: "#3B3183" },
-          }}
-        />
-      }
-      label="Music Entry Clerk"
-      componentsProps={{
-        typography: {
-          sx: { fontFamily: "Montserrat" },
-        },
-      }}
-    />
-  </RadioGroup>
-</FormControl>
-
+          <FormControl component="fieldset" sx={{ mt: 0 }}>
+            <RadioGroup
+              aria-label="role"
+              name="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              row
+            >
+              <FormControlLabel
+                value="customer"
+                control={
+                  <Radio
+                    required
+                    sx={{
+                      color: "#8BD3E6",
+                      "&.Mui-checked": { color: "#3B3183" },
+                    }}
+                  />
+                }
+                label="Customer"
+                componentsProps={{
+                  typography: {
+                    sx: { fontFamily: "Montserrat" },
+                  },
+                }}
+              />
+              <FormControlLabel
+                value="music_entry_clerk"
+                control={
+                  <Radio
+                    required
+                    sx={{
+                      color: "#8BD3E6",
+                      "&.Mui-checked": { color: "#3B3183" },
+                    }}
+                  />
+                }
+                label="Music Entry Clerk"
+                componentsProps={{
+                  typography: {
+                    sx: { fontFamily: "Montserrat" },
+                  },
+                }}
+              />
+            </RadioGroup>
+          </FormControl>
 
           {errorMessage && (
             <Typography

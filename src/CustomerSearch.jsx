@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
+  Avatar,
+  Divider,
   Box,
   List,
   Tabs,
@@ -425,15 +427,48 @@ export default function CustomerSearch() {
         <Box
           sx={{ flexGrow: 1, p: 5, display: "flex", flexDirection: "column" }}
         >
-          <Typography
-            variant="h4"
+           <Box
             sx={{
-              fontFamily: "Montserrat, sans-serif",
-              textAlign: "center", // Center-aligns the text
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+              mt: 3,
             }}
           >
-            Music Score Repository Search
-          </Typography>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Typography variant="h4">Music Score Repository Search</Typography>
+            </Box>
+
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              {user ? (
+                <>
+                  <Typography variant="body1" sx={{ mr: 2 }}>
+                    {user.username}
+                  </Typography>
+                  <Avatar
+                    alt={user.username}
+                    src={
+                      user && user.profile_picture
+                        ? user.profile_picture
+                        : null
+                    }
+                  >
+                    {(!user || !user.profile_picture) &&
+                      user.username.charAt(0).toUpperCase()}
+                  </Avatar>
+                </>
+              ) : (
+                <>
+                  <Typography variant="body1" sx={{ mr: 2 }}>
+                    Loading...
+                  </Typography>
+                  <Avatar></Avatar>
+                </>
+              )}
+            </Box>
+          </Box>
+          <Divider sx={{ my: 1 }} />
 
           {/* Basic Search Component Start */}
 

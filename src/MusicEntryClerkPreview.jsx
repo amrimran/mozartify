@@ -7,7 +7,6 @@ import ABCJS from "abcjs";
 import axios from "axios";
 import { Divider } from "@mui/material";
 
-
 const GlobalStyle = createGlobalStyle`
   body {
     margin: 0;
@@ -36,7 +35,7 @@ export default function MusicEntryClerkPreview() {
   const navigate = useNavigate();
   const location = useLocation();
   const { fileName } = location.state || {};
-  const [abcContent, setAbcContent] = useState('');
+  const [abcContent, setAbcContent] = useState("");
   const [user, setUser] = useState(null);
 
   // Fetch current user data
@@ -59,15 +58,17 @@ export default function MusicEntryClerkPreview() {
     if (fileName) {
       const fetchABCFileContent = async () => {
         try {
-          const response = await fetch(`http://localhost:3001/abc-file/${fileName}`);
+          const response = await fetch(
+            `http://localhost:3001/abc-file/${fileName}`
+          );
           if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error("Network response was not ok");
           }
           const data = await response.json();
           console.log("Fetched ABC Content:", data.content);
           setAbcContent(data.content);
         } catch (error) {
-          console.error('Error fetching ABC file content:', error);
+          console.error("Error fetching ABC file content:", error);
         }
       };
 
@@ -94,40 +95,65 @@ export default function MusicEntryClerkPreview() {
   return (
     <>
       <GlobalStyle />
-<Box sx={{ display: "flex", minHeight: "100vh" }}>
-  <Box
-    sx={{
-      width: 225,
-      bgcolor: "#3B3183",
-      flexShrink: 0, // Prevent shrinking
-      overflowY: "auto", // Add scroll if content overflows
-    }}
-  >
-    <ClerkSidebar active="upload" /> {/* Sidebar with fixed width and scroll */}
-  </Box>
-  <Box sx={{ flexGrow: 1, p: 3, pl: 5, display: "flex", flexDirection: "column" }}>
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        mb: 3,
-      }}
-    >
-      <Typography variant="h4" gutterBottom sx={{ fontFamily: 'Montserrat', fontWeight: 'bold', mt: 4, ml:1 }}>
-        Preview Music Scores
-      </Typography>
-      <Box sx={{ display: "flex", alignItems: "center" }}>
-        <Typography variant="body1" sx={{ mr: 2, fontFamily: "Montserrat" }}>
-          {user ? user.username : 'Loading...'}
-        </Typography>
-        <Avatar>{user ? user.username[0] : 'U'}</Avatar>
-      </Box>
-    </Box>
-    <Divider sx={{ my: 2 }} />  {/* This is the line for the divider */}
-    <Box
-
-
+      <Box sx={{ display: "flex", minHeight: "100vh" }}>
+        <Box
+          sx={{
+            width: 225,
+            bgcolor: "#3B3183",
+            flexShrink: 0, // Prevent shrinking
+            overflowY: "auto", // Add scroll if content overflows
+          }}
+        >
+          <ClerkSidebar active="upload" />{" "}
+          {/* Sidebar with fixed width and scroll */}
+        </Box>
+        <Box
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            pl: 5,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+            }}
+          >
+            <Typography
+              variant="h4"
+              gutterBottom
+              sx={{
+                fontFamily: "Montserrat",
+                fontWeight: "bold",
+                mt: 4,
+                ml: 1,
+              }}
+            >
+              Preview Music Scores
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Typography
+                variant="body1"
+                sx={{ mr: 2, fontFamily: "Montserrat" }}
+              >
+                {user ? user?.username : "Loading..."}
+              </Typography>
+              <Avatar
+                alt={user?.username}
+                src={user && user?.profile_picture ? user?.profile_picture : null}
+              >
+                {(!user || !user?.profile_picture) &&
+                  user?.username.charAt(0).toUpperCase()}
+              </Avatar>
+            </Box>
+          </Box>
+          <Divider sx={{ my: 2 }} /> {/* This is the line for the divider */}
+          <Box
             sx={{
               mb: 3,
               textAlign: "center",
@@ -139,11 +165,24 @@ export default function MusicEntryClerkPreview() {
               borderRadius: 8,
             }}
           >
-            <Typography variant="h6" sx={{ mb: 2, fontFamily: "Montserrat", color: "red", fontWeight: "bold" }}>
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 2,
+                fontFamily: "Montserrat",
+                color: "red",
+                fontWeight: "bold",
+              }}
+            >
               ATTENTION!
             </Typography>
-            <Typography variant="body1" sx={{ fontFamily: "Montserrat", mb: 3 }}>
-              Please <strong>double-check</strong> the music notation on the physical music score sheet against the scanned music score sheet preview.
+            <Typography
+              variant="body1"
+              sx={{ fontFamily: "Montserrat", mb: 3 }}
+            >
+              Please <strong>double-check</strong> the music notation on the
+              physical music score sheet against the scanned music score sheet
+              preview.
             </Typography>
           </Box>
           <Box sx={{ flexGrow: 1, textAlign: "center", p: 3 }}>
@@ -163,21 +202,19 @@ export default function MusicEntryClerkPreview() {
               Edit
             </Button>
             <Button
-  variant="outlined"
-  size="large"
-  sx={{
-    flexGrow: 1,
-    mx: 1,
-    ...buttonStyles, // Apply consistent styles
-  }}
-  onClick={handleProceed}
->
-  Proceed
-</Button>
-
+              variant="outlined"
+              size="large"
+              sx={{
+                flexGrow: 1,
+                mx: 1,
+                ...buttonStyles, // Apply consistent styles
+              }}
+              onClick={handleProceed}
+            >
+              Proceed
+            </Button>
           </Box>
-          <Box sx={{ flexGrow: 1, p: 3 }}>
-          </Box>
+          <Box sx={{ flexGrow: 1, p: 3 }}></Box>
         </Box>
       </Box>
     </>

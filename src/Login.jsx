@@ -14,6 +14,7 @@ import { createGlobalStyle } from "styled-components";
 import Visibility from "@mui/icons-material/VisibilityOff";
 import VisibilityOff from "@mui/icons-material/Visibility";
 import backgroundImage from "./assets/loginWP.png";
+import SidebarMozartifyLogo from "./assets/mozartify.png";
 
 const FormContainer = styled(Box)(({ theme }) => ({
   backgroundColor: "#FFFFFF",
@@ -54,7 +55,7 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 const textFieldStyles = {
-  "& label.Mui-focused": { 
+  "& label.Mui-focused": {
     color: "#5A67D8", // Vibrant indigo for focus
     fontWeight: "bold", // Adds emphasis to the label on focus
   },
@@ -92,7 +93,6 @@ const textFieldStyles = {
   },
 };
 
-
 export default function Login() {
   const [username_or_email, setUsernameOrEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -101,7 +101,6 @@ export default function Login() {
 
   const navigate = useNavigate();
 
-  
   useEffect(() => {
     axios
       .get("http://localhost:3000/clearSession")
@@ -118,16 +117,17 @@ export default function Login() {
     };
   }, []);
 
-  
-
   const handleLogin = (e) => {
     e.preventDefault();
+
+    // Clear any previous error message
+    setErrorMessage("");
+
     axios
       .post("http://localhost:3000/login", { username_or_email, password })
       .then((result) => {
         if (result.data.message === "Success") {
-
-          if (result.data.first_timer === true) {
+          if (result.data.first_timer && result.data.role === "customer") {
             navigate("/first-time-login");
           } else if (result.data.role === "customer") {
             navigate("/customer-homepage");
@@ -136,14 +136,13 @@ export default function Login() {
           } else if (result.data.role === "admin") {
             navigate("/admin-dashboard");
           }
-         
         } else {
-          setErrorMessage("Invalid username/email or password");
+          navigate("/login");
         }
       })
       .catch((err) => {
-        console.log(err);
-        setErrorMessage("Error accessing user database.");
+        console.error("Login error:", err);
+        setErrorMessage("Invalid username/email or password");
       });
   };
 
@@ -153,121 +152,162 @@ export default function Login() {
 
   return (
     <>
+      <style>
+        {`
+          @keyframes rotateLogo {
+            0% {
+              transform: rotate(0deg); // Start from 0 degrees
+            }
+            100% {
+              transform: rotate(360deg); // Rotate to 360 degrees
+            }
+          }
+        `}
+      </style>
       <GlobalStyle />
+
       <BackgroundContainer>
-            <FormContainer component="form" onSubmit={handleLogin}>
-              <Typography
-                variant="h5"
-                align="center"
-                fontWeight="bold"
-                gutterBottom
-                sx={{ fontFamily: "Montserrat", marginBottom: 1 }}
-              >
-                Hello! Welcome back.
-              </Typography>
-              <Typography
-                variant="body1"
-                align="center"
-                color="textSecondary"
-                sx={{ fontFamily: "Montserrat", marginBottom: 3 }}
-              >
-                Log in using the information you provided during registration
-              </Typography>
-              <TextField
-                fullWidth
-                label="Username or Email Address"
-                margin="normal"
-                variant="outlined"
-                required
-                value={username_or_email}
-                onChange={(e) => setUsernameOrEmail(e.target.value)}
-                sx={textFieldStyles}
+        <img
+          src={SidebarMozartifyLogo}
+          alt="MozartifyIcon"
+          style={{
+            position: "fixed", // Fix the position relative to the viewport
+            top: 10, // Place it at the top of the screen
+            left: 10, // Place it at the left of the screen
+            maxWidth: "100%", // Ensure it scales properly
+            maxHeight: "90px", // Set a fixed height for the logo
+            zIndex: 10, // Ensure it's always on top of other elements
+            animation: "rotateLogo 5s linear infinite", // Apply the rotation animation
+          }}
+        />
 
-              />
-              <TextField
-                fullWidth
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                margin="normal"
-                variant="outlined"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton onClick={handleClickShowPassword} edge="end">
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={textFieldStyles}
+        <FormContainer component="form" onSubmit={handleLogin}>
+          <Typography
+            variant="h5"
+            align="center"
+            fontWeight="bold"
+            gutterBottom
+            sx={{ fontFamily: "Montserrat", marginBottom: 1 }}
+          >
+            Hello! Welcome back.
+          </Typography>
+          <Typography
+            variant="body1"
+            align="center"
+            color="textSecondary"
+            sx={{ fontFamily: "Montserrat", marginBottom: 3 }}
+          >
+            Log in using the information you provided during registration
+          </Typography>
+          <TextField
+            fullWidth
+            label="Username or Email Address"
+            margin="normal"
+            variant="outlined"
+            required
+            value={username_or_email}
+            onChange={(e) => setUsernameOrEmail(e.target.value)}
+            sx={textFieldStyles}
+          />
+          <TextField
+            fullWidth
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            margin="normal"
+            variant="outlined"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={handleClickShowPassword} edge="end">
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={textFieldStyles}
+          />
 
-              />
-              {errorMessage && (
-                <Typography color="error" variant="body2" sx={{ mt: 2 }}>
-                  {errorMessage}
-                </Typography>
-              )}
-              <Box
-                sx={{
-                  width: "100%",
-                  display: "flex",
-                  justifyContent: "end",
-                  alignItems: "center",
-                  mt: 2,
-                }}
-              >
-                <Link
-                  to="/forgot-password"
-                  style={{ textDecoration: "none", color: "#483C32" }}
-                >
-                  Forgot Password?
-                </Link>
-              </Box>
-              <Button
-                variant="outlined"
-                size="large"
-                type="submit"
-                sx={{
-                  mt: 3,
-                  px: 10,
-                  fontFamily: "Montserrat",
-                  fontWeight: "bold",
-                  color: "#FFFFFF",
-                  backgroundColor: "#8BD3E6",
-                  border: "1px solid #8BD3E6", // Explicitly define the border
-                  borderColor: "#8BD3E6",
-                  "&:hover": {
-                    backgroundColor: "#3B3183",
-                    color: "#FFFFFF",
-                    border: "1px solid #3B3183", // Ensure border remains visible on hover  
-                  },
-                }}
-              >
-                Login Now
-              </Button>
-              <Typography
-                variant="body2"
-                align="center"
-                sx={{ mt: 2, fontFamily: "Montserrat", color: "#00000" }}
-              >
-                Don’t have an account?{" "}
-                <Link
-                  to="/signup"
-                  style={{
-                    textDecoration: "none",
-                    color: "#3B3183",
-                    fontWeight: "bold",
-                  }}
-                >
-                  REGISTER
-                </Link>
-              </Typography>
-            </FormContainer>
+          <Box
+            sx={{
+              width: "100%",
+              display: "flex",
+              justifyContent: "end",
+              alignItems: "center",
+              mt: 2,
+            }}
+          >
+            <Link to="/forgot-password" style={{ color: "#483C32" }}>
+              Forgot Password?
+            </Link>
+          </Box>
+          {!errorMessage && (
+            <Typography
+              color="white"
+              variant="body2"
+              sx={{
+                mt: 2,
+                fontFamily: "Montserrat, sans-serif",
+              }}
+            >
+              no error
+            </Typography>
+          )}
+          {errorMessage && (
+            <Typography
+              color="error"
+              variant="body2"
+              sx={{
+                mt: 2,
+                fontFamily: "Montserrat, sans-serif",
+              }}
+            >
+              {errorMessage}
+            </Typography>
+          )}
 
-
+          <Button
+            variant="outlined"
+            size="large"
+            type="submit"
+            sx={{
+              mt: 2,
+              px: 10,
+              fontFamily: "Montserrat",
+              fontWeight: "bold",
+              color: "#FFFFFF",
+              backgroundColor: "#8BD3E6",
+              border: "1px solid #8BD3E6", // Explicitly define the border
+              borderColor: "#8BD3E6",
+              "&:hover": {
+                backgroundColor: "#3B3183",
+                color: "#FFFFFF",
+                border: "1px solid #3B3183", // Ensure border remains visible on hover
+              },
+            }}
+          >
+            Login Now
+          </Button>
+          <Typography
+            variant="body2"
+            align="center"
+            sx={{ mt: 2, fontFamily: "Montserrat", color: "#00000" }}
+          >
+            Don’t have an account?{" "}
+            <Link
+              to="/signup"
+              style={{
+                textDecoration: "none",
+                color: "#3B3183",
+                fontWeight: "bold",
+              }}
+            >
+              REGISTER
+            </Link>
+          </Typography>
+        </FormContainer>
       </BackgroundContainer>
     </>
   );

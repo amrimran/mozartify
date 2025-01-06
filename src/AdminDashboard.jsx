@@ -33,7 +33,16 @@ import {
 } from "chart.js";
 import { Bar, Line } from "react-chartjs-2";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -106,7 +115,7 @@ export default function AdminDashboard() {
       change: null,
     },
   ]);
-  
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -120,37 +129,47 @@ export default function AdminDashboard() {
           totalUploads,
           totalDownloads,
         } = response.data;
-  
-        const uploadsChange =
-          monthlyUploads[monthlyUploads.length - 1] - (monthlyUploads[monthlyUploads.length - 2] || 0);
-        const downloadsChange =
-          monthlyDownloads[monthlyDownloads.length - 1] - (monthlyDownloads[monthlyDownloads.length - 2] || 0);
-  
-        setStatsData((prevStats) => [
-  {
-    ...prevStats[0],
-    value: totalUsers.toString(),
-  },
-  prevStats[1],
-  {
-    ...prevStats[2],
-    value: totalUploads.toString(),
-    change: uploadsChange,
-  },
-  {
-    ...prevStats[3],
-    value: totalDownloads.toString(),
-    change: downloadsChange,
-  },
-]);
 
-  
+        const uploadsChange =
+          monthlyUploads[monthlyUploads.length - 1] -
+          (monthlyUploads[monthlyUploads.length - 2] || 0);
+        const downloadsChange =
+          monthlyDownloads[monthlyDownloads.length - 1] -
+          (monthlyDownloads[monthlyDownloads.length - 2] || 0);
+
+        setStatsData((prevStats) => [
+          {
+            ...prevStats[0],
+            value: totalUsers.toString(),
+          },
+          prevStats[1],
+          {
+            ...prevStats[2],
+            value: totalUploads.toString(),
+            change: uploadsChange,
+          },
+          {
+            ...prevStats[3],
+            value: totalDownloads.toString(),
+            change: downloadsChange,
+          },
+        ]);
+
         const labels = [
-          "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-          "Jul", "Aug", "Sep", "Oct", "Nov",
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
           "Dec",
         ];
-  
+
         setUploadsData({
           labels,
           datasets: [
@@ -162,7 +181,7 @@ export default function AdminDashboard() {
             },
           ],
         });
-  
+
         setDownloadsData({
           labels,
           datasets: [
@@ -180,9 +199,6 @@ export default function AdminDashboard() {
         console.error("Error fetching dashboard stats:", error);
       }
     };
-  
-  
-  
 
     const fetchUser = async () => {
       try {
@@ -199,15 +215,16 @@ export default function AdminDashboard() {
     fetchUser();
   }, [navigate]);
 
-
   useEffect(() => {
     const fetchFeedbacks = async () => {
       try {
-        const response = await axios.get("http://localhost:3003/admin/feedbacks");
+        const response = await axios.get(
+          "http://localhost:3003/admin/feedbacks"
+        );
         const feedbackCount = response.data.totalFeedbacks;
         setTotalFeedbacks(feedbackCount);
-        
-        setStatsData(prevStats => {
+
+        setStatsData((prevStats) => {
           const newStats = [...prevStats];
           newStats[1] = {
             ...newStats[1],
@@ -228,7 +245,7 @@ export default function AdminDashboard() {
         console.error("Error fetching feedbacks:", error);
       }
     };
-  
+
     fetchFeedbacks();
   }, [navigate]);
 
@@ -283,120 +300,177 @@ export default function AdminDashboard() {
             <Typography
               variant="h4"
               gutterBottom
-              sx={{ fontFamily: "Montserrat", fontWeight: "bold", mt: 4, ml: 1 }}
+              sx={{
+                fontFamily: "Montserrat",
+                fontWeight: "bold",
+                mt: 4,
+                ml: 1,
+              }}
             >
               Dashboard
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="body1" sx={{ mr: 2, fontFamily: "Montserrat" }}>
+              <Typography
+                variant="body1"
+                sx={{ mr: 2, fontFamily: "Montserrat" }}
+              >
                 {loading ? "Loading..." : user?.username || "Admin"}
               </Typography>
-              <Avatar>{user ? user.username[0] : "A"}</Avatar>
+              <Avatar
+                alt={user? user.username : null}
+                src={user && user.profile_picture ? user.profile_picture : null}
+              >
+                {(!user || !user.profile_picture) &&
+                  user? user.username.charAt(0).toUpperCase():null}
+              </Avatar>
             </Box>
           </Box>
 
           <Divider sx={{ my: 1 }} />
 
-          
-
-         <Grid container spacing={3} sx={{ mt: 10, maxWidth: "1300px", margin: "0 auto" }}>
-  {/* First Row */}
-  {[
-    {
-      title: "Upload Statistics",
-      data: uploadsData,
-      chart: Bar,
-      maxWidth: "520px",
-      placeholder: "Loading chart...",
-    },
-    {
-      title: "Download Trends",
-      data: downloadsData,
-      chart: Line,
-      maxWidth: "550px",
-      placeholder: "Loading chart...",
-    },
-  ].map((item, index) => (
-    <Grid 
-      item xs={12} md={6} 
-      key={index}
-      sx={{ display: "flex", justifyContent: "center", px: 1 }}
-    >
-      <Card elevation={2} sx={{ p: 2, borderRadius: 4, width: "100%", maxWidth: item.maxWidth }}>
-        <CardContent>
-          <Typography
-            variant="h6"
-            sx={{ fontFamily: "Montserrat", fontWeight: "bold", mb: 2 }}
+          <Grid
+            container
+            spacing={3}
+            sx={{ mt: 10, maxWidth: "1300px", margin: "0 auto" }}
           >
-            {item.title}
-          </Typography>
-          <Box sx={{ height: 300 }}>
-            {item.data ? (
-              <item.chart data={item.data} options={chartOptions} />
-            ) : (
-              <Typography
-                variant="body2"
-                sx={{ fontFamily: "Montserrat", textAlign: "center", mt: 2 }}
+            {/* First Row */}
+            {[
+              {
+                title: "Upload Statistics",
+                data: uploadsData,
+                chart: Bar,
+                maxWidth: "520px",
+                placeholder: "Loading chart...",
+              },
+              {
+                title: "Download Trends",
+                data: downloadsData,
+                chart: Line,
+                maxWidth: "550px",
+                placeholder: "Loading chart...",
+              },
+            ].map((item, index) => (
+              <Grid
+                item
+                xs={12}
+                md={6}
+                key={index}
+                sx={{ display: "flex", justifyContent: "center", px: 1 }}
               >
-                {item.placeholder}
-              </Typography>
-            )}
-          </Box>
-        </CardContent>
-      </Card>
-    </Grid>
-  ))}
-</Grid>
+                <Card
+                  elevation={2}
+                  sx={{
+                    p: 2,
+                    borderRadius: 4,
+                    width: "100%",
+                    maxWidth: item.maxWidth,
+                  }}
+                >
+                  <CardContent>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontFamily: "Montserrat",
+                        fontWeight: "bold",
+                        mb: 2,
+                      }}
+                    >
+                      {item.title}
+                    </Typography>
+                    <Box sx={{ height: 300 }}>
+                      {item.data ? (
+                        <item.chart data={item.data} options={chartOptions} />
+                      ) : (
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "Montserrat",
+                            textAlign: "center",
+                            mt: 2,
+                          }}
+                        >
+                          {item.placeholder}
+                        </Typography>
+                      )}
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
 
-{/* Second Row */}
-<Grid container spacing={4} sx={{ mt: 5, maxWidth: "1200px", margin: "0 auto" }}>
-  {statsData.map((stat, index) => (
-    <Grid 
-      item xs={12} sm={6} md={3} 
-      key={index}
-      sx={{ display: "flex", justifyContent: "center" }}
-    >
-      <Card elevation={2} sx={{ borderRadius: 4, p: 2, width: "100%", maxWidth: "300px", mb: 2 }}>
-        <CardContent>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            {stat.icon}
-            <Box sx={{ textAlign: "right" }}>
-              <Typography variant="h4" sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}>
-                {stat.value}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ fontFamily: "Montserrat", color: "#757575" }}
+          {/* Second Row */}
+          <Grid
+            container
+            spacing={4}
+            sx={{ mt: 5, maxWidth: "1200px", margin: "0 auto" }}
+          >
+            {statsData.map((stat, index) => (
+              <Grid
+                item
+                xs={12}
+                sm={6}
+                md={3}
+                key={index}
+                sx={{ display: "flex", justifyContent: "center" }}
               >
-                {stat.title}
-              </Typography>
-            </Box>
-          </Box>
-          {stat.change !== undefined && (
-            <Typography
-              variant="body2"
-              sx={{
-                fontFamily: "Montserrat",
-                color: stat.change >= 0 ? "green" : "red",
-                fontWeight: "bold",
-                mt: 1,
-                textAlign: "left",
-              }}
-            >
-              {stat.change >= 0 ? `+${stat.change}` : stat.change} this month
-            </Typography>
-          )}
-        </CardContent>
-        {stat.button && <CardActions>{stat.button}</CardActions>}
-      </Card>
-    </Grid>
-  ))}
-</Grid>
+                <Card
+                  elevation={2}
+                  sx={{
+                    borderRadius: 4,
+                    p: 2,
+                    width: "100%",
+                    maxWidth: "300px",
+                    mb: 2,
+                  }}
+                >
+                  <CardContent>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      {stat.icon}
+                      <Box sx={{ textAlign: "right" }}>
+                        <Typography
+                          variant="h4"
+                          sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
+                        >
+                          {stat.value}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontFamily: "Montserrat", color: "#757575" }}
+                        >
+                          {stat.title}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    {stat.change !== undefined && (
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "Montserrat",
+                          color: stat.change >= 0 ? "green" : "red",
+                          fontWeight: "bold",
+                          mt: 1,
+                          textAlign: "left",
+                        }}
+                      >
+                        {stat.change >= 0 ? `+${stat.change}` : stat.change}{" "}
+                        this month
+                      </Typography>
+                    )}
+                  </CardContent>
+                  {stat.button && <CardActions>{stat.button}</CardActions>}
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
 
-<Box sx={{ height: "50px" }} />
-
-
-
+          <Box sx={{ height: "50px" }} />
         </Box>
       </Box>
     </>

@@ -116,6 +116,14 @@ export default function CustomerAddNewFeedback() {
         console.error("Error uploading file:", error);
       }
     }
+
+    if (!(formData.attachment)) {
+      try {
+        data.append("attachment_url", "");
+      } catch (error) {
+        console.error("Error uploading file:", error);
+      }
+    }
   
     try {
       await axios.post("http://localhost:3002/api/feedback", data);

@@ -1,22 +1,21 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  profile_picture: { type: String, required: false },
   role: {
     type: String,
-    enum: ['customer', 'music_entry_clerk', 'admin'], // Added 'admin' role
-    default: 'customer',
+    enum: ["customer", "music_entry_clerk", "admin"], // Added 'admin' role
+    default: "customer",
   },
   approval: {
     type: String,
-    enum: ['approved', 'pending', 'denied'], // Updated approval field to string with predefined values
-    default: 'pending', // Default is 'pending' for new users
+    enum: ["approved", "pending", "denied"], // Updated approval field to string with predefined values
+    default: "pending", // Default is 'pending' for new users
   },
-  favorites: [
-    { type: mongoose.Schema.Types.ObjectId, ref: 'MusicScore' },
-  ], // References to favorite MusicScore objects
+  favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "MusicScore" }], // References to favorite MusicScore objects
   first_timer: {
     type: Boolean,
     required: true,
@@ -31,6 +30,6 @@ const UserSchema = new mongoose.Schema({
 // userSchema.index({ username: 1, role: 1 }, { unique: true });
 // userSchema.index({ email: 1, role: 1 }, { unique: true });
 
-const UserModel = mongoose.model('User', UserSchema);
+const UserModel = mongoose.model("User", UserSchema);
 
 module.exports = UserModel;

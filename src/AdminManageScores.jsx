@@ -19,6 +19,7 @@ import {
   MenuItem,
   Pagination,
 } from "@mui/material";
+
 import { FilterAlt } from "@mui/icons-material";
 import AdminSidebar from "./AdminSidebar";
 import { useNavigate } from "react-router-dom";
@@ -37,20 +38,28 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 export default function AdminManageScore() {
-  const [musicScores, setMusicScores] = useState([]);
   const [user, setUser] = useState(null);
+
+  const [unfilteredSearchedScores, setUnfilteredSearchedScores] = useState([]);
+
+  const [searchedScores, setSearchedScores] = useState([]);
+  const [filteredScores, setFilteredScores] = useState([]);
+  const [isFiltered, setIsFiltered] = useState(false);
+
+  const [musicScores, setMusicScores] = useState([]);
+
   const [searchQuery, setSearchQuery] = useState("");
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [genre, setGenre] = useState("");
   const [composer, setComposer] = useState("");
   const [instrumentation, setInstrumentation] = useState("");
-  const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(100);
+  const [emotion, setEmotion] = useState("");
+
   const [page, setPage] = useState(1);
 
   const navigate = useNavigate();
-
-  const itemsPerPage = 12; // 3 rows of 4 cards each
+  const itemsPerPage = 12;
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -70,37 +79,134 @@ export default function AdminManageScore() {
     const fetchMusicScores = async () => {
       try {
         const response = await axios.get("http://localhost:3001/abc-file");
-        setMusicScores(response.data);
+        // Transform the data to ensure string IDs
+        const transformedScores = response.data.map((score) => ({
+          ...score,
+          _id: score._id.$oid || score._id.toString() || score._id,
+          title: String(score.title || "Untitled"),
+          artist: String(score.artist || "Unknown Artist"),
+        }));
+        setMusicScores(transformedScores);
       } catch (error) {
         console.error("Error fetching music scores:", error);
       }
     };
-
     fetchMusicScores();
   }, []);
 
-  const handlePageChange = (event, value) => {
-    setPage(value);
+  useEffect(() => {
+    // When search query changes, reset filters
+    if (searchQuery) {
+      const fetchSearchedScores = async () => {
+        try {
+          const response = await axios.get(
+            "http://localhost:3000/search-music-scores",
+            {
+              params: { query: searchQuery },
+            }
+          );
+          setUnfilteredSearchedScores(response.data);
+          setSearchedScores(response.data);
+          setIsFiltered(false); // Reset filter state when searching
+        } catch (error) {
+          console.error("Error fetching searched scores:", error);
+        }
+      };
+      fetchSearchedScores();
+    } else {
+      setUnfilteredSearchedScores([]);
+      setSearchedScores([]);
+    }
+  }, [searchQuery]);
+
+  const getDisplayedScores = () => {
+    if (searchQuery && isFiltered) {
+      // If we're searching and filters are applied, show filtered search results
+      return searchedScores;
+    } else if (searchQuery) {
+      // If we're only searching without filters, show search results
+      return searchedScores;
+    } else if (isFiltered) {
+      // If we're only filtering without search, show filtered scores
+      return filteredScores;
+    } else {
+      // Default case: show all music scores
+      return musicScores;
+    }
+  };
+
+  const displayedScores = getDisplayedScores();
+  const paginatedScores = displayedScores.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage
+  );
+  const pageCount = Math.ceil(displayedScores.length / itemsPerPage);
+
+  const applyFilters = (scores) => {
+    return scores.filter((score) => {
+      return (
+        (!genre || score.genre === genre) &&
+        (!composer ||
+          score.composer.toLowerCase().includes(composer.toLowerCase())) &&
+        (!emotion ||
+          score.emotion.toLowerCase().includes(composer.toLowerCase())) &&
+        (!instrumentation ||
+          score.instrumentation
+            .toLowerCase()
+            .includes(instrumentation.toLowerCase()))
+      );
+    });
   };
 
   const clearFilters = () => {
     setGenre("");
     setComposer("");
+    setEmotion("");
     setInstrumentation("");
-    setMinPrice(0);
-    setMaxPrice(100);
+    setIsFiltered(false);
+    if (searchQuery) {
+      setSearchedScores(unfilteredSearchedScores);
+    }
+  };
+
+  const handleFilterRequest = async () => {
+    const hasFilter = genre || composer || instrumentation || emotion;
+
+    if (hasFilter) {
+      setIsFiltered(true);
+      try {
+        if (searchQuery) {
+          // Apply filters to search results
+          const filteredSearchResults = applyFilters(unfilteredSearchedScores);
+          setSearchedScores(filteredSearchResults);
+        } else {
+          // Apply filters to all scores
+          const response = await axios.get(
+            "http://localhost:3000/filter-music-scores",
+            {
+              params: { genre, composer, instrumentation, emotion },
+            }
+          );
+          setFilteredScores(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching filtered scores:", error);
+      }
+    } else {
+      setIsFiltered(false);
+      if (searchQuery) {
+        setSearchedScores(unfilteredSearchedScores);
+      }
+    }
+  };
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
   };
 
   const handleCardClick = (scoreId) => {
     navigate(`/admin-music-score-view/${scoreId}`);
   };
-
-  const paginatedMusicScores = musicScores.slice(
-    (page - 1) * itemsPerPage,
-    page * itemsPerPage
-  );
-
-  const pageCount = Math.ceil(musicScores.length / itemsPerPage);
 
   return (
     <>
@@ -114,7 +220,7 @@ export default function AdminManageScore() {
             overflowY: "auto", // Add scroll if content overflows
           }}
         >
-          <AdminSidebar />
+          <AdminSidebar active="dashboard" />
         </Box>
         <Box sx={{ flexGrow: 1, p: 3, pl: 5 }}>
           <Box
@@ -138,7 +244,7 @@ export default function AdminManageScore() {
                 }}
               >
                 <InputBase
-                  sx={{ ml: 1, flex: 1, fontFamily: 'Montserrat' }}
+                  sx={{ ml: 1, flex: 1, fontFamily: "Montserrat" }}
                   placeholder="Look for music scores here..."
                   inputProps={{ "aria-label": "search music scores" }}
                   value={searchQuery}
@@ -158,38 +264,82 @@ export default function AdminManageScore() {
                 open={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
               >
-                <Box sx={{ width: 400, p: 2 }}>
-                  <Typography variant="h6" sx={{ mb: 2, fontFamily: 'Montserrat' }}>
+                <Box
+                  sx={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    p: 2,
+                    width: 300,
+                  }}
+                >
+                  <Typography variant="h6" sx={{ mb: 2 }}>
                     Filter Options
                   </Typography>
 
                   <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel sx={{ fontFamily: 'Montserrat' }}>Genre</InputLabel>
+                    <InputLabel>Genre</InputLabel>
                     <Select
                       label="Genre"
                       value={genre}
                       onChange={(e) => setGenre(e.target.value)}
-                      sx={{ fontFamily: 'Montserrat' }}
                     >
-                      <MenuItem value="" sx={{ fontFamily: 'Montserrat' }}>All</MenuItem>
-                      <MenuItem value="Classical" sx={{ fontFamily: 'Montserrat' }}>Classical</MenuItem>
-                      <MenuItem value="Jazz" sx={{ fontFamily: 'Montserrat' }}>Jazz</MenuItem>
-                      <MenuItem value="Pop" sx={{ fontFamily: 'Montserrat' }}>Pop</MenuItem>
+                      {[
+                        "Baroque",
+                        "Children's",
+                        "Children's Song",
+                        "Classical",
+                        "Disco",
+                        "Impressionist",
+                        "Pop",
+                        "Rock",
+                        "Renaissance Polyphony",
+                      ].map((item) => (
+                        <MenuItem key={item} value={item}>
+                          {item}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
 
                   <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel sx={{ fontFamily: 'Montserrat' }}>Composer</InputLabel>
+                    <InputLabel>Composer</InputLabel>
                     <Select
                       label="Composer"
                       value={composer}
                       onChange={(e) => setComposer(e.target.value)}
-                      sx={{ fontFamily: 'Montserrat' }}
                     >
-                      <MenuItem value="" sx={{ fontFamily: 'Montserrat' }}>All</MenuItem>
-                      <MenuItem value="Mozart" sx={{ fontFamily: 'Montserrat' }}>Mozart</MenuItem>
-                      <MenuItem value="Beethoven" sx={{ fontFamily: 'Montserrat' }}>Beethoven</MenuItem>
-                      <MenuItem value="Gershwin" sx={{ fontFamily: 'Montserrat' }}>Gershwin</MenuItem>
+                      {[
+                        "Antonio Vivaldi",
+                        "Claude Debussy",
+                        "Emil Aarestrup",
+                        "Heinrich Faber",
+                        "Johann Pachelbel",
+                        "John Lennon, Paul McCartney",
+                        "Ludwig van Beethoven",
+                        "Mark Fisher",
+                        "Joe Goodman",
+                        "Larry Shay",
+                        "Wolfgang Amadeus Mozart",
+                      ].map((composerName) => (
+                        <MenuItem key={composerName} value={composerName}>
+                          {composerName}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel>Emotion</InputLabel>
+                    <Select
+                      label="Emotion"
+                      value={emotion}
+                      onChange={(e) => setEmotion(e.target.value)}
+                    >
+                      <MenuItem value="Happy">Angry</MenuItem>
+                      <MenuItem value="Happy">Happy</MenuItem>
+                      <MenuItem value="Relaxed">Relaxed</MenuItem>
+                      <MenuItem value="Sad">Sad</MenuItem>
                     </Select>
                   </FormControl>
 
@@ -197,48 +347,27 @@ export default function AdminManageScore() {
                     label="Instrumentation"
                     variant="outlined"
                     fullWidth
-                    sx={{ mb: 2, fontFamily: 'Montserrat' }}
+                    sx={{ mb: 2 }}
                     value={instrumentation}
                     onChange={(e) => setInstrumentation(e.target.value)}
-                    InputLabelProps={{ sx: { fontFamily: 'Montserrat' } }}
-                  />
-
-                  <TextField
-                    label="Min Price"
-                    variant="outlined"
-                    fullWidth
-                    type="number"
-                    sx={{ mb: 2, fontFamily: 'Montserrat' }}
-                    value={minPrice}
-                    onChange={(e) => setMinPrice(e.target.value)}
-                    InputLabelProps={{ sx: { fontFamily: 'Montserrat' } }}
-                  />
-                  <TextField
-                    label="Max Price"
-                    variant="outlined"
-                    fullWidth
-                    type="number"
-                    sx={{ mb: 2, fontFamily: 'Montserrat' }}
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
-                    InputLabelProps={{ sx: { fontFamily: 'Montserrat' } }}
                   />
 
                   <Button
-                    variant="contained"
+                    variant="outlined"
                     fullWidth
                     sx={{
-                      mt: 4,
-                      backgroundColor: "#483C32",
-                      color: "#fff",
-                      fontFamily: 'Montserrat',
+                      mt: 2,
+                      borderColor: "#3B3183",
+                      color: "#3B3183",
                       "&:hover": {
-                        backgroundColor: "#3c312a",
+                        borderColor: "#3B3183",
+                        color: "#FFFFFF",
+                        backgroundColor: "#3B3183",
                       },
                     }}
-                    onClick={() => setIsDrawerOpen(false)}
+                    onClick={handleFilterRequest}
                   >
-                    CLOSE FILTERS
+                    APPLY FILTERS
                   </Button>
 
                   <Button
@@ -248,7 +377,6 @@ export default function AdminManageScore() {
                       mt: 2,
                       borderColor: "#C44131",
                       color: "#C44131",
-                      fontFamily: 'Montserrat',
                       "&:hover": {
                         borderColor: "#C44131",
                         color: "#FFFFFF",
@@ -259,6 +387,23 @@ export default function AdminManageScore() {
                   >
                     CLEAR FILTERS
                   </Button>
+                  <Box sx={{ mt: "auto" }}>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      sx={{
+                        mb: 2, // Margin at the bottom
+                        backgroundColor: "#483C32",
+                        color: "#fff",
+                        "&:hover": {
+                          backgroundColor: "#3c312a",
+                        },
+                      }}
+                      onClick={() => setIsDrawerOpen(false)}
+                    >
+                      CLOSE FILTERS
+                    </Button>
+                  </Box>
                 </Box>
               </Drawer>
             </Box>
@@ -266,40 +411,124 @@ export default function AdminManageScore() {
             <Box sx={{ display: "flex", alignItems: "center" }}>
               {user ? (
                 <>
-                  <Typography variant="body1" sx={{ mr: 2, fontFamily: 'Montserrat' }}>
-                    {user.username}
+                  <Typography
+                    variant="body1"
+                    sx={{ mr: 2, fontFamily: "Montserrat" }}
+                  >
+                    {user?.username}
                   </Typography>
-                  <Avatar>{user.username.charAt(0)}</Avatar>
+                  <Avatar
+                    alt={user?.username}
+                    src={
+                      user && user?.profile_picture
+                        ? user?.profile_picture
+                        : null
+                    }
+                  >
+                    {(!user || !user?.profile_picture) &&
+                      user?.username.charAt(0).toUpperCase()}
+                  </Avatar>
                 </>
               ) : (
-                <Typography variant="body1" sx={{ mr: 2, fontFamily: 'Montserrat' }}>
+                <Typography
+                  variant="body1"
+                  sx={{ mr: 2, fontFamily: "Montserrat" }}
+                >
                   Loading...
                 </Typography>
               )}
             </Box>
           </Box>
 
-          <Typography variant="h5" gutterBottom sx={{ fontFamily: 'Montserrat', fontWeight: 'bold', mt: 4, mb: 3 }}>
-            Uploaded Music Scores
+          <Typography
+            variant="h5"
+            gutterBottom
+            sx={{ fontFamily: "Montserrat", fontWeight: "bold", mt: 4, mb: 3 }}
+          >
+            {searchQuery
+              ? "Search Results"
+              : isFiltered
+              ? "Filtered Results"
+              : "Uploaded Music Scores"}
           </Typography>
+
+          {/* Display search result count if searching */}
+          {/* {searchQuery && (
+            <Typography
+              variant="body1"
+              sx={{ mb: 2, fontFamily: "Montserrat" }}
+            >
+              Found{" "}
+              <Box
+                component="span"
+                sx={{ fontWeight: "bold", color: "#3B3183" }}
+              >
+                {searchedScores.length}
+              </Box>{" "}
+              results
+            </Typography>
+          )} */}
+          <Typography variant="body1" sx={{ mb: 2, fontFamily: "Montserrat" }}>
+            Found{" "}
+            <Box component="span" sx={{ fontWeight: "bold", color: "#3B3183" }}>
+              {displayedScores.length}
+            </Box>{" "}
+            results
+          </Typography>
+
+          {/* {isFiltered && (
+            <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
+              {filteredScores.length > 0 ? (
+                <List>
+                  {filteredScores.map((score) => (
+                    <ListItemButton
+                      key={score._id}
+                      sx={{ display: "flex", alignItems: "center" }}
+                      onClick={() =>
+                        navigate(`/clerk-music-score-view/${score._id}`)
+                      }
+                    >
+                      <ListItemText
+                        primary={score.title}
+                        secondary={`Genre: ${score.genre} | Composer: ${score.composer} | Artist: ${score.artist} | Emotion: ${score.emotion}`}
+                      />
+
+                      <ListItemIcon>
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                        >
+                          <PlayArrow />
+                        </IconButton>
+                      </ListItemIcon>
+                    </ListItemButton>
+                  ))}
+                </List>
+              ) : (
+                <Typography variant="body2">No results found</Typography>
+              )}
+            </Box>
+          )} */}
+
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)", // Four columns per row
+              gridTemplateColumns: "repeat(4, 1fr)",
               gap: 3,
             }}
           >
-            {paginatedMusicScores.length > 0 ? (
-              paginatedMusicScores.map((score) => (
+            {paginatedScores.length > 0 ? (
+              paginatedScores.map((score) => (
                 <Card
                   key={score._id}
                   sx={{
-                    width: 210, // Increase width slightly to ensure border visibility
+                    width: 210,
                     display: "flex",
                     flexDirection: "column",
-                    alignItems: "center", // Center content
-                    boxShadow: 'none', // Remove shadow
-                    cursor: 'pointer', // Indicate it's clickable
+                    alignItems: "center",
+                    boxShadow: "none",
+                    cursor: "pointer",
                   }}
                   onClick={() => handleCardClick(score._id)}
                 >
@@ -309,84 +538,87 @@ export default function AdminManageScore() {
                     image={score.coverImageUrl}
                     alt={score.title}
                     sx={{
-                      border: "2px solid #000", // Border only for the image
+                      border: "2px solid #000",
                       borderRadius: 10,
-                      width: 200, // Adjust width to make border visible
+                      width: 200,
                     }}
                   />
                   <CardContent
-  sx={{
-    flexGrow: 1,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center", // Center the text
-    justifyContent: "center",
-    fontFamily: 'Montserrat',
-    width: '100%', // Ensure the content spans the full width
-    textAlign: 'center',
-  }}
->
-  <Typography
-    variant="h6"
-    noWrap
-    sx={{
-      mb: 1,
-      fontFamily: 'Montserrat',
-      textOverflow: 'ellipsis',
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
-      width: '100%', // Ensures the ellipsis effect works
-    }}
-  >
-    {score.title || "N/A"}
-  </Typography>
-  <Typography
-    variant="body2"
-    color="textSecondary"
-    noWrap
-    sx={{
-      fontFamily: 'Montserrat',
-      textOverflow: 'ellipsis',
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
-      width: '100%', // Ensures the ellipsis effect works
-    }}
-  >
-    {score.artist || "N/A"}
-  </Typography>
-</CardContent>
-
+                    sx={{
+                      flexGrow: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontFamily: "Montserrat",
+                      width: "100%",
+                      textAlign: "center",
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      noWrap
+                      sx={{
+                        mb: 1,
+                        fontFamily: "Montserrat",
+                        textOverflow: "ellipsis",
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                        width: "100%",
+                      }}
+                    >
+                      {score.title}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      noWrap
+                      sx={{
+                        fontFamily: "Montserrat",
+                        textOverflow: "ellipsis",
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                        width: "100%",
+                      }}
+                    >
+                      {score.artist}
+                    </Typography>
+                  </CardContent>
                 </Card>
               ))
             ) : (
-              <Typography variant="body2" sx={{ fontFamily: 'Montserrat' }}>No scores found</Typography>
+              <Typography variant="body2" sx={{ fontFamily: "Montserrat" }}>
+                No scores found
+              </Typography>
             )}
           </Box>
 
           {/* Pagination component */}
-          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-          <Pagination
-            count={pageCount}
-            page={page}
-            onChange={handlePageChange}
-            color="primary"
-            sx={{
-              '& .MuiPaginationItem-root': {
-                borderRadius: 2, // Makes the pagination buttons square
-                fontFamily: 'Montserrat', // Use Montserrat font
-                backgroundColor: 'primary', // Set background color
-                color: '#000', // Set text color to white
-                '&.Mui-selected': {
-                  backgroundColor: '#8BD3E6',
-                  color: '#fff', // Darker shade for selected state
-                },
-                '&:hover': {
-                  backgroundColor: '#FFEE8C', // Slightly lighter shade on hover
-                },
-              },
-            }}
-          />
-          </Box>
+          {paginatedScores.length > 0 && (
+            <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+              <Pagination
+                count={pageCount}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                sx={{
+                  "& .MuiPaginationItem-root": {
+                    borderRadius: 2,
+                    fontFamily: "Montserrat",
+                    backgroundColor: "primary",
+                    color: "#000",
+                    "&.Mui-selected": {
+                      backgroundColor: "#8BD3E6",
+                      color: "#fff",
+                    },
+                    "&:hover": {
+                      backgroundColor: "#FFEE8C",
+                    },
+                  },
+                }}
+              />
+            </Box>
+          )}
         </Box>
       </Box>
     </>

@@ -83,9 +83,10 @@ export default function CustomerMyCart() {
     fetchCartItems();
   }, [cartItemIDs]);
 
-  const subtotal = cartItems.length > 0
-    ? cartItems.reduce((sum, item) => sum + parseFloat(item.price), 0)
-    : 0;
+  const subtotal =
+    cartItems.length > 0
+      ? cartItems.reduce((sum, item) => sum + parseFloat(item.price), 0)
+      : 0;
 
   const handleRemoveItem = async (id) => {
     try {
@@ -119,9 +120,8 @@ export default function CustomerMyCart() {
       console.error("Stripe checkout error:", error);
     }
 
-  console.log("Subtotal:", subtotal);
-  console.log("Data type of subtotal:", typeof subtotal);
-  
+    console.log("Subtotal:", subtotal);
+    console.log("Data type of subtotal:", typeof subtotal);
   };
 
   const GlobalStyle = createGlobalStyle`
@@ -183,7 +183,15 @@ export default function CustomerMyCart() {
                   <Typography variant="body1" sx={{ mr: 2 }}>
                     {user.username}
                   </Typography>
-                  <Avatar>{user.username.charAt(0)}</Avatar>
+                  <Avatar
+                    alt={user.username}
+                    src={
+                      user && user.profile_picture ? user.profile_picture : null
+                    }
+                  >
+                    {(!user || !user.profile_picture) &&
+                      user.username.charAt(0).toUpperCase()}
+                  </Avatar>
                 </>
               ) : (
                 <>
@@ -211,13 +219,15 @@ export default function CustomerMyCart() {
             <>
               <TableContainer component={Paper} sx={{ mt: 2 }}>
                 <Table>
-                  <TableHead>
+                  <TableHead
+                    sx={{ color: "white", backgroundColor: "#67ADC1" }}
+                  >
                     <TableRow>
-                      <TableCell>#</TableCell>
-                      <TableCell>Title</TableCell>
-                      <TableCell>Composer</TableCell>
-                      <TableCell>Price</TableCell>
-                      <TableCell>Action</TableCell>
+                      <TableCell sx={{ color: "#ffffff" }}>#</TableCell>
+                      <TableCell sx={{ color: "#ffffff" }}>Title</TableCell>
+                      <TableCell sx={{ color: "#ffffff" }}>Composer</TableCell>
+                      <TableCell sx={{ color: "#ffffff" }}>Price</TableCell>
+                      <TableCell sx={{ color: "#ffffff" }}>Action</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>

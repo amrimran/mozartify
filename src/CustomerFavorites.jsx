@@ -33,14 +33,7 @@ import CustomerSidebar from "./CustomerSidebar";
 axios.defaults.withCredentials = true;
 
 const options = {
-  keys: [
-    "title",
-    "genre",
-    "composer",
-    "artist",
-    "instrumentation",
-    "emotion",
-  ],
+  keys: ["title", "genre", "composer", "artist", "instrumentation", "emotion"],
   threshold: 0.3,
 };
 
@@ -253,7 +246,7 @@ export default function CustomerFavorites() {
               justifyContent: "space-between",
               alignItems: "center",
               mb: 3,
-              mt:3
+              mt: 3,
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -277,7 +270,7 @@ export default function CustomerFavorites() {
                 />
               </Paper>
               <IconButton
-                sx={{ p: "10px", ml: 2}}
+                sx={{ p: "10px", ml: 2 }}
                 aria-label="filter"
                 onClick={() => setIsDrawerOpen(true)}
               >
@@ -309,15 +302,25 @@ export default function CustomerFavorites() {
                       value={genre}
                       onChange={(e) => setGenre(e.target.value)}
                     >
-                      <MenuItem value="">All</MenuItem>
-                      <MenuItem value="Classical">Classical</MenuItem>
-                      <MenuItem value="Jazz">Jazz</MenuItem>
-                      <MenuItem value="Pop">Pop</MenuItem>
-                      <MenuItem value="Ragtime">Ragtime</MenuItem>
+                      {[
+                        "All",
+                        "Baroque",
+                        "Children's",
+                        "Children's Song",
+                        "Classical",
+                        "Disco",
+                        "Impressionist",
+                        "Pop",
+                        "Rock",
+                        "Renaissance Polyphony",
+                      ].map((item) => (
+                        <MenuItem key={item} value={item}>
+                          {item}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
 
-                  {/* Composer Filter */}
                   <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel>Composer</InputLabel>
                     <Select
@@ -325,23 +328,24 @@ export default function CustomerFavorites() {
                       value={composer}
                       onChange={(e) => setComposer(e.target.value)}
                     >
-                      <MenuItem value="">All</MenuItem>
-                      <MenuItem value="Mozart">Mozart</MenuItem>
-                      <MenuItem value="Beethoven">Beethoven</MenuItem>
-                      <MenuItem value="Gershwin">Gershwin</MenuItem>
-                      <MenuItem value="Chopin">Chopin</MenuItem>
-                      <MenuItem value="Debussy">Debussy</MenuItem>
-                      <MenuItem value="Scott Joplin">Scott Joplin</MenuItem>
-                      <MenuItem value="Erik Satie">Erik Satie</MenuItem>
-                      <MenuItem value="Vivaldi">Vivaldi</MenuItem>
-                      <MenuItem value="Pacheibel">Pacheibel</MenuItem>
-                      <MenuItem value="Ravel">Ravel</MenuItem>
-                      <MenuItem value="Liszt">Liszt</MenuItem>
-                      <MenuItem value="Rimsky-Korsakov">
-                        Rimsky-Korsakov
-                      </MenuItem>
-                      <MenuItem value="Tchaikovsky">Tchaikovsky</MenuItem>
-                      <MenuItem value="Holst">Holst</MenuItem>
+                      {[
+                        "All",
+                        "Antonio Vivaldi",
+                        "Claude Debussy",
+                        "Emil Aarestrup",
+                        "Heinrich Faber",
+                        "Johann Pachelbel",
+                        "John Lennon, Paul McCartney",
+                        "Ludwig van Beethoven",
+                        "Mark Fisher",
+                        "Joe Goodman",
+                        "Larry Shay",
+                        "Wolfgang Amadeus Mozart",
+                      ].map((composerName) => (
+                        <MenuItem key={composerName} value={composerName}>
+                          {composerName}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
 
@@ -353,13 +357,10 @@ export default function CustomerFavorites() {
                       onChange={(e) => setEmotion(e.target.value)}
                     >
                       <MenuItem value="All">All</MenuItem>
+                      <MenuItem value="Happy">Angry</MenuItem>
                       <MenuItem value="Happy">Happy</MenuItem>
                       <MenuItem value="Relaxed">Relaxed</MenuItem>
-                      <MenuItem value="Melancholic">Melancholic</MenuItem>
-                      <MenuItem value="Peaceful">Peaceful</MenuItem>
-                      <MenuItem value="Energetic">Energetic</MenuItem>
-                      <MenuItem value="Joyful">Joyful</MenuItem>
-                      <MenuItem value="Majestic">Majestic</MenuItem>
+                      <MenuItem value="Sad">Sad</MenuItem>
                     </Select>
                   </FormControl>
 
@@ -429,13 +430,21 @@ export default function CustomerFavorites() {
               </Drawer>
             </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center"}}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
               {user ? (
                 <>
                   <Typography variant="body1" sx={{ mr: 2 }}>
                     {user.username}
                   </Typography>
-                  <Avatar>{user.username.charAt(0)}</Avatar>
+                  <Avatar
+                    alt={user.username}
+                    src={
+                      user && user.profile_picture ? user.profile_picture : null
+                    }
+                  >
+                    {(!user || !user.profile_picture) &&
+                      user.username.charAt(0).toUpperCase()}
+                  </Avatar>
                 </>
               ) : (
                 <>
@@ -489,9 +498,12 @@ export default function CustomerFavorites() {
                   <ListItemIcon>
                     {!purchasedScores.includes(item._id) &&
                       !addedToCartScores.includes(item._id) && (
-                        <IconButton onClick={(e) => {
-                          e.stopPropagation();
-                          addToCart(item._id);}}>
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart(item._id);
+                          }}
+                        >
                           <ShoppingCartIcon />
                         </IconButton>
                       )}

@@ -125,6 +125,35 @@ app.put("/users/:id", async (req, res) => {
   }
 });
 
+app.post("/api/feedback/reply/:id", async (req, res) => {
+  const { id } = req.params;
+  const { replyMessage } = req.body;
+
+  if (!replyMessage) {
+    return res.status(400).json({ error: "Reply message is required" });
+  }
+
+  try {
+    const updatedFeedback = await Feedback.findByIdAndUpdate(
+      id,
+      {
+        replyMessage,
+        replyDate: new Date(), // Set the current date
+      },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedFeedback) {
+      return res.status(404).json({ error: "Feedback not found" });
+    }
+
+    res.status(200).json(updatedFeedback);
+  } catch (error) {
+    console.error("Error adding reply:", error);
+    res.status(500).json({ error: "Failed to add reply" });
+  }
+});
+
 
 
 // Add user to deletedusers
