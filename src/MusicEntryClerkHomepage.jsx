@@ -514,114 +514,10 @@ export default function MusicEntryClerkHomepage() {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 3,
+              gridTemplateColumns: "repeat(4, 1fr)", // Ensures 4 cards per row
+              gap: 3, // Controls spacing between the cards
             }}
           >
-
-{paginatedScores.length > 0 ? (
-  paginatedScores.map((score) => (
-    <Card
-      key={score._id}
-      sx={{
-        width: 210,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        boxShadow: 'none',
-        cursor: 'pointer',
-      }}
-      onClick={() => handleCardClick(score._id)}
-    >
-      <CardMedia
-  component="img"
-  height={280}
-  image={score.coverImageUrl || "placeholder-image-url"} // Fallback to placeholder if empty
-  alt={score.title || "No Title Available"} // Fallback for alt text
-  sx={{
-    border: "2px solid #000",
-    borderRadius: 10,
-    width: 200,
-    display: score.coverImageUrl ? "block" : "none", // Hide if no image
-  }}
-/>
-{!score.coverImageUrl && (
-  <Box
-    sx={{
-      height: 280,
-      width: 200,
-      border: "2px solid #000",
-      borderRadius: 10,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: "#f5f5f5", // Light background for empty UI
-    }}
-  >
-    <Typography
-      sx={{
-        fontFamily: "Montserrat",
-        color: "#000",
-        textAlign: "center",
-      }}
-    >
-      No Cover Image Available
-    </Typography>
-  </Box>
-)}
-
-      <CardContent
-        sx={{
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: 'Montserrat',
-          width: '100%',
-          textAlign: 'center',
-        }}
-      >
-        <Typography
-          variant="h6"
-          noWrap
-          sx={{
-            mb: 1,
-            fontFamily: 'Montserrat',
-            textOverflow: 'ellipsis',
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            width: '100%',
-          }}
-        >
-          {score.title}
-        </Typography>
-        <Typography
-          variant="body2"
-          color="textSecondary"
-          noWrap
-          sx={{
-            fontFamily: 'Montserrat',
-            textOverflow: 'ellipsis',
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            width: '100%',
-          }}
-        >
-          {score.artist}
-        </Typography>
-      </CardContent>
-    </Card>
-  ))
-) : (
-  searchQuery ? null : (
-    <Typography variant="body2" sx={{ fontFamily: 'Montserrat' }}>
-      No scores found
-    </Typography>
-  )
-)}
-
-</Box>
             {paginatedScores.length > 0 ? (
               paginatedScores.map((score) => (
                 <Card
@@ -639,14 +535,40 @@ export default function MusicEntryClerkHomepage() {
                   <CardMedia
                     component="img"
                     height={280}
-                    image={score.coverImageUrl}
-                    alt={score.title}
+                    image={score.coverImageUrl || "placeholder-image-url"} // Fallback to placeholder if empty
+                    alt={score.title || "No Title Available"} // Fallback for alt text
                     sx={{
                       border: "2px solid #000",
                       borderRadius: 10,
                       width: 200,
+                      display: score.coverImageUrl ? "block" : "none", // Hide if no image
                     }}
                   />
+                  {!score.coverImageUrl && (
+                    <Box
+                      sx={{
+                        height: 280,
+                        width: 200,
+                        border: "2px solid #000",
+                        borderRadius: 10,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: "#f5f5f5", // Light background for empty UI
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontFamily: "Montserrat",
+                          color: "#000",
+                          textAlign: "center",
+                        }}
+                      >
+                        No Cover Image Available
+                      </Typography>
+                    </Box>
+                  )}
+
                   <CardContent
                     sx={{
                       flexGrow: 1,
@@ -690,41 +612,115 @@ export default function MusicEntryClerkHomepage() {
                   </CardContent>
                 </Card>
               ))
-            ) : (
+            ) : searchQuery ? null : (
               <Typography variant="body2" sx={{ fontFamily: "Montserrat" }}>
                 No scores found
               </Typography>
             )}
           </Box>
-
-          {/* Pagination component */}
-          {paginatedScores.length > 0 && (
-            <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
-              <Pagination
-                count={pageCount}
-                page={page}
-                onChange={handlePageChange}
-                color="primary"
+          {/* {paginatedScores.length > 0 ? (
+            paginatedScores.map((score) => (
+              <Card
+                key={score._id}
                 sx={{
-                  "& .MuiPaginationItem-root": {
-                    borderRadius: 2,
-                    fontFamily: "Montserrat",
-                    backgroundColor: "primary",
-                    color: "#000",
-                    "&.Mui-selected": {
-                      backgroundColor: "#8BD3E6",
-                      color: "#fff",
-                    },
-                    "&:hover": {
-                      backgroundColor: "#FFEE8C",
-                    },
-                  },
+                  width: 210,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  boxShadow: "none",
+                  cursor: "pointer",
                 }}
-              />
-            </Box>
-          )}
+                onClick={() => handleCardClick(score._id)}
+              >
+                <CardMedia
+                  component="img"
+                  height={280}
+                  image={score.coverImageUrl}
+                  alt={score.title}
+                  sx={{
+                    border: "2px solid #000",
+                    borderRadius: 10,
+                    width: 200,
+                  }}
+                />
+                <CardContent
+                  sx={{
+                    flexGrow: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontFamily: "Montserrat",
+                    width: "100%",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    noWrap
+                    sx={{
+                      mb: 1,
+                      fontFamily: "Montserrat",
+                      textOverflow: "ellipsis",
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                      width: "100%",
+                    }}
+                  >
+                    {score.title}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    noWrap
+                    sx={{
+                      fontFamily: "Montserrat",
+                      textOverflow: "ellipsis",
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                      width: "100%",
+                    }}
+                  >
+                    {score.artist}
+                  </Typography>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Typography variant="body2" sx={{ fontFamily: "Montserrat" }}>
+              No scores found
+            </Typography>
+          )} */}
+          {paginatedScores.length > 0 && (
+          <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+            <Pagination
+              count={pageCount}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+              sx={{
+                "& .MuiPaginationItem-root": {
+                  borderRadius: 2,
+                  fontFamily: "Montserrat",
+                  backgroundColor: "primary",
+                  color: "#000",
+                  "&.Mui-selected": {
+                    backgroundColor: "#8BD3E6",
+                    color: "#fff",
+                  },
+                  "&:hover": {
+                    backgroundColor: "#FFEE8C",
+                  },
+                },
+              }}
+            />
+          </Box>
+        )}
         </Box>
-      
+
+        {/* Pagination component */}
+        
+      </Box>
     </>
   );
 }
