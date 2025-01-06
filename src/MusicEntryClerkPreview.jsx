@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Button, Avatar } from "@mui/material";
+import { Box, Typography, Button, Avatar, Pagination, Paper } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
 import ABCJS from "abcjs";
 import axios from "axios";
 import { Divider } from "@mui/material";
-
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -22,12 +21,12 @@ const buttonStyles = {
   fontWeight: "bold",
   color: "#FFFFFF",
   backgroundColor: "#8BD3E6",
-  border: "1px solid #8BD3E6", // Explicitly define the border
+  border: "1px solid #8BD3E6",
   borderColor: "#8BD3E6",
   "&:hover": {
     backgroundColor: "#3B3183",
     color: "#FFFFFF",
-    border: "1px solid #3B3183", // Ensure border remains visible on hover
+    border: "1px solid #3B3183",
     borderColor: "#3B3183",
   },
 };
@@ -37,6 +36,8 @@ export default function MusicEntryClerkPreview() {
   const location = useLocation();
   const { fileName } = location.state || {};
   const [abcContent, setAbcContent] = useState('');
+  const [splitContent, setSplitContent] = useState([]);
+  const [page, setPage] = useState(1);
   const [user, setUser] = useState(null);
 
   // Fetch current user data
@@ -61,13 +62,12 @@ export default function MusicEntryClerkPreview() {
         try {
           const response = await fetch(`http://localhost:3001/abc-file/${fileName}`);
           if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error("Network response was not ok");
           }
           const data = await response.json();
-          console.log("Fetched ABC Content:", data.content);
           setAbcContent(data.content);
         } catch (error) {
-          console.error('Error fetching ABC file content:', error);
+          console.error("Error fetching ABC file content:", error);
         }
       };
 
@@ -75,13 +75,33 @@ export default function MusicEntryClerkPreview() {
     }
   }, [fileName]);
 
-  // Render ABC content
+  // Split ABC content into pages
   useEffect(() => {
     if (abcContent) {
-      console.log("Rendering ABC Content:", abcContent);
-      ABCJS.renderAbc("abc-render", abcContent);
+      const lines = abcContent.split("\n");
+      const maxLinesPerPage = 20; // Adjust this value as needed
+      const pages = [];
+      for (let i = 0; i < lines.length; i += maxLinesPerPage) {
+        pages.push(lines.slice(i, i + maxLinesPerPage).join("\n"));
+      }
+      setSplitContent(pages);
     }
   }, [abcContent]);
+
+  // Render ABC content for the current page
+  useEffect(() => {
+    if (splitContent.length > 0) {
+      const currentPageContent = splitContent[page - 1] || "";
+      if (currentPageContent.trim() !== "") {
+        ABCJS.renderAbc("abc-render", currentPageContent);
+      }
+    }
+  }, [splitContent, page]);
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handleEdit = () => {
     navigate("/clerk-edit", { state: { fileName } });
@@ -94,89 +114,97 @@ export default function MusicEntryClerkPreview() {
   return (
     <>
       <GlobalStyle />
-<Box sx={{ display: "flex", minHeight: "100vh" }}>
-  <Box
-    sx={{
-      width: 225,
-      bgcolor: "#3B3183",
-      flexShrink: 0, // Prevent shrinking
-      overflowY: "auto", // Add scroll if content overflows
-    }}
-  >
-    <ClerkSidebar active="upload" /> {/* Sidebar with fixed width and scroll */}
-  </Box>
-  <Box sx={{ flexGrow: 1, p: 3, pl: 5, display: "flex", flexDirection: "column" }}>
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        mb: 3,
-      }}
-    >
-      <Typography variant="h4" gutterBottom sx={{ fontFamily: 'Montserrat', fontWeight: 'bold', mt: 4, ml:1 }}>
-        Preview Music Scores
-      </Typography>
-      <Box sx={{ display: "flex", alignItems: "center" }}>
-        <Typography variant="body1" sx={{ mr: 2, fontFamily: "Montserrat" }}>
-          {user ? user.username : 'Loading...'}
-        </Typography>
-        <Avatar>{user ? user.username[0] : 'U'}</Avatar>
-      </Box>
-    </Box>
-    <Divider sx={{ my: 2 }} />  {/* This is the line for the divider */}
-    <Box
+      <Box sx={{ display: "flex", minHeight: "100vh" }}>
+        <Box
+          sx={{
+            width: 225,
+            bgcolor: "#3B3183",
+            flexShrink: 0,
+            overflowY: "auto",
+          }}
+        >
+          <ClerkSidebar active="upload" />
+        </Box>
+        <Box sx={{ flexGrow: 1, p: 3, pl: 5, display: "flex", flexDirection: "column" }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+            <Typography
+              variant="h4"
+              gutterBottom
+              sx={{ fontFamily: "Montserrat", fontWeight: "bold", mt: 4, ml: 1 }}
+            >
+              Preview Music Scores
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Typography variant="body1" sx={{ mr: 2, fontFamily: "Montserrat" }}>
+                {user ? user.username : "Loading..."}
+              </Typography>
+              <Avatar>{user ? user.username[0] : "U"}</Avatar>
+            </Box>
+          </Box>
+          <Divider sx={{ my: 2 }} />
+          {splitContent[page - 1] && splitContent[page - 1].trim() !== "" ? (
+            <Paper
+              elevation={3}
+              sx={{
+                flex: 1,
+                p: 2,
+                borderRadius: 4,
+                bgcolor: "#ffffff",
+                textAlign: "center",
+                maxWidth: "800px",
+                margin: "0 auto",
+                minHeight: "300px",
+                mb: 3,
+              }}
+            >
+              <div id="abc-render"></div>
+            </Paper>
+          ) : (
+            <Typography variant="body1" sx={{ textAlign: "center", mt: 3, fontFamily: "Montserrat" }}>
+              No content on this page.
+            </Typography>
+          )}
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
 
-
+          <Pagination
+            count={splitContent.length}
+            page={page}
+            onChange={handlePageChange}
+            color="primary"
             sx={{
-              mb: 3,
-              textAlign: "center",
-              p: 3,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              bgcolor: "#f8f8f8",
-              borderRadius: 8,
+              "& .MuiPaginationItem-root": {
+                borderRadius: 2,
+                fontFamily: "Montserrat",
+                backgroundColor: "primary",
+                color: "#000",
+                "&.Mui-selected": {
+                  backgroundColor: "#8BD3E6",
+                  color: "#fff",
+                },
+                "&:hover": {
+                  backgroundColor: "#FFEE8C",
+                },
+              },
             }}
-          >
-            <Typography variant="h6" sx={{ mb: 2, fontFamily: "Montserrat", color: "red", fontWeight: "bold" }}>
-              ATTENTION!
-            </Typography>
-            <Typography variant="body1" sx={{ fontFamily: "Montserrat", mb: 3 }}>
-              Please <strong>double-check</strong> the music notation on the physical music score sheet against the scanned music score sheet preview.
-            </Typography>
+          />
           </Box>
-          <Box sx={{ flexGrow: 1, textAlign: "center", p: 3 }}>
-            <div id="abc-render"></div>
-          </Box>
-          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
             <Button
               variant="outlined"
               size="large"
-              sx={{
-                flexGrow: 1,
-                mx: 1,
-                ...buttonStyles, // Apply consistent styles
-              }}
+              sx={{ flexGrow: 1, mx: 1, ...buttonStyles }}
               onClick={handleEdit}
             >
               Edit
             </Button>
             <Button
-  variant="outlined"
-  size="large"
-  sx={{
-    flexGrow: 1,
-    mx: 1,
-    ...buttonStyles, // Apply consistent styles
-  }}
-  onClick={handleProceed}
->
-  Proceed
-</Button>
-
-          </Box>
-          <Box sx={{ flexGrow: 1, p: 3 }}>
+              variant="outlined"
+              size="large"
+              sx={{ flexGrow: 1, mx: 1, ...buttonStyles }}
+              onClick={handleProceed}
+            >
+              Proceed
+            </Button>
           </Box>
         </Box>
       </Box>

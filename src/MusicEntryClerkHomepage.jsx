@@ -348,16 +348,42 @@ export default function MusicEntryClerkHomepage() {
       onClick={() => handleCardClick(score._id)}
     >
       <CardMedia
-        component="img"
-        height={280}
-        image={score.coverImageUrl}
-        alt={score.title}
-        sx={{
-          border: "2px solid #000",
-          borderRadius: 10,
-          width: 200,
-        }}
-      />
+  component="img"
+  height={280}
+  image={score.coverImageUrl || "placeholder-image-url"} // Fallback to placeholder if empty
+  alt={score.title || "No Title Available"} // Fallback for alt text
+  sx={{
+    border: "2px solid #000",
+    borderRadius: 10,
+    width: 200,
+    display: score.coverImageUrl ? "block" : "none", // Hide if no image
+  }}
+/>
+{!score.coverImageUrl && (
+  <Box
+    sx={{
+      height: 280,
+      width: 200,
+      border: "2px solid #000",
+      borderRadius: 10,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#f5f5f5", // Light background for empty UI
+    }}
+  >
+    <Typography
+      sx={{
+        fontFamily: "Montserrat",
+        color: "#000",
+        textAlign: "center",
+      }}
+    >
+      No Cover Image Available
+    </Typography>
+  </Box>
+)}
+
       <CardContent
         sx={{
           flexGrow: 1,

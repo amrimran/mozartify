@@ -64,7 +64,6 @@ app.post('/upload', upload.single('file'), (req, res) => {
   const inputFilePath = path.join(__dirname, 'uploads', req.file.filename);
   const outputDir = path.join(__dirname, 'uploads', `${path.parse(req.file.filename).name}`);
   const mxlFilePath = path.join(outputDir, `${path.parse(req.file.filename).name}.mxl`);
-  const xmlFilePath = path.join(outputDir, `${path.parse(req.file.filename).name}.xml`);
   const abcFilePath = path.join(outputDir, `${path.parse(req.file.filename).name}.abc`);
 
   fs.mkdir(outputDir, { recursive: true }, (err) => {
@@ -82,16 +81,8 @@ app.post('/upload', upload.single('file'), (req, res) => {
         return res.status(500).json({ message: 'Error processing file with Audiveris', error: error.message });
       }
 
-      const musescorePath = process.env.MUSESCORE_PATH || "C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe";
-      const musescoreCommand = `"${musescorePath}" "${mxlFilePath}" -o "${xmlFilePath}"`;
-
-      exec(musescoreCommand, (musescoreError) => {
-        if (musescoreError) {
-          return res.status(500).json({ message: 'Error converting .mxl to .xml with MuseScore', error: musescoreError.message });
-        }
-
         const xml2abcPath = path.resolve(__dirname, 'node_modules/.bin/xml2abc');
-        const xml2abcCommand = `"${xml2abcPath}" -o ${outputDir} ${xmlFilePath}`;
+        const xml2abcCommand = `"${xml2abcPath}" -o ${outputDir} ${mxlFilePath}`;
 
         exec(xml2abcCommand, (xml2abcError) => {
           if (xml2abcError) {
@@ -113,7 +104,6 @@ app.post('/upload', upload.single('file'), (req, res) => {
               res.json({
                 filePath: `/uploads/${req.file.filename}`,
                 mxlFilePath: `/uploads/${path.parse(req.file.filename).name}/${path.parse(req.file.filename).name}.mxl`,
-                xmlFilePath: `/uploads/${path.parse(req.file.filename).name}/${path.parse(req.file.filename).name}.xml`,
                 abcFilePath: `/uploads/${path.parse(req.file.filename).name}/${path.parse(req.file.filename).name}.abc`,
                 message: 'File uploaded and processed successfully'
               });
@@ -125,7 +115,6 @@ app.post('/upload', upload.single('file'), (req, res) => {
       });
     });
   });
-});
 
 // Endpoint to handle emotion prediction request based on Firebase URL
 app.post('/predictEmotion', async (req, res) => {

@@ -13,7 +13,12 @@ import {
   CircularProgress,
   Backdrop,
   Skeleton,
-  InputAdornment
+  InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
@@ -79,12 +84,55 @@ const buttonStyles = {
   },
 };
 
+const dialogStyles = {
+  dialogPaper: {
+    borderRadius: "16px",
+    padding: "16px",
+    fontFamily: "Montserrat",
+  },
+  title: {
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    fontSize: "20px",
+    textAlign: "center",
+  },
+  content: {
+    fontFamily: "Montserrat",
+    textAlign: "center",
+  },
+  contentText: {
+    fontFamily: "Montserrat",
+    fontSize: "16px",
+    color: "#555",
+  },
+  actions: {
+    justifyContent: "center",
+    gap: "12px",
+    marginTop: "8px",
+  },
+  button: {
+    textTransform: "none",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#3B3183",
+    border: "1px solid #3B3183",
+    borderRadius: "8px",
+    padding: "8px 24px",
+    "&:hover": {
+      bgcolor: "#ECEFF1",
+    },
+  },
+};
 
 export default function MusicEntryClerkCatalog() {
   const navigate = useNavigate();
   const location = useLocation();
   const { fileName } = location.state || {}; 
-
+  const [originalData, setOriginalData] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [dialogTitle, setDialogTitle] = useState("");
+  const [isSuccess, setIsSuccess] = useState(true);
   const [tabIndex, setTabIndex] = useState(0);
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [catalogData, setCatalogData] = useState({
@@ -204,6 +252,7 @@ export default function MusicEntryClerkCatalog() {
           if (response.data) {
             console.log("Fetched data:", response.data); // Log the fetched data
             setCatalogData(response.data); // Populate the form with existing data
+            setOriginalData(response.data); // Store original data
             setCoverImageUrl(response.data.coverImageUrl); // Set cover image URL from database
           }
         } catch (error) {
@@ -220,13 +269,31 @@ export default function MusicEntryClerkCatalog() {
     setTabIndex(newValue);
   };
 
+  // Add function to check for changes
+  const hasChanges = () => {
+    if (!originalData) return false;
+    return JSON.stringify(catalogData) !== JSON.stringify(originalData);
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setCatalogData((prevData) => ({
       ...prevData,
       [name]: value, // Ensure empty fields are sent as empty strings
     }));
-  };  
+  }; 
+  
+  // Helper function to show dialog
+  const showDialog = (title, message, success = true) => {
+    setDialogTitle(title);
+    setDialogMessage(message);
+    setIsSuccess(success);
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+  };
 
   const handleDateChange = (name, newValue) => {
     setCatalogData((prevData) => ({
@@ -241,6 +308,10 @@ export default function MusicEntryClerkCatalog() {
     }
   };
 
+  useEffect(() => {
+  }, [openDialog, dialogTitle, dialogMessage]);
+
+  // Modify handleCoverImageChange
   const handleCoverImageChange = (e) => {
     if (e.target.files[0]) {
       const file = e.target.files[0];
@@ -255,22 +326,23 @@ export default function MusicEntryClerkCatalog() {
             ...prevData,
             coverImageUrl: url,
           }));
-          alert("Cover image uploaded successfully!");
+          showDialog("Uploaded", "Cover image uploaded successfully!");
         })
         .catch((error) => {
           console.error("Error uploading cover image:", error);
-          alert("Error uploading cover image");
+          showDialog("Error", "Failed to upload cover image", false);
         });
-    } else {
-      alert("Please select a cover image to upload.");
     }
   };
 
   const handleMp3FileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) {
-      alert("Please select an MP3 file.");
-      return;
+        setDialogTitle("Error");
+        setDialogMessage("Please select an MP3 file.");
+        setIsSuccess(false);
+        setOpenDialog(true);
+        return;
     }
   
     try {
@@ -338,54 +410,70 @@ export default function MusicEntryClerkCatalog() {
         ...prevData,
         instrumentation: instrumentResponse.data.top_instruments,  // Update instrumentation field
       }));
+
+      setDialogTitle("Prediction Complete");
+setDialogMessage("File uploaded and predictions completed successfully!");
+setIsSuccess(true);
+setOpenDialog(true);
   
     } catch (error) {
       console.error("Error uploading MP3 or predicting emotion/gender/genre/instrument:", error);
-  
-      // Handle different types of errors gracefully
+
+      // Handle different types of errors with dialog
+      let errorMessage = "An unexpected error occurred.";
+      
       if (error.response) {
-        // If the error has a response from the backend (e.g., 500, 422)
-        alert(`Backend error: ${error.response.data.detail || error.response.statusText}`);
+          errorMessage = `Backend error: ${error.response.data.detail || error.response.statusText}`;
       } else if (error.request) {
-        // If the request was made but no response was received
-        alert("Error communicating with the backend. Please try again later.");
+          errorMessage = "Error communicating with the backend. Please try again later.";
       } else {
-        // Other errors
-        alert(`An error occurred: ${error.message}`);
+          errorMessage = `An error occurred: ${error.message}`;
       }
-    } finally {
-      // Set loading state to false (hide loading spinner)
+
+      setDialogTitle("Error");
+      setDialogMessage(errorMessage);
+      setIsSuccess(false);
+      setOpenDialog(true);
+  } finally {
       setLoading(false);
-    }
+  }
 };
 
 
   
   
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    try {
-      const response = await fetch("http://localhost:3001/catalog", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(catalogData),
-      });
+const handleSubmit = async (e) => {
+  e.preventDefault();
   
-      if (!response.ok) {
-        throw new Error("Failed to save data");
-      }
-  
-      alert("Data saved successfully");
-      navigate("/clerk-homepage");
-    } catch (error) {
-      console.error("Error saving data:", error);
-      alert("Error saving data");
+  try {
+    const response = await fetch("http://localhost:3001/catalog", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(catalogData),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to save data");
     }
-  };
+
+    setOriginalData(catalogData); // Update original data after successful save
+    showDialog("Success", "Data saved successfully");
+    setDialogTitle("Success");
+    setDialogMessage("Data saved successfully");
+    setIsSuccess(true);
+    setOpenDialog(true); // Open the dialog explicitly
+  } catch (error) {
+    console.error("Error saving data:", error);
+    setDialogTitle("Error");
+    setDialogMessage("Failed to save data");
+    setIsSuccess(false);
+    setOpenDialog(true);
+  }
+};
+
   
   return (
 
@@ -1713,6 +1801,39 @@ export default function MusicEntryClerkCatalog() {
     </Grid>
   )
 }
+<Dialog
+  open={openDialog}
+  onClose={handleCloseDialog}
+  PaperProps={{ sx: dialogStyles.dialogPaper }}
+>
+  <DialogTitle sx={dialogStyles.title}>
+    {dialogTitle}
+  </DialogTitle>
+  <DialogContent sx={dialogStyles.content}>
+    <DialogContentText sx={dialogStyles.contentText}>
+      {dialogMessage}
+    </DialogContentText>
+  </DialogContent>
+  <DialogActions sx={dialogStyles.actions}>
+  {dialogTitle === "Prediction Complete" || dialogTitle === "Error" || dialogTitle === "Uploaded" ? (
+      // For prediction success - only show Close button
+      <Button 
+        onClick={handleCloseDialog}
+        sx={dialogStyles.button}
+      >
+        Close
+      </Button>
+    ) : (
+      // For save success - only show Proceed to Homepage button
+      <Button 
+        onClick={() => navigate("/clerk-homepage")}
+        sx={dialogStyles.button}
+      >
+        Proceed to Homepage
+      </Button>
+    )}
+  </DialogActions>
+</Dialog>
 
 
             
@@ -1727,8 +1848,15 @@ export default function MusicEntryClerkCatalog() {
             variant="outlined"
             size="large"
             type="submit"
-            sx={buttonStyles}
-          >
+            disabled={!hasChanges()} // Add this
+            sx={{
+              ...buttonStyles,
+              "&:disabled": {
+                backgroundColor: "#E0E0E0",
+                borderColor: "#E0E0E0",
+                color: "#9E9E9E",
+              },
+            }}          >
             Save Metadata
           </Button>
           {tabIndex < 10 && (
@@ -1741,6 +1869,7 @@ export default function MusicEntryClerkCatalog() {
               Next
             </Button>
           )}
+          
         </Box>
       </Box>
     </Box>

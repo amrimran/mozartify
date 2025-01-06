@@ -8,11 +8,15 @@ import {
   TextField,
   Button,
   Grid,
-  Divider
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions
 } from "@mui/material";
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import EditIcon from "@mui/icons-material/Edit";
-
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
@@ -25,7 +29,57 @@ export default function ClerkProfile() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
+  const [isFormChanged, setIsFormChanged] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogConfig, setDialogConfig] = useState({
+    title: "",
+    content: "",
+    confirmAction: () => {},
+    confirmText: "",
+    cancelText: "Cancel"
+  });
+  
   const navigate = useNavigate();
+
+  const dialogStyles = {
+    dialogPaper: {
+      borderRadius: "16px",
+      padding: "16px",
+      fontFamily: "Montserrat",
+    },
+    title: {
+      fontFamily: "Montserrat",
+      fontWeight: "bold",
+      fontSize: "20px",
+      textAlign: "center",
+    },
+    content: {
+      fontFamily: "Montserrat",
+      textAlign: "center",
+    },
+    contentText: {
+      fontFamily: "Montserrat",
+      fontSize: "16px",
+      color: "#555",
+    },
+    actions: {
+      justifyContent: "center",
+      gap: "12px",
+      marginTop: "8px",
+    },
+    button: {
+      textTransform: "none",
+      fontFamily: "Montserrat",
+      fontWeight: "bold",
+      color: "#3B3183",
+      border: "1px solid #3B3183",
+      borderRadius: "8px",
+      padding: "8px 24px",
+      "&:hover": {
+        bgcolor: "#ECEFF1",
+      },
+    },
+  };
 
   // Button styles
   const buttonStyles = {
@@ -34,15 +88,21 @@ export default function ClerkProfile() {
     fontWeight: "bold",
     color: "#FFFFFF",
     backgroundColor: "#8BD3E6",
-    border: "1px solid #8BD3E6", // Explicitly define the border
+    border: "1px solid #8BD3E6",
     borderColor: "#8BD3E6",
     "&:hover": {
       backgroundColor: "#3B3183",
       color: "#FFFFFF",
-      border: "1px solid #3B3183", // Ensure border remains visible on hover
+      border: "1px solid #3B3183",
       borderColor: "#3B3183",
     },
+    "&:disabled": {
+      backgroundColor: "#E0E0E0",
+      borderColor: "#E0E0E0",
+      color: "#9E9E9E",
+    },
   };
+
   // Create a custom theme
   const theme = createTheme({
     typography: {
@@ -87,37 +147,85 @@ export default function ClerkProfile() {
     fetchCurrentUser();
   }, [navigate]);
 
+  useEffect(() => {
+    if (currentUser) {
+      setIsFormChanged(
+        username !== currentUser.username ||
+        password !== "" ||
+        confirmPassword !== ""
+      );
+    }
+  }, [username, password, confirmPassword, currentUser]);
+
+  const showDialog = (config) => {
+    setDialogConfig(config);
+    setDialogOpen(true);
+  };
+
   const handleSaveChanges = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      alert("Passwords do not match!");
+      showDialog({
+        title: "Password Mismatch",
+        content: "Passwords do not match. Please try again.",
+        confirmText: "OK",
+        confirmAction: () => setDialogOpen(false),
+      });
       return;
     }
+
     try {
       await axios.put("http://localhost:3000/user/update", {
         username,
         password,
       });
-      alert("Profile updated successfully!");
-      navigate("/clerk-homepage");
+      showDialog({
+        title: "Success",
+        content: "Profile updated successfully!",
+        confirmText: "OK",
+        confirmAction: () => {
+          setDialogOpen(false);
+          navigate("/clerk-homepage");
+        },
+      });
     } catch (error) {
-      console.error("Error updating profile:", error);
-      alert("Failed to update profile.");
+      showDialog({
+        title: "Error",
+        content: "Failed to update profile. Please try again.",
+        confirmText: "OK",
+        confirmAction: () => setDialogOpen(false),
+      });
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (!window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-      return;
-    }
-    try {
-      await axios.delete("http://localhost:3000/user/delete");
-      alert("Account deleted successfully.");
-      navigate("/login");
-    } catch (error) {
-      console.error("Error deleting account:", error);
-      alert("Failed to delete account.");
-    }
+  const handleDeleteAccount = () => {
+    showDialog({
+      title: "Delete Account",
+      content: "Are you sure you want to delete your account? This action cannot be undone.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      confirmAction: async () => {
+        try {
+          await axios.delete("http://localhost:3000/user/delete");
+          showDialog({
+            title: "Success",
+            content: "Account deleted successfully.",
+            confirmText: "OK",
+            confirmAction: () => {
+              setDialogOpen(false);
+              navigate("/login");
+            },
+          });
+        } catch (error) {
+          showDialog({
+            title: "Error",
+            content: "Failed to delete account. Please try again.",
+            confirmText: "OK",
+            confirmAction: () => setDialogOpen(false),
+          });
+        }
+      },
+    });
   };
 
   const GlobalStyle = createGlobalStyle`
@@ -125,17 +233,16 @@ export default function ClerkProfile() {
       margin: 0;
       padding: 0;
       font-family: 'Montserrat', sans-serif;
-      background-color: #FFFFFF;  /* Set background to white */
+      background-color: #FFFFFF;
     }
   `;
 
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyle />
-      <Box sx={{ display: "flex", height: "100vh", backgroundColor: "#FFFFFF" }}> {/* Set the root Box background to white */}
+      <Box sx={{ display: "flex", height: "100vh", backgroundColor: "#FFFFFF" }}>
         <ClerkSidebar />
         <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column", marginLeft: "225px", minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
-          {/* Updated Header Section with Bold User Profile */}
           <Box
             sx={{
               display: "flex",
@@ -146,7 +253,7 @@ export default function ClerkProfile() {
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="h4" sx={{ fontWeight: 700 }}>User Profile</Typography> {/* Bold the header */}
+              <Typography variant="h4" sx={{ fontWeight: 700 }}>User Profile</Typography>
             </Box>
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography variant="body1" sx={{ mr: 2 }}>
@@ -158,16 +265,15 @@ export default function ClerkProfile() {
           <Divider sx={{ ml: 2 }} />
 
           <Container maxWidth="sm">
-            {/* Removed the card around the profile details */}
             <Box 
               display="flex" 
               flexDirection="column" 
               alignItems="center"
               sx={{ 
-                backgroundColor: "#FFFFFF",  /* Set the background of the profile box to white */
+                backgroundColor: "#FFFFFF",
                 borderRadius: 2, 
                 p: 4, 
-                boxShadow: 'none'  /* Remove the box shadow */
+                boxShadow: 'none'
               }}
             >
               <Box position="relative" sx={{ mb: 3 }}>
@@ -178,7 +284,7 @@ export default function ClerkProfile() {
                     width: 150, 
                     height: 150, 
                     border: '4px solid #3B3183',
-                    boxShadow: 'none'  /* Removed box shadow */
+                    boxShadow: 'none'
                   }}
                 />
                 <IconButton
@@ -269,6 +375,7 @@ export default function ClerkProfile() {
                   type="submit"
                   variant="outlined"
                   fullWidth
+                  disabled={!isFormChanged}
                   sx={{
                     ...buttonStyles,
                     mt: 2,
@@ -303,6 +410,43 @@ export default function ClerkProfile() {
           </Container>
         </Box>
       </Box>
+
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        PaperProps={{ sx: dialogStyles.dialogPaper }}
+      >
+        <DialogTitle sx={dialogStyles.title}>
+          {dialogConfig.title}
+        </DialogTitle>
+        <DialogContent sx={dialogStyles.content}>
+          <DialogContentText sx={dialogStyles.contentText}>
+            {dialogConfig.content}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={dialogStyles.actions}>
+          {dialogConfig.cancelText && (
+            <Button
+              onClick={() => setDialogOpen(false)}
+              sx={dialogStyles.button}
+            >
+              {dialogConfig.cancelText}
+            </Button>
+          )}
+          <Button
+            onClick={dialogConfig.confirmAction}
+            sx={{
+              ...dialogStyles.button,
+              ...(dialogConfig.confirmText === "Delete" && {
+                color: "#D32F2F",
+                border: "1px solid #D32F2F",
+              }),
+            }}
+          >
+            {dialogConfig.confirmText}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </ThemeProvider>
   );
 }
