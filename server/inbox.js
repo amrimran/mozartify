@@ -85,7 +85,7 @@ app.get("/api/feedback", async (req, res) => {
   }
 });
 
-app.delete("/api/feedback/:id", async (req, res) => {
+app.delete("/api/feedback/delete/:id", async (req, res) => {
   try {
     const { id } = req.params;
     await Feedback.findByIdAndDelete(id);

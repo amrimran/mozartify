@@ -60,7 +60,9 @@ export default function MusicEntryClerkPreview() {
     if (fileName) {
       const fetchABCFileContent = async () => {
         try {
-          const response = await fetch(`http://localhost:3001/abc-file/${fileName}`);
+          const response = await fetch(
+            `http://localhost:3001/abc-file/${fileName}`
+          );
           if (!response.ok) {
             throw new Error("Network response was not ok");
           }
@@ -135,42 +137,23 @@ export default function MusicEntryClerkPreview() {
               Preview Music Scores
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="body1" sx={{ mr: 2, fontFamily: "Montserrat" }}>
-                {user ? user.username : "Loading..."}
+              <Typography
+                variant="body1"
+                sx={{ mr: 2, fontFamily: "Montserrat" }}
+              >
+                {user ? user?.username : "Loading..."}
               </Typography>
-              <Avatar>{user ? user.username[0] : "U"}</Avatar>
+              <Avatar
+                alt={user?.username}
+                src={user && user?.profile_picture ? user?.profile_picture : null}
+              >
+                {(!user || !user?.profile_picture) &&
+                  user?.username.charAt(0).toUpperCase()}
+              </Avatar>
             </Box>
           </Box>
-          <Divider sx={{ my: 2 }} />
-          {splitContent[page - 1] && splitContent[page - 1].trim() !== "" ? (
-            <Paper
-              elevation={3}
-              sx={{
-                flex: 1,
-                p: 2,
-                borderRadius: 4,
-                bgcolor: "#ffffff",
-                textAlign: "center",
-                maxWidth: "800px",
-                margin: "0 auto",
-                minHeight: "300px",
-                mb: 3,
-              }}
-            >
-              <div id="abc-render"></div>
-            </Paper>
-          ) : (
-            <Typography variant="body1" sx={{ textAlign: "center", mt: 3, fontFamily: "Montserrat" }}>
-              No content on this page.
-            </Typography>
-          )}
-          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-
-          <Pagination
-            count={splitContent.length}
-            page={page}
-            onChange={handlePageChange}
-            color="primary"
+          <Divider sx={{ my: 2 }} /> {/* This is the line for the divider */}
+          <Box
             sx={{
               "& .MuiPaginationItem-root": {
                 borderRadius: 2,
@@ -186,7 +169,26 @@ export default function MusicEntryClerkPreview() {
                 },
               },
             }}
-          />
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 2,
+                fontFamily: "Montserrat",
+                color: "red",
+                fontWeight: "bold",
+              }}
+            >
+              ATTENTION!
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{ fontFamily: "Montserrat", mb: 3 }}
+            >
+              Please <strong>double-check</strong> the music notation on the
+              physical music score sheet against the scanned music score sheet
+              preview.
+            </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
             <Button
@@ -206,6 +208,7 @@ export default function MusicEntryClerkPreview() {
               Proceed
             </Button>
           </Box>
+          <Box sx={{ flexGrow: 1, p: 3 }}></Box>
         </Box>
       </Box>
     </>

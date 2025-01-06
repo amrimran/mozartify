@@ -25,14 +25,10 @@ import {
   Card,
   CardContent,
   CardMedia,
+  Grid,
 } from "@mui/material";
 import Favorite from "@mui/icons-material/Favorite";
-import {
-  PlayArrow,
-  FilterAlt,
-  ArrowBack,
-  ArrowForward,
-} from "@mui/icons-material";
+import { PlayArrow, FilterAlt } from "@mui/icons-material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { Link, useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
@@ -293,50 +289,6 @@ export default function CustomerHomepage() {
     }
   `;
 
-  const scrollLeft = () => {
-    const container = scrollContainerRef.current;
-    if (container.scrollLeft === 0) {
-      container.scrollLeft = container.scrollWidth / 3;
-    }
-    container.scrollBy({
-      left: -300,
-      behavior: "smooth",
-    });
-  };
-
-  const scrollRight = () => {
-    const container = scrollContainerRef.current;
-    if (container.scrollLeft + container.clientWidth >= container.scrollWidth) {
-      container.scrollLeft = container.scrollWidth / 3 - container.clientWidth; // Move to the start of the second set of items
-    }
-    container.scrollBy({
-      left: 300,
-      behavior: "smooth",
-    });
-  };
-
-  const scrollLeft2 = () => {
-    const container = scrollContainerRef2.current;
-    if (container.scrollLeft === 0) {
-      container.scrollLeft = container.scrollWidth / 3; // Move to the end of the second set of items
-    }
-    container.scrollBy({
-      left: -300,
-      behavior: "smooth",
-    });
-  };
-
-  const scrollRight2 = () => {
-    const container = scrollContainerRef2.current;
-    if (container.scrollLeft + container.clientWidth >= container.scrollWidth) {
-      container.scrollLeft = container.scrollWidth / 3 - container.clientWidth; // Move to the start of the second set of items
-    }
-    container.scrollBy({
-      left: 300,
-      behavior: "smooth",
-    });
-  };
-
   return (
     <>
       <GlobalStyle />
@@ -360,7 +312,7 @@ export default function CustomerHomepage() {
               justifyContent: "space-between",
               alignItems: "center",
               mb: 3,
-              mt:3
+              mt: 3,
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -384,7 +336,7 @@ export default function CustomerHomepage() {
                 />
               </Paper>
               <IconButton
-                sx={{ p: "10px", ml: 2}}
+                sx={{ p: "10px", ml: 2 }}
                 aria-label="filter"
                 onClick={() => setIsDrawerOpen(true)}
               >
@@ -417,11 +369,22 @@ export default function CustomerHomepage() {
                         value={genre}
                         onChange={(e) => setGenre(e.target.value)}
                       >
-                        <MenuItem value="All">All</MenuItem>
-                        <MenuItem value="Classical">Classical</MenuItem>
-                        <MenuItem value="Jazz">Jazz</MenuItem>
-                        <MenuItem value="Pop">Pop</MenuItem>
-                        <MenuItem value="Ragtime">Ragtime</MenuItem>
+                        {[
+                          "All",
+                          "Baroque",
+                          "Children's",
+                          "Children's Song",
+                          "Classical",
+                          "Disco",
+                          "Impressionist",
+                          "Pop",
+                          "Rock",
+                          "Renaissance Polyphony",
+                        ].map((item) => (
+                          <MenuItem key={item} value={item}>
+                            {item}
+                          </MenuItem>
+                        ))}
                       </Select>
                     </FormControl>
 
@@ -432,23 +395,24 @@ export default function CustomerHomepage() {
                         value={composer}
                         onChange={(e) => setComposer(e.target.value)}
                       >
-                        <MenuItem value="All">All</MenuItem>
-                        <MenuItem value="Mozart">Mozart</MenuItem>
-                        <MenuItem value="Beethoven">Beethoven</MenuItem>
-                        <MenuItem value="Gershwin">Gershwin</MenuItem>
-                        <MenuItem value="Chopin">Chopin</MenuItem>
-                        <MenuItem value="Debussy">Debussy</MenuItem>
-                        <MenuItem value="Scott Joplin">Scott Joplin</MenuItem>
-                        <MenuItem value="Erik Satie">Erik Satie</MenuItem>
-                        <MenuItem value="Vivaldi">Vivaldi</MenuItem>
-                        <MenuItem value="Pacheibel">Pacheibel</MenuItem>
-                        <MenuItem value="Ravel">Ravel</MenuItem>
-                        <MenuItem value="Liszt">Liszt</MenuItem>
-                        <MenuItem value="Rimsky-Korsakov">
-                          Rimsky-Korsakov
-                        </MenuItem>
-                        <MenuItem value="Tchaikovsky">Tchaikovsky</MenuItem>
-                        <MenuItem value="Holst">Holst</MenuItem>
+                        {[
+                          "All",
+                          "Antonio Vivaldi",
+                          "Claude Debussy",
+                          "Emil Aarestrup",
+                          "Heinrich Faber",
+                          "Johann Pachelbel",
+                          "John Lennon, Paul McCartney",
+                          "Ludwig van Beethoven",
+                          "Mark Fisher",
+                          "Joe Goodman",
+                          "Larry Shay",
+                          "Wolfgang Amadeus Mozart",
+                        ].map((composerName) => (
+                          <MenuItem key={composerName} value={composerName}>
+                            {composerName}
+                          </MenuItem>
+                        ))}
                       </Select>
                     </FormControl>
 
@@ -460,13 +424,10 @@ export default function CustomerHomepage() {
                         onChange={(e) => setEmotion(e.target.value)}
                       >
                         <MenuItem value="All">All</MenuItem>
+                        <MenuItem value="Happy">Angry</MenuItem>
                         <MenuItem value="Happy">Happy</MenuItem>
                         <MenuItem value="Relaxed">Relaxed</MenuItem>
-                        <MenuItem value="Melancholic">Melancholic</MenuItem>
-                        <MenuItem value="Peaceful">Peaceful</MenuItem>
-                        <MenuItem value="Energetic">Energetic</MenuItem>
-                        <MenuItem value="Joyful">Joyful</MenuItem>
-                        <MenuItem value="Majestic">Majestic</MenuItem>
+                        <MenuItem value="Sad">Sad</MenuItem>
                       </Select>
                     </FormControl>
 
@@ -537,13 +498,21 @@ export default function CustomerHomepage() {
               </Drawer>
             </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center"}}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
               {user ? (
                 <>
                   <Typography variant="body1" sx={{ mr: 2 }}>
                     {user.username}
                   </Typography>
-                  <Avatar>{user.username.charAt(0)}</Avatar>
+                  <Avatar
+                    alt={user.username}
+                    src={
+                      user && user.profile_picture ? user.profile_picture : null
+                    }
+                  >
+                    {(!user || !user.profile_picture) &&
+                      user.username.charAt(0).toUpperCase()}
+                  </Avatar>
                 </>
               ) : (
                 <>
@@ -709,234 +678,187 @@ export default function CustomerHomepage() {
                   flexDirection: "column",
                 }}
               >
-                <Box>
-                  <Typography variant="h5" gutterBottom sx={{ ml: 3 }}>
-                    Popular
-                  </Typography>
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      position: "relative",
-                    }}
-                  >
-                    <Box sx={{ width: "calc(100% - 60px)" }}>
+                <Grid container spacing={4}>
+                  {/* Left Box - Popular Scores */}
+                  <Grid item xs={12} sm={6}>
+                    <Typography
+                      variant="h5"
+                      gutterBottom
+                      sx={{
+                        ml: 3,
+                        position: "sticky",
+                        top: 0,
+                        backgroundColor: "#fff",
+                        zIndex: 1,
+                      }}
+                    >
+                      Popular
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        position: "relative",
+                        overflow: "hidden",
+                      }}
+                    >
                       <Box
+                        ref={scrollContainerRef}
                         sx={{
-                          position: "relative",
-                          display: "flex",
-                          alignItems: "center",
+                          display: "grid",
+                          gridTemplateColumns: "repeat(3, 1fr)", // Creates a 3x3 grid
+                          gap: "15px", // Increased the gap to 15px
+                          paddingLeft: "50px", // Padding to accommodate the left arrow button
+                          overflowX: "auto",
+                          scrollBehavior: "smooth",
+                          height: "calc(100% - 40px)", // Keep height for scores only
+                          overflowY: "auto", // Allow scrolling vertically for the scores
                         }}
                       >
-                        <IconButton
-                          onClick={scrollLeft}
-                          sx={{
-                            position: "absolute",
-                            left: 0,
-                            zIndex: 1,
-                            backgroundColor: "#fff",
-                            "&:hover": { backgroundColor: "#f0f0f0" },
-                          }}
-                        >
-                          <ArrowBack />
-                        </IconButton>
-
-                        <Box
-                          ref={scrollContainerRef}
-                          sx={{
-                            display: "flex",
-                            overflowX: "auto",
-                            scrollBehavior: "smooth",
-                            whiteSpace: "nowrap",
-                            paddingLeft: "50px", // Add padding to the left to accommodate the arrow button
-                          }}
-                        >
-                          {popularScores.map((score, index) => (
-                            <Box
-                              key={index}
-                              sx={{ flex: "0 0 auto", margin: "0 20px" }}
+                        {popularScores.map((score, index) => (
+                          <Box key={index}>
+                            <Link
+                              to={`/customer-music-score-view/${score._id}`}
+                              style={{ textDecoration: "none" }}
                             >
-                              <Link
-                                to={`/customer-music-score-view/${score._id}`}
-                                style={{ textDecoration: "none" }}
+                              <Card
+                                sx={{
+                                  width: 200,
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  justifyContent: "space-between",
+                                  border: "2px solid #000",
+                                  borderRadius: 10,
+                                }}
                               >
-                                <Card
+                                <CardMedia
+                                  component="img"
+                                  height={280}
+                                  image={score.imageUrl}
+                                  alt={score.title}
+                                />
+                                <CardContent
                                   sx={{
-                                    width: 200,
+                                    flexGrow: 1,
                                     display: "flex",
                                     flexDirection: "column",
-                                    justifyContent: "space-between",
-                                    border: "2px solid #000",
-                                    borderRadius: 10,
+                                    justifyContent: "center",
                                   }}
                                 >
-                                  <CardMedia
-                                    component="img"
-                                    height={280}
-                                    image={score.imageUrl}
-                                    alt={score.title}
-                                  />
-                                  <CardContent
-                                    sx={{
-                                      flexGrow: 1,
-                                      display: "flex",
-                                      flexDirection: "column",
-                                      justifyContent: "center",
-                                    }}
+                                  <Typography
+                                    variant="h6"
+                                    noWrap
+                                    sx={{ textAlign: "center", mb: 1 }}
                                   >
-                                    <Typography
-                                      variant="h6"
-                                      noWrap
-                                      sx={{ textAlign: "center", mb: 1 }}
-                                    >
-                                      {score.title}
-                                    </Typography>
-                                    <Typography
-                                      variant="body2"
-                                      color="textSecondary"
-                                      sx={{ textAlign: "center" }}
-                                    >
-                                      {score.artist}
-                                    </Typography>
-                                  </CardContent>
-                                </Card>
-                              </Link>
-                            </Box>
-                          ))}
-                        </Box>
-
-                        <IconButton
-                          onClick={scrollRight}
-                          sx={{
-                            position: "absolute",
-                            right: 0,
-                            zIndex: 1,
-                            backgroundColor: "#fff",
-                            "&:hover": { backgroundColor: "#f0f0f0" },
-                          }}
-                        >
-                          <ArrowForward />
-                        </IconButton>
+                                    {score.title}
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    color="textSecondary"
+                                    sx={{ textAlign: "center" }}
+                                  >
+                                    {score.artist}
+                                  </Typography>
+                                </CardContent>
+                              </Card>
+                            </Link>
+                          </Box>
+                        ))}
                       </Box>
                     </Box>
-                  </Box>
-                </Box>
+                  </Grid>
 
-                <Box sx={{ mt: 4 }}>
-                  <Typography variant="h5" gutterBottom sx={{ ml: 3 }}>
-                    For You
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      position: "relative",
-                    }}
-                  >
-                    <Box sx={{ width: "calc(100% - 60px)" }}>
+                  {/* Right Box - Recommended Scores */}
+                  <Grid item xs={12} sm={6}>
+                    <Typography
+                      variant="h5"
+                      gutterBottom
+                      sx={{
+                        ml: 3,
+                        position: "sticky",
+                        top: 0,
+                        backgroundColor: "#fff",
+                        zIndex: 1,
+                      }}
+                    >
+                      For You
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        position: "relative",
+                        overflow: "hidden",
+                      }}
+                    >
                       <Box
+                        ref={scrollContainerRef2}
                         sx={{
-                          position: "relative",
-                          display: "flex",
-                          alignItems: "center",
+                          display: "grid",
+                          gridTemplateColumns: "repeat(3, 1fr)", // Creates a 3x3 grid
+                          gap: "15px", // Increased the gap to 15px
+                          paddingLeft: "50px", // Padding to accommodate the left arrow button
+                          overflowX: "auto",
+                          scrollBehavior: "smooth",
+                          height: "calc(100% - 40px)", // Keep height for scores only
+                          overflowY: "auto", // Allow scrolling vertically for the scores
                         }}
                       >
-                        <IconButton
-                          onClick={scrollLeft2}
-                          sx={{
-                            position: "absolute",
-                            left: 0,
-                            zIndex: 1,
-                            backgroundColor: "#fff",
-                            "&:hover": { backgroundColor: "#f0f0f0" },
-                          }}
-                        >
-                          <ArrowBack />
-                        </IconButton>
-
-                        <Box
-                          ref={scrollContainerRef2}
-                          sx={{
-                            display: "flex",
-                            overflowX: "auto",
-                            scrollBehavior: "smooth",
-                            whiteSpace: "nowrap",
-                            paddingLeft: "50px", // Add padding to the left to accommodate the arrow button
-                          }}
-                        >
-                          {recommendedScores.map((score, index) => (
-                            <Box
-                              key={index}
-                              sx={{ flex: "0 0 auto", margin: "0 20px" }}
+                        {recommendedScores.map((score, index) => (
+                          <Box key={index}>
+                            <Link
+                              to={`/customer-music-score-view/${score._id}`}
+                              style={{ textDecoration: "none" }}
                             >
-                              <Link
-                                to={`/customer-music-score-view/${score._id}`}
-                                style={{ textDecoration: "none" }}
+                              <Card
+                                sx={{
+                                  width: 200,
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  justifyContent: "space-between",
+                                  border: "2px solid #000",
+                                  borderRadius: 10,
+                                }}
                               >
-                                <Card
+                                <CardMedia
+                                  component="img"
+                                  height={280}
+                                  image={score.imageUrl}
+                                  alt={score.title}
+                                />
+                                <CardContent
                                   sx={{
-                                    width: 200,
+                                    flexGrow: 1,
                                     display: "flex",
                                     flexDirection: "column",
-                                    justifyContent: "space-between",
-                                    border: "2px solid #000",
-                                    borderRadius: 10,
+                                    justifyContent: "center",
                                   }}
                                 >
-                                  <CardMedia
-                                    component="img"
-                                    height={280}
-                                    image={score.imageUrl}
-                                    alt={score.title}
-                                  />
-                                  <CardContent
-                                    sx={{
-                                      flexGrow: 1,
-                                      display: "flex",
-                                      flexDirection: "column",
-                                      justifyContent: "center",
-                                    }}
+                                  <Typography
+                                    variant="h6"
+                                    noWrap
+                                    sx={{ textAlign: "center", mb: 1 }}
                                   >
-                                    <Typography
-                                      variant="h6"
-                                      noWrap
-                                      sx={{ textAlign: "center", mb: 1 }}
-                                    >
-                                      {score.title}
-                                    </Typography>
-                                    <Typography
-                                      variant="body2"
-                                      color="textSecondary"
-                                      sx={{ textAlign: "center" }}
-                                    >
-                                      {score.artist}
-                                    </Typography>
-                                  </CardContent>
-                                </Card>
-                              </Link>
-                            </Box>
-                          ))}
-                        </Box>
-
-                        <IconButton
-                          onClick={scrollRight2}
-                          sx={{
-                            position: "absolute",
-                            right: 0,
-                            zIndex: 1,
-                            backgroundColor: "#fff",
-                            "&:hover": { backgroundColor: "#f0f0f0" },
-                          }}
-                        >
-                          <ArrowForward />
-                        </IconButton>
+                                    {score.title}
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    color="textSecondary"
+                                    sx={{ textAlign: "center" }}
+                                  >
+                                    {score.artist}
+                                  </Typography>
+                                </CardContent>
+                              </Card>
+                            </Link>
+                          </Box>
+                        ))}
                       </Box>
                     </Box>
-                  </Box>
-                </Box>
+                  </Grid>
+                </Grid>
               </Box>
             </>
           )}

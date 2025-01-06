@@ -10,13 +10,16 @@ import {
   Grid,
   Divider,
   Dialog,
-  DialogTitle,
+  DialogActions,
   DialogContent,
+  DialogTitle,
   DialogContentText,
-  DialogActions
 } from "@mui/material";
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import EditIcon from "@mui/icons-material/Edit";
+import UploadIcon from "@mui/icons-material/Upload";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "./firebase";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
@@ -41,6 +44,7 @@ export default function ClerkProfile() {
   
   const navigate = useNavigate();
 
+  
   const dialogStyles = {
     dialogPaper: {
       borderRadius: "16px",
@@ -81,7 +85,11 @@ export default function ClerkProfile() {
     },
   };
 
-  // Button styles
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  const [profilePictureFile, setProfilePictureFile] = useState(null);
+  const [profilePictureUrl, setProfilePictureUrl] = useState(null);
+
   const buttonStyles = {
     px: 10,
     fontFamily: "Montserrat",
@@ -103,20 +111,20 @@ export default function ClerkProfile() {
     },
   };
 
-  // Create a custom theme
+
   const theme = createTheme({
     typography: {
-      fontFamily: 'Montserrat, Arial, sans-serif',
+      fontFamily: "Montserrat, Arial, sans-serif",
     },
     components: {
       MuiTextField: {
         styleOverrides: {
           root: {
-            '& label': {
-              fontFamily: 'Montserrat',
+            "& label": {
+              fontFamily: "Montserrat",
             },
-            '& input': {
-              fontFamily: 'Montserrat',
+            "& input": {
+              fontFamily: "Montserrat",
             },
           },
         },
@@ -124,8 +132,8 @@ export default function ClerkProfile() {
       MuiButton: {
         styleOverrides: {
           root: {
-            fontFamily: 'Montserrat',
-            textTransform: 'none',
+            fontFamily: "Montserrat",
+            textTransform: "none",
           },
         },
       },
@@ -162,6 +170,18 @@ export default function ClerkProfile() {
     setDialogOpen(true);
   };
 
+  const handleEditClick = () => {
+    setEditDialogOpen(true);
+  };
+
+  const handleEditDialogClose = () => {
+    setEditDialogOpen(false);
+  };
+
+  const handleSaveProfilePicture = () => {
+    setEditDialogOpen(false);
+  };
+
   const handleSaveChanges = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
@@ -174,11 +194,26 @@ export default function ClerkProfile() {
       return;
     }
 
+
     try {
+      let profile_picture_url = null;
+
+      if (profilePictureFile) {
+        const storageRef = ref(
+          storage,
+          `profile_pictures/${Date.now()}_${profilePictureFile.name}`
+        );
+        await uploadBytes(storageRef, profilePictureFile);
+        profile_picture_url = await getDownloadURL(storageRef);
+      }
+
+      // Send the updated user data to the backend
       await axios.put("http://localhost:3000/user/update", {
         username,
         password,
+        profile_picture_url, // Pass the URL of the uploaded profile picture
       });
+
       showDialog({
         title: "Success",
         content: "Profile updated successfully!",
@@ -197,6 +232,8 @@ export default function ClerkProfile() {
       });
     }
   };
+
+ 
 
   const handleDeleteAccount = () => {
     showDialog({
@@ -240,53 +277,105 @@ export default function ClerkProfile() {
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyle />
-      <Box sx={{ display: "flex", height: "100vh", backgroundColor: "#FFFFFF" }}>
+      <Box
+        sx={{ display: "flex", height: "100vh", backgroundColor: "#FFFFFF" }}
+      >
+        {" "}
+       
         <ClerkSidebar />
-        <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column", marginLeft: "225px", minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
+        <Box
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            marginLeft: "225px",
+            minHeight: "100vh",
+            backgroundColor: "#FFFFFF",
+          }}
+        >
+          {/* Updated Header Section with Bold User Profile */}
           <Box
             sx={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              mb: 3,
-              mt: 3,
+              mb: 2,
+              mt: 2,
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="h4" sx={{ fontWeight: 700 }}>User Profile</Typography>
+              <Typography
+                variant="h4"
+                gutterBottom
+                sx={{
+                  fontFamily: "Montserrat",
+                  fontWeight: "bold",
+                  mt: 4,
+                  ml: 1,
+                }}
+              >
+                User Profile
+              </Typography>{" "}
+              {/* Bold the header */}
             </Box>
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography variant="body1" sx={{ mr: 2 }}>
                 {username}
               </Typography>
-              <Avatar>{username[0]}</Avatar>
+              <Avatar
+                  alt={username}
+                  src={
+                    currentUser && currentUser?.profile_picture
+                      ? currentUser?.profile_picture
+                      : null
+                  }
+                >
+                  {(!currentUser || !currentUser?.profile_picture) &&
+                    username.charAt(0).toUpperCase()}
+                </Avatar>
             </Box>
           </Box>
-          <Divider sx={{ ml: 2 }} />
+          <Divider sx={{ my: 1 }} />
 
           <Container maxWidth="sm">
-            <Box 
-              display="flex" 
-              flexDirection="column" 
+            {/* Removed the card around the profile details */}
+            <Box
+              display="flex"
+              flexDirection="column"
               alignItems="center"
-              sx={{ 
-                backgroundColor: "#FFFFFF",
-                borderRadius: 2, 
-                p: 4, 
-                boxShadow: 'none'
+              sx={{
+                backgroundColor:
+                  "#FFFFFF" /* Set the background of the profile box to white */,
+                borderRadius: 2,
+                p: 4,
+                boxShadow: "none" /* Remove the box shadow */,
               }}
             >
               <Box position="relative" sx={{ mb: 3 }}>
                 <Avatar
                   alt={username}
-                  src="path/to/profile-picture.jpg"
-                  sx={{ 
-                    width: 150, 
-                    height: 150, 
-                    border: '4px solid #3B3183',
-                    boxShadow: 'none'
+                  src={
+                    currentUser && currentUser.profile_picture
+                      ? currentUser.profile_picture
+                      : null
+                  }
+                  sx={{
+                    width: 150,
+                    height: 150,
+                    border: "4px solid #3B3183",
+                    boxShadow: "none",
+                    fontSize: 50, // Adjust font size for the initial
+                    backgroundColor: "#3B3183", // Background color for when no image is available
+                    color: "#FFFFFF", // Text color for the initial
+                    fontFamily: "Montserrat",
+                    fontWeight: "bold",
                   }}
-                />
+                >
+                  {(!currentUser || !currentUser.profile_picture) &&
+                    username.charAt(0).toUpperCase()}
+                </Avatar>
+
                 <IconButton
                   sx={{
                     position: "absolute",
@@ -296,13 +385,107 @@ export default function ClerkProfile() {
                     color: "white",
                     "&:hover": {
                       bgcolor: "#2A2462",
-                    }
+                    },
                   }}
                   size="small"
+                  onClick={handleEditClick}
                 >
                   <EditIcon />
                 </IconButton>
               </Box>
+              <Dialog
+                open={editDialogOpen}
+                onClose={handleEditDialogClose}
+                sx={{
+                  "& .MuiDialog-paper": {
+                    borderRadius: "12px", // Add border radius for dialog
+                    fontFamily: "Montserrat", // Set font to Montserrat
+                  },
+                }}
+              >
+                <DialogTitle
+                  sx={{
+                    fontFamily: "Montserrat",
+                    fontWeight: "bold",
+                    color: "#3B3183",
+                  }}
+                >
+                  Edit Item
+                </DialogTitle>
+                <DialogContent
+                  sx={{
+                    fontFamily: "Montserrat",
+                    minWidth: "300px", // Ensure the dialog has a reasonable width
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      height: "100%",
+                      p: 2,
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      sx={{ mr: 2 }}
+                    >
+                      Attachment (if any)
+                    </Typography>
+                    <IconButton component="label">
+                      <UploadIcon />
+                      <input type="file" hidden onChange={handleFileChange} />
+                    </IconButton>
+                  </Box>
+                </DialogContent>
+                <DialogActions>
+                  <Button
+                    onClick={handleEditDialogClose}
+                    variant="outlined"
+                    sx={{
+                      fontFamily: "Montserrat",
+                      color: "#8BD3E6", // Text color
+                      borderColor: "#8BD3E6", // Border color
+                      "&:hover": {
+                        borderColor: "#8BD3E6",
+                        bgcolor: "#F0F9FF", // Light background on hover
+                      },
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleDeleteProfilePicture} // Replace with your click handler
+                    variant="contained"
+                    sx={{
+                      fontFamily: "Montserrat",
+                      bgcolor: "red", // Set the background color to red
+                      color: "white", // Set the text color to white
+                      "&:hover": {
+                        bgcolor: "#cc0000", // Darker red on hover
+                      },
+                    }}
+                  >
+                    Delete
+                  </Button>
+                  <Button
+                    onClick={handleSaveProfilePicture}
+                    variant="contained"
+                    sx={{
+                      fontFamily: "Montserrat",
+                      bgcolor: "#8BD3E6", // Filled pastel blue color
+                      color: "white",
+                      "&:hover": {
+                        bgcolor: "#67ADC1", // Slightly darker blue on hover
+                      },
+                    }}
+                  >
+                    Save Changes
+                  </Button>
+                </DialogActions>
+              </Dialog>
               <Typography variant="h6" sx={{ mt: 2, mb: 2, fontWeight: 700 }}>
                 Profile Details
               </Typography>
@@ -394,12 +577,11 @@ export default function ClerkProfile() {
                   py: 1.5,
                   fontFamily: "Montserrat",
                   fontWeight: "bold",
-                  background: "#D32F2F",
                   borderColor: "#D32F2F",
-                  color: "#FFFFFF",
+                  color: "#D32F2F",
                   "&:hover": {
-                    backgroundColor: "#FFFFFF",
-                    color: "#D32F2F",
+                    backgroundColor: "#D32F2F",
+                    color: "#FFFFFF",
                   },
                 }}
                 onClick={handleDeleteAccount}

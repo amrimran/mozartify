@@ -1,217 +1,233 @@
-// import React, { useState } from "react";
-// import axios from "axios";
-// import { useParams, useNavigate } from "react-router-dom";
-// import { Box, Typography, TextField, Button } from "@mui/material";
-// import { styled } from "@mui/system";
-// import { createGlobalStyle } from "styled-components";
-// import backgroundImage from "./assets/loginWP.png";
+import React, { useState } from "react";
+import axios from "axios";
+import { useLocation, useNavigate } from "react-router-dom"; // Use useNavigate instead of useHistory
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Dialog,
+  DialogContent,
+} from "@mui/material";
+import { styled } from "@mui/system";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import SidebarMozartifyLogo from "./assets/mozartify.png";
 
-// const FormContainer = styled(Box)(({ theme }) => ({
-//   backgroundColor: "#FFFFFF",
-//   borderRadius: "20px",
-//   boxShadow: "0px 3px 6px rgba(0,0,0,1)",
-//   padding: 80,
-//   width: "60%",
-//   display: "flex",
-//   flexDirection: "column",
-//   justifyContent: "center",
-//   alignItems: "center",
-//   fontFamily: "Montserrat",
-// }));
+const FormContainer = styled(Box)(({ theme }) => ({
+  backgroundColor: "#FFFFFF",
+  borderRadius: "12px",
+  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+  padding: "32px",
+  width: "100%",
+  maxWidth: "400px",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+}));
 
-// const BackgroundContainer = styled(Box)(() => ({
-//   backgroundColor: "#f5f5f5",
-//   backgroundImage: `url(${backgroundImage})`,
-//   backgroundSize: "cover",
-//   backgroundRepeat: "no-repeat",
-//   backgroundAttachment: "fixed",
-//   backgroundPosition: "right",
-//   minHeight: "100vh",
-//   width: "100vw",
-//   display: "flex",
-//   justifyContent: "center",
-//   alignItems: "center",
-//   flexDirection: "column",
-//   margin: 0,
-//   overflow: "hidden",
-//   fontFamily: "Montserrat",
-// }));
-
-// const GlobalStyle = createGlobalStyle`
-//   body {
-//     margin: 0;
-//     padding: 0;
-//     font-family: 'Montserrat', sans-serif;
-//   }
-// `;
-
-// export default function ResetPassword() {
-//   const { token } = useParams();
-//   const [password, setPassword] = useState("");
-//   const [confirmPassword, setConfirmPassword] = useState("");
-//   const [message, setMessage] = useState("");
-//   const [error, setError] = useState("");
-//   const navigate = useNavigate();
-
-//   const handleSubmit = (e) => {
-//     e.preventDefault();
-//     if (password !== confirmPassword) {
-//       setError("Passwords do not match");
-//       return;
-//     }
-
-//     axios
-//       .post(`http://localhost:3000/reset-password/${token}`, { password })
-//       .then((response) => {
-//         setMessage("Your password has been successfully reset.");
-//         setError("");
-//         setTimeout(() => {
-//           navigate("/login");
-//         }, 3000);
-//       })
-//       .catch((error) => {
-//         setMessage("");
-//         setError("An error occurred. Please try again.");
-//       });
-//   };
-
-//   return (
-//     <>
-//       <GlobalStyle />
-//       <BackgroundContainer>
-//         <FormContainer component="form" onSubmit={handleSubmit}>
-//           <Typography
-//             variant="h5"
-//             align="center"
-//             fontWeight="bold"
-//             gutterBottom
-//             sx={{ fontFamily: "Montserrat", marginBottom: 1 }}
-//           >
-//             Reset Password
-//           </Typography>
-//           <Typography
-//             variant="body1"
-//             align="center"
-//             color="textSecondary"
-//             sx={{ fontFamily: "Montserrat", marginBottom: 3 }}
-//           >
-//             Enter your new password below.
-//           </Typography>
-//           <TextField
-//             fullWidth
-//             label="New Password"
-//             type="password"
-//             margin="normal"
-//             variant="outlined"
-//             required
-//             value={password}
-//             onChange={(e) => setPassword(e.target.value)}
-//             sx={{
-//               "& label.Mui-focused": { color: "#483C32" },
-//               "& .MuiInput-underline:after": {
-//                 borderBottomColor: "#483C32",
-//               },
-//               "& .MuiOutlinedInput-root": {
-//                 "& fieldset": { borderColor: "#483C32" },
-//                 "&:hover fieldset": { borderColor: "#483C32" },
-//                 "&.Mui-focused fieldset": { borderColor: "#483C32" },
-//               },
-//             }}
-//           />
-//           <TextField
-//             fullWidth
-//             label="Confirm New Password"
-//             type="password"
-//             margin="normal"
-//             variant="outlined"
-//             required
-//             value={confirmPassword}
-//             onChange={(e) => setConfirmPassword(e.target.value)}
-//             sx={{
-//               "& label.Mui-focused": { color: "#483C32" },
-//               "& .MuiInput-underline:after": {
-//                 borderBottomColor: "#483C32",
-//               },
-//               "& .MuiOutlinedInput-root": {
-//                 "& fieldset": { borderColor: "#483C32" },
-//                 "&:hover fieldset": { borderColor: "#483C32" },
-//                 "&.Mui-focused fieldset": { borderColor: "#483C32" },
-//               },
-//             }}
-//           />
-//           {message && (
-//             <Typography color="primary" variant="body2" sx={{ mt: 2 }}>
-//               {message}
-//             </Typography>
-//           )}
-//           {error && (
-//             <Typography color="error" variant="body2" sx={{ mt: 2 }}>
-//               {error}
-//             </Typography>
-//           )}
-//           <Button
-//             variant="outlined"
-//             size="large"
-//             type="submit"
-//             sx={{
-//               mt: 5,
-//               px: 10,
-//               fontFamily: "Montserrat",
-//               fontWeight: "bold",
-//               color: "#483C32", 
-//               borderColor: "#483C32",
-//               "&:hover": {
-//                 backgroundColor: "#483C32",
-//                 color: "#FFFFFF",
-//                 borderColor: "#483C32",
-//               },
-//             }}
-//           >
-//             Reset Password
-//           </Button>
-//         </FormContainer>
-//       </BackgroundContainer>
-//     </>
-//   );
-// }
-
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useLocation } from 'react-router-dom';
+const PageContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  minHeight: "100vh",
+  backgroundColor: "#F3F4F6",
+  padding: "16px",
+}));
 
 const ResetPassword = () => {
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
   const query = new URLSearchParams(useLocation().search);
-  const token = query.get('token');
+  const token = query.get("token");
+  const navigate = useNavigate(); // Use useNavigate instead of useHistory
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Clear previous error messages
+    setMessage("");
+    setPasswordError("");
+
+    // Validate passwords match
+    if (password !== confirmPassword) {
+      setPasswordError("Passwords do not match.");
+      return;
+    }
+
     try {
-      const response = await axios.post('http://localhost:3000/reset-password', { token, newPassword: password });
+      const response = await axios.post(
+        "http://localhost:3000/reset-password",
+        {
+          token,
+          newPassword: password,
+        }
+      );
       setMessage(response.data.message);
+      setOpenDialog(true); // Open dialog after successful reset
+
+      // Redirect after 2 seconds
+      setTimeout(() => {
+        navigate("/login"); // Use navigate to redirect
+      }, 2000);
     } catch (error) {
-      setMessage(error.response.data.message || 'An error occurred');
+      setMessage(error.response?.data?.message || "An error occurred");
     }
   };
 
   return (
-    <div>
-      <h2>Reset Password</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>New Password:</label>
-          <input
-            type="password"
+    <PageContainer>
+      <style>
+        {`
+          @keyframes rotateLogo {
+            0% {
+              transform: rotate(0deg); // Start from 0 degrees
+            }
+            100% {
+              transform: rotate(360deg); // Rotate to 360 degrees
+            }
+          }
+        `}
+      </style>
+      <img
+        src={SidebarMozartifyLogo}
+        alt="MozartifyIcon"
+        style={{
+          position: "fixed", // Fix the position relative to the viewport
+          top: 10, // Place it at the top of the screen
+          left: 10, // Place it at the left of the screen
+          maxWidth: "100%", // Ensure it scales properly
+          maxHeight: "90px", // Set a fixed height for the logo
+          zIndex: 10, // Ensure it's always on top of other elements
+          animation: "rotateLogo 5s linear infinite", // Apply the rotation animation
+        }}
+        onClick={() => window.location.replace("http://localhost:5173")} // Redirect on click
+      />
+      <FormContainer>
+        <Typography
+          variant="h5"
+          component="h2"
+          fontWeight="bold"
+          mb={2}
+          sx={{ fontFamily: "Montserrat, sans-serif", color: "#333" }}
+        >
+          Reset Password
+        </Typography>
+        <form onSubmit={handleSubmit} style={{ width: "100%" }}>
+          <TextField
+            fullWidth
+            label="New Password"
+            type={showPassword ? "text" : "password"} // Toggle password visibility
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            variant="outlined"
+            margin="normal"
+            sx={{
+              "& .MuiInputBase-root": {
+                fontFamily: "Montserrat, sans-serif",
+              },
+              "& .MuiFormLabel-root": {
+                fontFamily: "Montserrat, sans-serif",
+              },
+            }}
+            InputProps={{
+              endAdornment: (
+                <Button
+                  onClick={() => setShowPassword(!showPassword)}
+                  sx={{ padding: 0 }}
+                >
+                  {showPassword ? <Visibility /> : <VisibilityOff />}
+                </Button>
+              ),
+            }}
           />
-        </div>
-        <button type="submit">Reset Password</button>
-      </form>
-      {message && <p>{message}</p>}
-    </div>
+          <TextField
+            fullWidth
+            label="Confirm Password"
+            type={showConfirmPassword ? "text" : "password"} // Toggle password visibility
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            variant="outlined"
+            margin="normal"
+            sx={{
+              "& .MuiInputBase-root": {
+                fontFamily: "Montserrat, sans-serif",
+              },
+              "& .MuiFormLabel-root": {
+                fontFamily: "Montserrat, sans-serif",
+              },
+            }}
+            InputProps={{
+              endAdornment: (
+                <Button
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  sx={{ padding: 0 }}
+                >
+                  {showConfirmPassword ? <Visibility /> : <VisibilityOff />}
+                </Button>
+              ),
+            }}
+          />
+          {passwordError && (
+            <Typography
+              color="error"
+              variant="body2"
+              sx={{
+                mt: 1,
+                fontFamily: "Montserrat, sans-serif",
+                textAlign: "center",
+              }}
+            >
+              {passwordError}
+            </Typography>
+          )}
+          <Button
+            fullWidth
+            type="submit"
+            variant="contained"
+            color="primary"
+            sx={{
+              fontFamily: "Montserrat, sans-serif",
+              fontWeight: "bold",
+              mt: 2,
+              py: 1.2,
+              backgroundColor: "#3B3183",
+              "&:hover": {
+                backgroundColor: "#2B2565",
+              },
+            }}
+          >
+            Reset Password
+          </Button>
+        </form>
+      </FormContainer>
+
+      {/* Dialog for success message */}
+      <Dialog open={openDialog} sx={{ borderRadius: "16px" }}>
+        <DialogContent
+          sx={{
+            textAlign: "center",
+            fontFamily: "Montserrat, sans-serif",
+            padding: "32px",
+          }}
+        >
+          <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+            Password reset successfully!
+          </Typography>
+          <Typography variant="h6" sx={{ marginTop: 2, fontSize: "1.25rem" }}>
+            We will redirect you to the login page shortly.
+          </Typography>
+        </DialogContent>
+      </Dialog>
+    </PageContainer>
   );
 };
 

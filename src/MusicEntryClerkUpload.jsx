@@ -67,7 +67,12 @@ export default function MusicEntryClerkUpload() {
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
-    const acceptedFileTypes = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
+    const acceptedFileTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+      "application/pdf",
+    ];
     if (file && acceptedFileTypes.includes(file.type)) {
       setSelectedFile(file);
       setUploadMessage("");
@@ -90,21 +95,23 @@ export default function MusicEntryClerkUpload() {
     const formData = new FormData();
     formData.append("file", selectedFile);
 
-    fetch('http://localhost:3001/upload', {
-      method: 'POST',
+    fetch("http://localhost:3001/upload", {
+      method: "POST",
       body: formData,
     })
-      .then(response => response.json())
-      .then(data => {
+      .then((response) => response.json())
+      .then((data) => {
         setIsUploading(false);
         if (data.filePath) {
-          navigate("/clerk-preview", { state: { file: data.filePath, fileName: selectedFile.name } });
+          navigate("/clerk-preview", {
+            state: { file: data.filePath, fileName: selectedFile.name },
+          });
         } else {
           setDialogMessage("Error uploading file. Please try again.");
           setDialogOpen(true);
         }
       })
-      .catch(error => {
+      .catch((error) => {
         setIsUploading(false);
         setDialogMessage("Error uploading file. Please try again.");
         setDialogOpen(true);
@@ -117,31 +124,88 @@ export default function MusicEntryClerkUpload() {
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh" }}>
         <ClerkSidebar active={"upload"} />
-        <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column", marginLeft: "225px", minHeight: "100vh" }}>
+        <Box
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            marginLeft: "225px",
+            minHeight: "100vh" ,
+          }}
+        >
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-            <Typography variant="h4" gutterBottom sx={{ fontFamily: 'Montserrat', fontWeight: 'bold', mt: 4, ml: 1 }}>
-              Digitize Music Scores
-            </Typography>
+            <Typography
+              variant="h4"
+              gutterBottom
+              sx={{
+                fontFamily: "Montserrat",
+                fontWeight: "bold",
+                mt: 4,
+                ml:  1,
+              }}
+            >
+                Digitize Music Scores
+              </Typography>
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="body1" sx={{ mr: 2, fontFamily: 'Montserrat' }}>
+              <Typography
+                variant="body1"
+                sx={{ mr: 2, fontFamily: "Montserrat" }}
+              >
                 {user ? user.username : "Loading..."}
               </Typography>
-              <Avatar>{user ? user.username[0] : "?"}</Avatar>
+              <Avatar
+                alt={user?.username}
+                src={user && user.profile_picture ? user.profile_picture : null}
+              >
+                {(!user || !user.profile_picture) &&
+                  user?.username.charAt(0).toUpperCase()}
+              </Avatar>
             </Box>
           </Box>
-          <Divider sx={{ my: 2 }} />
-          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "calc(100% - 64px)", mt: -5 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-around", alignItems: "center", width: "80%" }}>
-              <Box sx={{ textAlign: "center", border: "2px solid #8BD3E6", borderRadius: 8, padding: 4, width: "40%" }}>
-                <img src={ImportIcon} alt="Import Icon" style={{ width: "100px", height: "100px" }} />
-                <Typography variant="h6" sx={{ mt: 2, fontFamily: "Montserrat" }}>
+          <Divider sx={{ my: 2 }} /> {/* This is the line for the divider */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "calc(100% - 64px)",
+              mt: -5,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-around",
+                alignItems: "center",
+                width: "80%",
+              }}
+            >
+              <Box
+                sx={{
+                  textAlign: "center",
+                  border: "2px solid #8BD3E6",
+                  borderRadius: 8,
+                  padding: 4,
+                  width: "40%",
+                }}
+              >
+                <img
+                  src={ImportIcon}
+                  alt="Import Icon"
+                  style={{ width: "100px", height: "100px" }}
+                />
+                <Typography
+                  variant="h6"
+                  sx={{ mt: 2, fontFamily: "Montserrat" }}
+                >
                   Import from computer
                 </Typography>
                 <input
                   type="file"
                   accept=".jpg,.jpeg,.png,.pdf"
                   onChange={handleFileChange}
-                  style={{ display: 'none' }}
+                  style={{ display: "none" }}
                   id="upload-button"
                 />
                 <label htmlFor="upload-button">
@@ -149,7 +213,7 @@ export default function MusicEntryClerkUpload() {
                     variant="outlined"
                     size="large"
                     component="span"
-                    sx={{ mt: 5, width: '100%', ...buttonStyles }}
+                    sx={{ mt: 5, width: "100%", ...buttonStyles }}
                   >
                     Choose File
                   </Button>
@@ -161,12 +225,12 @@ export default function MusicEntryClerkUpload() {
                       size="large"
                       sx={{
                         mt: 2,
-                        width: '100%',
+                        width: "100%",
                         ...buttonStyles,
                         '&.Mui-disabled': {
-                          backgroundColor: '#D3D3D3',
-                          color: '#A9A9A9',
-                          border: '1px solid #D3D3D3',
+                          backgroundColor: '#D3D3D3', // Grey background for disabled state
+                          color: '#A9A9A9', // Optional: lighter grey text for disabled state
+                          border: '1px solid #D3D3D3', // Match the disabled border color
                         },
                       }}
                       onClick={handleUpload}
@@ -184,10 +248,21 @@ export default function MusicEntryClerkUpload() {
                         />
                       </Box>
                     )}
+                      <Box sx={{ width: "100%", mt: 2 }}>
+                        <LinearProgress
+                          sx={{
+                            backgroundColor: "#D3D3D3", // Optional: color for the track
+                            "& .MuiLinearProgress-bar": {
+                              backgroundColor: "#3B3183", // Dark blue for the progress bar
+                            },
+                          }}
+                        />
+                      </Box>
+                    )}
                   </>
                 )}
                 {uploadMessage && (
-                  <Typography variant="body1" sx={{ mt: 2, color: 'red' }}>
+                  <Typography variant="body1" sx={{ mt: 2, color: "red" }}>
                     {uploadMessage}
                   </Typography>
                 )}

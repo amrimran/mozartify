@@ -244,6 +244,19 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.get("/preferences-options", async (req, res) => {
+  try {
+    const composers = await ABCFileModel.distinct("composer");
+    const genres = await ABCFileModel.distinct("genre");
+    const emotions = await ABCFileModel.distinct("emotion");
+
+    res.status(200).json({ composers, genres, emotions });
+  } catch (error) {
+    console.error("Error fetching preferences:", error);
+    res.status(500).json({ error: "Failed to fetch preferences." });
+  }
+});
+
 app.post("/preferences", async (req, res) => {
   const { composer_preferences, genre_preferences, emotion_preferences } =
     req.body;
@@ -300,8 +313,8 @@ app.post("/forgot-password", async (req, res) => {
     }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+      expiresIn: "5m",  // Set token expiration to 5 minutes
+    });    
 
     const resetLink = `http://localhost:5173/reset-password?token=${token}`;
     const emailTemplate = `
@@ -392,7 +405,7 @@ app.get("/clearSession", (req, res) => {
 });
 
 app.put("/user/update", async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, profile_picture_url } = req.body;
 
   try {
     const userId = req.session.userId;
@@ -409,6 +422,9 @@ app.put("/user/update", async (req, res) => {
     if (password) {
       user.password = password;
     }
+    if (profile_picture_url) {
+      user.profile_picture = profile_picture_url;
+    }
 
     await user.save();
     res.json({ message: "Profile updated successfully" });
@@ -416,6 +432,7 @@ app.put("/user/update", async (req, res) => {
     res.status(500).json({ message: "Server error", error: err });
   }
 });
+
 
 app.get("/current-user", isAuthenticated, (req, res) => {
   UserModel.findById(req.session.userId)

@@ -1,11 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Box, Typography, Button, Card, CardContent, List, ListItem, ListItemText, Avatar, Divider } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  List,
+  ListItem,
+  ListItemText,
+  Avatar,
+  Divider,
+} from "@mui/material";
 import AdminSidebar from "./AdminSidebar";
 import abcjs from "abcjs";
-import { format } from 'date-fns';
-
+import { format } from "date-fns";
 
 export default function AdminMusicScoreView() {
   const { scoreId } = useParams();
@@ -53,11 +63,11 @@ export default function AdminMusicScoreView() {
       }
     };
 
-    
-
     const fetchAbcFileAndMetadata = async () => {
       try {
-        const response = await axios.get(`http://localhost:3001/abc-file/${scoreId}`);
+        const response = await axios.get(
+          `http://localhost:3001/abc-file/${scoreId}`
+        );
         setAbcContent(response.data.content);
         setMetadata(response.data);
         renderAbc(response.data.content);
@@ -90,45 +100,44 @@ export default function AdminMusicScoreView() {
 
   const handleDeleteClick = () => {
     if (!metadata || !metadata.filename) {
-      console.error('No metadata or filename available');
+      console.error("No metadata or filename available");
       return;
     }
-  
-    const confirmDelete = window.confirm('Are you sure you want to delete this music score?');
+
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this music score?"
+    );
     if (!confirmDelete) {
       return; // Exit if the user cancels the action
     }
-  
-    fetch('http://localhost:3001/catalog', { // Replace with the correct backend URL
-      method: 'POST',
+
+    fetch("http://localhost:3001/catalog", {
+      // Replace with the correct backend URL
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         filename: metadata.filename, // Use metadata to get the filename
         deleted: true, // Mark the file as deleted
       }),
     })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      return response.json(); // Parse the JSON from the response
-    })
-    .then(data => {
-      if (data.message === 'Metadata saved successfully') {
-        // Redirect or update the UI after successful deletion
-        navigate('/admin-manage-scores'); // Redirect to the homepage or handle UI update
-      }
-    })
-    .catch((error) => {
-      console.error('Error:', error);
-    });
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json(); // Parse the JSON from the response
+      })
+      .then((data) => {
+        if (data.message === "Metadata saved successfully") {
+          // Redirect or update the UI after successful deletion
+          navigate("/admin-manage-scores"); // Redirect to the homepage or handle UI update
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
   };
-  
-  
-  
-
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
@@ -155,14 +164,27 @@ export default function AdminMusicScoreView() {
             mb: 3,
           }}
         >
-          <Typography variant="h4" gutterBottom sx={{ fontFamily: 'Montserrat', fontWeight: 'bold', mt: 2, ml:1 }}>
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{ fontFamily: "Montserrat", fontWeight: "bold", mt: 2, ml: 1 }}
+          >
             Manage Music Scores
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Typography variant="body1" sx={{ mr: 2, fontFamily: "Montserrat" }}>
+            <Typography
+              variant="body1"
+              sx={{ mr: 2, fontFamily: "Montserrat" }}
+            >
               {user ? user.username : "Guest"}
             </Typography>
-            <Avatar>{user ? user.username.charAt(0) : "G"}</Avatar>
+            <Avatar
+              alt={user.username}
+              src={user && user.profile_picture ? user.profile_picture : null}
+            >
+              {(!user || !user.profile_picture) &&
+                user.username.charAt(0).toUpperCase()}
+            </Avatar>
           </Box>
         </Box>
         <Divider sx={{ my: 2 }} />
@@ -172,7 +194,14 @@ export default function AdminMusicScoreView() {
           <Card sx={{ flexGrow: 1, p: 3, bgcolor: "#F2F2F5", borderRadius: 2 }}>
             <Box sx={{ bgcolor: "#FFFFFF", borderRadius: 2, p: 2 }}>
               {abcContent ? (
-                <div id="abc-container" style={{ width: "100%", borderRadius: "10px", backgroundColor: "#FFFFFF" }}>
+                <div
+                  id="abc-container"
+                  style={{
+                    width: "100%",
+                    borderRadius: "10px",
+                    backgroundColor: "#FFFFFF",
+                  }}
+                >
                   {/* ABC notation will be rendered here */}
                 </div>
               ) : (
@@ -185,52 +214,85 @@ export default function AdminMusicScoreView() {
 
           {/* Music Score Details */}
           {metadata ? (
-            <Card sx={{ width: 200, p: 2, bgcolor: "#F2F2F5", borderRadius: 2, height: "auto", maxHeight: "500px", overflowY: "auto", flexGrow: 1 }}>
-              <CardContent sx={{ bgcolor: "#FFFFFF", borderRadius: 2, p: 0, pl: -1 }}>
+            <Card
+              sx={{
+                width: 200,
+                p: 2,
+                bgcolor: "#F2F2F5",
+                borderRadius: 2,
+                height: "auto",
+                maxHeight: "500px",
+                overflowY: "auto",
+                flexGrow: 1,
+              }}
+            >
+              <CardContent
+                sx={{ bgcolor: "#FFFFFF", borderRadius: 2, p: 0, pl: -1 }}
+              >
                 <List>
                   {/* Reordered Fields */}
                   <ListItem>
                     <ListItemText
                       primary="Title"
-                      secondary={metadata.title || 'N/A'}
-                      primaryTypographyProps={{ sx: { fontFamily: "Montserrat", fontWeight: "bold" } }}
-                      secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
+                      secondary={metadata.title || "N/A"}
+                      primaryTypographyProps={{
+                        sx: { fontFamily: "Montserrat", fontWeight: "bold" },
+                      }}
+                      secondaryTypographyProps={{
+                        sx: { fontFamily: "Montserrat" },
+                      }}
                       sx={{ p: 1 }}
                     />
                   </ListItem>
                   <ListItem>
                     <ListItemText
                       primary="Artist"
-                      secondary={metadata.artist || 'N/A'}
-                      primaryTypographyProps={{ sx: { fontFamily: "Montserrat", fontWeight: "bold" } }}
-                      secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
+                      secondary={metadata.artist || "N/A"}
+                      primaryTypographyProps={{
+                        sx: { fontFamily: "Montserrat", fontWeight: "bold" },
+                      }}
+                      secondaryTypographyProps={{
+                        sx: { fontFamily: "Montserrat" },
+                      }}
                       sx={{ p: 1 }}
                     />
                   </ListItem>
                   <ListItem>
                     <ListItemText
                       primary="Composer"
-                      secondary={metadata.composer || 'N/A'}
-                      primaryTypographyProps={{ sx: { fontFamily: "Montserrat", fontWeight: "bold" } }}
-                      secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
+                      secondary={metadata.composer || "N/A"}
+                      primaryTypographyProps={{
+                        sx: { fontFamily: "Montserrat", fontWeight: "bold" },
+                      }}
+                      secondaryTypographyProps={{
+                        sx: { fontFamily: "Montserrat" },
+                      }}
                       sx={{ p: 1 }}
                     />
                   </ListItem>
                   <ListItem>
                     <ListItemText
                       primary="Genre"
-                      secondary={metadata.genre || 'N/A'}
-                      primaryTypographyProps={{ sx: { fontFamily: "Montserrat", fontWeight: "bold" } }}
-                      secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
+                      secondary={metadata.genre || "N/A"}
+                      primaryTypographyProps={{
+                        sx: { fontFamily: "Montserrat", fontWeight: "bold" },
+                      }}
+                      secondaryTypographyProps={{
+                        sx: { fontFamily: "Montserrat" },
+                      }}
                       sx={{ p: 1 }}
                     />
                   </ListItem>
                   <ListItem>
                     <ListItemText
                       primary="Instrumentation"
-                      secondary={metadata.instrumentation || 'N/A'}
-                      primaryTypographyProps={{ sx: { fontFamily: "Montserrat", fontWeight: "bold" } }}
-                      secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
+                      secondary={metadata.instrumentation || "N/A"}
+                      primaryTypographyProps={{
+                        sx: { fontFamily: "Montserrat", fontWeight: "bold" },
+                      }}
+                      secondaryTypographyProps={{
+                        sx: { fontFamily: "Montserrat" },
+                      }}
                       sx={{ p: 1 }}
                     />
                   </ListItem>
@@ -238,33 +300,70 @@ export default function AdminMusicScoreView() {
                   {/* Remaining Fields */}
                   {Object.keys(metadata).map((key) => {
                     // Exclude certain fields and format date fields
-                    if (['title', 'artist', 'composer', 'genre', 'instrumentation', 'content', '__v', '_id', 'filename', 'coverImageUrl','deleted', 'mp3FileName', 'mp3FileUrl'].includes(key)) {
+                    if (
+                      [
+                        "title",
+                        "artist",
+                        "composer",
+                        "genre",
+                        "instrumentation",
+                        "content",
+                        "__v",
+                        "_id",
+                        "filename",
+                        "coverImageUrl",
+                        "deleted",
+                        "mp3FileName",
+                        "mp3FileUrl",
+                      ].includes(key)
+                    ) {
                       return null;
                     }
 
                     // Format date fields
                     let value = metadata[key];
-                    if (['dateAccessioned', 'dateAvailable', 'dateIssued','dateOfBirth', 'dateOfComposition', 'dateOfCreation', 'dateOfRecording','lastModified'].includes(key) && value) {
-                      value = new Date(value).toLocaleDateString('en-GB'); // Format to dd/MM/yyyy
+                    if (
+                      [
+                        "dateAccessioned",
+                        "dateAvailable",
+                        "dateIssued",
+                        "dateOfBirth",
+                        "dateOfComposition",
+                        "dateOfCreation",
+                        "dateOfRecording",
+                        "lastModified",
+                      ].includes(key) &&
+                      value
+                    ) {
+                      value = new Date(value).toLocaleDateString("en-GB"); // Format to dd/MM/yyyy
                     }
 
                     // Prepend "RM" for price-related fields
-                    if (['price'].includes(key.toLowerCase()) && value) {
+                    if (["price"].includes(key.toLowerCase()) && value) {
                       value = `RM ${value}`;
                     }
 
                     return (
                       <ListItem key={key}>
                         <ListItemText
-                          primary={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                          secondary={value || 'N/A'}
-                          primaryTypographyProps={{ sx: { fontFamily: "Montserrat", fontWeight: "bold" } }}
-                          secondaryTypographyProps={{ sx: { fontFamily: "Montserrat" } }}
+                          primary={key
+                            .replace(/([A-Z])/g, " $1")
+                            .replace(/^./, (str) => str.toUpperCase())}
+                          secondary={value || "N/A"}
+                          primaryTypographyProps={{
+                            sx: {
+                              fontFamily: "Montserrat",
+                              fontWeight: "bold",
+                            },
+                          }}
+                          secondaryTypographyProps={{
+                            sx: { fontFamily: "Montserrat" },
+                          }}
                           sx={{ p: 1 }}
                         />
                       </ListItem>
                     );
-                  })}    
+                  })}
                 </List>
               </CardContent>
             </Card>
@@ -276,20 +375,27 @@ export default function AdminMusicScoreView() {
         </Box>
 
         <Box sx={{ mt: 4, display: "flex", justifyContent: "center", gap: 2 }}>
-          <Button variant="outlined" onClick={handleBackClick} sx={buttonStyles}>
+          <Button
+            variant="outlined"
+            onClick={handleBackClick}
+            sx={buttonStyles}
+          >
             Back
           </Button>
-          <Button variant="outlined" onClick={handleEditMusicScoreClick} sx={buttonStyles}>
+          <Button
+            variant="outlined"
+            onClick={handleEditMusicScoreClick}
+            sx={buttonStyles}
+          >
             Edit
           </Button>
-          <Button 
-          variant="outlined" 
-          onClick={handleDeleteClick}  // Directly call the delete handler
-          sx={deleteButtonStyles}
+          <Button
+            variant="outlined"
+            onClick={handleDeleteClick} // Directly call the delete handler
+            sx={deleteButtonStyles}
           >
             Delete
           </Button>
-
         </Box>
       </Box>
     </Box>

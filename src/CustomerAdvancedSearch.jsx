@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
+  Avatar,
+  Divider,
   Box,
   List,
   Tabs,
@@ -578,16 +580,48 @@ export default function CustomerAdvancedSearch() {
         <Box
           sx={{ flexGrow: 1, p: 5, display: "flex", flexDirection: "column" }}
         >
-          <Typography
-            variant="h5"
-            sx={{
-              mb: 2,
-              fontFamily: "Montserrat, sans-serif",
-              textAlign: "center",
-            }}
-          >
-            Advanced Search Query Builder
-          </Typography>
+          <Box
+                     sx={{
+                       display: "flex",
+                       justifyContent: "space-between",
+                       alignItems: "center",
+                       mb: 3,
+                       mt: 3,
+                     }}
+                   >
+                     <Box sx={{ display: "flex", alignItems: "center" }}>
+                       <Typography variant="h4">Advanced Music Score Repository Search Query Builder</Typography>
+                     </Box>
+         
+                     <Box sx={{ display: "flex", alignItems: "center" }}>
+                       {user ? (
+                         <>
+                           <Typography variant="body1" sx={{ mr: 2 }}>
+                             {user.username}
+                           </Typography>
+                           <Avatar
+                             alt={user.username}
+                             src={
+                               user && user.profile_picture
+                                 ? user.profile_picture
+                                 : null
+                             }
+                           >
+                             {(!user || !user.profile_picture) &&
+                               user.username.charAt(0).toUpperCase()}
+                           </Avatar>
+                         </>
+                       ) : (
+                         <>
+                           <Typography variant="body1" sx={{ mr: 2 }}>
+                             Loading...
+                           </Typography>
+                           <Avatar></Avatar>
+                         </>
+                       )}
+                     </Box>
+                   </Box>
+                   <Divider sx={{ my: 1 }} />
 
           <Button
             variant="text" // Use text variant for no background

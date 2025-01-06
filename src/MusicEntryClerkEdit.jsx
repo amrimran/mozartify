@@ -1,21 +1,7 @@
-import React, { useEffect, useState, useRef } from "react";
-import {
-  Box,
-  Typography,
-  Avatar,
-  Button,
-  Grid,
-  Divider,
-  IconButton,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Pagination,
-  Paper,
-} from "@mui/material";
-import { HelpOutline } from "@mui/icons-material";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useEffect, useState, useRef } from 'react';
+import { Box, Typography, Avatar, Button, Grid, Divider, IconButton } from "@mui/material";
+import { HelpOutline } from "@mui/icons-material"; // Import the HelpOutline icon
+import { useNavigate, useLocation } from 'react-router-dom';
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
 import ABCJS from "abcjs";
@@ -59,10 +45,7 @@ const MusicEntryClerkEdit = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { fileName } = location.state || {};
-  const [abcContent, setAbcContent] = useState("");
-  const [splitContent, setSplitContent] = useState([]);
-  const [page, setPage] = useState(1);
-  const [originalContent, setOriginalContent] = useState("");
+  const [abcContent, setAbcContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [user, setUser] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -88,7 +71,9 @@ const MusicEntryClerkEdit = () => {
     if (fileName) {
       const fetchABCFileContent = async () => {
         try {
-          const response = await fetch(`http://localhost:3001/abc-file/${fileName}`);
+          const response = await fetch(
+            `http://localhost:3001/abc-file/${fileName}`
+          );
           if (!response.ok) {
             throw new Error("Network response was not ok");
           }
@@ -107,84 +92,76 @@ const MusicEntryClerkEdit = () => {
   // Split content into pages
   useEffect(() => {
     if (abcContent) {
-      const lines = abcContent.split("\n");
-      const maxLinesPerPage = 20; // Adjust lines per page as needed
-      const pages = [];
-      for (let i = 0; i < lines.length; i += maxLinesPerPage) {
-        pages.push(lines.slice(i, i + maxLinesPerPage).join("\n"));
-      }
-      setSplitContent(pages);
+      ABCJS.renderAbc("abc-render-edit", abcContent, {}, {
+        clickListener: function (abcElem, tuneNumber, classes, analysis, drag, mouseEvent) {
+          // Get the character position of the ABC element in the notation
+          const startChar = abcElem.startChar;
+          const endChar = abcElem.endChar;
+
+          // Highlight the corresponding text in the textarea
+          const textarea = textAreaRef.current;
+          textarea.focus();
+          textarea.setSelectionRange(startChar, endChar);
+        }
+      });
     }
   }, [abcContent]);
 
-  // Render the ABC content for the current page
-  useEffect(() => {
-    if (splitContent.length > 0) {
-      const currentPageContent = splitContent[page - 1] || "";
-      
-      // Calculate the correct offset by counting characters in previous pages
-      const previousPagesContent = splitContent.slice(0, page - 1).join("\n");
-      const offset = previousPagesContent ? previousPagesContent.length + 1 : 0; // +1 for the newline after each page
-      
-      ABCJS.renderAbc("abc-render-edit", currentPageContent, {}, {
-        clickListener: (abcElem) => {
-          if (abcElem && textAreaRef.current) {
-            const { startChar, endChar } = abcElem;
-            const textarea = textAreaRef.current;
-            
-            // Calculate absolute positions in the full content
-            const absoluteStartChar = startChar + offset;
-            const absoluteEndChar = endChar + offset;
-            
-            // Set selection in textarea
-            textarea.focus();
-            textarea.setSelectionRange(absoluteStartChar, absoluteEndChar);
-            
-            // Calculate the line number for scrolling
-            const contentUpToSelection = abcContent.substring(0, absoluteStartChar);
-            const lineNumber = contentUpToSelection.split('\n').length;
-            
-            // Scroll to the selected line
-            const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight, 10) || 20;
-            const scrollPosition = (lineNumber - 1) * lineHeight;
-            
-            textarea.scrollTop = scrollPosition - textarea.clientHeight / 2;
-          }
-        },
-      });
-    }
-  }, [splitContent, page, abcContent]);
-
-  const handlePageChange = (event, value) => {
-    setPage(value);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const adjustTextareaHeight = () => {
+    const textarea = textAreaRef.current;
+    textarea.style.height = 'auto'; // Reset height to auto to calculate the correct scrollHeight
+    textarea.style.height = `${textarea.scrollHeight}px`; // Set height to scrollHeight
   };
 
   const handleInputChange = (event) => {
     const newContent = event.target.value;
     setAbcContent(newContent);
+    adjustTextareaHeight(); // Adjust the height based on content
+    
+    // Debounce the rendering to avoid performance issues
+    clearTimeout(window.abcRenderTimeout);
+    window.abcRenderTimeout = setTimeout(() => {
+      ABCJS.renderAbc("abc-render-edit", newContent, {}, {
+        clickListener: function (abcElem, tuneNumber, classes, analysis, drag, mouseEvent) {
+          // Get the character position of the ABC element in the notation
+          const startChar = abcElem.startChar;
+          const endChar = abcElem.endChar;
+
+          // Highlight the corresponding text in the textarea
+          const textarea = textAreaRef.current;
+          textarea.focus();
+          textarea.setSelectionRange(startChar, endChar);
+        }
+      });
+    }, 300);
   };
 
   const handleSave = async () => {
     setIsSaving(true);
+    console.log("Saving file:", fileName);  // Log the filename to check if it's correct
+    console.log("Content:", abcContent);
+  
     try {
       const response = await fetch(`http://localhost:3001/abc-file/${fileName}/content`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ content: abcContent }),
       });
+  
+      console.log("Response status:", response.status);
+  
       if (!response.ok) {
-        throw new Error(`Failed to save the ABC file content. Status: ${response.status}`);
+        throw new Error(
+          `Failed to save the ABC file content. Status: ${response.status}`
+        );
       }
-      setOriginalContent(abcContent);
-      setDialogMessage("Changes saved successfully");
-      setOpenDialog(true);
+  
+      alert('Changes saved successfully');
     } catch (error) {
-      console.error("Error saving ABC file content:", error);
-      setDialogMessage(`Failed to save changes: ${error.message}`);
-      setOpenDialog(true);
+      console.error('Error saving ABC file content:', error);
+      alert(`Failed to save changes: ${error.message}`);
     } finally {
       setIsSaving(false);
     }
@@ -203,7 +180,8 @@ const MusicEntryClerkEdit = () => {
       <GlobalStyle />
       <Box sx={{ display: "flex", minHeight: "100vh" }}>
         <ClerkSidebar active="editScore" />
-        <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column", marginLeft: "225px" }}>
+        {/* <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column" }}> */}
+        <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column", marginLeft: "225px", minHeight: "100vh"}}>
           <Box
             sx={{
               display: "flex",
@@ -212,20 +190,30 @@ const MusicEntryClerkEdit = () => {
               mb: 3,
             }}
           >
-            <Typography variant="h4" sx={{ fontFamily: "Montserrat", fontWeight: "bold", mt: 4, ml: 1 }}>
-              Edit Music Scores
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Typography variant="h4" gutterBottom sx={{ fontFamily: 'Montserrat', fontWeight: 'bold', mt: 4, ml:1 }}>
+                Edit Music Scores
+              </Typography>
+              <IconButton
+                href="https://web.archive.org/web/20190214175540/http://www.stephenmerrony.co.uk/uploads/ABCquickRefv0_6.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ mt: 4, ml: 1 }}
+              >
+                <HelpOutline />
+              </IconButton>
+            </Box>
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography variant="body1" sx={{ mr: 2, fontFamily: "Montserrat" }}>
-                {user ? user.username : "User"}
+                {user ? user.username : 'User'}
               </Typography>
-              <Avatar>{user ? user.username[0] : "U"}</Avatar>
+              <Avatar>{user ? user.username[0] : 'U'}</Avatar>
             </Box>
           </Box>
           <Divider />
-          <Grid container spacing={2} sx={{ flexGrow: 1, mt: 2, flexDirection: "column" }}>
+          <Grid container spacing={2} sx={{ flexGrow: 1, mt: 2, flexDirection: 'column' }}>
             <Grid item>
-              <Typography variant="h6" gutterBottom sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}>
+              <Typography variant="h6" gutterBottom sx={{ fontFamily: 'Montserrat', fontWeight: 'bold' }}>
                 ABC Notation Editor
               </Typography>
               <textarea
@@ -239,25 +227,22 @@ const MusicEntryClerkEdit = () => {
               />
             </Grid>
             <Grid item sx={{ mt: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}>
+              <Typography variant="h6" gutterBottom sx={{ fontFamily: 'Montserrat', fontWeight: 'bold' }}>
                 Music Score Preview
               </Typography>
               <Paper
                 elevation={3}
                 sx={{
                   padding: 2,
-                  borderRadius: 4,
-                  bgcolor: "#ffffff",
-                  textAlign: "center",
-                  maxWidth: "800px",
-                  margin: "0 auto",
-                  minHeight: "300px",
-                  mb: 3,
-                  mt:3,
+                  border: '1px solid #ccc',
+                  borderRadius: '5px',
+                  backgroundColor: '#f8f8f8',
+                  display: 'flex',        // Add flexbox to center content
+                  justifyContent: 'center', // Center horizontally
+                  alignItems: 'center',    // Center vertically
+                  height: 'auto',         // You can adjust this height as needed
                 }}
-              >
-                <div id="abc-render-edit"></div>
-              </Paper>
+              />
             </Grid>
           </Grid>
           <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>

@@ -37,9 +37,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
-
 const textFieldStyles = {
-  "& label.Mui-focused": { 
+  "& label.Mui-focused": {
     color: "#5A67D8", // Vibrant indigo for focus
     fontWeight: "bold", // Adds emphasis to the label on focus
   },
@@ -77,7 +76,6 @@ const textFieldStyles = {
   },
 };
 
-
 const AdminManageUsers = () => {
   const [activeTab, setActiveTab] = useState("customers");
   const [users, setUsers] = useState([]);
@@ -86,7 +84,12 @@ const AdminManageUsers = () => {
 
   // Modal state
   const [openModal, setOpenModal] = useState(false);
-  const [newUser, setNewUser] = useState({ username: "", email: "", password: "", role: "" });
+  const [newUser, setNewUser] = useState({
+    username: "",
+    email: "",
+    password: "",
+    role: "",
+  });
 
   // Delete confirmation dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -103,14 +106,14 @@ const AdminManageUsers = () => {
   const [originalUser, setOriginalUser] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
-    const handleTogglePasswordVisibility = () => {
-      setShowPassword(!showPassword);
-    };
-  
-    const handleToggleConfirmPasswordVisibility = () => {
-      setShowConfirmPassword(!showConfirmPassword);
-    };
+
+  const handleTogglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const handleToggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
 
   const formatRole = (role) => {
     const roleMapping = {
@@ -118,25 +121,19 @@ const AdminManageUsers = () => {
       music_entry_clerk: "Music Entry Clerk",
       admin: "Admin",
     };
-  
+
     return roleMapping[role] || "Unknown Role"; // Fallback for unexpected roles
   };
-  
 
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setOriginalUser(user); // Keep the original data for comparison
+    setEditModalOpen(true);
+  };
 
-
-const handleEditUser = (user) => {
-  setSelectedUser(user);
-  setOriginalUser(user); // Keep the original data for comparison
-  setEditModalOpen(true);
-};
-
-const hasChanges = () => {
-  return JSON.stringify(selectedUser) !== JSON.stringify(originalUser);
-};
-
-
-
+  const hasChanges = () => {
+    return JSON.stringify(selectedUser) !== JSON.stringify(originalUser);
+  };
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -176,7 +173,7 @@ const hasChanges = () => {
       email: "",
       password: "",
       confirmPassword: "",
-      role: ""
+      role: "",
     });
     setErrorMessage(""); // Clear any error messages
   };
@@ -184,16 +181,21 @@ const hasChanges = () => {
   // Update user's approval status
   const handleUpdateApproval = async (id, status) => {
     try {
-      const response = await axios.put(`http://localhost:3003/users/${id}/approval`, {
-        approval: status,
-      });
+      const response = await axios.put(
+        `http://localhost:3003/users/${id}/approval`,
+        {
+          approval: status,
+        }
+      );
       setUsers(users.map((user) => (user._id === id ? response.data : user)));
     } catch (error) {
-      console.error("Error updating approval:", error.response?.data || error.message);
+      console.error(
+        "Error updating approval:",
+        error.response?.data || error.message
+      );
       alert("Failed to update approval status. Please try again.");
     }
   };
-  
 
   // Open delete confirmation dialog
   const openDeleteDialog = (user) => {
@@ -207,14 +209,16 @@ const hasChanges = () => {
     if (userToDelete) {
       // Close the dialog immediately to prevent double triggers
       setDeleteDialogOpen(false);
-  
+
       try {
         console.log("Deleting user:", userToDelete);
-  
+
         // Directly call the delete endpoint
-        const deleteResponse = await axios.delete(`http://localhost:3003/users/${userToDelete._id}`);
+        const deleteResponse = await axios.delete(
+          `http://localhost:3003/users/${userToDelete._id}`
+        );
         console.log("User successfully deleted:", deleteResponse.data);
-  
+
         // Update local state
         setUsers(users.filter((user) => user._id !== userToDelete._id));
         setUserToDelete(null);
@@ -224,10 +228,10 @@ const hasChanges = () => {
       }
     }
   };
-  
+
   const handleAddUser = async () => {
     const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
-  
+
     const formatErrorMessage = (message) => (
       <Typography
         color="error"
@@ -241,13 +245,19 @@ const hasChanges = () => {
         {message}
       </Typography>
     );
-  
+
     // Ensure all fields are filled
-    if (!newUser.username || !newUser.email || !newUser.password || !newUser.confirmPassword || !newUser.role) {
+    if (
+      !newUser.username ||
+      !newUser.email ||
+      !newUser.password ||
+      !newUser.confirmPassword ||
+      !newUser.role
+    ) {
       setErrorMessage(formatErrorMessage("Please fill in all the fields."));
       return;
     }
-  
+
     // Validate password format
     if (!passwordRegex.test(newUser.password)) {
       setErrorMessage(
@@ -257,16 +267,16 @@ const hasChanges = () => {
       );
       return;
     }
-  
+
     // Validate passwords match
     if (newUser.password !== newUser.confirmPassword) {
       setErrorMessage(formatErrorMessage("Passwords do not match."));
       return;
     }
-  
+
     // Clear error message
     setErrorMessage("");
-  
+
     // Proceed with adding the user
     try {
       const response = await axios.post("http://localhost:3003/users", newUser);
@@ -274,7 +284,7 @@ const hasChanges = () => {
       handleCloseModal(); // Close modal and reset form
     } catch (error) {
       console.error("Error adding user:", error);
-  
+
       if (error.response && error.response.data) {
         // Display specific error message from the server
         setErrorMessage(
@@ -287,22 +297,24 @@ const hasChanges = () => {
       }
     }
   };
-  
+
   const handleSaveEdit = async () => {
     try {
       const response = await axios.put(
         `http://localhost:3003/users/${selectedUser._id}`,
         selectedUser
       );
-      
+
       // Update the users list
-      setUsers(users.map((user) =>
-        user._id === selectedUser._id ? response.data : user
-      ));
-  
+      setUsers(
+        users.map((user) =>
+          user._id === selectedUser._id ? response.data : user
+        )
+      );
+
       // Open success dialog
       setSuccessDialogOpen(true);
-  
+
       // Close the modal and reset selection
       setEditModalOpen(false);
       setSelectedUser(null);
@@ -311,36 +323,37 @@ const hasChanges = () => {
       alert("Failed to update user. Please try again.");
     }
   };
-  
-  
- 
-  
-  
 
   const renderContent = () => {
     if (loading) {
       return <Typography>Loading...</Typography>;
     }
-  
+
     const activeUsers = users.filter((user) => {
-      if (activeTab === "clerks") return user.role === "music_entry_clerk" && user.approval === "approved";
+      if (activeTab === "clerks")
+        return (
+          user.role === "music_entry_clerk" && user.approval === "approved"
+        );
       if (activeTab === "customers") return user.role === "customer";
-      if (activeTab === "admins") return user.role === "admin" && user.approval === "approved";
+      if (activeTab === "admins")
+        return user.role === "admin" && user.approval === "approved";
       return false;
     });
-  
+
     const pendingUsers = users.filter((user) => {
-      if (activeTab === "clerks") return user.role === "music_entry_clerk" && user.approval === "pending";
-      if (activeTab === "admins") return user.role === "admin" && user.approval === "pending";
+      if (activeTab === "clerks")
+        return user.role === "music_entry_clerk" && user.approval === "pending";
+      if (activeTab === "admins")
+        return user.role === "admin" && user.approval === "pending";
       return false;
     });
-  
+
     const tabTitles = {
       clerks: "Existing Music Entry Clerks",
       customers: "Customers",
       admins: "Existing Admins",
     };
-  
+
     return (
       <Box>
         {/* Active Users Section */}
@@ -352,7 +365,10 @@ const hasChanges = () => {
             mb: 2,
           }}
         >
-          <Typography variant="h6" sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}>
+          <Typography
+            variant="h6"
+            sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
+          >
             {tabTitles[activeTab]}
           </Typography>
           {activeTab !== "customers" && (
@@ -366,7 +382,10 @@ const hasChanges = () => {
                 fontFamily: "Montserrat",
               }}
               onClick={() => {
-                setNewUser({ ...newUser, role: activeTab === "clerks" ? "music_entry_clerk" : "admin" });
+                setNewUser({
+                  ...newUser,
+                  role: activeTab === "clerks" ? "music_entry_clerk" : "admin",
+                });
                 setOpenModal(true);
               }}
             >
@@ -395,7 +414,10 @@ const hasChanges = () => {
                 }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <Avatar src={user.avatar || "/api/placeholder/40/40"} sx={{ mr: 2 }} />
+                  <Avatar
+                    src={user.profile_picture || "/api/placeholder/40/40"}
+                    sx={{ mr: 2 }}
+                  />
                   <Box>
                     <Typography
                       variant="body1"
@@ -412,13 +434,13 @@ const hasChanges = () => {
                   </Box>
                 </Box>
                 <Box>
-                <IconButton
-  size="small"
-  sx={{ color: "#8BD3E6" }} // Use a color to distinguish the Edit button
-  onClick={() => handleEditUser(user)}
->
-  <EditIcon fontSize="small" />
-</IconButton>
+                  <IconButton
+                    size="small"
+                    sx={{ color: "#8BD3E6" }} // Use a color to distinguish the Edit button
+                    onClick={() => handleEditUser(user)}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
 
                   <IconButton
                     size="small"
@@ -433,10 +455,16 @@ const hasChanges = () => {
           </Box>
         ) : (
           <Typography sx={{ mt: 2, color: "gray", fontFamily: "Montserrat" }}>
-            No existing {activeTab === "clerks" ? "Music Entry Clerks" : activeTab === "admins" ? "Admins" : "Customers"} found.
+            No existing{" "}
+            {activeTab === "clerks"
+              ? "Music Entry Clerks"
+              : activeTab === "admins"
+              ? "Admins"
+              : "Customers"}{" "}
+            found.
           </Typography>
         )}
-  
+
         {/* Pending Users Section */}
         {activeTab !== "customers" && (
           <>
@@ -444,7 +472,9 @@ const hasChanges = () => {
               variant="h6"
               sx={{ mt: 4, fontFamily: "Montserrat", fontWeight: "bold" }}
             >
-              {activeTab === "clerks" ? "Pending Music Entry Clerks" : "Pending Admins"}
+              {activeTab === "clerks"
+                ? "Pending Music Entry Clerks"
+                : "Pending Admins"}
             </Typography>
             {pendingUsers.length > 0 ? (
               <Box
@@ -468,17 +498,23 @@ const hasChanges = () => {
                     }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <Avatar src={user.avatar || "/api/placeholder/40/40"} sx={{ mr: 2 }} />
+                      <Avatar
+                        src={user.profile_picture || "/api/placeholder/40/40"}
+                        sx={{ mr: 2 }}
+                      />
                       <Box>
                         <Typography
                           variant="body1"
                           sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
                         >
-                          {user.username}
+                          {currentUser.username}
                         </Typography>
                         <Typography
                           variant="body2"
-                          sx={{ fontFamily: "Montserrat", color: "text.secondary" }}
+                          sx={{
+                            fontFamily: "Montserrat",
+                            color: "text.secondary",
+                          }}
                         >
                           {user.email}
                         </Typography>
@@ -488,7 +524,9 @@ const hasChanges = () => {
                       <IconButton
                         size="small"
                         sx={{ color: "#4CAF50", mr: 1 }}
-                        onClick={() => handleUpdateApproval(user._id, "approved")}
+                        onClick={() =>
+                          handleUpdateApproval(user._id, "approved")
+                        }
                       >
                         <CheckIcon fontSize="small" />
                       </IconButton>
@@ -504,8 +542,12 @@ const hasChanges = () => {
                 ))}
               </Box>
             ) : (
-              <Typography sx={{ mt: 2, color: "gray", fontFamily: "Montserrat" }}>
-                No pending {activeTab === "clerks" ? "Music Entry Clerks" : "Admins"} found.
+              <Typography
+                sx={{ mt: 2, color: "gray", fontFamily: "Montserrat" }}
+              >
+                No pending{" "}
+                {activeTab === "clerks" ? "Music Entry Clerks" : "Admins"}{" "}
+                found.
               </Typography>
             )}
           </>
@@ -513,7 +555,6 @@ const hasChanges = () => {
       </Box>
     );
   };
-  
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
@@ -545,10 +586,24 @@ const hasChanges = () => {
             Manage User Accounts
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Typography variant="body1" sx={{ mr: 2, fontFamily: "Montserrat" }}>
+            <Typography
+              variant="body1"
+              sx={{ mr: 2, fontFamily: "Montserrat" }}
+            >
               {loading ? "Loading..." : currentUser?.username || "Admin"}
             </Typography>
-            <Avatar>{currentUser ? currentUser.username.charAt(0) : "A"}</Avatar>
+            <Avatar
+              alt={currentUser ? currentUser.username : null}
+              src={
+                currentUser && currentUser.profile_picture
+                  ? currentUser.profile_picture
+                  : null
+              }
+            >
+              {(!currentUser || !currentUser.profile_picture) && currentUser
+                ? currentUser.username.charAt(0).toUpperCase()
+                : null}
+            </Avatar>
           </Box>
         </Box>
         <Divider sx={{ my: 2 }} />
@@ -584,553 +639,565 @@ const hasChanges = () => {
       </Box>
       {/* Modal for Adding Users */}
       <Modal open={openModal} onClose={handleCloseModal}>
-      <Box
-    sx={{
-      position: "absolute",
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%)",
-      bgcolor: "white",
-      borderRadius: "20px",
-      boxShadow: 24,
-      padding: 4,
-      width: 400,
-      textAlign: "center",
-    }}
-  >
-    {/* Close Button */}
-    <IconButton
-      onClick={() => setOpenModal(false)}
-      sx={{
-        position: "absolute",
-        top: "12px",
-        right: "12px",
-        color: "#555",
-        "&:hover": {
-          color: "#D32F2F",
-        },
-      }}
-    >
-      &times;
-    </IconButton>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            bgcolor: "white",
+            borderRadius: "20px",
+            boxShadow: 24,
+            padding: 4,
+            width: 400,
+            textAlign: "center",
+          }}
+        >
+          {/* Close Button */}
+          <IconButton
+            onClick={() => setOpenModal(false)}
+            sx={{
+              position: "absolute",
+              top: "12px",
+              right: "12px",
+              color: "#555",
+              "&:hover": {
+                color: "#D32F2F",
+              },
+            }}
+          >
+            &times;
+          </IconButton>
 
-    <Typography
-      variant="h5"
-      align="center"
-      fontFamily="Montserrat"
-      fontWeight="bold"
-      gutterBottom
-      sx={{ marginBottom: 2 }}
-    >
-      Add New User
-    </Typography>
-    <Typography
-      variant="body1"
-      align="center"
-      fontFamily="Montserrat"
-      gutterBottom
-      sx={{ marginBottom: 2 }}
-    >
-      Fill this form to create a new user account
-    </Typography>
+          <Typography
+            variant="h5"
+            align="center"
+            fontFamily="Montserrat"
+            fontWeight="bold"
+            gutterBottom
+            sx={{ marginBottom: 2 }}
+          >
+            Add New User
+          </Typography>
+          <Typography
+            variant="body1"
+            align="center"
+            fontFamily="Montserrat"
+            gutterBottom
+            sx={{ marginBottom: 2 }}
+          >
+            Fill this form to create a new user account
+          </Typography>
 
-    {/* Username Field */}
-    <TextField
-      fullWidth
-      label="Username"
-      margin="normal"
-      required
-      value={newUser.username}
-      onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-      sx={textFieldStyles}
-    />
+          {/* Username Field */}
+          <TextField
+            fullWidth
+            label="Username"
+            margin="normal"
+            required
+            value={newUser.username}
+            onChange={(e) =>
+              setNewUser({ ...newUser, username: e.target.value })
+            }
+            sx={textFieldStyles}
+          />
 
-    {/* Email Field */}
-    <TextField
-      fullWidth
-      label="Email Address"
-      margin="normal"
-      variant="outlined"
-      required
-      value={newUser.email}
-      onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-      sx={textFieldStyles}
-    />
+          {/* Email Field */}
+          <TextField
+            fullWidth
+            label="Email Address"
+            margin="normal"
+            variant="outlined"
+            required
+            value={newUser.email}
+            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+            sx={textFieldStyles}
+          />
 
-    {/* Password Field */}
-      <TextField
-        fullWidth
-        label="Password"
-        type={showPassword ? "text" : "password"}
-        margin="normal"
-        variant="outlined"
-        required
-        value={newUser.password}
-        onChange={(e) =>
-          setNewUser({ ...newUser, password: e.target.value })
-        }
-        sx={textFieldStyles}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton
-                onClick={handleTogglePasswordVisibility}
-                edge="end"
-                aria-label="toggle password visibility"
-              >
-                {showPassword ? <Visibility /> : <VisibilityOff />}
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-      />
+          {/* Password Field */}
+          <TextField
+            fullWidth
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            margin="normal"
+            variant="outlined"
+            required
+            value={newUser.password}
+            onChange={(e) =>
+              setNewUser({ ...newUser, password: e.target.value })
+            }
+            sx={textFieldStyles}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={handleTogglePasswordVisibility}
+                    edge="end"
+                    aria-label="toggle password visibility"
+                  >
+                    {showPassword ? <Visibility /> : <VisibilityOff />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
 
-      {/* Confirm Password Field */}
-      <TextField
-        fullWidth
-        label="Confirm Password"
-        type={showConfirmPassword ? "text" : "password"}
-        margin="normal"
-        variant="outlined"
-        required
-        value={newUser.confirmPassword}
-        onChange={(e) =>
-          setNewUser({ ...newUser, confirmPassword: e.target.value })
-        }
-        sx={textFieldStyles}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton
-                onClick={handleToggleConfirmPasswordVisibility}
-                edge="end"
-                aria-label="toggle confirm password visibility"
-              >
-                {showConfirmPassword ? <Visibility /> : <VisibilityOff />}
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-      />
+          {/* Confirm Password Field */}
+          <TextField
+            fullWidth
+            label="Confirm Password"
+            type={showConfirmPassword ? "text" : "password"}
+            margin="normal"
+            variant="outlined"
+            required
+            value={newUser.confirmPassword}
+            onChange={(e) =>
+              setNewUser({ ...newUser, confirmPassword: e.target.value })
+            }
+            sx={textFieldStyles}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={handleToggleConfirmPasswordVisibility}
+                    edge="end"
+                    aria-label="toggle confirm password visibility"
+                  >
+                    {showConfirmPassword ? <Visibility /> : <VisibilityOff />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
 
-    {/* Role Selection */}
-    <Typography sx={{ fontFamily: "Montserrat", mt: 2 }}>Select Role:</Typography>
-    <FormControl component="fieldset" sx={{ mt: 1 }}>
-      <RadioGroup
-        aria-label="role"
-        name="role"
-        value={newUser.role}
-        onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-        row
-      >
-        <FormControlLabel
-          value="music_entry_clerk"
-          control={
-            <Radio
+          {/* Role Selection */}
+          <Typography sx={{ fontFamily: "Montserrat", mt: 2 }}>
+            Select Role:
+          </Typography>
+          <FormControl component="fieldset" sx={{ mt: 1 }}>
+            <RadioGroup
+              aria-label="role"
+              name="role"
+              value={newUser.role}
+              onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+              row
+            >
+              <FormControlLabel
+                value="customer"
+                control={
+                  <Radio
+                    sx={{
+                      color: "#8BD3E6",
+                      "&.Mui-checked": { color: "#3B3183" },
+                    }}
+                  />
+                }
+                label="Customer"
+                componentsProps={{
+                  typography: {
+                    sx: { fontFamily: "Montserrat" },
+                  },
+                }}
+              />
+              <FormControlLabel
+                value="music_entry_clerk"
+                control={
+                  <Radio
+                    sx={{
+                      color: "#8BD3E6",
+                      "&.Mui-checked": { color: "#3B3183" },
+                    }}
+                  />
+                }
+                label="Music Entry Clerk"
+                componentsProps={{
+                  typography: {
+                    sx: { fontFamily: "Montserrat" },
+                  },
+                }}
+              />
+              <FormControlLabel
+                value="admin"
+                control={
+                  <Radio
+                    sx={{
+                      color: "#8BD3E6",
+                      "&.Mui-checked": { color: "#3B3183" },
+                    }}
+                  />
+                }
+                label="Admin"
+                componentsProps={{
+                  typography: {
+                    sx: { fontFamily: "Montserrat" },
+                  },
+                }}
+              />
+            </RadioGroup>
+          </FormControl>
+
+          {/* Error Message */}
+          {errorMessage && (
+            <Typography
+              color="error"
+              variant="body2"
+              align="center"
+              sx={{ mt: 2 }}
+            >
+              {errorMessage}
+            </Typography>
+          )}
+
+          {/* Submit Button */}
+          <Button
+            fullWidth
+            variant="contained"
+            sx={{
+              mt: 1,
+              px: 10,
+              fontFamily: "Montserrat",
+              fontWeight: "bold",
+              color: "#FFFFFF",
+              backgroundColor: "#8BD3E6",
+              border: "1px solid #8BD3E6", // Explicitly define the border
+              borderColor: "#8BD3E6",
+              boxShadow: "none", // Remove the shadow
+              "&:hover": {
+                backgroundColor: "#3B3183",
+                color: "#FFFFFF",
+                border: "1px solid #3B3183", // Ensure border remains visible on hover
+                boxShadow: "none", // Remove shadow on hover
+              },
+            }}
+            onClick={handleAddUser}
+          >
+            Add User
+          </Button>
+        </Box>
+      </Modal>
+
+      <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            bgcolor: "white",
+            borderRadius: "20px",
+            boxShadow: 24,
+            padding: 4,
+            width: 400,
+            textAlign: "center",
+            // position: "relative", // Needed to position the close button correctly
+          }}
+        >
+          {/* Close Button (X) */}
+          <IconButton
+            onClick={() => setEditModalOpen(false)}
+            sx={{
+              position: "absolute",
+              top: "8px",
+              right: "8px",
+              color: "#555",
+              "&:hover": {
+                color: "#D32F2F", // Red color on hover
+              },
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+
+          {/* Modal Content */}
+          <Typography
+            variant="h5"
+            align="center"
+            fontFamily="Montserrat"
+            fontWeight="bold"
+            gutterBottom
+          >
+            Edit User
+          </Typography>
+          <TextField
+            fullWidth
+            label="Username"
+            margin="normal"
+            value={selectedUser?.username || ""}
+            onChange={(e) =>
+              setSelectedUser({ ...selectedUser, username: e.target.value })
+            }
+            sx={textFieldStyles}
+          />
+          <TextField
+            fullWidth
+            label="Email Address"
+            margin="normal"
+            value={selectedUser?.email || ""}
+            onChange={(e) =>
+              setSelectedUser({ ...selectedUser, email: e.target.value })
+            }
+            sx={textFieldStyles}
+          />
+          <Typography
+            sx={{
+              fontFamily: "Montserrat",
+              fontSize: "14px",
+              color: "#4A5568",
+              textAlign: "left",
+              mb: 1,
+              mt: 2,
+            }}
+          >
+            Role
+          </Typography>
+          <FormControl
+            fullWidth
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                fontFamily: "Montserrat",
+                borderRadius: "12px",
+                boxShadow: "0px 4px 6px rgba(90, 103, 216, 0.2)",
+                "&:hover fieldset": {
+                  borderColor: "#7F9CF5",
+                  boxShadow: "0px 6px 16px rgba(127, 156, 245, 0.4)",
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#5A67D8",
+                  boxShadow: "0px 8px 20px rgba(90, 103, 216, 0.6)",
+                },
+              },
+            }}
+          >
+            <Select
+              value={selectedUser?.role || ""}
+              onChange={(e) =>
+                setSelectedUser({ ...selectedUser, role: e.target.value })
+              }
               sx={{
-                color: "#8BD3E6",
-                "&.Mui-checked": { color: "#3B3183" },
+                fontFamily: "Montserrat",
+                fontSize: "14px",
+                borderRadius: "12px",
+                padding: "1px 3px",
+                "& .MuiSelect-icon": {
+                  color: "#5A67D8",
+                },
               }}
-            />
-          }
-          label="Music Entry Clerk"
-          componentsProps={{
-            typography: {
-              sx: { fontFamily: "Montserrat" },
+            >
+              <MenuItem
+                value="customer"
+                sx={{
+                  fontFamily: "Montserrat",
+                  fontSize: "14px",
+                }}
+              >
+                Customer
+              </MenuItem>
+              <MenuItem
+                value="music_entry_clerk"
+                sx={{
+                  fontFamily: "Montserrat",
+                  fontSize: "14px",
+                }}
+              >
+                Music Entry Clerk
+              </MenuItem>
+              <MenuItem
+                value="admin"
+                sx={{
+                  fontFamily: "Montserrat",
+                  fontSize: "14px",
+                }}
+              >
+                Admin
+              </MenuItem>
+            </Select>
+          </FormControl>
+          <Button
+            fullWidth
+            variant="contained"
+            sx={{
+              mt: 2,
+              fontFamily: "Montserrat",
+              fontWeight: "bold",
+              boxShadow: "none",
+              color: "#FFFFFF",
+              bgcolor: hasChanges() ? "#8BD3E6" : "#CCCCCC", // Gray if disabled
+              "&:hover": { bgcolor: hasChanges() ? "#3B3183" : "#CCCCCC" },
+            }}
+            onClick={handleSaveEdit}
+            disabled={!hasChanges()} // Disable if no changes
+          >
+            Save Changes
+          </Button>
+        </Box>
+      </Modal>
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: "16px",
+            padding: "16px",
+            fontFamily: "Montserrat",
+          },
+        }}
+      >
+        <IconButton
+          onClick={handleCloseModal} // Changed from setOpenModal(false)
+          sx={{
+            position: "absolute",
+            top: "12px",
+            right: "12px",
+            color: "#555",
+            "&:hover": {
+              color: "#D32F2F",
             },
           }}
-        />
-        <FormControlLabel
-          value="admin"
-          control={
-            <Radio
-              sx={{
-                color: "#8BD3E6",
-                "&.Mui-checked": { color: "#3B3183" },
-              }}
-            />
-          }
-          label="Admin"
-          componentsProps={{
-            typography: {
-              sx: { fontFamily: "Montserrat" },
-            },
+        >
+          &times;
+        </IconButton>
+
+        <DialogTitle
+          sx={{
+            fontFamily: "Montserrat",
+            fontWeight: "bold",
+            fontSize: "20px",
+            textAlign: "center",
+            paddingTop: "16px", // To provide space for the close button
           }}
-        />
-      </RadioGroup>
-    </FormControl>
+        >
+          Confirm Deletion
+        </DialogTitle>
+        <DialogContent
+          sx={{
+            fontFamily: "Montserrat",
+            textAlign: "center",
+          }}
+        >
+          <DialogContentText
+            sx={{
+              fontFamily: "Montserrat",
+              fontSize: "16px",
+              color: "#555",
+            }}
+          >
+            Are you sure you want to delete{" "}
+            <strong style={{ color: "#D32F2F" }}>
+              {userToDelete?.username}
+            </strong>
+            ? This action <strong>cannot be undone</strong>.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions
+          sx={{
+            justifyContent: "center",
+            gap: "12px",
+            marginTop: "8px",
+          }}
+        >
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            sx={{
+              textTransform: "none",
+              fontFamily: "Montserrat",
+              fontWeight: "bold",
+              color: "#3B3183",
+              border: "1px solid #3B3183",
+              borderRadius: "8px",
+              padding: "8px 24px",
+              "&:hover": {
+                bgcolor: "#ECEFF1",
+              },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            color="error"
+            disabled={loadingDelete}
+            sx={{
+              textTransform: "none",
+              fontFamily: "Montserrat",
+              fontWeight: "bold",
+              bgcolor: "#D32F2F",
+              color: "#FFFFFF",
+              borderRadius: "8px",
+              padding: "8px 24px",
+              "&:hover": {
+                bgcolor: "#B71C1C",
+              },
+            }}
+          >
+            {loadingDelete ? "Deleting..." : "Confirm"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-    {/* Error Message */}
-    {errorMessage && (
-      <Typography
-        color="error"
-        variant="body2"
-        align="center"
-        sx={{ mt: 2 }}
-      >
-        {errorMessage}
-      </Typography>
-    )}
-
-    {/* Submit Button */}
-<Button
-  fullWidth
-  variant="contained"
-  sx={{
-    mt: 1,
-    px: 10,
-    fontFamily: "Montserrat",
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    backgroundColor: "#8BD3E6",
-    border: "1px solid #8BD3E6", // Explicitly define the border
-    borderColor: "#8BD3E6",
-    boxShadow: "none", // Remove the shadow
-    "&:hover": {
-      backgroundColor: "#3B3183",
-      color: "#FFFFFF",
-      border: "1px solid #3B3183", // Ensure border remains visible on hover  
-      boxShadow: "none", // Remove shadow on hover
-    },
-  }}
-  onClick={handleAddUser}
->
-  Add User
-</Button>
-
-  </Box>
-</Modal>
-
-<Modal open={editModalOpen} onClose={() => setEditModalOpen(false)}>
-  <Box
-    sx={{
-      position: "absolute",
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%)",
-      bgcolor: "white",
-      borderRadius: "20px",
-      boxShadow: 24,
-      padding: 4,
-      width: 400,
-      textAlign: "center",
-      position: "relative", // Needed to position the close button correctly
-    }}
-  >
-    {/* Close Button (X) */}
-    <IconButton
-      onClick={() => setEditModalOpen(false)}
-      sx={{
-        position: "absolute",
-        top: "8px",
-        right: "8px",
-        color: "#555",
-        "&:hover": {
-          color: "#D32F2F", // Red color on hover
-        },
-      }}
-    >
-      <CloseIcon />
-    </IconButton>
-
-    {/* Modal Content */}
-    <Typography
-      variant="h5"
-      align="center"
-      fontFamily="Montserrat"
-      fontWeight="bold"
-      gutterBottom
-    >
-      Edit User
-    </Typography>
-    <TextField
-      fullWidth
-      label="Username"
-      margin="normal"
-      value={selectedUser?.username || ""}
-      onChange={(e) =>
-        setSelectedUser({ ...selectedUser, username: e.target.value })
-      }
-      sx={textFieldStyles}
-    />
-    <TextField
-      fullWidth
-      label="Email Address"
-      margin="normal"
-      value={selectedUser?.email || ""}
-      onChange={(e) =>
-        setSelectedUser({ ...selectedUser, email: e.target.value })
-      }
-      sx={textFieldStyles}
-    />
-    <Typography
-      sx={{
-        fontFamily: "Montserrat",
-        fontSize: "14px",
-        color: "#4A5568",
-        textAlign: "left",
-        mb: 1,
-        mt: 2,
-      }}
-    >
-      Role
-    </Typography>
-    <FormControl
-      fullWidth
-      sx={{
-        "& .MuiOutlinedInput-root": {
-          fontFamily: "Montserrat",
-          borderRadius: "12px",
-          boxShadow: "0px 4px 6px rgba(90, 103, 216, 0.2)",
-          "&:hover fieldset": {
-            borderColor: "#7F9CF5",
-            boxShadow: "0px 6px 16px rgba(127, 156, 245, 0.4)",
-          },
-          "&.Mui-focused fieldset": {
-            borderColor: "#5A67D8",
-            boxShadow: "0px 8px 20px rgba(90, 103, 216, 0.6)",
-          },
-        },
-      }}
-    >
-      <Select
-        value={selectedUser?.role || ""}
-        onChange={(e) =>
-          setSelectedUser({ ...selectedUser, role: e.target.value })
-        }
-        sx={{
-          fontFamily: "Montserrat",
-          fontSize: "14px",
-          borderRadius: "12px",
-          padding: "1px 3px",
-          "& .MuiSelect-icon": {
-            color: "#5A67D8",
+      <Dialog
+        open={successDialogOpen}
+        onClose={() => setSuccessDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: "16px",
+            padding: "16px",
+            fontFamily: "Montserrat",
           },
         }}
       >
-        <MenuItem
-          value="customer"
+        <DialogTitle
           sx={{
             fontFamily: "Montserrat",
-            fontSize: "14px",
+            fontWeight: "bold",
+            fontSize: "20px",
+            textAlign: "center",
           }}
         >
-          Customer
-        </MenuItem>
-        <MenuItem
-          value="music_entry_clerk"
+          Success
+        </DialogTitle>
+        <DialogContent
           sx={{
             fontFamily: "Montserrat",
-            fontSize: "14px",
+            textAlign: "center",
           }}
         >
-          Music Entry Clerk
-        </MenuItem>
-        <MenuItem
-          value="admin"
+          <DialogContentText
+            sx={{
+              fontFamily: "Montserrat",
+              fontSize: "16px",
+              color: "#555",
+            }}
+          >
+            User has been updated successfully.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions
           sx={{
-            fontFamily: "Montserrat",
-            fontSize: "14px",
+            justifyContent: "center",
+            gap: "12px",
+            marginTop: "8px",
           }}
         >
-          Admin
-        </MenuItem>
-      </Select>
-    </FormControl>
-    <Button
-      fullWidth
-      variant="contained"
-      sx={{
-        mt: 2,
-        fontFamily: "Montserrat",
-        fontWeight: "bold",
-        boxShadow: "none",
-        color: "#FFFFFF",
-        bgcolor: hasChanges() ? "#8BD3E6" : "#CCCCCC", // Gray if disabled
-        "&:hover": { bgcolor: hasChanges() ? "#3B3183" : "#CCCCCC" },
-      }}
-      onClick={handleSaveEdit}
-      disabled={!hasChanges()} // Disable if no changes
-    >
-      Save Changes
-    </Button>
-  </Box>
-</Modal>
-
-
-
-  
-
-
-
-
-<Dialog
-  open={deleteDialogOpen}
-  onClose={() => setDeleteDialogOpen(false)}
-  PaperProps={{
-    sx: {
-      borderRadius: "16px",
-      padding: "16px",
-      fontFamily: "Montserrat",
-    },
-  }}
->
-<IconButton
-  onClick={handleCloseModal}  // Changed from setOpenModal(false)
-  sx={{
-    position: "absolute",
-    top: "12px",
-    right: "12px",
-    color: "#555",
-    "&:hover": {
-      color: "#D32F2F",
-    },
-  }}
->
-  &times;
-</IconButton>
-
-
-  <DialogTitle
-    sx={{
-      fontFamily: "Montserrat",
-      fontWeight: "bold",
-      fontSize: "20px",
-      textAlign: "center",
-      paddingTop: "16px", // To provide space for the close button
-    }}
-  >
-    Confirm Deletion
-  </DialogTitle>
-  <DialogContent
-    sx={{
-      fontFamily: "Montserrat",
-      textAlign: "center",
-    }}
-  >
-    <DialogContentText
-      sx={{
-        fontFamily: "Montserrat",
-        fontSize: "16px",
-        color: "#555",
-      }}
-    >
-      Are you sure you want to delete{" "}
-      <strong style={{ color: "#D32F2F" }}>{userToDelete?.username}</strong>?
-      This action <strong>cannot be undone</strong>.
-    </DialogContentText>
-  </DialogContent>
-  <DialogActions
-    sx={{
-      justifyContent: "center",
-      gap: "12px",
-      marginTop: "8px",
-    }}
-  >
-    <Button
-      onClick={() => setDeleteDialogOpen(false)}
-      sx={{
-        textTransform: "none",
-        fontFamily: "Montserrat",
-        fontWeight: "bold",
-        color: "#3B3183",
-        border: "1px solid #3B3183",
-        borderRadius: "8px",
-        padding: "8px 24px",
-        "&:hover": {
-          bgcolor: "#ECEFF1",
-        },
-      }}
-    >
-      Cancel
-    </Button>
-    <Button
-      onClick={handleConfirmDelete}
-      color="error"
-      disabled={loadingDelete}
-      sx={{
-        textTransform: "none",
-        fontFamily: "Montserrat",
-        fontWeight: "bold",
-        bgcolor: "#D32F2F",
-        color: "#FFFFFF",
-        borderRadius: "8px",
-        padding: "8px 24px",
-        "&:hover": {
-          bgcolor: "#B71C1C",
-        },
-      }}
-    >
-      {loadingDelete ? "Deleting..." : "Confirm"}
-    </Button>
-  </DialogActions>
-</Dialog>
-
-<Dialog
-  open={successDialogOpen}
-  onClose={() => setSuccessDialogOpen(false)}
-  PaperProps={{
-    sx: {
-      borderRadius: "16px",
-      padding: "16px",
-      fontFamily: "Montserrat",
-    },
-  }}
->
-  <DialogTitle
-    sx={{
-      fontFamily: "Montserrat",
-      fontWeight: "bold",
-      fontSize: "20px",
-      textAlign: "center",
-    }}
-  >
-    Success
-  </DialogTitle>
-  <DialogContent
-    sx={{
-      fontFamily: "Montserrat",
-      textAlign: "center",
-    }}
-  >
-    <DialogContentText
-      sx={{
-        fontFamily: "Montserrat",
-        fontSize: "16px",
-        color: "#555",
-      }}
-    >
-      User has been updated successfully.
-    </DialogContentText>
-  </DialogContent>
-  <DialogActions
-    sx={{
-      justifyContent: "center",
-      gap: "12px",
-      marginTop: "8px",
-    }}
-  >
-    <Button
-      onClick={() => setSuccessDialogOpen(false)}
-      sx={{
-        textTransform: "none",
-        fontFamily: "Montserrat",
-        fontWeight: "bold",
-        color: "#3B3183",
-        border: "1px solid #3B3183",
-        borderRadius: "8px",
-        padding: "8px 24px",
-        "&:hover": {
-          bgcolor: "#ECEFF1",
-        },
-      }}
-    >
-      OK
-    </Button>
-  </DialogActions>
-</Dialog>
-
-
+          <Button
+            onClick={() => setSuccessDialogOpen(false)}
+            sx={{
+              textTransform: "none",
+              fontFamily: "Montserrat",
+              fontWeight: "bold",
+              color: "#3B3183",
+              border: "1px solid #3B3183",
+              borderRadius: "8px",
+              padding: "8px 24px",
+              "&:hover": {
+                bgcolor: "#ECEFF1",
+              },
+            }}
+          >
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

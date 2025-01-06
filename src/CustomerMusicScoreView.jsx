@@ -17,8 +17,8 @@ import CustomerSidebar from "./CustomerSidebar";
 import { createGlobalStyle } from "styled-components";
 import { ref, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebase";
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import FavoriteIcon from '@mui/icons-material/Favorite';
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 
 export default function CustomerMusicScoreView() {
   const { id } = useParams();
@@ -27,7 +27,6 @@ export default function CustomerMusicScoreView() {
   const [favorites, setFavorites] = useState([]);
   const [addedToCartScores, setAddedToCartScores] = useState([]);
   const navigate = useNavigate();
-
 
   useEffect(() => {
     const fetchUserSession = async () => {
@@ -148,7 +147,7 @@ export default function CustomerMusicScoreView() {
               mt: 3,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography variant="h4">Music Score View</Typography>
             </Box>
             <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -157,7 +156,15 @@ export default function CustomerMusicScoreView() {
                   <Typography variant="body1" sx={{ mr: 2 }}>
                     {user.username}
                   </Typography>
-                  <Avatar>{user.username[0]}</Avatar>
+                  <Avatar
+                    alt={user.username}
+                    src={
+                      user && user.profile_picture ? user.profile_picture : null
+                    }
+                  >
+                    {(!user || !user.profile_picture) &&
+                      user.username.charAt(0).toUpperCase()}
+                  </Avatar>
                 </>
               ) : (
                 <>
@@ -178,13 +185,15 @@ export default function CustomerMusicScoreView() {
               gap: 2,
               justifyContent: "center",
               alignItems: "center",
-              mb: 3
+              mb: 3,
             }}
           >
             <Button
               variant="contained"
               startIcon={<ShoppingCartIcon />}
-              onClick={(e) => {addToCart(musicScore._id);}}
+              onClick={(e) => {
+                addToCart(musicScore._id);
+              }}
               sx={{
                 backgroundColor: "#3b3183",
                 color: "#fff", // White text color
@@ -198,7 +207,9 @@ export default function CustomerMusicScoreView() {
             <Button
               variant="contained"
               startIcon={<FavoriteIcon />}
-              onClick={(e) => {toggleFavorite(musicScore._id);}}
+              onClick={(e) => {
+                toggleFavorite(musicScore._id);
+              }}
               sx={{
                 backgroundColor: "red",
                 color: "#fff", // White text color
