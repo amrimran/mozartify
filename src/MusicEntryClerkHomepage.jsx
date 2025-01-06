@@ -260,152 +260,174 @@ export default function MusicEntryClerkHomepage() {
               </IconButton>
 
               <Drawer
-                anchor="right"
-                open={isDrawerOpen}
-                onClose={() => setIsDrawerOpen(false)}
-              >
-                <Box
-                  sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    p: 2,
-                    width: 300,
-                  }}
-                >
-                  <Typography variant="h6" sx={{ mb: 2 }}>
-                    Filter Options
-                  </Typography>
+  anchor="right"
+  open={isDrawerOpen}
+  onClose={() => setIsDrawerOpen(false)}
+>
+  <Box
+    sx={{
+      height: "100%",
+      display: "flex",
+      flexDirection: "column",
+      p: 2,
+      width: 300,
+      fontFamily: "Montserrat", // Apply Montserrat globally to the Box
+    }}
+  >
+    <Typography variant="h6" sx={{ mb: 2, fontFamily: "Montserrat" }}>
+      Filter Options
+    </Typography>
 
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Genre</InputLabel>
-                    <Select
-                      label="Genre"
-                      value={genre}
-                      onChange={(e) => setGenre(e.target.value)}
-                    >
-                      {[
-                        "Baroque",
-                        "Children's",
-                        "Children's Song",
-                        "Classical",
-                        "Disco",
-                        "Impressionist",
-                        "Pop",
-                        "Rock",
-                        "Renaissance Polyphony",
-                      ].map((item) => (
-                        <MenuItem key={item} value={item}>
-                          {item}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+    <FormControl fullWidth sx={{ mb: 2 }}>
+      <InputLabel sx={{ fontFamily: "Montserrat" }}>Genre</InputLabel>
+      <Select
+        label="Genre"
+        value={genre}
+        onChange={(e) => setGenre(e.target.value)}
+        sx={{ fontFamily: "Montserrat" }}
+      >
+        {[
+          "Baroque",
+          "Children's",
+          "Children's Song",
+          "Classical",
+          "Disco",
+          "Impressionist",
+          "Pop",
+          "Rock",
+          "Renaissance Polyphony",
+        ].map((item) => (
+          <MenuItem key={item} value={item} sx={{ fontFamily: "Montserrat" }}>
+            {item}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
 
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Composer</InputLabel>
-                    <Select
-                      label="Composer"
-                      value={composer}
-                      onChange={(e) => setComposer(e.target.value)}
-                    >
-                      {[
-                        "Antonio Vivaldi",
-                        "Claude Debussy",
-                        "Emil Aarestrup",
-                        "Heinrich Faber",
-                        "Johann Pachelbel",
-                        "John Lennon, Paul McCartney",
-                        "Ludwig van Beethoven",
-                        "Mark Fisher",
-                        "Joe Goodman",
-                        "Larry Shay",
-                        "Wolfgang Amadeus Mozart",
-                      ].map((composerName) => (
-                        <MenuItem key={composerName} value={composerName}>
-                          {composerName}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+    <FormControl fullWidth sx={{ mb: 2 }}>
+      <InputLabel sx={{ fontFamily: "Montserrat" }}>Composer</InputLabel>
+      <Select
+        label="Composer"
+        value={composer}
+        onChange={(e) => setComposer(e.target.value)}
+        sx={{ fontFamily: "Montserrat" }}
+      >
+        {[
+          "Antonio Vivaldi",
+          "Claude Debussy",
+          "Emil Aarestrup",
+          "Heinrich Faber",
+          "Johann Pachelbel",
+          "John Lennon, Paul McCartney",
+          "Ludwig van Beethoven",
+          "Mark Fisher",
+          "Joe Goodman",
+          "Larry Shay",
+          "Wolfgang Amadeus Mozart",
+        ].map((composerName) => (
+          <MenuItem
+            key={composerName}
+            value={composerName}
+            sx={{ fontFamily: "Montserrat" }}
+          >
+            {composerName}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
 
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Emotion</InputLabel>
-                    <Select
-                      label="Emotion"
-                      value={emotion}
-                      onChange={(e) => setEmotion(e.target.value)}
-                    >
-                      <MenuItem value="Happy">Angry</MenuItem>
-                      <MenuItem value="Happy">Happy</MenuItem>
-                      <MenuItem value="Relaxed">Relaxed</MenuItem>
-                      <MenuItem value="Sad">Sad</MenuItem>
-                    </Select>
-                  </FormControl>
+    <FormControl fullWidth sx={{ mb: 2 }}>
+      <InputLabel sx={{ fontFamily: "Montserrat" }}>Emotion</InputLabel>
+      <Select
+        label="Emotion"
+        value={emotion}
+        onChange={(e) => setEmotion(e.target.value)}
+        sx={{ fontFamily: "Montserrat" }}
+      >
+        <MenuItem value="Angry" sx={{ fontFamily: "Montserrat" }}>
+          Angry
+        </MenuItem>
+        <MenuItem value="Happy" sx={{ fontFamily: "Montserrat" }}>
+          Happy
+        </MenuItem>
+        <MenuItem value="Relaxed" sx={{ fontFamily: "Montserrat" }}>
+          Relaxed
+        </MenuItem>
+        <MenuItem value="Sad" sx={{ fontFamily: "Montserrat" }}>
+          Sad
+        </MenuItem>
+      </Select>
+    </FormControl>
 
-                  <TextField
-                    label="Instrumentation"
-                    variant="outlined"
-                    fullWidth
-                    sx={{ mb: 2 }}
-                    value={instrumentation}
-                    onChange={(e) => setInstrumentation(e.target.value)}
-                  />
+    <TextField
+      label="Instrumentation"
+      variant="outlined"
+      fullWidth
+      sx={{ mb: 2, fontFamily: "Montserrat" }}
+      InputLabelProps={{ style: { fontFamily: "Montserrat" } }}
+      InputProps={{ style: { fontFamily: "Montserrat" } }}
+      value={instrumentation}
+      onChange={(e) => setInstrumentation(e.target.value)}
+    />
 
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    sx={{
-                      mt: 2,
-                      borderColor: "#3B3183",
-                      color: "#3B3183",
-                      "&:hover": {
-                        borderColor: "#3B3183",
-                        color: "#FFFFFF",
-                        backgroundColor: "#3B3183",
-                      },
-                    }}
-                    onClick={handleFilterRequest}
-                  >
-                    APPLY FILTERS
-                  </Button>
+    <Button
+      variant="outlined"
+      fullWidth
+      sx={{
+        mt: 2,
+        borderColor: "#3B3183",
+        color: "#3B3183",
+        fontFamily: "Montserrat",
+        "&:hover": {
+          borderColor: "#3B3183",
+          color: "#FFFFFF",
+          backgroundColor: "#3B3183",
+        },
+      }}
+      onClick={handleFilterRequest}
+    >
+      APPLY FILTERS
+    </Button>
 
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    sx={{
-                      mt: 2,
-                      borderColor: "#C44131",
-                      color: "#C44131",
-                      "&:hover": {
-                        borderColor: "#C44131",
-                        color: "#FFFFFF",
-                        backgroundColor: "#C44131",
-                      },
-                    }}
-                    onClick={clearFilters}
-                  >
-                    CLEAR FILTERS
-                  </Button>
-                  <Box sx={{ mt: "auto" }}>
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      sx={{
-                        mb: 2, // Margin at the bottom
-                        backgroundColor: "#483C32",
-                        color: "#fff",
-                        "&:hover": {
-                          backgroundColor: "#3c312a",
-                        },
-                      }}
-                      onClick={() => setIsDrawerOpen(false)}
-                    >
-                      CLOSE FILTERS
-                    </Button>
-                  </Box>
-                </Box>
-              </Drawer>
+    <Button
+      variant="outlined"
+      fullWidth
+      sx={{
+        mt: 2,
+        borderColor: "#DB2226",
+        color: "#DB2226",
+        fontFamily: "Montserrat",
+        "&:hover": {
+          borderColor: "#DB2226",
+          color: "#FFFFFF",
+          backgroundColor: "#DB2226",
+        },
+      }}
+      onClick={clearFilters}
+    >
+      CLEAR FILTERS
+    </Button>
+    <Box sx={{ mt: "auto" }}>
+      <Button
+        variant="contained"
+        fullWidth
+        sx={{
+          mb: 2,
+          backgroundColor: "#3B3183",
+          color: "#fff",
+          fontFamily: "Montserrat",
+          "&:hover": {
+            backgroundColor: "#3B3183",
+          },
+        }}
+        onClick={() => setIsDrawerOpen(false)}
+      >
+        CLOSE FILTERS
+      </Button>
+    </Box>
+  </Box>
+</Drawer>
+
             </Box>
 
             <Box sx={{ display: "flex", alignItems: "center" }}>

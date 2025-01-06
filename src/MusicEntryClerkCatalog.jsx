@@ -603,6 +603,7 @@ const handleSubmit = async (e) => {
                       sx={formStyles}
                       value={catalogData.title}
                       onChange={handleInputChange}
+                      required
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -1757,6 +1758,8 @@ const handleSubmit = async (e) => {
                       {coverImageUrl ? "Change Image" : "Upload Image"}
                       <input
                         type="file"
+                        accept=".jpg, .jpeg, .png" // Only allow JPG, JPEG, and PNG file types
+
                         hidden
                         onChange={handleCoverImageChange}
                       />
@@ -1988,7 +1991,6 @@ const handleSubmit = async (e) => {
             variant="outlined"
             size="large"
             type="submit"
-            disabled={!hasChanges()} // Add this
             sx={{
               ...buttonStyles,
               "&:disabled": {

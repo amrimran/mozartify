@@ -233,6 +233,17 @@ export default function ClerkProfile() {
     }
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setProfilePictureFile(file);
+    setProfilePictureUrl(URL.createObjectURL(file));
+  };
+
+  const handleDeleteProfilePicture = () => {
+    setProfilePictureFile(null);
+    setProfilePictureUrl(null);
+  };
+
  
 
   const handleDeleteAccount = () => {

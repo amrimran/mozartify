@@ -248,17 +248,7 @@ export default function MusicEntryClerkUpload() {
                         />
                       </Box>
                     )}
-                      <Box sx={{ width: "100%", mt: 2 }}>
-                        <LinearProgress
-                          sx={{
-                            backgroundColor: "#D3D3D3", // Optional: color for the track
-                            "& .MuiLinearProgress-bar": {
-                              backgroundColor: "#3B3183", // Dark blue for the progress bar
-                            },
-                          }}
-                        />
-                      </Box>
-                    )}
+                    
                   </>
                 )}
                 {uploadMessage && (

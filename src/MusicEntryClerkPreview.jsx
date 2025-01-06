@@ -39,6 +39,8 @@ export default function MusicEntryClerkPreview() {
   const [splitContent, setSplitContent] = useState([]);
   const [page, setPage] = useState(1);
   const [user, setUser] = useState(null);
+  const [error, setError] = useState(null);
+
 
   // Fetch current user data
   useEffect(() => {
@@ -57,24 +59,23 @@ export default function MusicEntryClerkPreview() {
 
   // Fetch ABC file content
   useEffect(() => {
-    if (fileName) {
-      const fetchABCFileContent = async () => {
-        try {
-          const response = await fetch(
-            `http://localhost:3001/abc-file/${fileName}`
-          );
-          if (!response.ok) {
-            throw new Error("Network response was not ok");
-          }
-          const data = await response.json();
-          setAbcContent(data.content);
-        } catch (error) {
-          console.error("Error fetching ABC file content:", error);
-        }
-      };
+    const fetchABCFileContent = async () => {
+      if (!fileName) {
+        setError("No file name provided");
+        return;
+      }
 
-      fetchABCFileContent();
-    }
+      try {
+        const response = await axios.get(`http://localhost:3001/abc-file/${encodeURIComponent(fileName)}`);
+        setAbcContent(response.data.content);
+        setError(null);
+      } catch (error) {
+        console.error("Error fetching ABC file content:", error);
+        setError(error.response?.data?.message || "Error loading file content");
+      }
+    };
+
+    fetchABCFileContent();
   }, [fileName]);
 
   // Split ABC content into pages
@@ -137,23 +138,80 @@ export default function MusicEntryClerkPreview() {
               Preview Music Scores
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography
-                variant="body1"
-                sx={{ mr: 2, fontFamily: "Montserrat" }}
-              >
-                {user ? user?.username : "Loading..."}
+              <Typography variant="body1" sx={{ mr: 2, fontFamily: "Montserrat" }}>
+                {user ? user.username : "Loading..."}
               </Typography>
-              <Avatar
-                alt={user?.username}
-                src={user && user?.profile_picture ? user?.profile_picture : null}
-              >
-                {(!user || !user?.profile_picture) &&
-                  user?.username.charAt(0).toUpperCase()}
-              </Avatar>
+               <Avatar
+                              alt={user?.username}
+                              src={user && user?.profile_picture ? user?.profile_picture : null}
+                            >
+                              {(!user || !user?.profile_picture) &&
+                                user?.username.charAt(0).toUpperCase()}
+                            </Avatar>
             </Box>
           </Box>
-          <Divider sx={{ my: 2 }} /> {/* This is the line for the divider */}
+          <Divider sx={{ my: 2 }} />
           <Box
+          sx={{
+            mb: 3,
+            textAlign: "center",
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            bgcolor: "#f8f8f8",
+            borderRadius: 8,
+          }}>
+          
+          <Typography
+                        variant="h6"
+                        sx={{
+                          mb: 2,
+                          fontFamily: "Montserrat",
+                          color: "red",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        ATTENTION!
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{ fontFamily: "Montserrat", mb: 3 }}
+                      >
+                        Please <strong>double-check</strong> the music notation on the
+                        physical music score sheet against the scanned music score sheet
+                        preview.
+                      </Typography>
+                      </Box>
+          {splitContent[page - 1] && splitContent[page - 1].trim() !== "" ? (
+            <Paper
+              elevation={3}
+              sx={{
+                flex: 1,
+                p: 2,
+                borderRadius: 4,
+                bgcolor: "#ffffff",
+                textAlign: "center",
+                maxWidth: "800px",
+                margin: "0 auto",
+                minHeight: "300px",
+                mb: 3,
+              }}
+            >
+              <div id="abc-render"></div>
+            </Paper>
+          ) : (
+            <Typography variant="body1" sx={{ textAlign: "center", mt: 3, fontFamily: "Montserrat" }}>
+              {abcContent ? "No content on this page." : "Loading content..."}
+            </Typography>
+          )}
+           {/* Pagination with better spacing */}
+            <Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>
+          <Pagination
+            count={splitContent.length}
+            page={page}
+            onChange={handlePageChange}
+            color="primary"
             sx={{
               "& .MuiPaginationItem-root": {
                 borderRadius: 2,
@@ -169,26 +227,7 @@ export default function MusicEntryClerkPreview() {
                 },
               },
             }}
-          >
-            <Typography
-              variant="h6"
-              sx={{
-                mb: 2,
-                fontFamily: "Montserrat",
-                color: "red",
-                fontWeight: "bold",
-              }}
-            >
-              ATTENTION!
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ fontFamily: "Montserrat", mb: 3 }}
-            >
-              Please <strong>double-check</strong> the music notation on the
-              physical music score sheet against the scanned music score sheet
-              preview.
-            </Typography>
+          />
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
             <Button
@@ -208,7 +247,8 @@ export default function MusicEntryClerkPreview() {
               Proceed
             </Button>
           </Box>
-          <Box sx={{ flexGrow: 1, p: 3 }}></Box>
+
+          
         </Box>
       </Box>
     </>
