@@ -36,8 +36,6 @@ export default function CustomerMusicScoreView() {
   const [favorites, setFavorites] = useState([]);
   const [addedToCartScores, setAddedToCartScores] = useState([]);
   const navigate = useNavigate();
-
-  const { scoreId } = useParams();
   const [abcContent, setAbcContent] = useState("");
   const [metadata, setMetadata] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -116,7 +114,7 @@ export default function CustomerMusicScoreView() {
     const fetchAbcFileAndMetadata = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3001/abc-file/${scoreId}`
+          `http://localhost:3001/abc-file/${id}`
         );
         const abcContent = response.data.content;
 
@@ -140,7 +138,7 @@ export default function CustomerMusicScoreView() {
     return () => {
       stopAndReset();
     };
-  }, [scoreId]);
+  }, [id]);
 
   const transposeAbc = useCallback((abc, semitones) => {
     if (!abc) return abc;
@@ -320,12 +318,12 @@ export default function CustomerMusicScoreView() {
     fetchAddedToCartScores();
   }, [navigate]);
 
-  const addToCart = async (scoreId) => {
+  const addToCart = async (id) => {
     try {
       await axios.post("http://localhost:3000/add-to-cart", {
-        musicScoreId: scoreId,
+        musicScoreId: id,
       });
-      setAddedToCartScores([...addedToCartScores, scoreId]);
+      setAddedToCartScores([...addedToCartScores, id]);
     } catch (error) {
       console.error("Error adding to cart:", error);
     }
@@ -419,7 +417,7 @@ export default function CustomerMusicScoreView() {
               variant="contained"
               startIcon={<ShoppingCartIcon />}
               onClick={(e) => {
-                addToCart(musicScore._id);
+                addToCart(id);
               }}
               sx={{
                 backgroundColor: "#3b3183",
@@ -435,7 +433,7 @@ export default function CustomerMusicScoreView() {
               variant="contained"
               startIcon={<FavoriteIcon />}
               onClick={(e) => {
-                toggleFavorite(musicScore._id);
+                toggleFavorite(id);
               }}
               sx={{
                 backgroundColor: "red",

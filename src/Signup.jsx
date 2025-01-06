@@ -157,7 +157,9 @@ export default function Signup() {
       setErrorMessage("Please select a role");
       return;
     }
+
     setErrorMessage("");
+
     axios
       .post("http://localhost:3000/signup", { username, email, password, role })
       .then((result) => {

@@ -16,7 +16,7 @@ const UserModel = require("./models/User");
 const PurchaseModel = require("./models/Purchase");
 const CartModel = require("./models/Cart");
 const DeletedUserModel = require("./models/DeletedUser");
-const ABCFileModel = require('./models/ABCFile'); 
+const ABCFileModel = require("./models/ABCFile");
 
 const app = express();
 app.use(express.json());
@@ -135,7 +135,7 @@ const isAuthenticated = (req, res, next) => {
 };
 
 app.post("/signup", async (req, res) => {
-  const { username, email, password, role = "customer" } = req.body;
+  const { username, email, password, role } = req.body;
 
   try {
     const existingUser = await UserModel.findOne({
@@ -156,17 +156,17 @@ app.post("/signup", async (req, res) => {
       email,
       password,
       role,
-      approval: role === "customer",
+      approval: role === "customer" ? "approved" : "pending",
+      first_timer: true,
     });
+
     await newUser.save();
 
     if (role === "customer") {
       const token = jwt.sign(
         { username, email, password, role },
         process.env.JWT_SECRET,
-        {
-          expiresIn: "1h",
-        }
+        { expiresIn: "1h" }
       );
       sendVerificationEmail(email, username, token);
       res.json({ message: "Verification email sent" });
@@ -177,7 +177,8 @@ app.post("/signup", async (req, res) => {
       res.status(400).json({ message: "Invalid role" });
     }
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err });
+    console.error("Signup error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
@@ -313,8 +314,8 @@ app.post("/forgot-password", async (req, res) => {
     }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "5m",  // Set token expiration to 5 minutes
-    });    
+      expiresIn: "5m", // Set token expiration to 5 minutes
+    });
 
     const resetLink = `http://localhost:5173/reset-password?token=${token}`;
     const emailTemplate = `
@@ -433,7 +434,6 @@ app.put("/user/update", async (req, res) => {
   }
 });
 
-
 app.get("/current-user", isAuthenticated, (req, res) => {
   UserModel.findById(req.session.userId)
     .then((user) => {
@@ -473,7 +473,7 @@ app.get("/search-music-scores", async (req, res) => {
     let ABCFiles;
 
     if (query) {
-      ABCFiles= await ABCFileModel.find({
+      ABCFiles = await ABCFileModel.find({
         $or: [
           { title: { $regex: query, $options: "i" } },
           { genre: { $regex: query, $options: "i" } },
@@ -1039,7 +1039,7 @@ app.post("/complete-purchase", async (req, res) => {
         if (!musicScore) {
           throw new Error(`Music score with ID ${score_id} not found`);
         }
-    
+
         return {
           user_id: userId,
           purchase_date: new Date(),
@@ -1048,7 +1048,6 @@ app.post("/complete-purchase", async (req, res) => {
         };
       })
     );
-    
 
     await PurchaseModel.insertMany(purchaseItems);
 
