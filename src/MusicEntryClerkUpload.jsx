@@ -26,6 +26,22 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
+const buttonStyles2 = {
+  px: 10,
+  fontFamily: "Montserrat",
+  fontWeight: "bold",
+  color: "#8BD3E6",
+  backgroundColor: "#FFFFFF",
+  border: "1px solid #8BD3E6",
+  borderColor: "#8BD3E6",
+  "&:hover": {
+    backgroundColor: "#E6F8FB", // Subtle light blue hover effect
+    color: "#7AB9C4",           // Slightly darker shade of the text
+    borderColor: "#7AB9C4",     // Matches the text color for consistency
+  },
+};
+
+
 const buttonStyles = {
   px: 10,
   fontFamily: "Montserrat",
@@ -35,12 +51,13 @@ const buttonStyles = {
   border: "1px solid #8BD3E6",
   borderColor: "#8BD3E6",
   "&:hover": {
-    backgroundColor: "#3B3183",
-    color: "#FFFFFF",
-    border: "1px solid #3B3183",
-    borderColor: "#3B3183",
+    backgroundColor: "#6FBCCF", // Slightly darker blue for hover
+    color: "#FFFFFF",           // Keeps the text color consistent
+    borderColor: "#6FBCCF",     // Matches the background color for cohesion
   },
 };
+
+
 
 export default function MusicEntryClerkUpload() {
   const [user, setUser] = useState(null);
@@ -226,7 +243,7 @@ export default function MusicEntryClerkUpload() {
                       sx={{
                         mt: 2,
                         width: "100%",
-                        ...buttonStyles,
+                        ...buttonStyles2,
                         '&.Mui-disabled': {
                           backgroundColor: '#D3D3D3', // Grey background for disabled state
                           color: '#A9A9A9', // Optional: lighter grey text for disabled state

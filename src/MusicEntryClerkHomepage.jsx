@@ -18,6 +18,7 @@ import {
   Select,
   MenuItem,
   Pagination,
+  Skeleton,
 } from "@mui/material";
 
 import { FilterAlt } from "@mui/icons-material";
@@ -25,7 +26,20 @@ import ClerkSidebar from "./MusicEntryClerkSidebar";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 
+// Add animation keyframes to GlobalStyle
 const GlobalStyle = createGlobalStyle`
+  @keyframes skeleton-wave {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  
   body {
     margin: 0;
     padding: 0;
@@ -60,6 +74,8 @@ export default function MusicEntryClerkHomepage() {
 
   const navigate = useNavigate();
   const itemsPerPage = 12;
+  const [loading, setLoading] = useState(true);
+
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -77,9 +93,9 @@ export default function MusicEntryClerkHomepage() {
 
   useEffect(() => {
     const fetchMusicScores = async () => {
+      setLoading(true);
       try {
         const response = await axios.get("http://localhost:3001/abc-file");
-        // Transform the data to ensure string IDs
         const transformedScores = response.data.map((score) => ({
           ...score,
           _id: score._id.$oid || score._id.toString() || score._id,
@@ -89,6 +105,8 @@ export default function MusicEntryClerkHomepage() {
         setMusicScores(transformedScores);
       } catch (error) {
         console.error("Error fetching music scores:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchMusicScores();
@@ -118,6 +136,37 @@ export default function MusicEntryClerkHomepage() {
       setSearchedScores([]);
     }
   }, [searchQuery]);
+
+  const SkeletonCard = () => (
+    <Card sx={{ width: 210, boxShadow: 'none' }}>
+      <Skeleton 
+        variant="rectangular" 
+        width={200} 
+        height={280}
+        sx={{ 
+          borderRadius: 10,
+          animation: "skeleton-wave 1.5s ease-in-out 0.5s infinite"
+        }}
+      />
+      <CardContent>
+        <Skeleton 
+          width="80%" 
+          height={28} 
+          sx={{ 
+            mb: 1,
+            animation: "skeleton-wave 1.5s ease-in-out 0.5s infinite"
+          }} 
+        />
+        <Skeleton 
+          width="60%" 
+          height={20} 
+          sx={{ 
+            animation: "skeleton-wave 1.5s ease-in-out 0.5s infinite"
+          }}
+        />
+      </CardContent>
+    </Card>
+  );
 
   const getDisplayedScores = () => {
     if (searchQuery && isFiltered) {
@@ -226,9 +275,11 @@ export default function MusicEntryClerkHomepage() {
           <Box
             sx={{
               display: "flex",
-              justifyContent: "space-between",
+              justifyContent: "center",
               alignItems: "center",
               mb: 3,
+              gap: 2, // Space between search bar and filter button
+
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -430,37 +481,55 @@ export default function MusicEntryClerkHomepage() {
 
             </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              {user ? (
-                <>
-                  <Typography
-                    variant="body1"
-                    sx={{ mr: 2, fontFamily: "Montserrat" }}
-                  >
-                    {user?.username}
-                  </Typography>
-                  <Avatar
-                    alt={user?.username}
-                    src={
-                      user && user?.profile_picture
-                        ? user?.profile_picture
-                        : null
-                    }
-                  >
-                    {(!user || !user?.profile_picture) &&
-                      user?.username.charAt(0).toUpperCase()}
-                  </Avatar>
-                </>
-              ) : (
-                <Typography
-                  variant="body1"
-                  sx={{ mr: 2, fontFamily: "Montserrat" }}
-                >
-                  Loading...
-                </Typography>
-              )}
-            </Box>
-          </Box>
+            <Box
+  sx={{
+    position: 'absolute',
+    top: 28,
+    right: 40,
+    display: "flex",
+    alignItems: "center",
+  }}
+>
+  {user ? (
+    <>
+      <Typography
+        variant="body1"
+        sx={{ mr: 2, fontFamily: "Montserrat" }}
+      >
+        {user?.username}
+      </Typography>
+      <Avatar
+        alt={user?.username}
+        src={
+          user && user?.profile_picture
+            ? user?.profile_picture
+            : null
+        }
+      >
+        {(!user || !user?.profile_picture) &&
+          user?.username.charAt(0).toUpperCase()}
+      </Avatar>
+    </>
+  ) : (
+    <>
+      <Skeleton
+        variant="text"
+        width={100}
+        height={24}
+        sx={{ mr: 2, fontFamily: "Montserrat",           animation: "skeleton-wave 1.5s ease-in-out 0.5s infinite"
+        }}
+      />
+      <Skeleton
+        variant="circular"
+        width={40}
+        height={40}
+      />
+    </>
+ )}
+ </Box>
+</Box>
+
+
 
           <Typography
             variant="h5"
@@ -474,64 +543,20 @@ export default function MusicEntryClerkHomepage() {
               : "Uploaded Music Scores"}
           </Typography>
 
-          {/* Display search result count if searching */}
-          {/* {searchQuery && (
-            <Typography
-              variant="body1"
-              sx={{ mb: 2, fontFamily: "Montserrat" }}
-            >
+          
+
+          {/* Only show results count when searching or filtering */}
+          {(searchQuery || isFiltered) && (
+            <Typography variant="body1" sx={{ mb: 2, fontFamily: "Montserrat" }}>
               Found{" "}
-              <Box
-                component="span"
-                sx={{ fontWeight: "bold", color: "#3B3183" }}
-              >
-                {searchedScores.length}
+              <Box component="span" sx={{ fontWeight: "bold", color: "#3B3183" }}>
+                {displayedScores.length}
               </Box>{" "}
               results
             </Typography>
-          )} */}
-          <Typography variant="body1" sx={{ mb: 2, fontFamily: "Montserrat" }}>
-            Found{" "}
-            <Box component="span" sx={{ fontWeight: "bold", color: "#3B3183" }}>
-              {displayedScores.length}
-            </Box>{" "}
-            results
-          </Typography>
+          )}
 
-          {/* {isFiltered && (
-            <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
-              {filteredScores.length > 0 ? (
-                <List>
-                  {filteredScores.map((score) => (
-                    <ListItemButton
-                      key={score._id}
-                      sx={{ display: "flex", alignItems: "center" }}
-                      onClick={() =>
-                        navigate(`/clerk-music-score-view/${score._id}`)
-                      }
-                    >
-                      <ListItemText
-                        primary={score.title}
-                        secondary={`Genre: ${score.genre} | Composer: ${score.composer} | Artist: ${score.artist} | Emotion: ${score.emotion}`}
-                      />
-
-                      <ListItemIcon>
-                        <IconButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                        >
-                          <PlayArrow />
-                        </IconButton>
-                      </ListItemIcon>
-                    </ListItemButton>
-                  ))}
-                </List>
-              ) : (
-                <Typography variant="body2">No results found</Typography>
-              )}
-            </Box>
-          )} */}
+  
 
           <Box
             sx={{
@@ -540,7 +565,11 @@ export default function MusicEntryClerkHomepage() {
               gap: 3, // Controls spacing between the cards
             }}
           >
-            {paginatedScores.length > 0 ? (
+             {loading ? (
+              Array(12).fill().map((_, index) => (
+                <SkeletonCard key={index}  />
+              ))
+            ) : paginatedScores.length > 0 ? (
               paginatedScores.map((score) => (
                 <Card
                   key={score._id}
@@ -554,42 +583,47 @@ export default function MusicEntryClerkHomepage() {
                   }}
                   onClick={() => handleCardClick(score._id)}
                 >
-                  <CardMedia
-                    component="img"
-                    height={280}
-                    image={score.coverImageUrl || "placeholder-image-url"} // Fallback to placeholder if empty
-                    alt={score.title || "No Title Available"} // Fallback for alt text
-                    sx={{
-                      border: "2px solid #000",
-                      borderRadius: 10,
-                      width: 200,
-                      display: score.coverImageUrl ? "block" : "none", // Hide if no image
-                    }}
-                  />
-                  {!score.coverImageUrl && (
-                    <Box
-                      sx={{
-                        height: 280,
-                        width: 200,
-                        border: "2px solid #000",
-                        borderRadius: 10,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        backgroundColor: "#f5f5f5", // Light background for empty UI
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          fontFamily: "Montserrat",
-                          color: "#000",
-                          textAlign: "center",
-                        }}
-                      >
-                        No Cover Image Available
-                      </Typography>
-                    </Box>
-                  )}
+                 <CardMedia
+  component="img"
+  height={280}
+  image={score.coverImageUrl || "placeholder-image-url"} // Fallback to placeholder if empty
+  alt={score.title || "No Title Available"} // Fallback for alt text
+  sx={{
+    border: "2px solid #000",
+    borderRadius: 10,
+    width: 200,
+    padding: "10px", // Add padding for consistent spacing
+    boxSizing: "border-box", // Ensure padding doesn't affect size
+    display: score.coverImageUrl ? "block" : "none", // Hide if no image
+  }}
+/>
+{!score.coverImageUrl && (
+  <Box
+    sx={{
+      height: 280,
+      width: 200,
+      border: "2px solid #000",
+      borderRadius: 10,
+      padding: "10px", // Add padding for consistency with the image card
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      boxSizing: "border-box", // Maintain padding consistency
+      backgroundColor: "#f5f5f5", // Light background for empty UI
+    }}
+  >
+    <Typography
+      sx={{
+        fontFamily: "Montserrat",
+        color: "#000",
+        textAlign: "center",
+      }}
+    >
+      No Cover Image Available
+    </Typography>
+  </Box>
+)}
+
 
                   <CardContent
                     sx={{

@@ -13,6 +13,7 @@ import {
   DialogTitle,
   Pagination,
   Paper,
+  Alert,
 } from "@mui/material";
 import { HelpOutline } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -68,6 +69,8 @@ const MusicEntryClerkEdit = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
   const textAreaRef = useRef(null);
+  const [validationError, setValidationError] = useState(null);
+  const [isValidating, setIsValidating] = useState(false);
 
   // Fetch current user data
   useEffect(() => {
@@ -161,13 +164,69 @@ const MusicEntryClerkEdit = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const validateABCNotation = (content) => {
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    try {
+      setIsValidating(true);
+      // Use ABCJS to parse the ABC notation
+      const validationResponse = ABCJS.parseOnly(content, {
+        warn: (message) => {
+          throw new Error(message);
+        },
+      });
+
+      // Check if there's a header field (required in ABC notation)
+      if (!content.includes("X:") || !content.includes("T:") || !content.includes("K:")) {
+        throw new Error("Missing required ABC header fields (X:, T:, and K: are required)");
+      }
+
+      // Check if there's any music content
+      if (!validationResponse || validationResponse.length === 0) {
+        throw new Error("No valid music content found");
+      }
+
+      // Additional checks for common issues
+      if (!content.includes("M:")) {
+        throw new Error("Warning: Missing meter (M:) field");
+      }
+      if (!content.includes("L:")) {
+        throw new Error("Warning: Missing default note length (L:) field");
+      }
+
+      setValidationError(null);
+      return true;
+    } catch (error) {
+      setValidationError(error.message);
+      return false;
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
   const handleInputChange = (event) => {
     const newContent = event.target.value;
     setAbcContent(newContent);
+    // Clear validation error when user starts typing
+    if (validationError) {
+      setValidationError(null);
+    }
   };
 
   const handleSave = async () => {
     setIsSaving(true);
+    
+    // Validate before saving
+    const isValid = validateABCNotation(abcContent);
+    
+    if (!isValid) {
+      setIsSaving(false);
+      setDialogMessage("Please fix the ABC notation errors before saving");
+      setOpenDialog(true);
+      return;
+    }
+
     try {
       const response = await fetch(`http://localhost:3001/abc-file/${fileName}/content`, {
         method: "PUT",
@@ -176,9 +235,11 @@ const MusicEntryClerkEdit = () => {
         },
         body: JSON.stringify({ content: abcContent }),
       });
+      
       if (!response.ok) {
         throw new Error(`Failed to save the ABC file content. Status: ${response.status}`);
       }
+      
       setOriginalContent(abcContent);
       setDialogMessage("Changes saved successfully");
       setOpenDialog(true);
@@ -229,6 +290,20 @@ const MusicEntryClerkEdit = () => {
               <Typography variant="h6" gutterBottom sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}>
                 ABC Notation Editor
               </Typography>
+              {validationError && (
+                <Alert 
+                  severity="error" 
+                  sx={{ 
+                    mb: 2,
+                    fontFamily: "Montserrat",
+                    '& .MuiAlert-message': {
+                      fontFamily: "Montserrat"
+                    }
+                  }}
+                >
+                  {validationError}
+                </Alert>
+              )}
               <textarea
                 ref={textAreaRef}
                 value={abcContent}

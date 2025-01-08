@@ -422,23 +422,22 @@ export default function CustomerSearch() {
   return (
     <>
       <GlobalStyle />
-      <Box sx={{ display: "flex", height: "100vh" }}>
+      <Box sx={{ display: "flex", minHeight: "100vh" }}>
         <CustomerSidebar />
-        <Box
-          sx={{ flexGrow: 1, p: 5, display: "flex", flexDirection: "column" }}
-        >
+          <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column" }}>
+        
            <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-              mt: 3,
-            }}
-          >
+                       sx={{
+                         display: "flex",
+                         justifyContent: "space-between",
+                         alignItems: "center",
+                         mb: 3,
+                       }}
+                     >
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="h4">Music Score Repository Search</Typography>
-            </Box>
+            <Typography variant="h4" sx={{ fontFamily: "Montserrat", fontWeight: "bold", mt: 4, ml: 1 }}>
+              Music Score Repository Search
+            </Typography>            </Box>
 
             <Box sx={{ display: "flex", alignItems: "center" }}>
               {user ? (
@@ -470,318 +469,216 @@ export default function CustomerSearch() {
           </Box>
           <Divider sx={{ my: 1 }} />
 
-          {/* Basic Search Component Start */}
-
-          {!showSearchResults && (
-            <Container
-              maxWidth="md"
-              sx={{
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                paddingTop: "10px",
-                paddingBottom: "10px",
-              }}
-            >
-              <Paper
-                elevation={3}
-                sx={{ borderRadius: 4, overflow: "hidden", flex: 1 }}
+     {/* Basic Search Section */}
+     {!showSearchResults && (
+            <Container maxWidth="lg" sx={{ mt: 4 }}>
+              <Box 
+                sx={{ 
+                  backgroundColor: "#f5f5f5", 
+                  borderRadius: 2, 
+                  p: 4,
+                  boxShadow: '0px 3px 6px rgba(0, 0, 0, 0.16)', // Added elevation
+                  border: '1px solid rgba(0, 0, 0, 0.12)' // Added subtle border
+                }}
               >
-                <Tabs
-                  value={selectedTab}
-                  onChange={handleTabChange}
-                  variant="fullWidth"
-                  TabIndicatorProps={{
-                    style: { display: "none" },
-                  }}
-                >
-                  <Tab
-                    label="Music Scores"
-                    sx={{
-                      backgroundColor: selectedTab === 0 ? "white" : "#67ADC1",
-                      color: selectedTab === 0 ? "black" : "white",
-                      fontWeight: "bold",
-                      fontFamily: "Montserrat, sans-serif",
-                      "&.Mui-selected": {
-                        color: "#67ADC1",
-                      },
-                      borderTopRightRadius: selectedTab === 0 ? "5px" : "0px",
-                      transition: "border-radius 0.3s ease",
+                <Box sx={{ mb: 3, display: "flex", alignItems: "center" }}>
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      fontFamily: "Montserrat", 
+                      mr: 2,
+                      fontWeight: 500 
                     }}
-                  />
-                  <Tab
-                    label="Composers"
+                  >
+                    Search in:
+                  </Typography>
+                  <Select
+                    value={selectedCollection}
+                    onChange={(e) => setSelectedCollection(e.target.value)}
                     sx={{
-                      backgroundColor: selectedTab === 1 ? "white" : "#67ADC1",
-                      color: selectedTab === 1 ? "black" : "white",
-                      fontWeight: "bold",
-                      fontFamily: "Montserrat, sans-serif",
-                      "&.Mui-selected": {
-                        color: "#67ADC1",
+                      minWidth: 200,
+                      fontFamily: "Montserrat",
+                      backgroundColor: "white",
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#67ADC1'
                       },
+                      '& .MuiSelect-select': {
+                        fontFamily: "Montserrat"
+                      }
                     }}
-                  />
-                </Tabs>
-
-                <Box sx={{ backgroundColor: "white", padding: 3 }}>
-                  {selectedTab === 0 && (
-                    <Box>
-                      <Box
-                        sx={{
-                          border: "1px solid black",
-                          padding: 2,
-                          mt: 2,
-                          ml: 2,
-                          display: "inline-block",
-                          borderRadius: "5px",
-                        }}
-                      >
-                        <Typography
-                          variant="body1"
-                          color="black"
-                          sx={{
-                            fontFamily: "Montserrat, sans-serif",
-                            display: "inline",
-                          }}
-                        >
-                          Search in:
-                        </Typography>
-
-                        <Select
-                          value={selectedCollection}
-                          onChange={(e) =>
-                            setSelectedCollection(e.target.value)
-                          }
-                          variant="standard"
-                          sx={{
-                            marginLeft: "10px",
-                            border: "none",
-                            outline: "none",
-                            "& .MuiSelect-select": {
-                              padding: 0,
-                              fontWeight: "bold",
-                            },
-                            "& .MuiSelect-icon": {
-                              display: "none",
-                            },
-                            "& .MuiOutlinedInput-notchedOutline": {
-                              display: "none",
-                            },
-                            "&:focus .MuiSelect-select": {
-                              borderBottom: `2px solid #FFD700`,
-                            },
-                          }}
-                        >
-                          <MenuItem value="All">All</MenuItem>
-                          <MenuItem value="Lecturers">Lecturers</MenuItem>
-                          <MenuItem value="Students">Students</MenuItem>
-                          <MenuItem value="Freelancers">Freelancers</MenuItem>
-                        </Select>
-                      </Box>
-
-                      {searchCriteria.map((criteria, index) => (
-                        <Box
-                          key={index}
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            paddingTop: 3,
-                            paddingLeft: 2,
-                            paddingRight: 2,
-                            mt: 2,
-                            gap: 2,
-                          }}
-                        >
-                          {/* New Logic Select Component */}
-                          {index !== 0 && (
-                            <Select
-                              value={criteria.logic}
-                              onChange={(e) =>
-                                handleLogicChange(index, e.target.value)
-                              }
-                              variant="outlined"
-                              sx={{
-                                width: "100px",
-                                fontFamily: "Montserrat, sans-serif",
-                                fontWeight: "bold",
-                              }}
-                            >
-                              <MenuItem
-                                value="AND"
-                                sx={{ fontFamily: "Montserrat, sans-serif" }}
-                              >
-                                AND
-                              </MenuItem>
-                              <MenuItem
-                                value="OR"
-                                sx={{ fontFamily: "Montserrat, sans-serif" }}
-                              >
-                                OR
-                              </MenuItem>
-                              <MenuItem
-                                value="NOT"
-                                sx={{ fontFamily: "Montserrat, sans-serif" }}
-                              >
-                                NOT
-                              </MenuItem>
-                            </Select>
-                          )}
-
-                          <Select
-                            value={criteria.category}
-                            onChange={(e) =>
-                              handleCategoryChange(index, e.target.value)
-                            }
-                            variant="outlined"
-                            sx={{
-                              width: "150px",
-                              fontFamily: "Montserrat, sans-serif",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            <MenuItem
-                              value="All"
-                              sx={{ fontFamily: "Montserrat, sans-serif" }}
-                            >
-                              All
-                            </MenuItem>
-                            <MenuItem
-                              value="Title"
-                              sx={{ fontFamily: "Montserrat, sans-serif" }}
-                            >
-                              Title
-                            </MenuItem>
-                            <MenuItem
-                              value="Genre"
-                              sx={{ fontFamily: "Montserrat, sans-serif" }}
-                            >
-                              Genre
-                            </MenuItem>
-                            <MenuItem
-                              value="Composer"
-                              sx={{ fontFamily: "Montserrat, sans-serif" }}
-                            >
-                              Composer
-                            </MenuItem>
-                          </Select>
-
-                          <TextField
-                            variant="outlined"
-                            placeholder="Place your query here ..."
-                            value={criteria.text}
-                            onChange={(e) =>
-                              handleTextChange(index, e.target.value)
-                            }
-                            sx={{
-                              flex: 1,
-                              fontFamily: "Montserrat, sans-serif",
-                            }}
-                          />
-
-                          {searchCriteria.length > 1 && (
-                            <IconButton
-                              onClick={() => handleDeleteRow(index)}
-                              color="error"
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          )}
-                        </Box>
-                      ))}
-
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          paddingLeft: 2,
-                          paddingRight: 2,
-                          paddingTop: 3,
-                        }}
-                      >
-                        {searchCriteria.length < 3 && (
-                          <Button
-                            onClick={handleAddRow}
-                            variant="outlined"
-                            sx={{
-                              color: "#67ADC1",
-                              borderColor: "#67ADC1",
-                              backgroundColor: "white",
-                              fontFamily: "Montserrat, sans-serif",
-                              "&:hover": {
-                                backgroundColor: "#67ADC1",
-                                color: "white",
-                                borderColor: "#67ADC1",
-                              },
-                            }}
-                          >
-                            Add Row
-                          </Button>
-                        )}
-
-                        <Button
-                          component="a"
-                          href=""
-                          onClick={() =>
-                            navigate(
-                              `/customer-search/customer-advanced-search`
-                            )
-                          }
-                          sx={{
-                            padding: searchCriteria.length >= 3 ? 0 : 3,
-                            textDecoration: "underline",
-                            cursor: "pointer",
-                            color: "#67ADC1",
-                            fontFamily: "Montserrat, sans-serif",
-                          }}
-                        >
-                          Advanced Search
-                        </Button>
-
-                        <Box
-                          sx={{ display: "flex", gap: 2, marginLeft: "auto" }}
-                        >
-                          <Button
-                            onClick={handleClear}
-                            variant="outlined"
-                            sx={{
-                              color: "#67ADC1",
-                              borderColor: "#67ADC1",
-                              backgroundColor: "white",
-                              fontFamily: "Montserrat, sans-serif",
-                              "&:hover": {
-                                backgroundColor: "#67ADC1",
-                                color: "white",
-                                borderColor: "#67ADC1",
-                              },
-                            }}
-                          >
-                            X Clear
-                          </Button>
-
-                          <Button
-                            onClick={handleSearch}
-                            variant="contained"
-                            startIcon={<SearchIcon />} // Add Search icon here
-                            sx={{
-                              color: "white",
-                              backgroundColor: "#67ADC1",
-                              fontFamily: "Montserrat, sans-serif",
-                              "&:hover": {
-                                backgroundColor: "#67ADC1",
-                              },
-                            }}
-                          >
-                            Search
-                          </Button>
-                        </Box>
-                      </Box>
-                    </Box>
-                  )}
+                  >
+                    {collectionOptions.map(option => (
+                      <MenuItem key={option} value={option} sx={{ fontFamily: "Montserrat" }}>
+                        {option}
+                      </MenuItem>
+                    ))}
+                  </Select>
                 </Box>
-              </Paper>
+
+                {searchCriteria.map((criteria, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                      mb: 2,
+                      backgroundColor: "white",
+                      p: 2,
+                      borderRadius: 2,
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                    }}
+                  >
+                    {index !== 0 && (
+                      <FormControl sx={{ width: 120 }}>
+                        <InputLabel sx={{ fontFamily: "Montserrat" }}>Logic</InputLabel>
+                        <Select
+                          value={criteria.logic}
+                          onChange={(e) => handleLogicChange(index, e.target.value)}
+                          sx={{
+                            fontFamily: "Montserrat",
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              borderColor: '#67ADC1'
+                            }
+                          }}
+                          label="Logic"
+                        >
+                          {["AND", "OR", "NOT"].map(option => (
+                            <MenuItem key={option} value={option} sx={{ fontFamily: "Montserrat" }}>
+                              {option}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    )}
+
+                    <FormControl sx={{ width: 150 }}>
+                      <InputLabel sx={{ fontFamily: "Montserrat" }}>Category</InputLabel>
+                      <Select
+                        value={criteria.category}
+                        onChange={(e) => handleCategoryChange(index, e.target.value)}
+                        label="Category"
+                        sx={{
+                          fontFamily: "Montserrat",
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#67ADC1'
+                          }
+                        }}
+                      >
+                        {[
+                          "All", 
+                          "Title", 
+                          "Genre", 
+                          "Composer", 
+                          "Instrumentation", // Added
+                          "Emotion" // Added
+                        ].map(option => (
+                          <MenuItem key={option} value={option} sx={{ fontFamily: "Montserrat" }}>
+                            {option}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <TextField
+                      fullWidth
+                      placeholder="Enter your search query..."
+                      value={criteria.text}
+                      onChange={(e) => handleTextChange(index, e.target.value)}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          fontFamily: "Montserrat",
+                          '& fieldset': {
+                            borderColor: '#67ADC1',
+                          },
+                        },
+                        '& .MuiInputLabel-root': {
+                          fontFamily: "Montserrat"
+                        }
+                      }}
+                    />
+
+                    {searchCriteria.length > 1 && (
+                      <IconButton 
+                        onClick={() => handleDeleteRow(index)}
+                        sx={{ color: '#67ADC1' }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    )}
+                  </Box>
+                ))}
+
+                <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
+                  <Box sx={{ display: "flex", gap: 2 }}>
+                    {searchCriteria.length < 3 && (
+                      <Button
+                        onClick={handleAddRow}
+                        variant="outlined"
+                        sx={{
+                          fontFamily: "Montserrat",
+                          color: "#67ADC1",
+                          borderColor: "#67ADC1",
+                          '&:hover': {
+                            backgroundColor: "#67ADC1",
+                            color: "white"
+                          }
+                        }}
+                      >
+                        Add Row
+                      </Button>
+                    )}
+                    <Button
+                      onClick={() => navigate('/customer-search/customer-advanced-search')}
+                      variant="contained"
+                      sx={{
+                        fontFamily: "Montserrat",
+                        backgroundColor: "#3B3183", // Green color
+                        color: "white",
+                        '&:hover': {
+                          backgroundColor: "#8BD3E6" // Darker green on hover
+                        }
+                      }}
+                    >
+                      Advanced Search
+                    </Button>
+                  </Box>
+
+                  <Box sx={{ display: "flex", gap: 2 }}>
+                    <Button
+                      onClick={handleClear}
+                      variant="outlined"
+                      sx={{
+                        fontFamily: "Montserrat",
+                        color: "#67ADC1",
+                        borderColor: "#67ADC1",
+                        '&:hover': {
+                          backgroundColor: "#67ADC1",
+                          color: "white"
+                        }
+                      }}
+                    >
+                      Clear
+                    </Button>
+                    <Button
+                      onClick={handleSearch}
+                      variant="contained"
+                      startIcon={<SearchIcon />}
+                      sx={{
+                        fontFamily: "Montserrat",
+                        backgroundColor: "#67ADC1",
+                        '&:hover': {
+                          backgroundColor: "#78BBCC"
+                        }
+                      }}
+                    >
+                      Search
+                    </Button>
+                  </Box>
+                </Box>
+              </Box>
             </Container>
           )}
-          {/* Basic Search Component End */}
 
           {/* Search Result Component Start */}
 

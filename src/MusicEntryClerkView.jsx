@@ -25,7 +25,8 @@ import {
 import ClerkSidebar from "./MusicEntryClerkSidebar";
 import abcjs from "abcjs";
 import { format } from "date-fns";
-import { Play, Pause, RotateCw } from "lucide-react";
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import StopIcon from '@mui/icons-material/Stop';
 
 export default function ClerkMusicScoreView() {
   const { scoreId } = useParams();
@@ -37,6 +38,7 @@ export default function ClerkMusicScoreView() {
   const [visualObj, setVisualObj] = useState(null);
   const [tempo, setTempo] = useState(100);
   const [isLooping, setIsLooping] = useState(false);
+  const [isStop, setIsStop] = useState(false);
   const [transposition, setTransposition] = useState(0);
   const [instrument, setInstrument] = useState(0);
   const [timingCallbacks, setTimingCallbacks] = useState(null);
@@ -52,13 +54,27 @@ export default function ClerkMusicScoreView() {
     fontWeight: "bold",
     color: "#FFFFFF",
     backgroundColor: "#8BD3E6",
-    border: "1px solid #8BD3E6", // Explicitly define the border
+    border: "1px solid #8BD3E6",
     borderColor: "#8BD3E6",
     "&:hover": {
-      backgroundColor: "#3B3183",
-      color: "#FFFFFF",
-      border: "1px solid #3B3183", // Ensure border remains visible on hover
-      borderColor: "#3B3183",
+      backgroundColor: "#6FBCCF", // Slightly darker blue for hover
+      color: "#FFFFFF",           // Keeps the text color consistent
+      borderColor: "#6FBCCF",     // Matches the background color for cohesion
+    },
+  };
+
+  const buttonStyles2 = {
+    px: 15,
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#8BD3E6",
+    backgroundColor: "#FFFFFF",
+    border: "1px solid #8BD3E6",
+    borderColor: "#8BD3E6",
+    "&:hover": {
+      backgroundColor: "#E6F8FB", // Subtle light blue hover effect
+      color: "#7AB9C4",           // Slightly darker shade of the text
+      borderColor: "#7AB9C4",     // Matches the text color for consistency
     },
   };
 
@@ -71,11 +87,12 @@ export default function ClerkMusicScoreView() {
     width: "250px",
     height: "40px",
     "&:hover": {
-      backgroundColor: "#FFFFFF",
-      color: "#DB2226",
-      borderColor: "#DB2226",
+      backgroundColor: "#B71C1C", // Slightly darker red
+      color: "#FFFFFF",           // Keeps the text color consistent
+      borderColor: "#B71C1C",     // Matches the background color for cohesion
     },
   };
+  
 
   const instruments = [
     { id: 0, name: "Piano" },
@@ -194,57 +211,55 @@ export default function ClerkMusicScoreView() {
   // Effect to handle changes in manipulation controls
   useEffect(() => {
     stopAndReset();
-  }, [tempo, isLooping, transposition, instrument, stopAndReset]);
+  }, [tempo, isLooping, transposition, instrument, stopAndReset, isStop,]);
 
-  const handlePlayback = async () => {
-    if (!visualObj) return;
+  // Then, update the handlePlayback function to properly handle stopping:
+const handlePlayback = async () => {
+  if (!visualObj) return;
 
-    if (!isPlaying) {
-      const audioContext = new (window.AudioContext ||
-        window.webkitAudioContext)();
+  if (!isPlaying) {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-      try {
-        // Initialize the synthesizer
-        const newSynth = new abcjs.synth.CreateSynth();
-        setSynthesizer(newSynth);
+    try {
+      const newSynth = new abcjs.synth.CreateSynth();
+      setSynthesizer(newSynth);
 
-        await newSynth.init({
-          audioContext,
-          visualObj,
-          millisecondsPerMeasure: (60000 / (tempo * 1.1667)) * 4,
-          options: {
-            soundFontUrl:
-              "https://paulrosen.github.io/midi-js-soundfonts/abcjs/",
-            program: instrument, // MIDI instrument program
-          },
-        });
+      await newSynth.init({
+        audioContext,
+        visualObj,
+        millisecondsPerMeasure: (60000 / (tempo * 1.1667)) * 4,
+        options: {
+          soundFontUrl: "https://paulrosen.github.io/midi-js-soundfonts/abcjs/",
+          program: instrument,
+        },
+      });
 
-        await newSynth.prime();
+      await newSynth.prime();
+      setIsPlaying(true);
+      setIsStop(false); // Reset stop state when starting new playback
 
-        setIsPlaying(true);
+      timingCallbacks?.start();
+      await newSynth.start();
 
-        // Start playback
-        timingCallbacks?.start();
-        await newSynth.start();
+      newSynth.addEventListener("ended", () => {
+        if (isLooping && !isStop) {
+          handlePlayback();
+        } else {
+          stopAndReset();
+          setIsStop(false);
+        }
+      });
 
-        // Set a manual timeout for playback duration
-        // Set up ended callback
-        newSynth.addEventListener("ended", () => {
-          if (isLooping) {
-            handlePlayback();
-          } else {
-            stopAndReset();
-          }
-        });
-      } catch (error) {
-        console.error("Playback error:", error);
-        stopAndReset();
-      }
-    } else {
+    } catch (error) {
+      console.error("Playback error:", error);
       stopAndReset();
+      setIsStop(false);
     }
-  };
-
+  } else {
+    stopAndReset();
+    setIsStop(false);
+  }
+};
   // Split ABC content into pages
   useEffect(() => {
     if (abcContent) {
@@ -421,20 +436,38 @@ export default function ClerkMusicScoreView() {
                   mb: 2,
                 }}
               >
-                {/* Play/Stop Button */}
-                <Button
-                  onClick={handlePlayback}
-                  variant="contained"
-                  startIcon={isPlaying ? <Pause /> : <Play />}
-                  sx={{
-                    bgcolor: "#3B3183",
-                    "&:hover": { bgcolor: "#2A2355" },
-                    fontFamily: "Montserrat",
-                    px: 3,
-                  }}
-                >
-                  {isPlaying ? "Stop" : "Play"}
-                </Button>
+                <Box display="flex" gap={1}>
+  {/* Play Button */}
+  <Button
+    onClick={handlePlayback}
+    variant="contained"
+    sx={{
+      bgcolor: "#8BD3E6",
+      "&:hover": { bgcolor: "#6FBCCF" },
+      minWidth: "auto", // Button size fits icon
+      padding: "8px", // Adjust padding for smaller button
+    }}
+  >
+    <PlayArrowIcon />
+  </Button>
+
+  {/* Stop Button */}
+  <Button
+    onClick={() => {
+      setIsStop(true);
+      stopAndReset();
+    }}
+    variant="contained"
+    sx={{
+      bgcolor: "#8BD3E6",
+      "&:hover": { bgcolor: "#6FBCCF" },
+      minWidth: "auto", // Button size fits icon
+      padding: "8px", // Adjust padding for smaller button
+    }}
+  >
+    <StopIcon />
+  </Button>
+</Box>
 
                 {/* Loop Switch */}
                 <FormControlLabel
@@ -463,106 +496,135 @@ export default function ClerkMusicScoreView() {
                 />
 
                 {/* Tempo Controls */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                  }}
-                >
-                  <Typography
-                    sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
-                  >
-                    Tempo:
-                  </Typography>
-                  <Button
-                    onClick={() => setTempo((prev) => Math.max(40, prev - 1))}
-                    variant="outlined"
-                    size="small"
-                    sx={{ minWidth: 40 }}
-                  >
-                    -
-                  </Button>
-                  <TextField
-                    value={tempo}
-                    onChange={(e) => {
-                      const newValue = parseInt(e.target.value, 10);
-                      if (
-                        !isNaN(newValue) &&
-                        newValue >= 40 &&
-                        newValue <= 200
-                      ) {
-                        setTempo(newValue);
-                      }
-                    }}
-                    size="small"
-                    variant="outlined"
-                    sx={{ maxWidth: 60 }}
-                  />
-                  <Button
-                    onClick={() => setTempo((prev) => Math.min(200, prev + 1))}
-                    variant="outlined"
-                    size="small"
-                    sx={{ minWidth: 40 }}
-                  >
-                    +
-                  </Button>
-                  <Typography sx={{ fontFamily: "Montserrat" }}>BPM</Typography>
-                </Box>
+<Box
+  sx={{
+    display: "flex",
+    alignItems: "center",
+    gap: 1,
+  }}
+>
+  <Typography sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}>
+    Tempo:
+  </Typography>
+  <Button
+    onClick={() => setTempo((prev) => Math.max(40, prev - 1))}
+    variant="outlined"
+    size="small"
+    sx={{ minWidth: 40 }}
+  >
+    -
+  </Button>
+  <TextField
+    value={tempo}
+    onChange={(e) => {
+      const newValue = e.target.value;
+      if (/^\d*$/.test(newValue)) {
+        // Allow only numeric input
+        setTempo(newValue);
+      }
+    }}
+    onBlur={() => {
+      // Validate and clamp the value on blur
+      const numericValue = parseInt(tempo, 10);
+      if (!isNaN(numericValue)) {
+        setTempo(Math.min(Math.max(numericValue, 40), 200));
+      } else {
+        setTempo(40); // Default to 40 if input is invalid or empty
+      }
+    }}
+    size="small"
+    variant="outlined"
+    sx={{ maxWidth: 60, textAlign: "center" }}
+  />
+  <Button
+    onClick={() => setTempo((prev) => Math.min(200, prev + 1))}
+    variant="outlined"
+    size="small"
+    sx={{ minWidth: 40 }}
+  >
+    +
+  </Button>
+  <Typography sx={{ fontFamily: "Montserrat" }}>BPM</Typography>
+</Box>
 
-                {/* Transpose Controls */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                  }}
-                >
-                  <Typography
-                    sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
-                  >
-                    Transpose:
-                  </Typography>
-                  <Button
-                    onClick={() =>
-                      setTransposition((prev) => Math.max(-12, prev - 1))
-                    }
-                    variant="outlined"
-                    size="small"
-                    sx={{ minWidth: 40 }}
-                  >
-                    -
-                  </Button>
-                  <TextField
-                    value={transposition}
-                    onChange={(e) => {
-                      const newValue = parseInt(e.target.value, 10);
-                      if (
-                        !isNaN(newValue) &&
-                        newValue >= -12 &&
-                        newValue <= 12
-                      ) {
-                        setTransposition(newValue);
-                      }
-                    }}
-                    size="small"
-                    variant="outlined"
-                    sx={{ maxWidth: 45 }}
-                  />
-                  <Button
-                    onClick={() =>
-                      setTransposition((prev) => Math.min(12, prev + 1))
-                    }
-                    variant="outlined"
-                    size="small"
-                    sx={{ minWidth: 40 }}
-                  >
-                    +
-                  </Button>
-                  <Typography sx={{ fontFamily: "Montserrat" }}>
-                    semitones
-                  </Typography>
-                </Box>
+               {/* Transpose Controls */}
+<Box
+  sx={{
+    display: "flex",
+    alignItems: "center",
+    gap: 1, // Space between label, controls, and unit
+  }}
+>
+  <Typography sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}>
+    Transpose:
+  </Typography>
+  <Box
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      gap: 0, // No gap between controls
+      border: "1px solid rgba(0, 0, 0, 0.23)", // Optional: border for group
+      borderRadius: 1, // Rounded corners for group
+      overflow: "hidden", // Ensures clean edges
+    }}
+  >
+    <Button
+      onClick={() =>
+        setTransposition((prev) => Math.max(-12, prev - 1))
+      }
+      variant="outlined"
+      size="small"
+      sx={{
+        minWidth: 40,
+        borderRadius: 0, // Removes individual button corners
+        border: "none", // Removes individual button border
+      }}
+    >
+      -
+    </Button>
+    <TextField
+    disabled
+      value={transposition}
+      onChange={(e) => {
+        const newValue = parseInt(e.target.value, 10);
+        if (!isNaN(newValue) && newValue >= -12 && newValue <= 12) {
+          setTransposition(newValue);
+        }
+      }}
+      size="small"
+      variant="outlined"
+      sx={{
+        maxWidth: 55,
+        textAlign: "center",
+        "& .MuiOutlinedInput-notchedOutline": {
+          border: "none", // Removes TextField border for group cohesion
+        },
+        "& .MuiInputBase-input.Mui-disabled": {
+          WebkitTextFillColor: "#000", // Overrides text color when disabled
+        },
+      }}
+      inputProps={{
+        style: { textAlign: "center" }, // Centers the input text
+      }}
+    />
+    <Button
+      onClick={() =>
+        setTransposition((prev) => Math.min(12, prev + 1))
+      }
+      variant="outlined"
+      size="small"
+      sx={{
+        minWidth: 40,
+        borderRadius: 0, // Removes individual button corners
+        border: "none", // Removes individual button border
+      }}
+    >
+      +
+    </Button>
+  </Box>
+  <Typography sx={{ fontFamily: "Montserrat" }}>semitones</Typography>
+</Box>
+
 
                 {/* Instrument Selection */}
                 <Box
@@ -791,35 +853,39 @@ export default function ClerkMusicScoreView() {
         </Box>
 
         {/* Pagination with better spacing */}
-        <Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>
-          <Pagination
-            count={splitContent.length}
-            page={page}
-            onChange={handlePageChange}
-            color="primary"
-            sx={{
-              "& .MuiPaginationItem-root": {
-                borderRadius: 2,
-                fontFamily: "Montserrat",
-                backgroundColor: "primary",
-                color: "#000",
-                "&.Mui-selected": {
-                  backgroundColor: "#8BD3E6",
-                  color: "#fff",
-                },
-                "&:hover": {
-                  backgroundColor: "#FFEE8C",
-                },
-              },
-            }}
-          />
+        <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+        <Pagination
+  count={splitContent.length}
+  page={page}
+  onChange={handlePageChange}
+  color="primary"
+  sx={{
+    "& .MuiPaginationItem-root": {
+      borderRadius: 2,
+      fontFamily: "Montserrat",
+      backgroundColor: "primary",
+      color: "#000",
+      "&.Mui-selected": {
+        backgroundColor: "#8BD3E6", // Blue for selected
+        color: "#fff",
+        "&:hover": {
+          backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
+        },
+      },
+      "&:hover": {
+        backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
+      },
+    },
+  }}
+/>
+
         </Box>
 
         <Box sx={{ mt: 4, display: "flex", justifyContent: "center", gap: 2 }}>
           <Button
             variant="outlined"
             onClick={handleBackClick}
-            sx={buttonStyles}
+            sx={buttonStyles2}
           >
             Back
           </Button>

@@ -405,8 +405,9 @@ app.get("/clearSession", (req, res) => {
   }
 });
 
-app.put("/user/update", async (req, res) => {
-  const { username, password, profile_picture_url } = req.body;
+// Update username only
+app.put("/user/update-username", async (req, res) => {
+  const { username } = req.body;
 
   try {
     const userId = req.session.userId;
@@ -419,18 +420,89 @@ app.put("/user/update", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    user.username = username;
-    if (password) {
-      user.password = password;
-    }
-    if (profile_picture_url) {
-      user.profile_picture = profile_picture_url;
+    // Check if username already exists
+    const existingUser = await UserModel.findOne({ username, _id: { $ne: userId } });
+    if (existingUser) {
+      return res.status(400).json({ message: "Username already taken" });
     }
 
+    user.username = username;
     await user.save();
-    res.json({ message: "Profile updated successfully" });
+    
+    res.json({ 
+      message: "Username updated successfully",
+      user: {
+        username: user.username,
+        email: user.email,
+        profile_picture: user.profile_picture
+      }
+    });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err });
+    console.error("Error updating username:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// Update password endpoint
+app.put("/user/change-password", async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    const userId = req.session.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Simple string comparison since password is stored as plain text
+    if (currentPassword !== user.password) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    // Update with new password (as plain string)
+    user.password = newPassword;
+    await user.save();
+    
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error("Error updating password:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// Update profile picture only
+app.put("/user/update-profile-picture", async (req, res) => {
+  const { profile_picture_url } = req.body;
+
+  try {
+    const userId = req.session.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.profile_picture = profile_picture_url;
+    await user.save();
+    
+    res.json({ 
+      message: "Profile picture updated successfully",
+      user: {
+        username: user.username,
+        email: user.email,
+        profile_picture: user.profile_picture
+      }
+    });
+  } catch (err) {
+    console.error("Error updating profile picture:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 

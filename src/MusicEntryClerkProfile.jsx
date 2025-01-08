@@ -14,12 +14,16 @@ import {
   DialogContent,
   DialogTitle,
   DialogContentText,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import EditIcon from "@mui/icons-material/Edit";
 import UploadIcon from "@mui/icons-material/Upload";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { storage } from "./firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
@@ -29,11 +33,20 @@ axios.defaults.withCredentials = true;
 
 export default function ClerkProfile() {
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
-  const [isFormChanged, setIsFormChanged] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [profilePictureFile, setProfilePictureFile] = useState(null);
+  const [profilePictureUrl, setProfilePictureUrl] = useState(null);
+  
+  // Separate states for password change
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  
+  const navigate = useNavigate();
+
   const [dialogConfig, setDialogConfig] = useState({
     title: "",
     content: "",
@@ -41,8 +54,6 @@ export default function ClerkProfile() {
     confirmText: "",
     cancelText: "Cancel"
   });
-  
-  const navigate = useNavigate();
 
   
   const dialogStyles = {
@@ -84,11 +95,6 @@ export default function ClerkProfile() {
       },
     },
   };
-
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-
-  const [profilePictureFile, setProfilePictureFile] = useState(null);
-  const [profilePictureUrl, setProfilePictureUrl] = useState(null);
 
   const buttonStyles = {
     px: 10,
@@ -155,96 +161,32 @@ export default function ClerkProfile() {
     fetchCurrentUser();
   }, [navigate]);
 
-  useEffect(() => {
-    if (currentUser) {
-      setIsFormChanged(
-        username !== currentUser.username ||
-        password !== "" ||
-        confirmPassword !== ""
-      );
-    }
-  }, [username, password, confirmPassword, currentUser]);
-
-  const showDialog = (config) => {
-    setDialogConfig(config);
-    setDialogOpen(true);
-  };
-
-  const handleEditClick = () => {
-    setEditDialogOpen(true);
-  };
-
-  const handleEditDialogClose = () => {
-    setEditDialogOpen(false);
-  };
-
-  const handleSaveProfilePicture = () => {
-    setEditDialogOpen(false);
-  };
-
-  const handleSaveChanges = async (e) => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-      showDialog({
-        title: "Password Mismatch",
-        content: "Passwords do not match. Please try again.",
-        confirmText: "OK",
-        confirmAction: () => setDialogOpen(false),
-      });
-      return;
-    }
-
-
+  const handleUpdateUsername = async () => {
     try {
-      let profile_picture_url = null;
-
-      if (profilePictureFile) {
-        const storageRef = ref(
-          storage,
-          `profile_pictures/${Date.now()}_${profilePictureFile.name}`
-        );
-        await uploadBytes(storageRef, profilePictureFile);
-        profile_picture_url = await getDownloadURL(storageRef);
-      }
-
-      // Send the updated user data to the backend
-      await axios.put("http://localhost:3000/user/update", {
-        username,
-        password,
-        profile_picture_url, // Pass the URL of the uploaded profile picture
+      // Add loading state if needed
+      const response = await axios.put("http://localhost:3000/user/update-username", {
+        username
       });
-
+      
+      // Update the current user state after successful update
+      setCurrentUser(prev => ({...prev, username}));
+      
       showDialog({
         title: "Success",
-        content: "Profile updated successfully!",
+        content: "Username updated successfully!",
         confirmText: "OK",
-        confirmAction: () => {
-          setDialogOpen(false);
-          navigate("/clerk-homepage");
-        },
+        confirmAction: () => setDialogOpen(false)
       });
     } catch (error) {
+      console.error("Error updating username:", error);
       showDialog({
         title: "Error",
-        content: "Failed to update profile. Please try again.",
+        content: error.response?.data?.message || "Failed to update username",
         confirmText: "OK",
-        confirmAction: () => setDialogOpen(false),
+        confirmAction: () => setDialogOpen(false)
       });
     }
   };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setProfilePictureFile(file);
-    setProfilePictureUrl(URL.createObjectURL(file));
-  };
-
-  const handleDeleteProfilePicture = () => {
-    setProfilePictureFile(null);
-    setProfilePictureUrl(null);
-  };
-
- 
 
   const handleDeleteAccount = () => {
     showDialog({
@@ -275,6 +217,111 @@ export default function ClerkProfile() {
       },
     });
   };
+
+  const showDialog = (config) => {
+    setDialogConfig(config);
+    setDialogOpen(true);
+  };
+
+  const handleUpdatePassword = async () => {
+    if (newPassword !== confirmNewPassword) {
+      showDialog({
+        title: "Error",
+        content: "New passwords do not match.",
+        confirmText: "OK",
+        confirmAction: () => setDialogOpen(false)
+      });
+      return;
+    }
+  
+    try {
+      await axios.put("http://localhost:3000/user/change-password", {
+        currentPassword,
+        newPassword
+      });
+      
+      // Clear password fields after successful update
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      
+      showDialog({
+        title: "Success",
+        content: "Password updated successfully!",
+        confirmText: "OK",
+        confirmAction: () => setDialogOpen(false)
+      });
+    } catch (error) {
+      console.error("Error updating password:", error);
+      showDialog({
+        title: "Error",
+        content: error.response?.data?.message || "Failed to update password",
+        confirmText: "OK",
+        confirmAction: () => setDialogOpen(false)
+      });
+    }
+  };
+
+  // Add new function for removing profile picture
+const handleRemoveProfilePicture = async () => {
+  try {
+    await axios.put("http://localhost:3000/user/update-profile-picture", {
+      profile_picture_url: null
+    });
+    
+    setCurrentUser(prev => ({...prev, profile_picture: null}));
+    showDialog({
+      title: "Success",
+      content: "Profile picture removed successfully!",
+      confirmText: "OK",
+      confirmAction: () => setDialogOpen(false)
+    });
+  } catch (error) {
+    showDialog({
+      title: "Error",
+      content: "Failed to remove profile picture",
+      confirmText: "OK",
+      confirmAction: () => setDialogOpen(false)
+    });
+  }
+};
+
+  const handleUpdateProfilePicture = async () => {
+    if (!profilePictureFile) return;
+
+    try {
+      const storageRef = ref(
+        storage,
+        `profile_pictures/${Date.now()}_${profilePictureFile.name}`
+      );
+      await uploadBytes(storageRef, profilePictureFile);
+      const profile_picture_url = await getDownloadURL(storageRef);
+      
+      await axios.put("http://localhost:3000/user/update-profile-picture", {
+        profile_picture_url
+      });
+      
+      setCurrentUser(prev => ({...prev, profile_picture: profile_picture_url}));
+      setEditDialogOpen(false);
+      showDialog({
+        title: "Success",
+        content: "Profile picture updated successfully!",
+        confirmText: "OK",
+        confirmAction: () => setDialogOpen(false)
+      });
+    } catch (error) {
+      showDialog({
+        title: "Error",
+        content: "Failed to update profile picture. Please try again.",
+        confirmText: "OK",
+        confirmAction: () => setDialogOpen(false)
+      });
+    }
+  };
+
+
+
+  
 
   const GlobalStyle = createGlobalStyle`
     body {
@@ -350,254 +397,145 @@ export default function ClerkProfile() {
           <Divider sx={{ my: 1 }} />
 
           <Container maxWidth="sm">
-            {/* Removed the card around the profile details */}
-            <Box
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              sx={{
-                backgroundColor:
-                  "#FFFFFF" /* Set the background of the profile box to white */,
-                borderRadius: 2,
-                p: 4,
-                boxShadow: "none" /* Remove the box shadow */,
-              }}
-            >
-              <Box position="relative" sx={{ mb: 3 }}>
-                <Avatar
-                  alt={username}
-                  src={
-                    currentUser && currentUser.profile_picture
-                      ? currentUser.profile_picture
-                      : null
-                  }
-                  sx={{
-                    width: 150,
-                    height: 150,
-                    border: "4px solid #3B3183",
-                    boxShadow: "none",
-                    fontSize: 50, // Adjust font size for the initial
-                    backgroundColor: "#3B3183", // Background color for when no image is available
-                    color: "#FFFFFF", // Text color for the initial
-                    fontFamily: "Montserrat",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {(!currentUser || !currentUser.profile_picture) &&
-                    username.charAt(0).toUpperCase()}
-                </Avatar>
+  <Box sx={{ mt: 4 }}>
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      sx={{ mb: 4, position: "relative" }}
+    >
+      <Avatar
+        alt={username}
+        src={currentUser?.profile_picture}
+        sx={{
+          width: 150,
+          height: 150,
+          border: "4px solid #3B3183",
+          mb: 2,
+          position: "relative",
+        }}
+      />
+      <IconButton
+        onClick={() => setEditDialogOpen(true)}
+        sx={{
+          position: "absolute",
+          top: "70%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          bgcolor: "#3B3183",
+          color: "white",
+          
+          boxShadow: 2,
+          "&:hover": {
+            bgcolor: "#2A2462",
+          },
+        }}
+        size="small"
+      >
+        <EditIcon />
+      </IconButton>
+      {currentUser?.profile_picture && (
+        <Button
+          variant="text"
+          color="error"
+          onClick={handleRemoveProfilePicture}
+          sx={{ mt: 1 }}
+        >
+          Remove Picture
+        </Button>
+      )}
+    </Box>
 
-                <IconButton
-                  sx={{
-                    position: "absolute",
-                    bottom: 0,
-                    right: 0,
-                    bgcolor: "#3B3183",
-                    color: "white",
-                    "&:hover": {
-                      bgcolor: "#2A2462",
-                    },
-                  }}
-                  size="small"
-                  onClick={handleEditClick}
-                >
-                  <EditIcon />
-                </IconButton>
-              </Box>
-              <Dialog
-                open={editDialogOpen}
-                onClose={handleEditDialogClose}
-                sx={{
-                  "& .MuiDialog-paper": {
-                    borderRadius: "12px", // Add border radius for dialog
-                    fontFamily: "Montserrat", // Set font to Montserrat
-                  },
-                }}
-              >
-                <DialogTitle
-                  sx={{
-                    fontFamily: "Montserrat",
-                    fontWeight: "bold",
-                    color: "#3B3183",
-                  }}
-                >
-                  Edit Item
-                </DialogTitle>
-                <DialogContent
-                  sx={{
-                    fontFamily: "Montserrat",
-                    minWidth: "300px", // Ensure the dialog has a reasonable width
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      height: "100%",
-                      p: 2,
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      color="textSecondary"
-                      sx={{ mr: 2 }}
-                    >
-                      Attachment (if any)
-                    </Typography>
-                    <IconButton component="label">
-                      <UploadIcon />
-                      <input type="file" hidden onChange={handleFileChange} />
-                    </IconButton>
-                  </Box>
-                </DialogContent>
-                <DialogActions>
+
+<Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
+  <DialogTitle>Update Profile Picture</DialogTitle>
+  <DialogContent>
+    <input
+      type="file"
+      accept="image/*"
+      onChange={(e) => setProfilePictureFile(e.target.files[0])}
+    />
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+    <Button onClick={handleUpdateProfilePicture}>Save</Button>
+  </DialogActions>
+</Dialog>
+
+              {/* Username Section */}
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography fontWeight="bold">Update Username</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <TextField
+                    label="Username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    fullWidth
+                    margin="normal"
+                  />
                   <Button
-                    onClick={handleEditDialogClose}
-                    variant="outlined"
-                    sx={{
-                      fontFamily: "Montserrat",
-                      color: "#8BD3E6", // Text color
-                      borderColor: "#8BD3E6", // Border color
-                      "&:hover": {
-                        borderColor: "#8BD3E6",
-                        bgcolor: "#F0F9FF", // Light background on hover
-                      },
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleDeleteProfilePicture} // Replace with your click handler
                     variant="contained"
-                    sx={{
-                      fontFamily: "Montserrat",
-                      bgcolor: "red", // Set the background color to red
-                      color: "white", // Set the text color to white
-                      "&:hover": {
-                        bgcolor: "#cc0000", // Darker red on hover
-                      },
-                    }}
+                    onClick={handleUpdateUsername}
+                    disabled={username === currentUser?.username}
+                    sx={buttonStyles}
                   >
-                    Delete
+                    Update Username
                   </Button>
+                </AccordionDetails>
+              </Accordion>
+
+              {/* Password Section */}
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography fontWeight="bold">Change Password</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <TextField
+                    label="Current Password"
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    fullWidth
+                    margin="normal"
+                  />
+                  <TextField
+                    label="New Password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    fullWidth
+                    margin="normal"
+                  />
+                  <TextField
+                    label="Confirm New Password"
+                    type="password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    fullWidth
+                    margin="normal"
+                  />
                   <Button
-                    onClick={handleSaveProfilePicture}
                     variant="contained"
-                    sx={{
-                      fontFamily: "Montserrat",
-                      bgcolor: "#8BD3E6", // Filled pastel blue color
-                      color: "white",
-                      "&:hover": {
-                        bgcolor: "#67ADC1", // Slightly darker blue on hover
-                      },
-                    }}
+                    onClick={handleUpdatePassword}
+                    disabled={!currentPassword || !newPassword || !confirmNewPassword}
+                    sx={buttonStyles}
                   >
-                    Save Changes
+                    Update Password
                   </Button>
-                </DialogActions>
-              </Dialog>
-              <Typography variant="h6" sx={{ mt: 2, mb: 2, fontWeight: 700 }}>
-                Profile Details
-              </Typography>
-              <form onSubmit={handleSaveChanges} style={{ width: "100%" }}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      label="Username"
-                      variant="outlined"
-                      fullWidth
-                      margin="normal"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    {currentUser ? (
-                      <TextField
-                        label="Email Address"
-                        variant="outlined"
-                        fullWidth
-                        margin="normal"
-                        value={currentUser.email}
-                        InputProps={{
-                          readOnly: false,
-                        }}
-                        required
-                      />
-                    ) : (
-                      <TextField
-                        label="Email Address"
-                        variant="outlined"
-                        fullWidth
-                        margin="normal"
-                        value={"Loading ..."}
-                        InputProps={{
-                          readOnly: true,
-                        }}
-                        required
-                      />
-                    )}
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      label="Password"
-                      type="password"
-                      variant="outlined"
-                      fullWidth
-                      margin="normal"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      label="Confirm Password"
-                      type="password"
-                      variant="outlined"
-                      fullWidth
-                      margin="normal"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                    />
-                  </Grid>
-                </Grid>
-                <Button
-                  type="submit"
-                  variant="outlined"
-                  fullWidth
-                  disabled={!isFormChanged}
-                  sx={{
-                    ...buttonStyles,
-                    mt: 2,
-                    py: 1.5,
-                  }}
-                >
-                  SAVE CHANGES
-                </Button>
-              </form>
+                </AccordionDetails>
+              </Accordion>
+
+              {/* Delete Account Section */}
               <Button
                 variant="outlined"
                 color="error"
                 fullWidth
-                sx={{
-                  mt: 2,
-                  py: 1.5,
-                  fontFamily: "Montserrat",
-                  fontWeight: "bold",
-                  borderColor: "#D32F2F",
-                  color: "#D32F2F",
-                  "&:hover": {
-                    backgroundColor: "#D32F2F",
-                    color: "#FFFFFF",
-                  },
-                }}
+                sx={{ mt: 3 }}
                 onClick={handleDeleteAccount}
               >
-                DELETE ACCOUNT
+                Delete Account
               </Button>
             </Box>
           </Container>
