@@ -459,8 +459,8 @@ const AdminManageUsers = () => {
             {activeTab === "clerks"
               ? "Music Entry Clerks"
               : activeTab === "admins"
-              ? "Admins"
-              : "Customers"}{" "}
+                ? "Admins"
+                : "Customers"}{" "}
             found.
           </Typography>
         )}
@@ -507,7 +507,7 @@ const AdminManageUsers = () => {
                           variant="body1"
                           sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
                         >
-                          {currentUser.username}
+                          {user.username}
                         </Typography>
                         <Typography
                           variant="body2"

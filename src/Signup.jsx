@@ -6,7 +6,11 @@ import {
   Typography,
   TextField,
   Button,
-  Modal,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
   InputAdornment,
   IconButton,
   Radio,
@@ -21,16 +25,62 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import backgroundImage from "./assets/signupBG.png";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 
-const buttonStyles = {
-  px: 15,
-  fontFamily: "Montserrat",
-  fontWeight: "bold",
-  color: "#FFFFFF",
-  backgroundColor: "#8BD3E6",
-  border: "1px solid #8BD3E6",
-  "&:hover": {
-    backgroundColor: "#6FBCCF",
-    borderColor: "#6FBCCF",
+const dialogStyles = {
+  dialogPaper: {
+    borderRadius: "16px",
+    padding: "10px",
+    fontFamily: "Montserrat",
+  },
+  title: {
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    fontSize: "20px",
+    textAlign: "center",
+  },
+  content: {
+    fontFamily: "Montserrat",
+    textAlign: "center",
+  },
+  contentText: {
+    fontFamily: "Montserrat",
+    fontSize: "16px",
+    color: "#555",
+  },
+  actions: {
+    justifyContent: "center",
+    gap: "12px",
+    marginTop: "8px",
+  },
+  button: {
+    textTransform: "none",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    backgroundColor: "#8BD3E6",
+    border: "1px solid #8BD3E6",
+    borderRadius: "8px",
+    padding: "8px 24px",
+    boxShadow: "none",
+    "&:hover": {
+      boxShadow: "none",
+
+      backgroundColor: "#6FBCCF",
+      borderColor: "#6FBCCF",
+    },
+  },
+  deletebutton: {
+    textTransform: "none",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    backgroundColor: "#DB2226",
+    border: "1px solid #DB2226",
+    borderRadius: "8px",
+    padding: "8px 24px",
+    "&:hover": {
+      backgroundColor: "#B71C1C",
+      borderColor: "#B71C1C",
+    },
   },
 };
 
@@ -71,20 +121,6 @@ const GlobalStyle = createGlobalStyle`
     font-family: 'Montserrat', sans-serif;
   }
 `;
-
-const ModalContainer = styled(Box)(() => ({
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  backgroundColor: "#FFFFFF",
-  border: "2px solid #8BD3E6",
-  borderRadius: 20,
-  boxShadow: 24,
-  padding: 32,
-  width: 400,
-  textAlign: "center",
-}));
 
 const CustomButton = styled(Button)(({ theme }) => ({
   marginTop: theme.spacing(1),
@@ -142,21 +178,34 @@ const textFieldStyles = {
 export default function Signup() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [role, setRole] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setErrorMessage("Please enter a valid email address.");
+      return;
+    }
+
+    // Check if passwords match
     if (password !== confirmPassword) {
       setErrorMessage("Passwords do not match");
       return;
     }
+
+    // Validate password format
     const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
     if (!passwordRegex.test(password)) {
       setErrorMessage(
@@ -164,18 +213,22 @@ export default function Signup() {
       );
       return;
     }
+
+    // Check if role is selected
     if (!role) {
       setErrorMessage("Please select a role");
       return;
     }
 
+    // Clear any error messages
     setErrorMessage("");
 
+    // Make the API request
     axios
       .post("http://localhost:3000/signup", { username, email, password, role })
       .then((result) => {
         console.log(result);
-        setIsModalOpen(true);
+        setIsDialogOpen(true);
       })
       .catch((err) => {
         if (err.response && err.response.data && err.response.data.message) {
@@ -188,8 +241,8 @@ export default function Signup() {
       });
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
     navigate("/login");
   };
 
@@ -200,6 +253,26 @@ export default function Signup() {
   const handleClickShowConfirmPassword = () => {
     setShowConfirmPassword(!showConfirmPassword);
   };
+
+  const getDialogContent = () => {
+    if (role === "customer") {
+      return {
+        title: "Sign-Up Successful!",
+        content:
+          "Your account has been created successfully. Please check your email for the verification link.",
+        buttonText: "OK",
+      };
+    } else {
+      return {
+        title: "Sign-Up Pending Approval",
+        content:
+          "Your account has been created successfully. However, you will need admin approval before you can login.",
+        buttonText: "OK",
+      };
+    }
+  };
+
+  const dialogContent = getDialogContent();
 
   return (
     <>
@@ -245,6 +318,7 @@ export default function Signup() {
           <Typography
             variant="body1"
             align="center"
+            color="textSecondary"
             fontFamily="Montserrat"
             gutterBottom
             sx={{ marginBottom: 2 }}
@@ -374,7 +448,7 @@ export default function Signup() {
               color="error"
               variant="body2"
               align="center"
-              sx={{ mt: 2 }}
+              sx={{ fontFamily: "Montserrat" }}
             >
               {errorMessage}
             </Typography>
@@ -404,25 +478,27 @@ export default function Signup() {
         </FormContainer>
       </BackgroundContainer>
 
-      <Modal
-        open={isModalOpen}
-        onClose={handleCloseModal}
-        aria-labelledby="modal-title"
-        aria-describedby="modal-description"
+      <Dialog
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        PaperProps={{ sx: dialogStyles.dialogPaper }}
       >
-        <ModalContainer>
-          <Typography id="modal-title" variant="h6" component="h2">
-            Sign-Up Successful!
-          </Typography>
-          <Typography id="modal-description" sx={{ mt: 2 }}>
-            Your account has been created successfully. Please check your email
-            for the verification link.
-          </Typography>
-          <Button onClick={handleCloseModal} sx={{ mt: 2 }} variant="contained">
-            OK
+        <DialogTitle sx={dialogStyles.title}>{dialogContent.title}</DialogTitle>
+        <DialogContent sx={dialogStyles.content}>
+          <DialogContentText sx={dialogStyles.contentText}>
+            {dialogContent.content}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={dialogStyles.actions}>
+          <Button
+            onClick={handleCloseDialog}
+            variant="contained"
+            sx={dialogStyles.button}
+          >
+            {dialogContent.buttonText}
           </Button>
-        </ModalContainer>
-      </Modal>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

@@ -139,23 +139,43 @@ export default function Login() {
     axios
       .post("http://localhost:3000/login", { username_or_email, password })
       .then((result) => {
-        if (result.data.message === "Success") {
-          if (result.data.first_timer && result.data.role === "customer") {
+        const { message, role, first_timer, approval } = result.data;
+
+        if (message === "Success") {
+          // Check role and handle navigation
+          if (role === "music_entry_clerk" && approval === "pending") {
+            setErrorMessage(
+              "Your account is awaiting approval. Please contact the admin."
+            );
+          } else if (first_timer && role === "customer") {
             navigate("/first-time-login");
-          } else if (result.data.role === "customer") {
+          } else if (role === "customer") {
             navigate("/customer-homepage");
-          } else if (result.data.role === "music_entry_clerk") {
+          } else if (role === "music_entry_clerk") {
             navigate("/clerk-homepage");
-          } else if (result.data.role === "admin") {
+          } else if (role === "admin") {
             navigate("/admin-dashboard");
+          } else {
+            navigate("/login");
           }
         } else {
-          navigate("/login");
+          // Generic error handling if "message" is not "Success"
+          setErrorMessage("Login failed. Please try again.");
         }
       })
       .catch((err) => {
         console.error("Login error:", err);
-        setErrorMessage("Invalid username/email or password");
+
+        // Handle specific error responses from the backend
+        if (err.response && err.response.status === 403) {
+          setErrorMessage(err.response.data.message); // Display the backend error message
+        } else if (err.response && err.response.status === 400) {
+          setErrorMessage("Invalid username/email or password");
+        } else {
+          setErrorMessage(
+            "An unexpected error occurred. Please try again later."
+          );
+        }
       });
   };
 
@@ -203,7 +223,7 @@ export default function Login() {
             gutterBottom
             sx={{ fontFamily: "Montserrat", marginBottom: 1 }}
           >
-            Hello! Welcome back.
+            Hello, welcome back!
           </Typography>
           <Typography
             variant="body1"

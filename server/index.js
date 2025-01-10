@@ -62,27 +62,39 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendVerificationEmail = (email, username, token) => {
-  const url = `http://localhost:3000/verify-email?token=${token}`;
+  const url = `http://localhost:5173/verify-email?token=${token}`;
   const emailTemplate = `
-    <div style="border: 2px solid #483C32; border-radius: 10px; padding: 20px; font-family: Arial, sans-serif; width: 600px; margin: 0 auto;">
-      <div style="text-align: center;">
-        <h1 style="color: #483C32;">Mozartify</h1>
-      </div>
-      <div style="padding: 20px; text-align: left;">
-        <p>Hi <strong>${username}</strong>,</p>
-        <p>Thank you for registering with Mozartify! Please verify your email address to complete your registration.</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p>Click the link below to verify your email address:</p>
-        <a href="${url}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; border-radius: 5px; background-color: #483C32; color: #FFFFFF; text-decoration: none;">Verify Email</a>
-      </div>
+  <div style="border: 2px solid #8BD3E6; border-radius: 10px; padding: 20px; font-family: 'Montserrat', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #F9FBFC;">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <h1 style="color: #8BD3E6; font-size: 20px; margin: 0; font-weight: bold;">A Musicians' Notation And Score Integration Resource</h1>
+      <p style="color: #6C757D; font-size: 16px; margin: 5px 0 0;">Your Registration Portal</p>
     </div>
-  `;
+    <div style="padding: 20px; background: #FFFFFF; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);">
+      <p style="color: #333333; font-size: 16px; margin: 0;">Hi <strong>${username}</strong>,</p>
+      <p style="color: #555555; font-size: 14px; line-height: 1.6;">
+        Thank you for registering with <strong style="color: #8BD3E6;">N.A.S.I.R </strong>! Please verify your email address to complete your registration.
+      </p>
+      <p style="color: #333333; font-size: 14px; margin: 10px 0;"><strong>Email:</strong> ${email}</p>
+      <p style="color: #555555; font-size: 14px; line-height: 1.6;">
+        Click the button below to verify your email address:
+      </p>
+      <div style="text-align: center; margin: 20px 0;">
+        <a href="${url}" style="display: inline-block; padding: 12px 25px; font-size: 14px; font-weight: bold; color: #FFFFFF; background-color: #8BD3E6; border-radius: 5px; text-decoration: none;">
+          VERIFY EMAIL
+        </a>
+      </div>
+      <p style="color: #6C757D; font-size: 12px; text-align: center; margin-top: 20px;">
+        If you did not register for this account, please disregard this email.
+      </p>
+    </div>
+  </div>
+`;
 
   transporter.sendMail(
     {
-      from: "Mozartify",
+      from: "N.A.S.I.R",
       to: email,
-      subject: "Mozartify Email Verification",
+      subject: "N.A.S.I.R: Email Verification",
       html: emailTemplate,
     },
     (err, info) => {
@@ -97,25 +109,29 @@ const sendVerificationEmail = (email, username, token) => {
 
 const sendAdminApprovalEmail = (adminEmail, username, email) => {
   const emailTemplate = `
-    <div style="border: 2px solid #483C32; border-radius: 10px; padding: 20px; font-family: Arial, sans-serif; width: 600px; margin: 0 auto;">
-      <div style="text-align: center;">
-        <h1 style="color: #483C32;">Mozartify</h1>
-      </div>
-      <div style="padding: 20px; text-align: left;">
-        <p>Admin,</p>
-        <p>A new user has requested to become a Music Entry Clerk.</p>
-        <p><strong>Username:</strong> ${username}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p>Please review and approve their request in the admin panel.</p>
-      </div>
+  <div style="border: 2px solid #8BD3E6; border-radius: 10px; padding: 20px; font-family: 'Montserrat', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #F9FBFC;">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <h1 style="color: #8BD3E6; font-size: 28px; margin: 0; font-weight: bold;">A Musicians' Notation And Score Integration Resource</h1>
     </div>
-  `;
+    <div style="padding: 20px; background: #FFFFFF; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); text-align: left;">
+      <p style="color: #333333; font-size: 16px;">Admin,</p>
+      <p style="color: #555555; font-size: 14px; line-height: 1.6;">
+        A new user has requested to become a Music Entry Clerk.
+      </p>
+      <p style="color: #333333; font-size: 14px; margin: 10px 0;"><strong>Username:</strong> ${username}</p>
+      <p style="color: #333333; font-size: 14px; margin: 10px 0;"><strong>Email:</strong> ${email}</p>
+      <p style="color: #555555; font-size: 14px; line-height: 1.6;">
+        Please review and approve their request in the admin panel.
+      </p>
+    </div>
+  </div>
+`;
 
   transporter.sendMail(
     {
-      from: "Mozartify",
+      from: "N.A.S.I.R",
       to: adminEmail,
-      subject: "New Music Entry Clerk Approval Needed",
+      subject: "N.A.S.I.R: New Music Entry Clerk Approval Needed",
       html: emailTemplate,
     },
     (err, info) => {
@@ -187,25 +203,22 @@ app.get("/verify-email", async (req, res) => {
   const { token } = req.query;
 
   try {
-    const { username, email, password, role } = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
+    // Verify the token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await UserModel.findOne({ email });
+    // Find the user
+    const user = await UserModel.findOne({ email: decoded.email });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid token" });
+      return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.approval === false) {
-      return res
-        .status(400)
-        .json({ message: "Your account is pending approval" });
-    }
-
-    res.json({ message: "Email verified and user registered" });
+    // Return the approval status
+    res.json({
+      approval: user.approval,
+    });
   } catch (err) {
+    console.error("Error checking approval:", err);
     res.status(400).json({ message: "Invalid or expired token" });
   }
 });
@@ -214,34 +227,45 @@ app.post("/login", async (req, res) => {
   const { username_or_email, password } = req.body;
 
   try {
+    // Find the user by email or username
     const user = await UserModel.findOne({
       $or: [{ email: username_or_email }, { username: username_or_email }],
     });
 
-    if (user) {
-      if (user.password === password) {
-        req.session.userId = user._id;
-        req.session.save((err) => {
-          if (err) {
-            console.log("Session save error:", err);
-            return res
-              .status(500)
-              .json({ message: "Session save error", error: err });
-          }
-          res.json({
-            message: "Success",
-            userId: user._id,
-            role: user.role,
-            first_timer: user.first_timer,
-          });
-        });
-      } else {
-        res.status(400).json({ message: "The password is incorrect" });
-      }
-    } else {
-      res.status(400).json({ message: "No record existed" });
+    if (!user) {
+      return res.status(400).json({ message: "No record existed" });
     }
+
+    if (user.password !== password) {
+      return res.status(400).json({ message: "The password is incorrect" });
+    }
+
+    // Check if the user is a "music_entry_clerk" and their approval is pending
+    if (user.role === "music_entry_clerk" && user.approval === "pending") {
+      return res.status(403).json({
+        message: "Your account is awaiting approval. Please contact the admin.",
+      });
+    }
+
+    // Save the session if the user is approved or does not require approval
+    req.session.userId = user._id;
+    req.session.save((err) => {
+      if (err) {
+        console.log("Session save error:", err);
+        return res
+          .status(500)
+          .json({ message: "Session save error", error: err });
+      }
+      res.json({
+        message: "Success",
+        userId: user._id,
+        role: user.role,
+        first_timer: user.first_timer,
+        approval: user.approval, // Pass approval status to the frontend
+      });
+    });
   } catch (err) {
+    console.error("Server error:", err);
     res.status(500).json({ message: "Server error", error: err });
   }
 });
@@ -308,6 +332,13 @@ app.post("/preferences", async (req, res) => {
 
 app.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
+
+  // Validate email format using regex
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) {
+    return res.status(400).json({ message: "Invalid email format" });
+  }
+
   try {
     const user = await UserModel.findOne({ email });
     if (!user) {
@@ -320,16 +351,31 @@ app.post("/forgot-password", async (req, res) => {
 
     const resetLink = `http://localhost:5173/reset-password?token=${token}`;
     const emailTemplate = `
-      <div>
-        <p>You requested for a password reset. Click the link below to reset your password:</p>
-        <a href="${resetLink}">Reset Password</a>
+  <div style="border: 2px solid #8BD3E6; border-radius: 10px; padding: 20px; font-family: 'Montserrat', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #F9FBFC;">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <h1 style="color: #8BD3E6; font-size: 28px; margin: 0; font-weight: bold;">Reset Your Password</h1>
+      <p style="color: #6C757D; font-size: 16px; margin: 5px 0 0;">We received a request to reset your password.</p>
+    </div>
+    <div style="padding: 20px; background: #FFFFFF; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);">
+      <p style="color: #555555; font-size: 14px; line-height: 1.6;">
+        You requested to reset your password. Please click the button below to proceed:
+      </p>
+      <div style="text-align: center; margin: 20px 0;">
+        <a href="${resetLink}" style="display: inline-block; padding: 12px 25px; font-size: 14px; font-weight: bold; color: #FFFFFF; background-color: #8BD3E6; border-radius: 5px; text-decoration: none;">
+          RESET PASSWORD
+        </a>
       </div>
-    `;
+      <p style="color: #6C757D; font-size: 12px; text-align: center; margin-top: 20px;">
+        If you did not request this password reset, please ignore this email.
+      </p>
+    </div>
+  </div>
+`;
 
     await transporter.sendMail({
-      from: "Mozartify",
+      from: "N.A.S.I.R",
       to: email,
-      subject: "Password Reset",
+      subject: "N.A.S.I.R: Password Reset",
       html: emailTemplate,
     });
 
@@ -341,19 +387,47 @@ app.post("/forgot-password", async (req, res) => {
 
 app.post("/reset-password", async (req, res) => {
   const { token, newPassword } = req.body;
+
   try {
+    // Verify the JWT token
     const { userId } = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await UserModel.findById(userId);
-    if (!user) {
-      return res.status(400).json({ message: "Invalid token" });
+
+    // Validate the new password
+    const passwordRegex = /^(?=.*\d)[a-zA-Z\d]{8,}$/; // At least 8 characters, includes one number
+    if (!passwordRegex.test(newPassword)) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "Password must be at least 8 characters long and include a number",
+        });
     }
 
+    // Fetch the user by ID
+    const user = await UserModel.findById(userId);
+
+    // Check if the user exists
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    // Update the user's password (not hashed, as per your request)
     user.password = newPassword;
     await user.save();
 
+    // Send success response
     res.json({ message: "Password reset successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err });
+    // Token verification errors
+    if (err.name === "TokenExpiredError") {
+      return res.status(400).json({ message: "Token has expired" });
+    }
+    if (err.name === "JsonWebTokenError") {
+      return res.status(400).json({ message: "Invalid token" });
+    }
+
+    // Generic server error
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
@@ -422,21 +496,24 @@ app.put("/user/update-username", async (req, res) => {
     }
 
     // Check if username already exists
-    const existingUser = await UserModel.findOne({ username, _id: { $ne: userId } });
+    const existingUser = await UserModel.findOne({
+      username,
+      _id: { $ne: userId },
+    });
     if (existingUser) {
       return res.status(400).json({ message: "Username already taken" });
     }
 
     user.username = username;
     await user.save();
-    
-    res.json({ 
+
+    res.json({
       message: "Username updated successfully",
       user: {
         username: user.username,
         email: user.email,
-        profile_picture: user.profile_picture
-      }
+        profile_picture: user.profile_picture,
+      },
     });
   } catch (err) {
     console.error("Error updating username:", err);
@@ -467,7 +544,7 @@ app.put("/user/change-password", async (req, res) => {
     // Update with new password (as plain string)
     user.password = newPassword;
     await user.save();
-    
+
     res.json({ message: "Password updated successfully" });
   } catch (err) {
     console.error("Error updating password:", err);
@@ -492,14 +569,14 @@ app.put("/user/update-profile-picture", async (req, res) => {
 
     user.profile_picture = profile_picture_url;
     await user.save();
-    
-    res.json({ 
+
+    res.json({
       message: "Profile picture updated successfully",
       user: {
         username: user.username,
         email: user.email,
-        profile_picture: user.profile_picture
-      }
+        profile_picture: user.profile_picture,
+      },
     });
   } catch (err) {
     console.error("Error updating profile picture:", err);

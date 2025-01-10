@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import axios from "axios";
 import {
   Box,
@@ -46,6 +46,81 @@ const BackgroundContainer = styled(Box)(() => ({
   fontFamily: "Montserrat",
 }));
 
+const LoginButton = styled(Button)({
+  width: "200px",
+  marginTop: "16px",
+  padding: "8px 80px",
+  fontFamily: "Montserrat",
+  fontWeight: "bold",
+  color: "#8BD3E6",
+  backgroundColor: "#FFFFFF",
+  border: "1px solid #8BD3E6",
+  "&:hover": {
+    backgroundColor: "#E6F8FB",
+    color: "#7AB9C4",
+    borderColor: "#7AB9C4",
+  },
+});
+
+const SubmitButton = styled(Button)({
+  width: "200px",
+  marginTop: "16px",
+  padding: "8px 80px",
+  fontFamily: "Montserrat",
+  fontWeight: "bold",
+  color: "#FFFFFF",
+  backgroundColor: "#8BD3E6",
+  border: "1px solid #8BD3E6",
+  "&:hover": {
+    backgroundColor: "#6FBCCF",
+    borderColor: "#6FBCCF",
+  },
+  "&:disabled": {
+    backgroundColor: "#ccc",
+    borderColor: "#ccc",
+    color: "#FFFFFF",
+  },
+});
+
+const textFieldStyles = {
+  "& label.Mui-focused": {
+    color: "#8BD3E6", // Primary color for focused label
+    fontWeight: "bold", // Emphasis on focus
+  },
+  fontFamily: "Montserrat",
+  "& .MuiInputBase-root": {
+    fontFamily: "Montserrat",
+    borderRadius: "12px", // Slightly more rounded corners
+    boxShadow: "0px 4px 6px rgba(139, 211, 230, 0.2)", // Subtle shadow in primary color
+    backgroundColor: "rgba(235, 251, 255, 0.9)", // Complementary light cyan for background
+  },
+  "& .MuiFormLabel-root": {
+    fontFamily: "Montserrat",
+    fontSize: "15px", // Readable font size
+    color: "#467B89", // Muted teal for a clean look
+  },
+  "& .MuiInput-underline:after": {
+    borderBottomColor: "#8BD3E6", // Primary color for underline focus
+    transform: "scaleX(1)", // Smooth underline animation
+    borderWidth: "2px", // Enhanced visibility
+  },
+  "& .MuiOutlinedInput-root": {
+    "& fieldset": {
+      borderColor: "#C8EAF2", // Light complementary color for default border
+    },
+    "&:hover fieldset": {
+      borderColor: "#8BD3E6", // Primary color for hover
+      boxShadow: "0px 6px 16px rgba(139, 211, 230, 0.4)", // Glow effect on hover
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#8BD3E6", // Primary color for focus
+      boxShadow: "0px 8px 20px rgba(139, 211, 230, 0.6)", // Stronger shadow for focus
+    },
+    borderRadius: "12px", // Consistent design with input base
+    backgroundColor: "rgba(255, 255, 255, 0.9)", // Neutral white for contrast
+  },
+};
+
 const GlobalStyle = createGlobalStyle`
   body {
     margin: 0;
@@ -58,24 +133,59 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState(""); // Track the email value
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [disabled, setDisabled] = useState(false); // Track if the button should be disabled
+  const timeoutRef = useRef(null); // Ref to store timeout ID
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Prevent multiple submissions
+    if (loading || disabled) {
+      return;
+    }
+
     setLoading(true);
+    setMessage(""); // Clear previous messages
 
     axios
       .post("http://localhost:3000/forgot-password", { email })
       .then((response) => {
-        setMessage(
-          "We have sent you an email to reset your password. Please check your email."
-        );
+        setMessage({
+          text: "We have sent you an email to reset your password.",
+          type: "success",
+        });
+
+        // Disable the button for 1 minute
+        setDisabled(true);
+        timeoutRef.current = setTimeout(() => {
+          setDisabled(false); // Re-enable the button after 1 minute
+        }, 60000); // 60000ms = 1 minute
       })
       .catch((error) => {
-        setMessage("An error occurred. Please try again.");
+        // Handle specific error messages from the backend
+        if (error.response && error.response.status === 400) {
+          setMessage({ text: error.response.data.message, type: "error" }); // Show error message in red
+        } else {
+          setMessage({
+            text: "An error occurred. Please try again.",
+            type: "error",
+          });
+        }
       })
       .finally(() => {
         setLoading(false);
       });
+  };
+
+  // Reset the disable timer when email changes
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
+
+    // Clear timeout and re-enable the button
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      setDisabled(false);
+    }
   };
 
   return (
@@ -133,71 +243,43 @@ export default function ForgotPassword() {
             variant="outlined"
             required
             value={email} // The value should be controlled here
-            onChange={(e) => setEmail(e.target.value)} // Proper state update for email
-            sx={{
-              "& label.Mui-focused": { color: "#483C32" },
-              "& .MuiInput-underline:after": {
-                borderBottomColor: "#483C32",
-              },
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": { borderColor: "#483C32" },
-                "&:hover fieldset": { borderColor: "#483C32" },
-                "&.Mui-focused fieldset": { borderColor: "#483C32" },
-              },
-            }}
+            onChange={handleEmailChange} // Proper state update and reset on change
+            sx={textFieldStyles}
           />
-          {message && (
-            <Typography
-              color="textPrimary"
-              variant="body2"
-              sx={{
-                mt: 2,
-                fontFamily: "Montserrat",
-                textAlign: "center", // Centers the text horizontally
-              }}
-            >
-              {message}
-            </Typography>
-          )}
-
-          <Button
-            variant="outlined"
-            size="large"
-            type="submit"
-            sx={{
-              mt: 3,
-              px: 10,
-              fontFamily: "Montserrat",
-              fontWeight: "bold",
-              color: "#483C32",
-              borderColor: "#483C32",
-              "&:hover": {
-                backgroundColor: "#483C32",
-                color: "#FFFFFF",
-                borderColor: "#483C32",
-              },
-            }}
-            disabled={loading}
-          >
-            {loading ? (
-              <CircularProgress size={24} sx={{ color: "#483C32" }} />
-            ) : (
-              "Submit"
-            )}
-          </Button>
+          {/* Reserve space for the error or success message */}
           <Typography
-            component={Link}
-            to="/login"
+            color={message.type === "error" ? "error" : "black"} // Red for error, default for success
+            variant="body2"
             sx={{
-              textDecoration: "none",
-              color: "#3B3183",
-              fontWeight: "bold",
-              marginTop: "20px",
+              mt: 2,
               fontFamily: "Montserrat",
+              textAlign: "center", // Centers the text horizontally
+              minHeight: "24px", // Reserve space for a single line of text
             }}
           >
-            BACK TO LOGIN
+            {message.text || " "} {/* Placeholder to maintain space */}
           </Typography>
+
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 2,
+              mt: 0,
+            }}
+          >
+            <LoginButton to="/login" component={Link}>
+              Login
+            </LoginButton>
+            <SubmitButton type="submit" disabled={loading || disabled}>
+              {loading ? (
+                <CircularProgress size={24} sx={{ color: "#FFFFFF" }} />
+              ) : (
+                "Submit"
+              )}
+            </SubmitButton>
+          </Box>
         </FormContainer>
       </BackgroundContainer>
     </>
