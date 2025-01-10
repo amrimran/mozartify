@@ -361,6 +361,8 @@ export default function CustomerMusicScoreView() {
             flexDirection: "column",
             overflow: "hidden",
             padding: 5,
+            marginLeft: "229px",
+
           }}
         >
           <Box

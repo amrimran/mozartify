@@ -388,49 +388,6 @@ export default function CustomerHomepage() {
       });
   }, []);
 
-  useEffect(() => {
-    const fetchPopularImagePaths = async () => {
-      const updatedPopularScores = await Promise.all(
-        popularScores.map(async (score) => {
-          const imageUrl = await fetchImage(score.coverImageUrl);
-          return { ...score, imageUrl };
-        })
-      );
-      setPopularScores(updatedPopularScores);
-    };
-
-    if (popularScores.length > 0) {
-      fetchPopularImagePaths();
-    }
-  }, [popularScores]);
-
-  useEffect(() => {
-    const fetchRecommendedImagePaths = async () => {
-      const updatedRecommendedScores = await Promise.all(
-        recommendedScores.map(async (score) => {
-          const imageUrl = await fetchImage(score.coverImageUrl);
-          return { ...score, imageUrl };
-        })
-      );
-      setRecommendations(updatedRecommendedScores);
-    };
-
-    if (recommendedScores.length > 0) {
-      fetchRecommendedImagePaths();
-    }
-  }, [recommendedScores]);
-
-  const fetchImage = async (imagePath) => {
-    try {
-      const storageRef = ref(storage, imagePath);
-      const url = await getDownloadURL(storageRef);
-      return url;
-    } catch (error) {
-      console.error("Error fetching image:", error);
-      return null;
-    }
-  };
-
   const toggleFavorite = async (musicScoreId) => {
     try {
       const response = await axios.post("http://localhost:3000/set-favorites", {
@@ -459,7 +416,8 @@ export default function CustomerHomepage() {
     margin: 0;
     padding: 0;
     font-family: 'Montserrat', sans-serif;
-    overflow-y: hidden; /* Prevent vertical scroll */
+    overflow-y:hidden;
+    
   }
 
   * {
@@ -526,7 +484,7 @@ export default function CustomerHomepage() {
   return (
     <>
       <GlobalStyle />
-      <Box sx={{ display: "flex", height: "120vh" }}>
+      <Box sx={{ display: "flex", height: "100vh" }}>
         <Box
           sx={{
             width: 225,
@@ -839,7 +797,7 @@ export default function CustomerHomepage() {
               fontFamily: "Montserrat",
               fontWeight: "bold",
               mt: 4,
-              mb: 3,
+              mb: 1,
             }}
           >
             {searchQuery || isFiltered ? "Search Result" : "Dashboard"}
@@ -988,20 +946,13 @@ export default function CustomerHomepage() {
                 height: "calc(70vh)",
                 display: "flex",
                 flexDirection: "column",
+                paddingLeft: "50px",
               }}
             >
               <Grid container spacing={4}>
                 {/* Left Box - Popular Scores */}
-                <Grid
-                  item
-                  xs={5.5}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
+                <Grid item xs={5.5} sx={{ pr: 0 }}>
+
                   <Typography
                     variant="h5"
                     gutterBottom
@@ -1014,7 +965,9 @@ export default function CustomerHomepage() {
                       justifyContent: "center",
                       alignItems: "center",
                       fontFamily: "Montserrat",
-                      mb: 5,
+                      mb: 2,
+                      mr:7
+                      
                     }}
                   >
                     Popular
@@ -1149,16 +1102,8 @@ export default function CustomerHomepage() {
                 </Grid>
 
                 {/* Right Box - Recommended Scores */}
-                <Grid
-                  item
-                  xs={5.5}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
+                <Grid item xs={5.5} sx={{ pr: 0 }}>
+
                   <Typography
                     variant="h5"
                     gutterBottom
@@ -1171,7 +1116,8 @@ export default function CustomerHomepage() {
                       justifyContent: "center",
                       alignItems: "center",
                       fontFamily: "Montserrat",
-                      mb: 5,
+                      mb: 2,
+                      mr:7
                     }}
                   >
                     For You
