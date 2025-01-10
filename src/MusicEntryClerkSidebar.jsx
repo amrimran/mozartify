@@ -1,5 +1,18 @@
 import React, { useState } from "react";
-import { Box, List, ListItemIcon, ListItemText, ListItemButton, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from "@mui/material";
+import {
+  Box,
+  List,
+  ListItemIcon,
+  ListItemText,
+  ListItemButton,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+} from "@mui/material";
 import { useLocation, Link } from "react-router-dom";
 import HomeIcon from "@mui/icons-material/Home";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
@@ -7,27 +20,62 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
 import EditIcon from "@mui/icons-material/Edit";
+import SearchIcon from "@mui/icons-material/Search";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 import { useNavigate } from "react-router-dom"; // Import useNavigate at the top
-
 
 const ClerkSidebar = ({ active, disableActiveTab }) => {
   const location = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate(); // Initialize useNavigate
 
-
   const navigationItems = [
-    { path: "/clerk-homepage", label: "Dashboard", icon: <HomeIcon />, key: "dashboard" },
-    { path: "/clerk-upload", label: "Upload", icon: <CloudUploadIcon />, key: "upload" },
-    { path: "/clerk-music-score-view", label: "Manage Scores", icon: <LibraryMusicIcon />, key: "manageScore" },
-    { path: "/clerk-edit", label: "Edit Score", icon: <EditIcon />, key: "editScore" },
-    { path: "/clerk-catalog", label: "Edit Metadata", icon: <ViewListIcon />, key: "catalogMetadata" },
+    {
+      path: "/clerk-homepage",
+      label: "Dashboard",
+      icon: <HomeIcon />,
+      key: "dashboard",
+    },
+    {
+      path: "/clerk-upload",
+      label: "Upload",
+      icon: <CloudUploadIcon />,
+      key: "upload",
+    },
+    {
+      path: "/clerk-search",
+      label: "Search Scores",
+      icon: <SearchIcon />,
+      key: "searchScore",
+    },
+    {
+      path: "/clerk-music-score-view",
+      label: "Manage Scores",
+      icon: <LibraryMusicIcon />,
+      key: "manageScore",
+    },
+    {
+      path: "/clerk-edit",
+      label: "Edit Score",
+      icon: <EditIcon />,
+      key: "editScore",
+    },
+    {
+      path: "/clerk-catalog",
+      label: "Edit Metadata",
+      icon: <ViewListIcon />,
+      key: "catalogMetadata",
+    },
   ];
 
   const bottomNavigationItems = [
-    { path: "/clerk-profile", label: "User Profile", icon: <AccountCircleIcon />, key: "profile" },
+    {
+      path: "/clerk-profile",
+      label: "User Profile",
+      icon: <AccountCircleIcon />,
+      key: "profile",
+    },
     { path: "/login", label: "Logout", icon: <ExitToAppIcon />, key: "logout" },
   ];
 
@@ -47,10 +95,15 @@ const ClerkSidebar = ({ active, disableActiveTab }) => {
 
   const handleTabClick = (tabKey) => {
     // Open dialog for specific tabs unless they are the active one
-    if (["manageScore", "editScore", "catalogMetadata"].includes(tabKey) && tabKey !== active) {
+    if (
+      ["manageScore", "editScore", "catalogMetadata"].includes(tabKey) &&
+      tabKey !== active
+    ) {
       setDialogOpen(true);
     } else if (tabKey !== active) {
-      const targetPath = navigationItems.find((item) => item.key === tabKey)?.path;
+      const targetPath = navigationItems.find(
+        (item) => item.key === tabKey
+      )?.path;
       if (targetPath) {
         window.location.href = targetPath;
       }
@@ -62,7 +115,7 @@ const ClerkSidebar = ({ active, disableActiveTab }) => {
     if (key === "dashboard" || key === "upload") {
       return false;
     }
-  
+
     // Disable tabs other than the active one for certain conditions
     if (
       (active === "manageScore" && key === "editScore") ||
@@ -74,15 +127,13 @@ const ClerkSidebar = ({ active, disableActiveTab }) => {
     ) {
       return true;
     }
-  
+
     return false;
   };
-  
-
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
-            <style>{keyframes}</style>
+      <style>{keyframes}</style>
 
       <Box
         sx={{
@@ -97,16 +148,16 @@ const ClerkSidebar = ({ active, disableActiveTab }) => {
           top: 0,
         }}
       >
-        <Box 
-                  sx={{ 
-                    width: "4px", 
-                    bgcolor: "#FFEE8C", 
-                    height: "100%", 
-                    position: "fixed", 
-                    left: "225px", 
-                    top: 0,
-                  }} 
-                />
+        <Box
+          sx={{
+            width: "4px",
+            bgcolor: "#FFEE8C",
+            height: "100%",
+            position: "fixed",
+            left: "225px",
+            top: 0,
+          }}
+        />
         <Box
           sx={{
             textAlign: "center",
@@ -123,12 +174,11 @@ const ClerkSidebar = ({ active, disableActiveTab }) => {
             style={{
               maxWidth: "100%",
               maxHeight: "90px",
-              animation: "moveUpDown 2s ease-in-out infinite"
-
+              animation: "moveUpDown 2s ease-in-out infinite",
             }}
           />
         </Box>
-         <List sx={{ flexGrow: 1 }}>
+        <List sx={{ flexGrow: 1 }}>
           {navigationItems.map((item) => (
             <ListItemButton
               key={item.path}
@@ -159,7 +209,6 @@ const ClerkSidebar = ({ active, disableActiveTab }) => {
           ))}
         </List>
 
-
         <List>
           {bottomNavigationItems.map((item) => (
             <ListItemButton
@@ -167,10 +216,16 @@ const ClerkSidebar = ({ active, disableActiveTab }) => {
               component={Link}
               to={item.path}
               sx={{
-                bgcolor: active === item.key || location.pathname === item.path ? "#67ADC1" : "inherit",
+                bgcolor:
+                  active === item.key || location.pathname === item.path
+                    ? "#67ADC1"
+                    : "inherit",
                 color: "#FFFFFF",
                 "&:hover": {
-                  bgcolor: active === item.key || location.pathname === item.path ? "#67ADC1" : "#78BBCC",
+                  bgcolor:
+                    active === item.key || location.pathname === item.path
+                      ? "#67ADC1"
+                      : "#78BBCC",
                 },
                 padding: "8px 16px",
                 display: "flex",
@@ -238,10 +293,11 @@ const ClerkSidebar = ({ active, disableActiveTab }) => {
           }}
         >
           <Button
-onClick={() => {
-  setDialogOpen(false); // Close the dialog
-  navigate("/clerk-homepage"); // Redirect to the dashboard
-}}            sx={{
+            onClick={() => {
+              setDialogOpen(false); // Close the dialog
+              navigate("/clerk-homepage"); // Redirect to the dashboard
+            }}
+            sx={{
               textTransform: "none",
               fontFamily: "Montserrat",
               fontWeight: "bold",

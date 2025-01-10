@@ -21,12 +21,16 @@ import {
   FormControlLabel,
   Pagination,
   Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
 import abcjs from "abcjs";
 import { format } from "date-fns";
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import StopIcon from '@mui/icons-material/Stop';
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import StopIcon from "@mui/icons-material/Stop";
 
 export default function ClerkMusicScoreView() {
   const { scoreId } = useParams();
@@ -45,6 +49,7 @@ export default function ClerkMusicScoreView() {
   const [splitContent, setSplitContent] = useState([]);
   const [page, setPage] = useState(1);
   const abcContainerRef = useRef(null);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
   const navigate = useNavigate();
 
@@ -55,14 +60,12 @@ export default function ClerkMusicScoreView() {
     color: "#FFFFFF",
     backgroundColor: "#8BD3E6",
     border: "1px solid #8BD3E6",
-    borderColor: "#8BD3E6",
     "&:hover": {
-      backgroundColor: "#6FBCCF", // Slightly darker blue for hover
-      color: "#FFFFFF",           // Keeps the text color consistent
-      borderColor: "#6FBCCF",     // Matches the background color for cohesion
+      backgroundColor: "#6FBCCF",
+      borderColor: "#6FBCCF",
     },
   };
-
+  
   const buttonStyles2 = {
     px: 15,
     fontFamily: "Montserrat",
@@ -70,26 +73,80 @@ export default function ClerkMusicScoreView() {
     color: "#8BD3E6",
     backgroundColor: "#FFFFFF",
     border: "1px solid #8BD3E6",
-    borderColor: "#8BD3E6",
     "&:hover": {
-      backgroundColor: "#E6F8FB", // Subtle light blue hover effect
-      color: "#7AB9C4",           // Slightly darker shade of the text
-      borderColor: "#7AB9C4",     // Matches the text color for consistency
+      backgroundColor: "#E6F8FB",
+      color: "#7AB9C4",
+      borderColor: "#7AB9C4",
     },
   };
-
+  
   const deleteButtonStyles = {
+    px:15,
+    py:1,
     fontFamily: "Montserrat",
     fontWeight: "bold",
     color: "#FFFFFF",
-    borderColor: "#DB2226",
     backgroundColor: "#DB2226",
-    width: "250px",
-    height: "40px",
+    border: "1px solid #DB2226",
     "&:hover": {
-      backgroundColor: "#B71C1C", // Slightly darker red
-      color: "#FFFFFF",           // Keeps the text color consistent
-      borderColor: "#B71C1C",     // Matches the background color for cohesion
+      backgroundColor: "#B71C1C",
+      borderColor: "#B71C1C",
+    },
+  };
+  
+  const dialogStyles = {
+    dialogPaper: {
+      borderRadius: "16px",
+      padding: "20px",
+      fontFamily: "Montserrat",
+    },
+    title: {
+      fontFamily: "Montserrat",
+      fontWeight: "bold",
+      fontSize: "20px",
+      textAlign: "center",
+    },
+    content: {
+      fontFamily: "Montserrat",
+      textAlign: "center",
+    },
+    contentText: {
+      fontFamily: "Montserrat",
+      fontSize: "16px",
+      color: "#555",
+    },
+    actions: {
+      justifyContent: "center",
+      gap: "12px",
+      marginTop: "8px",
+    },
+    button: {
+      textTransform: "none",
+      fontFamily: "Montserrat",
+      fontWeight: "bold",
+      color: "#FFFFFF",
+      backgroundColor: "#8BD3E6",
+      border: "1px solid #8BD3E6",
+      borderRadius: "8px",
+      padding: "8px 24px",
+      "&:hover": {
+        backgroundColor: "#6FBCCF",
+        borderColor: "#6FBCCF",
+      },
+    },
+    deletebutton: {
+      textTransform: "none",
+      fontFamily: "Montserrat",
+      fontWeight: "bold",
+      color: "#FFFFFF",
+      backgroundColor: "#DB2226",
+      border: "1px solid #DB2226",
+      borderRadius: "8px",
+      padding: "8px 24px",
+      "&:hover": {
+        backgroundColor: "#B71C1C",
+        borderColor: "#B71C1C",
+      },
     },
   };
   
@@ -211,25 +268,27 @@ export default function ClerkMusicScoreView() {
   // Effect to handle changes in manipulation controls
   useEffect(() => {
     stopAndReset();
-  }, [tempo, isLooping, transposition, instrument, stopAndReset, isStop,]);
+  }, [tempo, isLooping, transposition, instrument, stopAndReset, isStop]);
 
   const handlePlayback = async () => {
     if (!visualObj) return;
-  
+
     if (!isPlaying) {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      
+      const audioContext = new (window.AudioContext ||
+        window.webkitAudioContext)();
+
       const startPlayback = async () => {
         try {
           const newSynth = new abcjs.synth.CreateSynth();
           setSynthesizer(newSynth);
-  
+
           await newSynth.init({
             audioContext,
             visualObj,
             millisecondsPerMeasure: (60000 / (tempo * 1.1667)) * 4,
             options: {
-              soundFontUrl: "https://paulrosen.github.io/midi-js-soundfonts/abcjs/",
+              soundFontUrl:
+                "https://paulrosen.github.io/midi-js-soundfonts/abcjs/",
               program: instrument,
               onEnded: async () => {
                 if (isLooping && !isStop) {
@@ -245,33 +304,31 @@ export default function ClerkMusicScoreView() {
               },
             },
           });
-  
+
           await newSynth.prime();
-          
+
           if (!isPlaying) {
             setIsPlaying(true);
             setIsStop(false);
           }
-  
+
           timingCallbacks?.start();
           await newSynth.start();
-  
         } catch (error) {
           console.error("Playback error:", error);
           stopAndReset();
           setIsStop(false);
         }
       };
-  
+
       // Start the initial playback
       await startPlayback();
-      
     } else {
       stopAndReset();
       setIsStop(false);
     }
   };
-  
+
   // Split ABC content into pages
   useEffect(() => {
     if (abcContent) {
@@ -336,14 +393,10 @@ export default function ClerkMusicScoreView() {
       console.error("No metadata or filename available");
       return;
     }
+    setOpenDeleteDialog(true); // Open the dialog
+  };
 
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this music score?"
-    );
-    if (!confirmDelete) {
-      return; // Exit if the user cancels the action
-    }
-
+  const handleConfirmDelete = () => {
     fetch("http://localhost:3001/catalog", {
       // Replace with the correct backend URL
       method: "POST",
@@ -369,7 +422,14 @@ export default function ClerkMusicScoreView() {
       })
       .catch((error) => {
         console.error("Error:", error);
+      })
+      .finally(() => {
+        setOpenDeleteDialog(false); // Close the dialog
       });
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDeleteDialog(false); // Close the dialog without deleting
   };
 
   return (
@@ -377,7 +437,6 @@ export default function ClerkMusicScoreView() {
       <Box
         sx={{
           width: 225,
-          bgcolor: "#3B3183",
           flexShrink: 0,
           overflowY: "auto",
           position: "fixed",
@@ -449,37 +508,37 @@ export default function ClerkMusicScoreView() {
                 }}
               >
                 <Box display="flex" gap={1}>
-  {/* Play Button */}
-  <Button
-    onClick={handlePlayback}
-    variant="contained"
-    sx={{
-      bgcolor: "#8BD3E6",
-      "&:hover": { bgcolor: "#6FBCCF" },
-      minWidth: "auto", // Button size fits icon
-      padding: "8px", // Adjust padding for smaller button
-    }}
-  >
-    <PlayArrowIcon />
-  </Button>
+                  {/* Play Button */}
+                  <Button
+                    onClick={handlePlayback}
+                    variant="contained"
+                    sx={{
+                      bgcolor: "#8BD3E6",
+                      "&:hover": { bgcolor: "#6FBCCF" },
+                      minWidth: "auto", // Button size fits icon
+                      padding: "8px", // Adjust padding for smaller button
+                    }}
+                  >
+                    <PlayArrowIcon />
+                  </Button>
 
-  {/* Stop Button */}
-  <Button
-    onClick={() => {
-      setIsStop(true);
-      stopAndReset();
-    }}
-    variant="contained"
-    sx={{
-      bgcolor: "#8BD3E6",
-      "&:hover": { bgcolor: "#6FBCCF" },
-      minWidth: "auto", // Button size fits icon
-      padding: "8px", // Adjust padding for smaller button
-    }}
-  >
-    <StopIcon />
-  </Button>
-</Box>
+                  {/* Stop Button */}
+                  <Button
+                    onClick={() => {
+                      setIsStop(true);
+                      stopAndReset();
+                    }}
+                    variant="contained"
+                    sx={{
+                      bgcolor: "#8BD3E6",
+                      "&:hover": { bgcolor: "#6FBCCF" },
+                      minWidth: "auto", // Button size fits icon
+                      padding: "8px", // Adjust padding for smaller button
+                    }}
+                  >
+                    <StopIcon />
+                  </Button>
+                </Box>
 
                 {/* Loop Switch */}
                 <FormControlLabel
@@ -508,168 +567,180 @@ export default function ClerkMusicScoreView() {
                 />
 
                 {/* Tempo Controls */}
-<Box
-  sx={{
-    display: "flex",
-    alignItems: "center",
-    gap: 1, // Space between label, controls, and unit
-  }}
->
-  <Typography sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}>
-    Tempo:
-  </Typography>
-  <Box
-    sx={{
-      display: "flex",
-      alignItems: "center",
-      gap: 0, // No gap between controls
-      border: "1px solid rgba(0, 0, 0, 0.23)", // Optional: border for group
-      borderRadius: 1, // Rounded corners for group
-      overflow: "hidden", // Ensures clean edges
-    }}
-  >
-    <Button
-      onClick={() => setTempo((prev) => Math.max(40, prev - 1))}
-      variant="outlined"
-      size="small"
-      sx={{
-        minWidth: 40,
-        borderRadius: 0, // Removes individual button corners
-        border: "none", // Removes individual button border
-        "&:hover": {
-          border: "none", // Prevents border from appearing on hover
-          backgroundColor: "#F8F8F8", // Forces white background on hover
-        },
-      }}
-    >
-      -
-    </Button>
-    <TextField
-      value={tempo}
-      onChange={(e) => {
-        const newValue = e.target.value;
-        if (/^\d*$/.test(newValue)) {
-          // Allow only numeric input
-          setTempo(newValue);
-        }
-      }}
-      onBlur={() => {
-        // Validate and clamp the value on blur
-        const numericValue = parseInt(tempo, 10);
-        if (!isNaN(numericValue)) {
-          setTempo(Math.min(Math.max(numericValue, 40), 200));
-        } else {
-          setTempo(40); // Default to 40 if input is invalid or empty
-        }
-      }}
-      size="small"
-      variant="outlined"
-      sx={{
-        maxWidth: 55,
-        textAlign: "center",
-        "& .MuiOutlinedInput-notchedOutline": {
-          border: "none", // Removes TextField border for group cohesion
-        },
-      }}
-      inputProps={{
-        style: { textAlign: "center" }, // Centers the input text
-      }}
-    />
-    <Button
-      onClick={() => setTempo((prev) => Math.min(200, prev + 1))}
-      variant="outlined"
-      size="small"
-      sx={{
-        minWidth: 40,
-        borderRadius: 0, // Removes individual button corners
-        border: "none", // Removes individual button border
-        "&:hover": {
-          border: "none", // Prevents border from appearing on hover
-          backgroundColor: "#F8F8F8", // Forces white background on hover
-        },
-      }}
-    >
-      +
-    </Button>
-  </Box>
-  <Typography sx={{ fontFamily: "Montserrat" }}>BPM</Typography>
-</Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1, // Space between label, controls, and unit
+                  }}
+                >
+                  <Typography
+                    sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
+                  >
+                    Tempo:
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0, // No gap between controls
+                      border: "1px solid rgba(0, 0, 0, 0.23)", // Optional: border for group
+                      borderRadius: 1, // Rounded corners for group
+                      overflow: "hidden", // Ensures clean edges
+                    }}
+                  >
+                    <Button
+                      onClick={() => setTempo((prev) => Math.max(40, prev - 1))}
+                      variant="outlined"
+                      size="small"
+                      sx={{
+                        minWidth: 40,
+                        borderRadius: 0, // Removes individual button corners
+                        border: "none", // Removes individual button border
+                        "&:hover": {
+                          border: "none", // Prevents border from appearing on hover
+                          backgroundColor: "#F8F8F8", // Forces white background on hover
+                        },
+                      }}
+                    >
+                      -
+                    </Button>
+                    <TextField
+                      value={tempo}
+                      onChange={(e) => {
+                        const newValue = e.target.value;
+                        if (/^\d*$/.test(newValue)) {
+                          // Allow only numeric input
+                          setTempo(newValue);
+                        }
+                      }}
+                      onBlur={() => {
+                        // Validate and clamp the value on blur
+                        const numericValue = parseInt(tempo, 10);
+                        if (!isNaN(numericValue)) {
+                          setTempo(Math.min(Math.max(numericValue, 40), 200));
+                        } else {
+                          setTempo(40); // Default to 40 if input is invalid or empty
+                        }
+                      }}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        maxWidth: 55,
+                        textAlign: "center",
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          border: "none", // Removes TextField border for group cohesion
+                        },
+                      }}
+                      inputProps={{
+                        style: { textAlign: "center" }, // Centers the input text
+                      }}
+                    />
+                    <Button
+                      onClick={() =>
+                        setTempo((prev) => Math.min(200, prev + 1))
+                      }
+                      variant="outlined"
+                      size="small"
+                      sx={{
+                        minWidth: 40,
+                        borderRadius: 0, // Removes individual button corners
+                        border: "none", // Removes individual button border
+                        "&:hover": {
+                          border: "none", // Prevents border from appearing on hover
+                          backgroundColor: "#F8F8F8", // Forces white background on hover
+                        },
+                      }}
+                    >
+                      +
+                    </Button>
+                  </Box>
+                  <Typography sx={{ fontFamily: "Montserrat" }}>BPM</Typography>
+                </Box>
 
-           {/* Transpose Controls */}
-<Box
-  sx={{
-    display: "flex",
-    alignItems: "center",
-    gap: 1, // Space between label, controls, and unit
-  }}
->
-  <Typography sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}>
-    Transpose:
-  </Typography>
-  <Box
-    sx={{
-      display: "flex",
-      alignItems: "center",
-      gap: 0, // No gap between controls
-      border: "1px solid rgba(0, 0, 0, 0.23)", // Optional: border for group
-      borderRadius: 1, // Rounded corners for group
-      overflow: "hidden", // Ensures clean edges
-    }}
-  >
-    <Button
-      onClick={() => setTransposition((prev) => Math.max(-12, prev - 1))}
-      variant="outlined"
-      size="small"
-      sx={{
-        minWidth: 40,
-        borderRadius: 0, // Removes individual button corners
-        border: "none", // Removes individual button border
-        "&:hover": {
-          border: "none", // Prevents border from appearing on hover
-          backgroundColor: "#F8F8F8", // Forces white background on hover
-        },
-      }}
-    >
-      -
-    </Button>
-    <TextField
-      disabled
-      value={transposition}
-      size="small"
-      variant="outlined"
-      sx={{
-        maxWidth: 55,
-        textAlign: "center",
-        "& .MuiOutlinedInput-notchedOutline": {
-          border: "none", // Removes TextField border for group cohesion
-        },
-        "& .MuiInputBase-input.Mui-disabled": {
-          WebkitTextFillColor: "#000", // Overrides text color when disabled
-        },
-      }}
-      inputProps={{
-        style: { textAlign: "center" }, // Centers the input text
-      }}
-    />
-    <Button
-      onClick={() => setTransposition((prev) => Math.min(12, prev + 1))}
-      variant="outlined"
-      size="small"
-      sx={{
-        minWidth: 40,
-        borderRadius: 0, // Removes individual button corners
-        border: "none", // Removes individual button border
-        "&:hover": {
-          border: "none", // Prevents border from appearing on hover
-          backgroundColor: "#F8F8F8", // Forces white background on hover
-        },
-      }}
-    >
-      +
-    </Button>
-  </Box>
-  <Typography sx={{ fontFamily: "Montserrat" }}>semitones</Typography>
-</Box>
+                {/* Transpose Controls */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1, // Space between label, controls, and unit
+                  }}
+                >
+                  <Typography
+                    sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
+                  >
+                    Transpose:
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0, // No gap between controls
+                      border: "1px solid rgba(0, 0, 0, 0.23)", // Optional: border for group
+                      borderRadius: 1, // Rounded corners for group
+                      overflow: "hidden", // Ensures clean edges
+                    }}
+                  >
+                    <Button
+                      onClick={() =>
+                        setTransposition((prev) => Math.max(-12, prev - 1))
+                      }
+                      variant="outlined"
+                      size="small"
+                      sx={{
+                        minWidth: 40,
+                        borderRadius: 0, // Removes individual button corners
+                        border: "none", // Removes individual button border
+                        "&:hover": {
+                          border: "none", // Prevents border from appearing on hover
+                          backgroundColor: "#F8F8F8", // Forces white background on hover
+                        },
+                      }}
+                    >
+                      -
+                    </Button>
+                    <TextField
+                      disabled
+                      value={transposition}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        maxWidth: 55,
+                        textAlign: "center",
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          border: "none", // Removes TextField border for group cohesion
+                        },
+                        "& .MuiInputBase-input.Mui-disabled": {
+                          WebkitTextFillColor: "#000", // Overrides text color when disabled
+                        },
+                      }}
+                      inputProps={{
+                        style: { textAlign: "center" }, // Centers the input text
+                      }}
+                    />
+                    <Button
+                      onClick={() =>
+                        setTransposition((prev) => Math.min(12, prev + 1))
+                      }
+                      variant="outlined"
+                      size="small"
+                      sx={{
+                        minWidth: 40,
+                        borderRadius: 0, // Removes individual button corners
+                        border: "none", // Removes individual button border
+                        "&:hover": {
+                          border: "none", // Prevents border from appearing on hover
+                          backgroundColor: "#F8F8F8", // Forces white background on hover
+                        },
+                      }}
+                    >
+                      +
+                    </Button>
+                  </Box>
+                  <Typography sx={{ fontFamily: "Montserrat" }}>
+                    semitones
+                  </Typography>
+                </Box>
 
                 {/* Instrument Selection */}
                 <Box
@@ -899,31 +970,30 @@ export default function ClerkMusicScoreView() {
 
         {/* Pagination with better spacing */}
         <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
-        <Pagination
-  count={splitContent.length}
-  page={page}
-  onChange={handlePageChange}
-  color="primary"
-  sx={{
-    "& .MuiPaginationItem-root": {
-      borderRadius: 2,
-      fontFamily: "Montserrat",
-      backgroundColor: "primary",
-      color: "#000",
-      "&.Mui-selected": {
-        backgroundColor: "#8BD3E6", // Blue for selected
-        color: "#fff",
-        "&:hover": {
-          backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
-        },
-      },
-      "&:hover": {
-        backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
-      },
-    },
-  }}
-/>
-
+          <Pagination
+            count={splitContent.length}
+            page={page}
+            onChange={handlePageChange}
+            color="primary"
+            sx={{
+              "& .MuiPaginationItem-root": {
+                borderRadius: 2,
+                fontFamily: "Montserrat",
+                backgroundColor: "primary",
+                color: "#000",
+                "&.Mui-selected": {
+                  backgroundColor: "#8BD3E6", // Blue for selected
+                  color: "#fff",
+                  "&:hover": {
+                    backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
+                  },
+                },
+                "&:hover": {
+                  backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
+                },
+              },
+            }}
+          />
         </Box>
 
         <Box sx={{ mt: 4, display: "flex", justifyContent: "center", gap: 2 }}>
@@ -948,6 +1018,35 @@ export default function ClerkMusicScoreView() {
           >
             Delete
           </Button>
+
+          <Dialog
+            open={openDeleteDialog}
+            onClose={handleCloseDialog}
+            PaperProps={{
+              sx: dialogStyles.dialogPaper,
+            }}
+            aria-labelledby="delete-dialog-title"
+          >
+            <DialogTitle id="delete-dialog-title" sx={dialogStyles.title}>
+              Confirm Deletion
+            </DialogTitle>
+            <DialogContent sx={dialogStyles.content}>
+              <Typography sx={dialogStyles.contentText}>
+                Are you sure you want to delete this music score?
+              </Typography>
+            </DialogContent>
+            <DialogActions sx={dialogStyles.actions}>
+              <Button onClick={handleCloseDialog} sx={dialogStyles.button}>
+                CANCEL
+              </Button>
+              <Button
+                onClick={handleConfirmDelete}
+                sx={dialogStyles.deletebutton}
+              >
+                DELETE
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Box>
       </Box>
     </Box>

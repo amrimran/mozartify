@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Button, Avatar, Pagination, Paper } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  Avatar,
+  Pagination,
+  Paper,
+} from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
@@ -23,11 +30,17 @@ const buttonStyles = {
   backgroundColor: "#8BD3E6",
   border: "1px solid #8BD3E6",
   borderColor: "#8BD3E6",
+  boxShadow: "none", // Correct spelling
   "&:hover": {
-    backgroundColor: "#3B3183",
-    color: "#FFFFFF",
-    border: "1px solid #3B3183",
-    borderColor: "#3B3183",
+    backgroundColor: "#6FBCCF", // Slightly darker blue for hover
+    color: "#FFFFFF", // Keeps the text color consistent
+    borderColor: "#6FBCCF",
+    boxShadow: "none", // Ensures no shadow on hover
+  },
+  "&:disabled": {
+    backgroundColor: "#E0E0E0",
+    borderColor: "#E0E0E0",
+    color: "#9E9E9E",
   },
 };
 
@@ -35,12 +48,11 @@ export default function MusicEntryClerkPreview() {
   const navigate = useNavigate();
   const location = useLocation();
   const { fileName } = location.state || {};
-  const [abcContent, setAbcContent] = useState('');
+  const [abcContent, setAbcContent] = useState("");
   const [splitContent, setSplitContent] = useState([]);
   const [page, setPage] = useState(1);
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
-
 
   // Fetch current user data
   useEffect(() => {
@@ -66,7 +78,9 @@ export default function MusicEntryClerkPreview() {
       }
 
       try {
-        const response = await axios.get(`http://localhost:3001/abc-file/${encodeURIComponent(fileName)}`);
+        const response = await axios.get(
+          `http://localhost:3001/abc-file/${encodeURIComponent(fileName)}`
+        );
         setAbcContent(response.data.content);
         setError(null);
       } catch (error) {
@@ -121,68 +135,92 @@ export default function MusicEntryClerkPreview() {
         <Box
           sx={{
             width: 225,
-            bgcolor: "#3B3183",
             flexShrink: 0,
             overflowY: "auto",
           }}
         >
           <ClerkSidebar active="upload" />
         </Box>
-        <Box sx={{ flexGrow: 1, p: 3, pl: 5, display: "flex", flexDirection: "column" }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Box
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            pl: 5,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+            }}
+          >
             <Typography
               variant="h4"
               gutterBottom
-              sx={{ fontFamily: "Montserrat", fontWeight: "bold", mt: 4, ml: 1 }}
+              sx={{
+                fontFamily: "Montserrat",
+                fontWeight: "bold",
+                mt: 4,
+                ml: 1,
+              }}
             >
               Preview Music Scores
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="body1" sx={{ mr: 2, fontFamily: "Montserrat" }}>
+              <Typography
+                variant="body1"
+                sx={{ mr: 2, fontFamily: "Montserrat" }}
+              >
                 {user ? user.username : "Loading..."}
               </Typography>
-               <Avatar
-                              alt={user?.username}
-                              src={user && user?.profile_picture ? user?.profile_picture : null}
-                            >
-                              {(!user || !user?.profile_picture) &&
-                                user?.username.charAt(0).toUpperCase()}
-                            </Avatar>
+              <Avatar
+                alt={user?.username}
+                src={
+                  user && user?.profile_picture ? user?.profile_picture : null
+                }
+              >
+                {(!user || !user?.profile_picture) &&
+                  user?.username.charAt(0).toUpperCase()}
+              </Avatar>
             </Box>
           </Box>
           <Divider sx={{ my: 2 }} />
           <Box
-          sx={{
-            mb: 3,
-            textAlign: "center",
-            p: 3,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            bgcolor: "#f8f8f8",
-            borderRadius: 8,
-          }}>
-          
-          <Typography
-                        variant="h6"
-                        sx={{
-                          mb: 2,
-                          fontFamily: "Montserrat",
-                          color: "red",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        ATTENTION!
-                      </Typography>
-                      <Typography
-                        variant="body1"
-                        sx={{ fontFamily: "Montserrat", mb: 3 }}
-                      >
-                        Please <strong>double-check</strong> the music notation on the
-                        physical music score sheet against the scanned music score sheet
-                        preview.
-                      </Typography>
-                      </Box>
+            sx={{
+              mb: 3,
+              textAlign: "center",
+              p: 3,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              bgcolor: "#f8f8f8",
+              borderRadius: 8,
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 2,
+                fontFamily: "Montserrat",
+                color: "red",
+                fontWeight: "bold",
+              }}
+            >
+              ATTENTION!
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{ fontFamily: "Montserrat", mb: 3 }}
+            >
+              Please <strong>double-check</strong> the music notation on the
+              physical music score sheet against the scanned music score sheet
+              preview.
+            </Typography>
+          </Box>
           {splitContent[page - 1] && splitContent[page - 1].trim() !== "" ? (
             <Paper
               elevation={3}
@@ -201,33 +239,39 @@ export default function MusicEntryClerkPreview() {
               <div id="abc-render"></div>
             </Paper>
           ) : (
-            <Typography variant="body1" sx={{ textAlign: "center", mt: 3, fontFamily: "Montserrat" }}>
+            <Typography
+              variant="body1"
+              sx={{ textAlign: "center", mt: 3, fontFamily: "Montserrat" }}
+            >
               {abcContent ? "No content on this page." : "Loading content..."}
             </Typography>
           )}
-           {/* Pagination with better spacing */}
-            <Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>
-          <Pagination
-            count={splitContent.length}
-            page={page}
-            onChange={handlePageChange}
-            color="primary"
-            sx={{
-              "& .MuiPaginationItem-root": {
-                borderRadius: 2,
-                fontFamily: "Montserrat",
-                backgroundColor: "primary",
-                color: "#000",
-                "&.Mui-selected": {
-                  backgroundColor: "#8BD3E6",
-                  color: "#fff",
+          {/* Pagination with better spacing */}
+          <Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>
+            <Pagination
+              count={splitContent.length}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+              sx={{
+                "& .MuiPaginationItem-root": {
+                  borderRadius: 2,
+                  fontFamily: "Montserrat",
+                  backgroundColor: "primary",
+                  color: "#000",
+                  "&.Mui-selected": {
+                    backgroundColor: "#8BD3E6", // Blue for selected
+                    color: "#fff",
+                    "&:hover": {
+                      backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
+                    },
+                  },
+                  "&:hover": {
+                    backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
+                  },
                 },
-                "&:hover": {
-                  backgroundColor: "#FFEE8C",
-                },
-              },
-            }}
-          />
+              }}
+            />
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
             <Button
@@ -247,8 +291,6 @@ export default function MusicEntryClerkPreview() {
               Proceed
             </Button>
           </Box>
-
-          
         </Box>
       </Box>
     </>

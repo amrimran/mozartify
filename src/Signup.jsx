@@ -21,6 +21,19 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import backgroundImage from "./assets/signupBG.png";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 
+const buttonStyles = {
+  px: 15,
+  fontFamily: "Montserrat",
+  fontWeight: "bold",
+  color: "#FFFFFF",
+  backgroundColor: "#8BD3E6",
+  border: "1px solid #8BD3E6",
+  "&:hover": {
+    backgroundColor: "#6FBCCF",
+    borderColor: "#6FBCCF",
+  },
+};
+
 const FormContainer = styled(Box)(({ theme }) => ({
   backgroundColor: "#FFFFFF",
   borderRadius: "20px",
@@ -65,7 +78,7 @@ const ModalContainer = styled(Box)(() => ({
   left: "50%",
   transform: "translate(-50%, -50%)",
   backgroundColor: "#FFFFFF",
-  border: "2px solid #3B3183",
+  border: "2px solid #8BD3E6",
   borderRadius: 20,
   boxShadow: 24,
   padding: 32,
@@ -80,51 +93,49 @@ const CustomButton = styled(Button)(({ theme }) => ({
   fontWeight: "bold",
   color: "#FFFFFF",
   backgroundColor: "#8BD3E6",
-  border: "1px solid #8BD3E6", // Explicitly define the border
-  borderColor: "#8BD3E6",
+  border: "1px solid #8BD3E6",
   "&:hover": {
-    backgroundColor: "#3B3183",
-    color: "#FFFFFF",
-    border: "1px solid #3B3183", // Ensure border remains visible on hover
+    backgroundColor: "#6FBCCF",
+    borderColor: "#6FBCCF",
   },
 }));
 
 const textFieldStyles = {
   "& label.Mui-focused": {
-    color: "#5A67D8", // Vibrant indigo for focus
-    fontWeight: "bold", // Adds emphasis to the label on focus
+    color: "#8BD3E6", // Primary color for focused label
+    fontWeight: "bold", // Emphasis on focus
   },
   fontFamily: "Montserrat",
   "& .MuiInputBase-root": {
     fontFamily: "Montserrat",
-    borderRadius: "12px", // Slightly more rounded corners for a modern feel
-    boxShadow: "0px 4px 6px rgba(90, 103, 216, 0.2)", // Subtle indigo shadow for depth
-    backgroundColor: "rgba(243, 244, 255, 0.8)", // Light gradient-inspired background
+    borderRadius: "12px", // Slightly more rounded corners
+    boxShadow: "0px 4px 6px rgba(139, 211, 230, 0.2)", // Subtle shadow in primary color
+    backgroundColor: "rgba(235, 251, 255, 0.9)", // Complementary light cyan for background
   },
   "& .MuiFormLabel-root": {
     fontFamily: "Montserrat",
-    fontSize: "15px", // Slightly larger for readability
-    color: "#4A5568", // Neutral gray for a clean appearance
+    fontSize: "15px", // Readable font size
+    color: "#467B89", // Muted teal for a clean look
   },
   "& .MuiInput-underline:after": {
-    borderBottomColor: "#5A67D8", // Matches the focus label color
+    borderBottomColor: "#8BD3E6", // Primary color for underline focus
     transform: "scaleX(1)", // Smooth underline animation
-    borderWidth: "2px", // Slightly thicker for better visibility
+    borderWidth: "2px", // Enhanced visibility
   },
   "& .MuiOutlinedInput-root": {
     "& fieldset": {
-      borderColor: "#CBD5E0", // Soft gray for the default border
+      borderColor: "#C8EAF2", // Light complementary color for default border
     },
     "&:hover fieldset": {
-      borderColor: "#7F9CF5", // Softer indigo for hover
-      boxShadow: "0px 6px 16px rgba(127, 156, 245, 0.4)", // Glow effect on hover
+      borderColor: "#8BD3E6", // Primary color for hover
+      boxShadow: "0px 6px 16px rgba(139, 211, 230, 0.4)", // Glow effect on hover
     },
     "&.Mui-focused fieldset": {
-      borderColor: "#5A67D8", // Vibrant indigo for focus
-      boxShadow: "0px 8px 20px rgba(90, 103, 216, 0.6)", // Stronger shadow for focus
+      borderColor: "#8BD3E6", // Primary color for focus
+      boxShadow: "0px 8px 20px rgba(139, 211, 230, 0.6)", // Stronger shadow for focus
     },
-    borderRadius: "12px", // Matches the input base for consistent design
-    backgroundColor: "rgba(255, 255, 255, 0.9)", // Slightly opaque white for contrast
+    borderRadius: "12px", // Consistent design with input base
+    backgroundColor: "rgba(255, 255, 255, 0.9)", // Neutral white for contrast
   },
 };
 
@@ -229,7 +240,7 @@ export default function Signup() {
             gutterBottom
             sx={{ marginBottom: 2 }}
           >
-            Sign up to <span style={{ color: "#3B3183" }}>N.A.S.I.R</span>
+            Sign up to <span style={{ color: "#8BD3E6" }}>N.A.S.I.R</span>
           </Typography>
           <Typography
             variant="body1"
@@ -326,7 +337,7 @@ export default function Signup() {
                     required
                     sx={{
                       color: "#8BD3E6",
-                      "&.Mui-checked": { color: "#3B3183" },
+                      "&.Mui-checked": { color: "#8BD3E6" },
                     }}
                   />
                 }
@@ -344,7 +355,7 @@ export default function Signup() {
                     required
                     sx={{
                       color: "#8BD3E6",
-                      "&.Mui-checked": { color: "#3B3183" },
+                      "&.Mui-checked": { color: "#8BD3E6" },
                     }}
                   />
                 }
@@ -383,7 +394,7 @@ export default function Signup() {
               to="/login"
               style={{
                 textDecoration: "none",
-                color: "#3B3183",
+                color: "#8BD3E6",
                 fontWeight: "bold",
               }}
             >

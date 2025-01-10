@@ -41,20 +41,18 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 const buttonStyles = {
-  px: 10,
+  px: 15,
   fontFamily: "Montserrat",
   fontWeight: "bold",
   color: "#FFFFFF",
   backgroundColor: "#8BD3E6",
   border: "1px solid #8BD3E6",
-  borderColor: "#8BD3E6",
   "&:hover": {
-    backgroundColor: "#3B3183",
-    color: "#FFFFFF",
-    border: "1px solid #3B3183",
-    borderColor: "#3B3183",
+    backgroundColor: "#6FBCCF",
+    borderColor: "#6FBCCF",
   },
 };
+
 
 const MusicEntryClerkEdit = () => {
   const navigate = useNavigate();
@@ -91,7 +89,9 @@ const MusicEntryClerkEdit = () => {
     if (fileName) {
       const fetchABCFileContent = async () => {
         try {
-          const response = await fetch(`http://localhost:3001/abc-file/${fileName}`);
+          const response = await fetch(
+            `http://localhost:3001/abc-file/${fileName}`
+          );
           if (!response.ok) {
             throw new Error("Network response was not ok");
           }
@@ -124,40 +124,49 @@ const MusicEntryClerkEdit = () => {
   useEffect(() => {
     if (splitContent.length > 0) {
       const currentPageContent = splitContent[page - 1] || "";
-      
+
       // Calculate the correct offset by counting characters in previous pages
       const previousPagesContent = splitContent.slice(0, page - 1).join("\n");
       const offset = previousPagesContent ? previousPagesContent.length + 1 : 0; // +1 for the newline after each page
-      
-      ABCJS.renderAbc("abc-render-edit", currentPageContent, {}, {
-        clickListener: (abcElem) => {
-          if (abcElem && textAreaRef.current) {
-            const { startChar, endChar } = abcElem;
-            const textarea = textAreaRef.current;
-            
-            // Calculate absolute positions in the full content
-            const absoluteStartChar = startChar + offset;
-            const absoluteEndChar = endChar + offset;
-            
-            // Set selection in textarea
-            textarea.focus();
-            textarea.setSelectionRange(absoluteStartChar, absoluteEndChar);
-            
-            // Calculate the line number for scrolling
-            const contentUpToSelection = abcContent.substring(0, absoluteStartChar);
-            const lineNumber = contentUpToSelection.split('\n').length;
-            
-            // Scroll to the selected line
-            const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight, 10) || 20;
-            const scrollPosition = (lineNumber - 1) * lineHeight;
-            
-            textarea.scrollTop = scrollPosition - textarea.clientHeight / 2;
-          }
-        },
-      });
+
+      ABCJS.renderAbc(
+        "abc-render-edit",
+        currentPageContent,
+        {},
+        {
+          clickListener: (abcElem) => {
+            if (abcElem && textAreaRef.current) {
+              const { startChar, endChar } = abcElem;
+              const textarea = textAreaRef.current;
+
+              // Calculate absolute positions in the full content
+              const absoluteStartChar = startChar + offset;
+              const absoluteEndChar = endChar + offset;
+
+              // Set selection in textarea
+              textarea.focus();
+              textarea.setSelectionRange(absoluteStartChar, absoluteEndChar);
+
+              // Calculate the line number for scrolling
+              const contentUpToSelection = abcContent.substring(
+                0,
+                absoluteStartChar
+              );
+              const lineNumber = contentUpToSelection.split("\n").length;
+
+              // Scroll to the selected line
+              const lineHeight =
+                parseInt(window.getComputedStyle(textarea).lineHeight, 10) ||
+                20;
+              const scrollPosition = (lineNumber - 1) * lineHeight;
+
+              textarea.scrollTop = scrollPosition - textarea.clientHeight / 2;
+            }
+          },
+        }
+      );
     }
   }, [splitContent, page, abcContent]);
-  
 
   const handlePageChange = (event, value) => {
     setPage(value);
@@ -165,7 +174,6 @@ const MusicEntryClerkEdit = () => {
   };
 
   const validateABCNotation = (content) => {
-
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     try {
@@ -178,8 +186,14 @@ const MusicEntryClerkEdit = () => {
       });
 
       // Check if there's a header field (required in ABC notation)
-      if (!content.includes("X:") || !content.includes("T:") || !content.includes("K:")) {
-        throw new Error("Missing required ABC header fields (X:, T:, and K: are required)");
+      if (
+        !content.includes("X:") ||
+        !content.includes("T:") ||
+        !content.includes("K:")
+      ) {
+        throw new Error(
+          "Missing required ABC header fields (X:, T:, and K: are required)"
+        );
       }
 
       // Check if there's any music content
@@ -216,10 +230,10 @@ const MusicEntryClerkEdit = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    
+
     // Validate before saving
     const isValid = validateABCNotation(abcContent);
-    
+
     if (!isValid) {
       setIsSaving(false);
       setDialogMessage("Please fix the ABC notation errors before saving");
@@ -228,18 +242,23 @@ const MusicEntryClerkEdit = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:3001/abc-file/${fileName}/content`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ content: abcContent }),
-      });
-      
+      const response = await fetch(
+        `http://localhost:3001/abc-file/${fileName}/content`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ content: abcContent }),
+        }
+      );
+
       if (!response.ok) {
-        throw new Error(`Failed to save the ABC file content. Status: ${response.status}`);
+        throw new Error(
+          `Failed to save the ABC file content. Status: ${response.status}`
+        );
       }
-      
+
       setOriginalContent(abcContent);
       setDialogMessage("Changes saved successfully");
       setOpenDialog(true);
@@ -265,7 +284,15 @@ const MusicEntryClerkEdit = () => {
       <GlobalStyle />
       <Box sx={{ display: "flex", minHeight: "100vh" }}>
         <ClerkSidebar active="editScore" />
-        <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column", marginLeft: "225px" }}>
+        <Box
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            marginLeft: "225px",
+          }}
+        >
           <Box
             sx={{
               display: "flex",
@@ -274,31 +301,69 @@ const MusicEntryClerkEdit = () => {
               mb: 3,
             }}
           >
-            <Typography variant="h4" sx={{ fontFamily: "Montserrat", fontWeight: "bold", mt: 4, ml: 1 }}>
-              Edit Music Scores
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mt: 4, ml: 1 }}>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontFamily: "Montserrat",
+                  fontWeight: "bold",
+                }}
+              >
+                Edit Music Scores
+              </Typography>
+              {/* Help Icon */}
+              <IconButton
+                onClick={() => {
+                  window.open(
+                    "https://web.archive.org/web/20190214175540/http://www.stephenmerrony.co.uk/uploads/ABCquickRefv0_6.pdf",
+                    "_blank"
+                  );
+                }}
+                sx={{
+                  ml: 1, // Margin to separate from the text
+                  color: "#6FBCCF", // Icon color
+                  "&:hover": {
+                    color: "#8BD3E6", // Slightly brighter on hover
+                  },
+                }}
+              >
+                <HelpOutline />
+              </IconButton>
+            </Box>
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="body1" sx={{ mr: 2, fontFamily: "Montserrat" }}>
+              <Typography
+                variant="body1"
+                sx={{ mr: 2, fontFamily: "Montserrat" }}
+              >
                 {user ? user.username : "User"}
               </Typography>
               <Avatar>{user ? user.username[0] : "U"}</Avatar>
             </Box>
           </Box>
+
           <Divider />
-          <Grid container spacing={2} sx={{ flexGrow: 1, mt: 2, flexDirection: "column" }}>
+          <Grid
+            container
+            spacing={2}
+            sx={{ flexGrow: 1, mt: 2, flexDirection: "column" }}
+          >
             <Grid item>
-              <Typography variant="h6" gutterBottom sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}>
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
+              >
                 ABC Notation Editor
               </Typography>
               {validationError && (
-                <Alert 
-                  severity="error" 
-                  sx={{ 
+                <Alert
+                  severity="error"
+                  sx={{
                     mb: 2,
                     fontFamily: "Montserrat",
-                    '& .MuiAlert-message': {
-                      fontFamily: "Montserrat"
-                    }
+                    "& .MuiAlert-message": {
+                      fontFamily: "Montserrat",
+                    },
                   }}
                 >
                   {validationError}
@@ -314,8 +379,12 @@ const MusicEntryClerkEdit = () => {
                 }}
               />
             </Grid>
-            <Grid item sx={{ mt: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}>
+            <Grid item sx={{ mt: 1 }}>
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
+              >
                 Music Score Preview
               </Typography>
               <Paper
@@ -329,34 +398,38 @@ const MusicEntryClerkEdit = () => {
                   margin: "0 auto",
                   minHeight: "300px",
                   mb: 3,
-                  mt:3,
+                  mt: 3,
                 }}
               >
                 <div id="abc-render-edit"></div>
               </Paper>
             </Grid>
           </Grid>
-          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-
-          <Pagination
-            count={splitContent.length}
-            page={page}
-            onChange={handlePageChange}
-            color="primary"
-            sx={{
-              "& .MuiPaginationItem-root": {
-                borderRadius: 2,
-                fontFamily: "Montserrat",
-                "&.Mui-selected": {
-                  backgroundColor: "#8BD3E6",
-                  color: "#fff",
+          <Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>
+            <Pagination
+              count={splitContent.length}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+              sx={{
+                "& .MuiPaginationItem-root": {
+                  borderRadius: 2,
+                  fontFamily: "Montserrat",
+                  backgroundColor: "primary",
+                  color: "#000",
+                  "&.Mui-selected": {
+                    backgroundColor: "#8BD3E6", // Blue for selected
+                    color: "#fff",
+                    "&:hover": {
+                      backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
+                    },
+                  },
+                  "&:hover": {
+                    backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
+                  },
                 },
-                "&:hover": {
-                  backgroundColor: "#FFEE8C",
-                },
-              },
-            }}
-          />
+              }}
+            />
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
             <Button
@@ -375,7 +448,12 @@ const MusicEntryClerkEdit = () => {
             >
               {isSaving ? "Saving..." : "Save"}
             </Button>
-            <Button variant="outlined" size="large" sx={buttonStyles} onClick={handleProceed}>
+            <Button
+              variant="outlined"
+              size="large"
+              sx={buttonStyles}
+              onClick={handleProceed}
+            >
               Proceed
             </Button>
           </Box>

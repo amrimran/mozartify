@@ -51,19 +51,20 @@ const formStyles = {
     fontFamily: "Montserrat",
   },
   "& .MuiOutlinedInput-root": {
-    borderRadius: 2, // Slightly rounded corners
+    borderRadius: 2,
     "& fieldset": {
-      borderColor: "rgba(0,0,0,0.23)", // Soft border color
+      borderColor: "rgba(0,0,0,0.23)",
     },
     "&:hover fieldset": {
-      borderColor: "#3B3183", // Match sidebar color on hover
+      borderColor: "#8BD3E6",
     },
     "&.Mui-focused fieldset": {
-      borderColor: "#3B3183", // Focused state matches sidebar color
+      borderColor: "#8BD3E6",
     },
   },
-  width: "90%", // Full width within grid item
+  width: "90%",
 };
+
 
 const buttonStyles = {
   px: 10,
@@ -71,20 +72,24 @@ const buttonStyles = {
   fontWeight: "bold",
   color: "#FFFFFF",
   backgroundColor: "#8BD3E6",
-  border: "1px solid #8BD3E6", // Explicitly define the border
-  borderColor: "#8BD3E6",
+  border: "1px solid #8BD3E6",
+  boxShadow: "none",
   "&:hover": {
-    backgroundColor: "#3B3183",
-    color: "#FFFFFF",
-    border: "1px solid #3B3183", // Ensure border remains visible on hover
-    borderColor: "#3B3183",
+    backgroundColor: "#6FBCCF",
+    borderColor: "#6FBCCF",
+  },
+  "&:disabled": {
+    backgroundColor: "#E0E0E0",
+    borderColor: "#E0E0E0",
+    color: "#9E9E9E",
   },
 };
+
 
 const dialogStyles = {
   dialogPaper: {
     borderRadius: "16px",
-    padding: "16px",
+    padding: "20px",
     fontFamily: "Montserrat",
   },
   title: {
@@ -111,15 +116,32 @@ const dialogStyles = {
     textTransform: "none",
     fontFamily: "Montserrat",
     fontWeight: "bold",
-    color: "#3B3183",
-    border: "1px solid #3B3183",
+    color: "#FFFFFF",
+    backgroundColor: "#8BD3E6",
+    border: "1px solid #8BD3E6",
     borderRadius: "8px",
     padding: "8px 24px",
     "&:hover": {
-      bgcolor: "#ECEFF1",
+      backgroundColor: "#6FBCCF",
+      borderColor: "#6FBCCF",
+    },
+  },
+  deletebutton: {
+    textTransform: "none",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    backgroundColor: "#DB2226",
+    border: "1px solid #DB2226",
+    borderRadius: "8px",
+    padding: "8px 24px",
+    "&:hover": {
+      backgroundColor: "#B71C1C",
+      borderColor: "#B71C1C",
     },
   },
 };
+
 
 export default function MusicEntryClerkCatalog() {
   const navigate = useNavigate();
@@ -464,15 +486,15 @@ export default function MusicEntryClerkCatalog() {
       }
 
       setOriginalData(catalogData); // Update original data after successful save
-      showDialog("Success", "Data saved successfully");
+      showDialog("Success", "Data saved successfully.");
       setDialogTitle("Success");
-      setDialogMessage("Data saved successfully");
+      setDialogMessage("Data saved successfully.");
       setIsSuccess(true);
       setOpenDialog(true); // Open the dialog explicitly
     } catch (error) {
       console.error("Error saving data:", error);
       setDialogTitle("Error");
-      setDialogMessage("Failed to save data");
+      setDialogMessage("Failed to save data.");
       setIsSuccess(false);
       setOpenDialog(true);
     }
@@ -489,7 +511,7 @@ export default function MusicEntryClerkCatalog() {
             position: "fixed",
             top: 0,
             left: 0,
-            backgroundColor: "#3B3183",
+            backgroundColor: "#8BD3E6",
             overflowY: "auto",
           }}
         >
@@ -1692,7 +1714,7 @@ export default function MusicEntryClerkCatalog() {
                       justifyContent: "center",
                       p: 3,
                       borderRadius: 2,
-                      borderColor: "#3B3183",
+                      borderColor: "#8BD3E6",
                       boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)", // Subtle shadow for depth
                     }}
                   >
@@ -1778,7 +1800,7 @@ export default function MusicEntryClerkCatalog() {
                       alignItems: "center",
                       p: 3,
                       borderRadius: 3,
-                      borderColor: "#3B3183",
+                      borderColor: "#8BD3E6",
                       boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.1)",
                       textAlign: "center",
                       position: "relative", // Important for overlay positioning
@@ -1887,7 +1909,6 @@ export default function MusicEntryClerkCatalog() {
                   </Card>
                 </Grid>
 
-                {/* Form Fields on the Right (Stacked Vertically) */}
                 <Grid item xs={12} sm={7} md={4}>
                   <Grid container direction="column" spacing={2}>
                     <Grid item xs={12}>
@@ -1958,7 +1979,7 @@ export default function MusicEntryClerkCatalog() {
                 dialogTitle === "Uploaded" ? (
                   // For prediction success - only show Close button
                   <Button onClick={handleCloseDialog} sx={dialogStyles.button}>
-                    Close
+                    CLOSE
                   </Button>
                 ) : (
                   // For save success - only show Proceed to Homepage button
@@ -1966,24 +1987,25 @@ export default function MusicEntryClerkCatalog() {
                     onClick={() => navigate("/clerk-homepage")}
                     sx={dialogStyles.button}
                   >
-                    Proceed to Homepage
+                    GO TO HOMEPAGE
                   </Button>
                 )}
               </DialogActions>
             </Dialog>
 
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                mt: 3,
+              }}
+            >
               <Button
                 variant="outlined"
                 size="large"
                 type="submit"
                 sx={{
                   ...buttonStyles,
-                  "&:disabled": {
-                    backgroundColor: "#E0E0E0",
-                    borderColor: "#E0E0E0",
-                    color: "#9E9E9E",
-                  },
                 }}
               >
                 Save Metadata
@@ -1995,7 +2017,7 @@ export default function MusicEntryClerkCatalog() {
                   onClick={handleNext}
                   sx={{ ...buttonStyles, ml: 2 }}
                 >
-                  Next
+                  Next Tab
                 </Button>
               )}
             </Box>

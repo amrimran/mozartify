@@ -36,6 +36,8 @@ import TestSearch from "./testSearch";
 import FileDownloaderPage from './FileDownloaderPage';
 import Success from "./Success";
 import Cancel from "./Cancel";
+// import ClerkSearch from "./ClerkSearch";
+// import ClerkAdvancedSearch from "./ClerkAdvancedSearch";
 
 
 
@@ -85,6 +87,8 @@ function App() {
         <Route path="/cancel" element={<Cancel />} />
         <Route path="/test-session" element={<TestSession />} />
         <Route path="/test-search" element={<TestSearch />} />
+        {/* <Route path="/clerk-search" element={<ClerkSearch />} />
+        <Route path="/clerk-search/clerk-advanced-search" element={<ClerkAdvancedSearch />} /> */}
 
 
 

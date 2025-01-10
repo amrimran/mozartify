@@ -61,8 +61,6 @@ export default function ClerkProfile() {
     cancelText: "CANCEL",
   });
 
- 
-
   const dialogStyles = {
     dialogPaper: {
       borderRadius: "16px",
@@ -94,35 +92,28 @@ export default function ClerkProfile() {
       fontFamily: "Montserrat",
       fontWeight: "bold",
       color: "#FFFFFF",
-    backgroundColor: "#8BD3E6",
-    border: "1px solid #8BD3E6",
-    borderColor: "#8BD3E6",
+      backgroundColor: "#8BD3E6",
       border: "1px solid #8BD3E6",
       borderRadius: "8px",
       padding: "8px 24px",
       "&:hover": {
-      backgroundColor: "#6FBCCF", // Slightly darker blue for hover
-      color: "#FFFFFF", // Keeps the text color consistent
-      borderColor: "#6FBCCF",
-      boxShadow: "none", // Ensures no shadow on hover
-    },
+        backgroundColor: "#6FBCCF",
+        borderColor: "#6FBCCF",
+      },
     },
     deletebutton: {
       textTransform: "none",
       fontFamily: "Montserrat",
       fontWeight: "bold",
       color: "#FFFFFF",
-    backgroundColor: "#DB2226",
-    border: "1px solid #DB2226",
-    borderColor: "#DB2226",
+      backgroundColor: "#DB2226",
+      border: "1px solid #DB2226",
       borderRadius: "8px",
       padding: "8px 24px",
       "&:hover": {
-      backgroundColor: "#B71C1C", // Slightly darker RED for hover
-      color: "#FFFFFF", // Keeps the text color consistent
-      borderColor: "#B71C1C",
-      boxShadow: "none", // Ensures no shadow on hover
-    },
+        backgroundColor: "#B71C1C",
+        borderColor: "#B71C1C",
+      },
     },
   };
 
@@ -133,13 +124,10 @@ export default function ClerkProfile() {
     color: "#FFFFFF",
     backgroundColor: "#8BD3E6",
     border: "1px solid #8BD3E6",
-    borderColor: "#8BD3E6",
-    boxShadow: "none", // Correct spelling
+    boxShadow: "none",
     "&:hover": {
-      backgroundColor: "#6FBCCF", // Slightly darker blue for hover
-      color: "#FFFFFF", // Keeps the text color consistent
+      backgroundColor: "#6FBCCF",
       borderColor: "#6FBCCF",
-      boxShadow: "none", // Ensures no shadow on hover
     },
     "&:disabled": {
       backgroundColor: "#E0E0E0",
@@ -152,16 +140,17 @@ export default function ClerkProfile() {
     fontFamily: "Montserrat",
     fontWeight: "bold",
     color: "#FFFFFF",
-    borderColor: "#DB2226",
     backgroundColor: "#DB2226",
+    border: "1px solid #DB2226",
     width: "250px",
     height: "40px",
+    boxShadow: "none",
     "&:hover": {
-      backgroundColor: "#B71C1C", // Slightly darker red
-      color: "#FFFFFF", // Keeps the text color consistent
-      borderColor: "#B71C1C", // Matches the background color for cohesion
+      backgroundColor: "#B71C1C",
+      borderColor: "#B71C1C",
     },
   };
+  
 
   const theme = createTheme({
     typography: {
@@ -722,7 +711,6 @@ export default function ClerkProfile() {
                       }
                       sx={{
                         ...buttonStyles,
-                        
                       }}
                     >
                       UPDATE PASSWORD
@@ -735,21 +723,20 @@ export default function ClerkProfile() {
                 sx={{ display: "flex", justifyContent: "center", mt: 3, mb: 3 }}
               >
                 <Button
-  variant="outlined"
-  color="error"
-  fullWidth
-  sx={{
-    ...deleteButtonStyles,
-    width: "100%", // Ensures full width of its container
-    maxWidth: "310px", // Optional: sets a maximum width
-    padding: "12px 24px", // Adds extra padding for a larger button
-    fontSize: "1rem", // Optional: Adjust font size for better readability
-  }}
-  onClick={handleDeleteAccount}
->
-  DELETE ACCOUNT
-</Button>
-
+                  variant="outlined"
+                  color="error"
+                  fullWidth
+                  sx={{
+                    ...deleteButtonStyles,
+                    width: "100%", // Ensures full width of its container
+                    maxWidth: "310px", // Optional: sets a maximum width
+                    padding: "12px 24px", // Adds extra padding for a larger button
+                    fontSize: "1rem", // Optional: Adjust font size for better readability
+                  }}
+                  onClick={handleDeleteAccount}
+                >
+                  DELETE ACCOUNT
+                </Button>
               </Box>
             </Box>
           </Container>
@@ -780,7 +767,9 @@ export default function ClerkProfile() {
             onClick={dialogConfig.confirmAction}
             sx={{
               ...dialogStyles.deletebutton,
-              ...(dialogConfig.confirmText === "DELETE" ? dialogStyles.deletebutton : dialogStyles.button)
+              ...(dialogConfig.confirmText === "DELETE"
+                ? dialogStyles.deletebutton
+                : dialogStyles.button),
             }}
           >
             {dialogConfig.confirmText}

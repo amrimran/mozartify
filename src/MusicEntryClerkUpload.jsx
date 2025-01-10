@@ -36,11 +36,10 @@ const buttonStyles2 = {
   borderColor: "#8BD3E6",
   "&:hover": {
     backgroundColor: "#E6F8FB", // Subtle light blue hover effect
-    color: "#7AB9C4",           // Slightly darker shade of the text
-    borderColor: "#7AB9C4",     // Matches the text color for consistency
+    color: "#7AB9C4", // Slightly darker shade of the text
+    borderColor: "#7AB9C4", // Matches the text color for consistency
   },
 };
-
 
 const buttonStyles = {
   px: 10,
@@ -52,12 +51,10 @@ const buttonStyles = {
   borderColor: "#8BD3E6",
   "&:hover": {
     backgroundColor: "#6FBCCF", // Slightly darker blue for hover
-    color: "#FFFFFF",           // Keeps the text color consistent
-    borderColor: "#6FBCCF",     // Matches the background color for cohesion
+    color: "#FFFFFF", // Keeps the text color consistent
+    borderColor: "#6FBCCF", // Matches the background color for cohesion
   },
 };
-
-
 
 export default function MusicEntryClerkUpload() {
   const [user, setUser] = useState(null);
@@ -99,7 +96,6 @@ export default function MusicEntryClerkUpload() {
       setSelectedFile(null);
     }
   };
-  
 
   const handleUpload = () => {
     if (!selectedFile) {
@@ -148,10 +144,17 @@ export default function MusicEntryClerkUpload() {
             display: "flex",
             flexDirection: "column",
             marginLeft: "225px",
-            minHeight: "100vh" ,
+            minHeight: "100vh",
           }}
         >
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+            }}
+          >
             <Typography
               variant="h4"
               gutterBottom
@@ -159,11 +162,11 @@ export default function MusicEntryClerkUpload() {
                 fontFamily: "Montserrat",
                 fontWeight: "bold",
                 mt: 4,
-                ml:  1,
+                ml: 1,
               }}
             >
-                Digitize Music Scores
-              </Typography>
+              Digitize Music Scores
+            </Typography>
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography
                 variant="body1"
@@ -244,10 +247,10 @@ export default function MusicEntryClerkUpload() {
                         mt: 2,
                         width: "100%",
                         ...buttonStyles2,
-                        '&.Mui-disabled': {
-                          backgroundColor: '#D3D3D3', // Grey background for disabled state
-                          color: '#A9A9A9', // Optional: lighter grey text for disabled state
-                          border: '1px solid #D3D3D3', // Match the disabled border color
+                        "&.Mui-disabled": {
+                          backgroundColor: "#D3D3D3", // Grey background for disabled state
+                          color: "#A9A9A9", // Optional: lighter grey text for disabled state
+                          border: "1px solid #D3D3D3", // Match the disabled border color
                         },
                       }}
                       onClick={handleUpload}
@@ -256,16 +259,17 @@ export default function MusicEntryClerkUpload() {
                       Upload
                     </Button>
                     {isUploading && (
-                      <Box sx={{ width: '100%', mt: 2 }}>
+                      <Box sx={{ width: "100%", mt: 2 }}>
                         <LinearProgress
                           sx={{
-                            backgroundColor: '#D3D3D3',
-                            '& .MuiLinearProgress-bar': { backgroundColor: '#3B3183' },
+                            backgroundColor: "#D3D3D3",
+                            "& .MuiLinearProgress-bar": {
+                              backgroundColor: "#8BD3E6",
+                            },
                           }}
                         />
                       </Box>
                     )}
-                    
                   </>
                 )}
                 {uploadMessage && (
@@ -330,12 +334,17 @@ export default function MusicEntryClerkUpload() {
               textTransform: "none",
               fontFamily: "Montserrat",
               fontWeight: "bold",
-              color: "#3B3183",
-              border: "1px solid #3B3183",
+              color: "#FFFFFF",
+              backgroundColor: "#8BD3E6",
+              border: "1px solid #8BD3E6",
+              borderColor: "#8BD3E6",
               borderRadius: "8px",
               padding: "8px 24px",
               "&:hover": {
-                bgcolor: "#ECEFF1",
+                backgroundColor: "#6FBCCF", // Slightly darker blue for hover
+                color: "#FFFFFF", // Keeps the text color consistent
+                borderColor: "#6FBCCF",
+                boxShadow: "none", // Ensures no shadow on hover
               },
             }}
           >
