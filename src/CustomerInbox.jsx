@@ -149,7 +149,7 @@ export default function CustomerInbox() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh" }}>
-        <CustomerSidebar />
+      <CustomerSidebar active ='inbox'/>
         <Box
           sx={{
             flexGrow: 1,

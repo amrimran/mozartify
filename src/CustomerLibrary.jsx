@@ -193,7 +193,7 @@ export default function CustomerLibrary() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh" }}>
-        <CustomerSidebar />
+      <CustomerSidebar active ='library'/>
         <Box
           sx={{
             flexGrow: 1,

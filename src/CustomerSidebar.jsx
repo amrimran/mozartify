@@ -26,15 +26,46 @@ import SidebarMozartifyLogo from "./assets/mozartify.png";
 
 axios.defaults.withCredentials = true;
 
-const CustomerSidebar = () => {
+const CustomerSidebar = ({ active }) => {
   const location = useLocation();
   const navigationItems = [
-    { path: "/customer-homepage", label: "Dashboard", icon: <Home /> },
-    { path: "/customer-library", label: "Libraries", icon: <LibraryBooks /> },
-    { path: "/customer-search", label: "Search", icon: <Search /> },
-    { path: "/customer-favorites", label: "Favorites", icon: <Favorite /> },
-    { path: "/customer-mycart", label: "My Cart", icon: <ShoppingCart /> },
-    {path: "/customer-inbox", label: "Inbox", icon: <Feedback />, isInbox: true,},
+    {
+      path: "/customer-homepage",
+      label: "Dashboard",
+      icon: <Home />,
+      key: "home",
+    },
+    {
+      path: "/customer-library",
+      label: "Libraries",
+      icon: <LibraryBooks />,
+      key: "library",
+    },
+    {
+      path: "/customer-search",
+      label: "Search",
+      icon: <Search />,
+      key: "search",
+    },
+    {
+      path: "/customer-favorites",
+      label: "Favorites",
+      icon: <Favorite />,
+      key: "favorites",
+    },
+    {
+      path: "/customer-mycart",
+      label: "My Cart",
+      icon: <ShoppingCart />,
+      key: "cart",
+    },
+    {
+      path: "/customer-inbox",
+      label: "Inbox",
+      icon: <Feedback />,
+      isInbox: true,
+      key: "inbox",
+    },
   ];
 
   const bottomNavigationItems = [
@@ -42,8 +73,9 @@ const CustomerSidebar = () => {
       path: "/customer-profile",
       label: "User Profile",
       icon: <AccountCircle />,
+      key: "profile",
     },
-    { path: "/login", label: "Logout", icon: <ExitToApp /> },
+    { path: "/login", label: "Logout", icon: <ExitToApp />, key: "logout" },
   ];
 
   return (
@@ -95,43 +127,31 @@ const CustomerSidebar = () => {
             }}
           />
         </Box>
+
         {/* Main navigation */}
-        <List sx={{ flexGrow: 1, pb: 2 }}>
+        <List sx={{ flexGrow: 1 }}>
           {navigationItems.map((item) => (
             <ListItemButton
               key={item.path}
               component={Link}
               to={item.path}
               sx={{
-                bgcolor:
-                  (item.isInbox &&
-                    (location.pathname === "/customer-inbox" ||
-                      location.pathname ===
-                        "/customer-inbox/customer-add-new-feedback")) ||
-                  location.pathname === item.path
-                    ? "#67ADC1"
-                    : "inherit",
+                bgcolor: active === item.key ? "#67ADC1" : "inherit",
                 color: "#FFFFFF",
                 "&:hover": {
-                  bgcolor:
-                    (item.isInbox &&
-                      (location.pathname === "/customer-inbox" ||
-                        location.pathname ===
-                          "/customer-inbox/customer-add-new-feedback")) ||
-                    location.pathname === item.path
-                      ? "#67ADC1"
-                      : "#78BBCC",
+                  bgcolor: active === item.key ? "#67ADC1" : "#78BBCC",
                 },
+                padding: "8px 16px",
                 display: "flex",
-                alignItems: "center",
+                gap: 0,
               }}
             >
-              <ListItemIcon sx={{ color: "#FFFFFF", minWidth: "auto", ml: 3 }}>
+              <ListItemIcon sx={{ color: "#FFFFFF", minWidth: "40px", ml: 3 }}>
                 {item.icon}
               </ListItemIcon>
               <ListItemText
                 primary={
-                  <Typography sx={{ fontFamily: "Montserrat", ml: 2 }}>
+                  <Typography sx={{ fontFamily: "Montserrat" }}>
                     {item.label}
                   </Typography>
                 }
@@ -150,24 +170,29 @@ const CustomerSidebar = () => {
                 to={item.path}
                 sx={{
                   bgcolor:
-                    location.pathname === item.path ? "#67ADC1" : "inherit",
+                    active === item.key || location.pathname === item.path
+                      ? "#67ADC1"
+                      : "inherit",
                   color: "#FFFFFF",
                   "&:hover": {
                     bgcolor:
-                      location.pathname === item.path ? "#78BBCC" : "#67ADC1",
+                      active === item.key || location.pathname === item.path
+                        ? "#67ADC1"
+                        : "#78BBCC",
                   },
+                  padding: "8px 16px",
                   display: "flex",
-                  alignItems: "center",
+                  gap: 0,
                 }}
               >
                 <ListItemIcon
-                  sx={{ color: "#FFFFFF", minWidth: "auto", ml: 3 }}
+                  sx={{ color: "#FFFFFF", minWidth: "40px", ml: 3 }}
                 >
                   {item.icon}
                 </ListItemIcon>
                 <ListItemText
                   primary={
-                    <Typography sx={{ fontFamily: "Montserrat", ml: 2 }}>
+                    <Typography sx={{ fontFamily: "Montserrat" }}>
                       {item.label}
                     </Typography>
                   }

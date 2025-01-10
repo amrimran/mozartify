@@ -230,7 +230,7 @@ export default function CustomerFavorites() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh" }}>
-        <CustomerSidebar />
+        <CustomerSidebar active="favorites" />
         <Box
           sx={{
             flexGrow: 1,

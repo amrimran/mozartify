@@ -450,20 +450,25 @@ export default function CustomerSearch() {
   return (
     <>
       <GlobalStyle />
-     <Box sx={{ display: "flex", minHeight: "100vh", maxHeight: "100vh" }}>
-        <CustomerSidebar />
-          <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column",             marginLeft: "229px", // 225px (sidebar width) + 4px (yellow line)
- }}>
-        
-           <Box
-                       sx={{
-                        
-                         display: "flex",
-                         justifyContent: "space-between",
-                         alignItems: "center",
-                         mb: 3,
-                       }}
-                     >
+      <Box sx={{ display: "flex", minHeight: "100vh", maxHeight: "100vh" }}>
+        <CustomerSidebar active="search" />
+        <Box
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            marginLeft: "229px", // 225px (sidebar width) + 4px (yellow line)
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography
                 variant="h4"
@@ -511,7 +516,8 @@ export default function CustomerSearch() {
             <Container maxWidth="lg" sx={{ mt: 4 }}>
               <Box
                 sx={{
-                  backgroundColor: "#f5f5f5",
+                  backgroundColor: "#fcfcfc",
+
                   borderRadius: 2,
                   p: 4,
                   boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.16)", // Added elevation
@@ -573,7 +579,6 @@ export default function CustomerSearch() {
                       backgroundColor: "white",
                       p: 2,
                       borderRadius: 2,
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                     }}
                   >
                     {index !== 0 && (

@@ -573,11 +573,17 @@ export default function CustomerAdvancedSearch() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", minHeight: "100vh", maxHeight: "100vh" }}>
-        <CustomerSidebar />
+        <CustomerSidebar active="search" />
 
         {/* Parent for header and main content */}
         <Box
-          sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column" }}
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            marginLeft: "229px",
+          }}
         >
           {/* Header */}
           <Box
@@ -637,7 +643,7 @@ export default function CustomerAdvancedSearch() {
             <Container maxWidth="lg" sx={{ mt: 2 }}>
               <Box
                 sx={{
-                  backgroundColor: "#f5f5f5",
+                  backgroundColor: "#fcfcfc",
                   borderRadius: 2,
                   p: 4,
                   boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.16)", // Added elevation
@@ -647,7 +653,8 @@ export default function CustomerAdvancedSearch() {
                 <Box sx={{ backgroundColor: "white", padding: 3 }}>
                   <Box
                     sx={{
-                      border: "1px solid black",
+                      border: "1px solid",
+                      borderColor: "#8bd3e6",
                       padding: 2,
                       display: "inline-block",
                       borderRadius: 3,
@@ -708,10 +715,19 @@ export default function CustomerAdvancedSearch() {
                       onChange={handleCategoryChange}
                       variant="outlined"
                       sx={{
-                        borderRadius: 3,
-
+                        width: "100px",
                         fontFamily: "Montserrat, sans-serif",
                         fontWeight: "bold",
+                        borderRadius: 3, // Set border radius here
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Default border color
+                        },
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#67ADC1", // Border color on hover
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#67ADC1", // Border color when focused
+                        },
                       }}
                     >
                       <MenuItem
@@ -761,6 +777,7 @@ export default function CustomerAdvancedSearch() {
                         flex: 1,
                         "& .MuiOutlinedInput-root": {
                           fontFamily: "Montserrat",
+                          borderRadius: 3, // Set border radius here
                           "& fieldset": {
                             borderColor: "#8BD3E6",
                           },
@@ -785,6 +802,16 @@ export default function CustomerAdvancedSearch() {
                         width: "100px",
                         fontFamily: "Montserrat, sans-serif",
                         fontWeight: "bold",
+                        borderRadius: 3, // Set border radius here
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Default border color
+                        },
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#67ADC1", // Border color on hover
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#67ADC1", // Border color when focused
+                        },
                       }}
                     >
                       <MenuItem
@@ -817,8 +844,10 @@ export default function CustomerAdvancedSearch() {
                         color: "white",
                         backgroundColor: "#78BBCC",
                         fontFamily: "Montserrat, sans-serif",
+                        boxShadow:"none",
                         "&:hover": {
                           backgroundColor: "#67ADC1",
+                          boxShadow:"none",
                         },
                       }}
                     >
@@ -862,13 +891,26 @@ export default function CustomerAdvancedSearch() {
                           value={queryPreview}
                           onChange={handleQueryPreviewChange}
                           sx={{
-                            fontFamily: "Montserrat, sans-serif",
-                            marginBottom: "20px",
-                            "& .MuiInputBase-root": {
-                              maxHeight: "120px",
-                              overflowY: "auto",
+                            flex: 1,
+                            "& .MuiOutlinedInput-root": {
+                              fontFamily: "Montserrat",
+                              borderRadius: 3, // Set border radius here
+                              "& fieldset": {
+                                borderColor: "#8BD3E6",
+                              },
+                              "&:hover fieldset": {
+                                borderColor: "#67ADC1",
+                              },
+                              "&.Mui-focused fieldset": {
+                                borderColor: "#67ADC1",
+                              },
                             },
+                            "& .MuiInputLabel-root": {
+                              fontFamily: "Montserrat",
+                            },
+                            mb: 3,
                           }}
+                          
                         />
 
                         <Box
@@ -1081,7 +1123,7 @@ export default function CustomerAdvancedSearch() {
                       p: 2,
                       border: "1px solid #ddd",
                       borderRadius: 1,
-            
+
                       display: "flex",
                       flexDirection: "column",
                     }}

@@ -146,8 +146,8 @@ export default function CustomerAddNewFeedback() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh" }}>
-        <CustomerSidebar />
-        <Box sx={{ flexGrow: 1, p: 3 }}>
+        <CustomerSidebar active="inbox" />
+        <Box sx={{ flexGrow: 1, p: 3, marginLeft: "229px" }}>
           <Box
             sx={{
               display: "flex",

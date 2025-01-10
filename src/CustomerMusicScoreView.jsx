@@ -351,9 +351,8 @@ export default function CustomerMusicScoreView() {
   return (
     <>
       <GlobalStyle />
-      <Box sx={{ display: "flex", maxHeight: "100vh" }}>
-        <CustomerSidebar />
-
+      <Box sx={{ display: "flex" }}>
+        <CustomerSidebar active="home" />
         <Box
           sx={{
             flexGrow: 1,
@@ -362,7 +361,6 @@ export default function CustomerMusicScoreView() {
             overflow: "hidden",
             padding: 5,
             marginLeft: "229px",
-
           }}
         >
           <Box

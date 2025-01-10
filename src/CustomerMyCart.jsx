@@ -136,7 +136,7 @@ export default function CustomerMyCart() {
     <>
       <GlobalStyle />
       <Box display="flex">
-        <CustomerSidebar />
+      <CustomerSidebar active ='cart'/>
         <Box
           sx={{
             flexGrow: 1,

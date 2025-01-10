@@ -492,7 +492,7 @@ export default function CustomerHomepage() {
             overflowY: "auto", // Add scroll if content overflows
           }}
         >
-          <CustomerSidebar />
+          <CustomerSidebar active ='home'/>
         </Box>
 
         <Box sx={{ flexGrow: 1, p: 3, pl: 5, mb: 4 }}>

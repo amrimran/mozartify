@@ -379,7 +379,7 @@ export default function CustomerProfile() {
           backgroundColor: "#FFFFFF",
         }}
       >
-        <CustomerSidebar />
+        <CustomerSidebar active ='profile'/>
         {/* Content Box - Remove fixed minHeight */}
         <Box
           sx={{
