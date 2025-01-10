@@ -16,7 +16,6 @@ import {
   Button,
   IconButton,
   MenuItem,
-  Paper,
   Select,
   Grid,
   InputLabel,
@@ -31,6 +30,40 @@ import CustomerSidebar from "./CustomerSidebar";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+
+const buttonStyles2 = {
+  px: 5,
+  fontFamily: "Montserrat",
+  fontWeight: "bold",
+  color: "#8BD3E6",
+  backgroundColor: "#FFFFFF",
+  border: "1px solid #8BD3E6",
+  borderColor: "#8BD3E6",
+  boxShadow: "none",
+  "&:hover": {
+    boxShadow: "none",
+    backgroundColor: "#E6F8FB", // Subtle light blue hover effect
+    color: "#7AB9C4", // Slightly darker shade of the text
+    borderColor: "#7AB9C4", // Matches the text color for consistency
+  },
+};
+
+const buttonStyles = {
+  px: 10,
+  fontFamily: "Montserrat",
+  fontWeight: "bold",
+  color: "#FFFFFF",
+  backgroundColor: "#8BD3E6",
+  border: "1px solid #8BD3E6",
+  borderColor: "#8BD3E6",
+  boxShadow: "none",
+  "&:hover": {
+    boxShadow: "none",
+    backgroundColor: "#6FBCCF", // Slightly darker blue for hover
+    color: "#FFFFFF", // Keeps the text color consistent
+    borderColor: "#6FBCCF", // Matches the background color for cohesion
+  },
+};
 
 export default function CustomerSearch() {
   const [user, setUser] = useState(null);
@@ -158,12 +191,7 @@ export default function CustomerSearch() {
     "Glockenspiel",
   ];
 
-  const emotionList = [
-    "Angry",
-    "Happy",
-    "Relaxed",
-    "Sad",
-  ];
+  const emotionList = ["Angry", "Happy", "Relaxed", "Sad"];
 
   const handlePageChange = (event, value) => {
     setPage(value);
@@ -422,7 +450,7 @@ export default function CustomerSearch() {
   return (
     <>
       <GlobalStyle />
-      <Box sx={{ display: "flex", minHeight: "100vh" }}>
+     <Box sx={{ display: "flex", minHeight: "100vh", maxHeight: "100vh" }}>
         <CustomerSidebar />
           <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column",             marginLeft: "229px", // 225px (sidebar width) + 4px (yellow line)
  }}>
@@ -437,9 +465,18 @@ export default function CustomerSearch() {
                        }}
                      >
             <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Typography variant="h4" sx={{ fontFamily: "Montserrat", fontWeight: "bold", mt: 4, ml: 1 }}>
-              Music Score Repository Search
-            </Typography>            </Box>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontFamily: "Montserrat",
+                  fontWeight: "bold",
+                  mt: 4,
+                  ml: 1,
+                }}
+              >
+                Music Score Repository Search
+              </Typography>{" "}
+            </Box>
 
             <Box sx={{ display: "flex", alignItems: "center" }}>
               {user ? (
@@ -450,9 +487,7 @@ export default function CustomerSearch() {
                   <Avatar
                     alt={user.username}
                     src={
-                      user && user.profile_picture
-                        ? user.profile_picture
-                        : null
+                      user && user.profile_picture ? user.profile_picture : null
                     }
                   >
                     {(!user || !user.profile_picture) &&
@@ -471,25 +506,25 @@ export default function CustomerSearch() {
           </Box>
           <Divider sx={{ my: 1 }} />
 
-     {/* Basic Search Section */}
-     {!showSearchResults && (
+          {/* Basic Search Section */}
+          {!showSearchResults && (
             <Container maxWidth="lg" sx={{ mt: 4 }}>
-              <Box 
-                sx={{ 
-                  backgroundColor: "#f5f5f5", 
-                  borderRadius: 2, 
+              <Box
+                sx={{
+                  backgroundColor: "#f5f5f5",
+                  borderRadius: 2,
                   p: 4,
-                  boxShadow: '0px 3px 6px rgba(0, 0, 0, 0.16)', // Added elevation
-                  border: '1px solid rgba(0, 0, 0, 0.12)' // Added subtle border
+                  boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.16)", // Added elevation
+                  border: "1px solid rgba(0, 0, 0, 0.12)", // Added subtle border
                 }}
               >
                 <Box sx={{ mb: 3, display: "flex", alignItems: "center" }}>
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      fontFamily: "Montserrat", 
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontFamily: "Montserrat",
                       mr: 2,
-                      fontWeight: 500 
+                      fontWeight: 500,
                     }}
                   >
                     Search in:
@@ -501,16 +536,26 @@ export default function CustomerSearch() {
                       minWidth: 200,
                       fontFamily: "Montserrat",
                       backgroundColor: "white",
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#67ADC1'
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#8BD3E6", // Default color
                       },
-                      '& .MuiSelect-select': {
-                        fontFamily: "Montserrat"
-                      }
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#67ADC1", // Hover color
+                      },
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#67ADC1", // Selected/focused color
+                      },
+                      "& .MuiSelect-select": {
+                        fontFamily: "Montserrat",
+                      },
                     }}
                   >
-                    {collectionOptions.map(option => (
-                      <MenuItem key={option} value={option} sx={{ fontFamily: "Montserrat" }}>
+                    {collectionOptions.map((option) => (
+                      <MenuItem
+                        key={option}
+                        value={option}
+                        sx={{ fontFamily: "Montserrat" }}
+                      >
                         {option}
                       </MenuItem>
                     ))}
@@ -528,25 +573,33 @@ export default function CustomerSearch() {
                       backgroundColor: "white",
                       p: 2,
                       borderRadius: 2,
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                     }}
                   >
                     {index !== 0 && (
                       <FormControl sx={{ width: 120 }}>
-                        <InputLabel sx={{ fontFamily: "Montserrat" }}>Logic</InputLabel>
+                        <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                          Logic
+                        </InputLabel>
                         <Select
                           value={criteria.logic}
-                          onChange={(e) => handleLogicChange(index, e.target.value)}
+                          onChange={(e) =>
+                            handleLogicChange(index, e.target.value)
+                          }
                           sx={{
                             fontFamily: "Montserrat",
-                            '& .MuiOutlinedInput-notchedOutline': {
-                              borderColor: '#67ADC1'
-                            }
+                            "& .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "#67ADC1",
+                            },
                           }}
                           label="Logic"
                         >
-                          {["AND", "OR", "NOT"].map(option => (
-                            <MenuItem key={option} value={option} sx={{ fontFamily: "Montserrat" }}>
+                          {["AND", "OR", "NOT"].map((option) => (
+                            <MenuItem
+                              key={option}
+                              value={option}
+                              sx={{ fontFamily: "Montserrat" }}
+                            >
                               {option}
                             </MenuItem>
                           ))}
@@ -555,27 +608,41 @@ export default function CustomerSearch() {
                     )}
 
                     <FormControl sx={{ width: 150 }}>
-                      <InputLabel sx={{ fontFamily: "Montserrat" }}>Category</InputLabel>
+                      <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                        Category
+                      </InputLabel>
                       <Select
                         value={criteria.category}
-                        onChange={(e) => handleCategoryChange(index, e.target.value)}
+                        onChange={(e) =>
+                          handleCategoryChange(index, e.target.value)
+                        }
                         label="Category"
                         sx={{
                           fontFamily: "Montserrat",
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#67ADC1'
-                          }
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#8BD3E6", // Default color
+                          },
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#67ADC1", // Hover color
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#67ADC1", // Selected/focused color
+                          },
                         }}
                       >
                         {[
-                          "All", 
-                          "Title", 
-                          "Genre", 
-                          "Composer", 
-                          "Instrumentation", // Added
-                          "Emotion" // Added
-                        ].map(option => (
-                          <MenuItem key={option} value={option} sx={{ fontFamily: "Montserrat" }}>
+                          "All",
+                          "Title",
+                          "Genre",
+                          "Composer",
+                          "Instrumentation",
+                          "Emotion",
+                        ].map((option) => (
+                          <MenuItem
+                            key={option}
+                            value={option}
+                            sx={{ fontFamily: "Montserrat" }}
+                          >
                             {option}
                           </MenuItem>
                         ))}
@@ -588,22 +655,28 @@ export default function CustomerSearch() {
                       value={criteria.text}
                       onChange={(e) => handleTextChange(index, e.target.value)}
                       sx={{
-                        '& .MuiOutlinedInput-root': {
+                        "& .MuiOutlinedInput-root": {
                           fontFamily: "Montserrat",
-                          '& fieldset': {
-                            borderColor: '#67ADC1',
+                          "& fieldset": {
+                            borderColor: "#8BD3E6",
+                          },
+                          "&:hover fieldset": {
+                            borderColor: "#67ADC1",
+                          },
+                          "&.Mui-focused fieldset": {
+                            borderColor: "#67ADC1",
                           },
                         },
-                        '& .MuiInputLabel-root': {
-                          fontFamily: "Montserrat"
-                        }
+                        "& .MuiInputLabel-root": {
+                          fontFamily: "Montserrat",
+                        },
                       }}
                     />
 
                     {searchCriteria.length > 1 && (
-                      <IconButton 
+                      <IconButton
                         onClick={() => handleDeleteRow(index)}
-                        sx={{ color: '#67ADC1' }}
+                        sx={{ color: "#B71C1C" }}
                       >
                         <DeleteIcon />
                       </IconButton>
@@ -611,35 +684,32 @@ export default function CustomerSearch() {
                   </Box>
                 ))}
 
-                <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mt: 3,
+                  }}
+                >
                   <Box sx={{ display: "flex", gap: 2 }}>
                     {searchCriteria.length < 3 && (
                       <Button
                         onClick={handleAddRow}
                         variant="outlined"
                         sx={{
-                          fontFamily: "Montserrat",
-                          color: "#67ADC1",
-                          borderColor: "#67ADC1",
-                          '&:hover': {
-                            backgroundColor: "#67ADC1",
-                            color: "white"
-                          }
+                          ...buttonStyles2,
                         }}
                       >
                         Add Row
                       </Button>
                     )}
                     <Button
-                      onClick={() => navigate('/customer-search/customer-advanced-search')}
+                      onClick={() =>
+                        navigate("/customer-search/customer-advanced-search")
+                      }
                       variant="contained"
                       sx={{
-                        fontFamily: "Montserrat",
-                        backgroundColor: "#3B3183", // Green color
-                        color: "white",
-                        '&:hover': {
-                          backgroundColor: "#8BD3E6" // Darker green on hover
-                        }
+                        ...buttonStyles,
                       }}
                     >
                       Advanced Search
@@ -651,13 +721,8 @@ export default function CustomerSearch() {
                       onClick={handleClear}
                       variant="outlined"
                       sx={{
-                        fontFamily: "Montserrat",
-                        color: "#67ADC1",
-                        borderColor: "#67ADC1",
-                        '&:hover': {
-                          backgroundColor: "#67ADC1",
-                          color: "white"
-                        }
+                        boxShadow: "none",
+                        ...buttonStyles2,
                       }}
                     >
                       Clear
@@ -667,11 +732,8 @@ export default function CustomerSearch() {
                       variant="contained"
                       startIcon={<SearchIcon />}
                       sx={{
-                        fontFamily: "Montserrat",
-                        backgroundColor: "#67ADC1",
-                        '&:hover': {
-                          backgroundColor: "#78BBCC"
-                        }
+                        boxShadow: "none",
+                        ...buttonStyles,
                       }}
                     >
                       Search
@@ -813,11 +875,10 @@ export default function CustomerSearch() {
             <Box
               sx={{
                 flexGrow: 1,
-                height: "100%",
+                height: "calc(100vh - 200px)", // Adjust this value based on your header/navigation height
                 width: "100%",
-                overflow: "auto",
-                pl: 2,
-                pt: 1,
+                overflow: "hidden", // Prevent outer box from scrolling
+                p: 2,
               }}
             >
               <Grid container spacing={2}>
@@ -828,62 +889,35 @@ export default function CustomerSearch() {
                       p: 2,
                       border: "1px solid #ddd",
                       borderRadius: 1,
-                      height: "100%",
-                      position: "relative",
-                      flexDirection: "column",
+
                       display: "flex",
+                      flexDirection: "column",
                     }}
                   >
                     <Typography
                       variant="h6"
                       gutterBottom
                       sx={{
-                        fontFamily: "Montserrat, sans-serif", // Apply Montserrat font
-                        textAlign: "center", // Center the text horizontally
+                        fontFamily: "Montserrat, sans-serif",
+                        textAlign: "center",
                       }}
                     >
                       Refine Your Search
                     </Typography>
 
+                    {/* Filters for Genre, Composer, Instrument, Emotion */}
                     <FormControl fullWidth sx={{ mb: 2 }}>
                       <InputLabel>Genre</InputLabel>
                       <Select
-                        multiple // Allow multiple selections
-                        value={selectedGenres} // state for multiple selections
-                        onChange={handleGenreChange} // handler to update selected genres
+                        multiple
+                        value={selectedGenres}
+                        onChange={handleGenreChange}
                         label="Genre"
-                        renderValue={(selected) => selected.join(", ")} // Display selected genres as a comma-separated string
-                        sx={{
-                          borderRadius: "16px", // Apply border-radius to the Select component itself
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderRadius: "16px", // Apply border-radius to the outline when the Select is focused
-                          },
-                          "& .MuiSelect-icon": {
-                            borderRadius: "100%", // Optional: round the dropdown icon
-                          },
-                        }}
+                        renderValue={(selected) => selected.join(", ")}
+                        sx={{ borderRadius: "16px" }}
                       >
-                        {/* Generate MenuItems dynamically from genreList */}
                         {genreList.map((genre) => (
-                          <MenuItem
-                            key={genre}
-                            value={genre}
-                            sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              "&:hover": {
-                                backgroundColor: "#78BBCC", // Hover effect
-                              },
-                              "&.Mui-selected": {
-                                backgroundColor: "#67ADC1", // Selected item effect
-                                color: "#FFFFFF",
-                                "&:hover": {
-                                  backgroundColor: "#67ADC1", // Keep the color when selected and hovered
-                                },
-                              },
-                            }}
-                          >
+                          <MenuItem key={genre} value={genre}>
                             {genre}
                           </MenuItem>
                         ))}
@@ -893,87 +927,33 @@ export default function CustomerSearch() {
                     <FormControl fullWidth sx={{ mb: 2 }}>
                       <InputLabel>Composer</InputLabel>
                       <Select
-                        multiple // Allow multiple selections
-                        value={selectedComposers} // state for multiple selections
-                        onChange={handleComposerChange} // handler to update selected genres
+                        multiple
+                        value={selectedComposers}
+                        onChange={handleComposerChange}
                         label="Composer"
-                        renderValue={(selected) => selected.join(", ")} // Display selected genres as a comma-separated string
-                        sx={{
-                          borderRadius: "16px", // Apply border-radius to the Select component itself
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderRadius: "16px", // Apply border-radius to the outline when the Select is focused
-                          },
-                          "& .MuiSelect-icon": {
-                            borderRadius: "100%", // Optional: round the dropdown icon
-                          },
-                        }}
+                        renderValue={(selected) => selected.join(", ")}
+                        sx={{ borderRadius: "16px" }}
                       >
-                        {/* Generate MenuItems dynamically from genreList */}
                         {composerList.map((composer) => (
-                          <MenuItem
-                            key={composer}
-                            value={composer}
-                            sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              "&:hover": {
-                                backgroundColor: "#78BBCC", // Hover effect
-                              },
-                              "&.Mui-selected": {
-                                backgroundColor: "#67ADC1", // Selected item effect
-                                color: "#FFFFFF",
-                                "&:hover": {
-                                  backgroundColor: "#67ADC1", // Keep the color when selected and hovered
-                                },
-                              },
-                            }}
-                          >
+                          <MenuItem key={composer} value={composer}>
                             {composer}
                           </MenuItem>
                         ))}
                       </Select>
                     </FormControl>
 
-                    {/* Section refinement dropdown example */}
                     <FormControl fullWidth sx={{ mb: 2 }}>
                       <InputLabel>Instrument</InputLabel>
                       <Select
-                        multiple // Allow multiple selections
-                        value={selectedInstruments} // state for multiple selections
-                        onChange={handleInstrumentChange} // handler to update selected genres
+                        multiple
+                        value={selectedInstruments}
+                        onChange={handleInstrumentChange}
                         label="Instrument"
-                        renderValue={(selected) => selected.join(", ")} // Display selected genres as a comma-separated string
-                        sx={{
-                          borderRadius: "16px", // Apply border-radius to the Select component itself
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderRadius: "16px", // Apply border-radius to the outline when the Select is focused
-                          },
-                          "& .MuiSelect-icon": {
-                            borderRadius: "100%", // Optional: round the dropdown icon
-                          },
-                        }}
+                        renderValue={(selected) => selected.join(", ")}
+                        sx={{ borderRadius: "16px" }}
                       >
                         {instrumentList.map((instrument) => (
-                          <MenuItem
-                            key={instrument}
-                            value={instrument}
-                            sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              "&:hover": {
-                                backgroundColor: "#78BBCC", // Hover effect
-                              },
-                              "&.Mui-selected": {
-                                backgroundColor: "#67ADC1", // Selected item effect
-                                color: "#FFFFFF",
-                                "&:hover": {
-                                  backgroundColor: "#67ADC1", // Keep the color when selected and hovered
-                                },
-                              },
-                            }}
-                          >
+                          <MenuItem key={instrument} value={instrument}>
                             {instrument}
                           </MenuItem>
                         ))}
@@ -983,42 +963,15 @@ export default function CustomerSearch() {
                     <FormControl fullWidth sx={{ mb: 2 }}>
                       <InputLabel>Emotion</InputLabel>
                       <Select
-                        multiple // Allow multiple selections
-                        value={selectedEmotions} // state for multiple selections
-                        onChange={handleEmotionChange} // handler to update selected genres
+                        multiple
+                        value={selectedEmotions}
+                        onChange={handleEmotionChange}
                         label="Emotion"
-                        renderValue={(selected) => selected.join(", ")} // Display selected genres as a comma-separated string
-                        sx={{
-                          borderRadius: "16px", // Apply border-radius to the Select component itself
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderRadius: "16px", // Apply border-radius to the outline when the Select is focused
-                          },
-                          "& .MuiSelect-icon": {
-                            borderRadius: "100%", // Optional: round the dropdown icon
-                          },
-                        }}
+                        renderValue={(selected) => selected.join(", ")}
+                        sx={{ borderRadius: "16px" }}
                       >
-                        {/* Generate MenuItems dynamically from genreList */}
                         {emotionList.map((emotion) => (
-                          <MenuItem
-                            key={emotion}
-                            value={emotion}
-                            sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              "&:hover": {
-                                backgroundColor: "#78BBCC", // Hover effect
-                              },
-                              "&.Mui-selected": {
-                                backgroundColor: "#67ADC1", // Selected item effect
-                                color: "#FFFFFF",
-                                "&:hover": {
-                                  backgroundColor: "#67ADC1", // Keep the color when selected and hovered
-                                },
-                              },
-                            }}
-                          >
+                          <MenuItem key={emotion} value={emotion}>
                             {emotion}
                           </MenuItem>
                         ))}
@@ -1026,37 +979,15 @@ export default function CustomerSearch() {
                     </FormControl>
 
                     <Box sx={{ flexGrow: 1 }} />
-
-                    <Button
-                      variant="outlined"
-                      sx={{
-                        borderColor: "#78BBCC", // Set the border color to #78BBCC
-                        color: "#78BBCC", // Set the text color to #78BBCC
-                        padding: "8px 16px", // Padding for the button
-                        textTransform: "none", // Disable text transformation
-                        height: "40px", // Set the height
-                        marginBottom: 2, // Add bottom margin of 2
-                        "&:hover": {
-                          borderColor: "#78BBCC", // Ensure border color stays consistent on hover
-                          backgroundColor: "#E0E0E0", // Transparent background on hover
-                        },
-                      }}
-                      onClick={() => {
-                        handleClearFilters();
-                      }}
-                    >
-                      Clear Filters
-                    </Button>
-
                     <Button
                       variant="contained"
                       fullWidth
                       onClick={handleRefineClick}
                       sx={{
-                        backgroundColor: "#78BBCC", // Pastel dark purple
+                        backgroundColor: "#78BBCC",
                         color: "#ffffff",
                         "&:hover": {
-                          backgroundColor: "#67ADC1", // Darker purple on hover
+                          backgroundColor: "#67ADC1",
                         },
                         width: "100%",
                         mb: 2,
@@ -1069,11 +1000,11 @@ export default function CustomerSearch() {
 
                 {/* Search results section on the right */}
                 <Grid item xs={9}>
-                  {searchResults.length === 0 && hasSearched && (
+                  {paginatedResults.length === 0 && hasSearched && (
                     <Typography variant="body1">No results found</Typography>
                   )}
 
-                  {searchResults.length > 0 && (
+                  {paginatedResults.length > 0 && (
                     <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
                       <List>
                         {paginatedResults.map((item) => (
@@ -1137,14 +1068,18 @@ export default function CustomerSearch() {
 
                       {/* Pagination */}
                       <Pagination
-                        count={Math.ceil(searchResults.length / itemsPerPage)} // Calculate total pages
-                        page={page} // Set the current page
-                        onChange={handlePageChange} // Handle page change
+                        count={Math.ceil(
+                          (hasFiltered
+                            ? filteredResults.length
+                            : searchResults.length) / itemsPerPage
+                        )}
+                        page={page}
+                        onChange={handlePageChange}
                         sx={{
-                          mt: 2,
+                          mt: 3,
                           display: "flex",
                           justifyContent: "center",
-                        }} // Style the pagination component
+                        }}
                       />
                     </Box>
                   )}

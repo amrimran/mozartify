@@ -19,6 +19,7 @@ const DeletedUserModel = require("./models/DeletedUser");
 const ABCFileModel = require("./models/ABCFile");
 
 const app = express();
+
 app.use(express.json());
 app.use(
   cors({
@@ -274,9 +275,9 @@ app.post("/preferences", async (req, res) => {
     client = new MongoClient(process.env.DB_URI);
     await client.connect();
     const db = client.db(dbName);
-    const collection = db.collection(collectionName);
+    const collectiondb = db.collection(collectionName);
 
-    const updateResult = await collection.updateOne(
+    const updateResult = await collectiondb.updateOne(
       { _id: new ObjectId(userId) },
       {
         $set: {

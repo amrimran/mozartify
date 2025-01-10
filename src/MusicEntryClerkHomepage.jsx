@@ -73,6 +73,22 @@ const buttonStyles = {
   },
 };
 
+const buttonStyles2 = {
+  px: 10,
+  fontFamily: "Montserrat",
+  fontWeight: "bold",
+  color: "#8BD3E6",
+  backgroundColor: "#FFFFFF",
+  boxShadow: "none", // Correct spelling
+  border: "1px solid #8BD3E6",
+  "&:hover": {
+    boxShadow: "none", // Correct spelling
+    backgroundColor: "#E6F8FB",
+    color: "#7AB9C4",
+    borderColor: "#7AB9C4",
+  },
+};
+
 const deleteButtonStyles = {
   px: 10,
 
@@ -545,7 +561,7 @@ export default function MusicEntryClerkHomepage() {
                       fullWidth
                       sx={{
                         mb: 2,
-                        ...buttonStyles,
+                        ...buttonStyles2,
                       }}
                       onClick={() => setIsDrawerOpen(false)}
                     >

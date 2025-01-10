@@ -233,7 +233,7 @@ export default function CustomerAdvancedSearch() {
   };
 
   const clearQueryPreview = () => {
-    setQueryPreview('');
+    setQueryPreview("");
     setSearchInputs([]);
   };
 
@@ -244,7 +244,6 @@ export default function CustomerAdvancedSearch() {
     setSelectedEmotions([]);
     setHasFiltered(false);
   };
-
 
   const paginatedResults = (
     hasFiltered ? filteredResults : searchResults
@@ -341,7 +340,7 @@ export default function CustomerAdvancedSearch() {
   };
 
   const handleGoBack = () => {
-    navigate(-1); // Navigate to the previous page
+    navigate(-1);
   };
 
   const [sortOption, setSortOption] = useState("default");
@@ -483,8 +482,6 @@ export default function CustomerAdvancedSearch() {
   };
 
   const parseQueryPreview = (queryPreview) => {
-    
-
     // This pattern matches each query in the format `Category=(Text)` or `Category=(Text) AND/OR ...`
     const regex = /(\w+)=\(([^)]+)\)/g;
     let match;
@@ -575,356 +572,312 @@ export default function CustomerAdvancedSearch() {
   return (
     <>
       <GlobalStyle />
-      <Box sx={{ display: "flex", height: "100vh" }}>
+      <Box sx={{ display: "flex", minHeight: "100vh", maxHeight: "100vh" }}>
         <CustomerSidebar />
-        <Box
-          sx={{ flexGrow: 1, p: 5, display: "flex", flexDirection: "column" }}
-        >
-          <Box
-                     sx={{
-                       display: "flex",
-                       justifyContent: "space-between",
-                       alignItems: "center",
-                       mb: 3,
-                       mt: 3,
-                     }}
-                   >
-                     <Box sx={{ display: "flex", alignItems: "center" }}>
-                       <Typography variant="h4">Advanced Music Score Repository Search Query Builder</Typography>
-                     </Box>
-         
-                     <Box sx={{ display: "flex", alignItems: "center" }}>
-                       {user ? (
-                         <>
-                           <Typography variant="body1" sx={{ mr: 2 }}>
-                             {user.username}
-                           </Typography>
-                           <Avatar
-                             alt={user.username}
-                             src={
-                               user && user.profile_picture
-                                 ? user.profile_picture
-                                 : null
-                             }
-                           >
-                             {(!user || !user.profile_picture) &&
-                               user.username.charAt(0).toUpperCase()}
-                           </Avatar>
-                         </>
-                       ) : (
-                         <>
-                           <Typography variant="body1" sx={{ mr: 2 }}>
-                             Loading...
-                           </Typography>
-                           <Avatar></Avatar>
-                         </>
-                       )}
-                     </Box>
-                   </Box>
-                   <Divider sx={{ my: 1 }} />
 
-          <Button
-            variant="text" // Use text variant for no background
-            startIcon={<ArrowBackIcon />} // Add the left arrow icon
-            onClick={handleGoBack} // Call the function to go back when clicked
+        {/* Parent for header and main content */}
+        <Box
+          sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column" }}
+        >
+          {/* Header */}
+          <Box
             sx={{
-              fontFamily: "Montserrat, sans-serif", // Set the font
-              color: "#B29DFF", // Set the text color to pastel purple
-              textDecoration: "underline", // Underline the text
-              display: "inline-flex", // Ensures the button only takes width of text
-              alignItems: "center", // Vertically center the icon and text
-              justifyContent: "left",
-              padding: "6px 0", // Optional: Add padding to control the button's height
-              "&:hover": {
-                backgroundColor: "transparent", // Prevent background color change on hover
-                textDecoration: "underline", // Keep the underline effect on hover
-                color: "#9b7fff", // Slightly darker pastel purple on hover
-              },
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
             }}
           >
-            Back to Basic Search
-          </Button>
-
-          {/* Advanced Search Component Start */}
-
-          {!showSearchResults && (
-            <Container
-              maxWidth="xl"
-              sx={{
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                paddingTop: "10px",
-                paddingBottom: "10px",
-              }}
-            >
-              <Paper
-                elevation={3}
-                sx={{ borderRadius: 4, overflow: "hidden", flex: 1 }}
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontFamily: "Montserrat",
+                  fontWeight: "bold",
+                  mt: 4,
+                  ml: 1,
+                }}
               >
-                <Tabs
-                  value={selectedTab}
-                  onChange={handleTabChange}
-                  variant="fullWidth"
-                  TabIndicatorProps={{
-                    style: { display: "none" },
-                  }}
-                >
-                  <Tab
-                    label="Music Scores"
-                    sx={{
-                      backgroundColor: selectedTab === 0 ? "white" : "#67ADC1",
-                      color: selectedTab === 0 ? "black" : "white",
-                      fontWeight: "bold",
-                      fontFamily: "Montserrat, sans-serif",
-                      "&.Mui-selected": {
-                        color: "#67ADC1",
-                      },
-                      borderTopRightRadius: selectedTab === 0 ? "5px" : "0px",
-                      transition: "border-radius 0.3s ease",
-                    }}
-                  />
-                  <Tab
-                    label="Composers"
-                    sx={{
-                      backgroundColor: selectedTab === 1 ? "white" : "#67ADC1",
-                      color: selectedTab === 1 ? "black" : "white",
-                      fontWeight: "bold",
-                      fontFamily: "Montserrat, sans-serif",
-                      "&.Mui-selected": {
-                        color: "#67ADC1",
-                      },
-                    }}
-                  />
-                </Tabs>
+                Advanced Music Score Search Query Builder
+              </Typography>{" "}
+            </Box>
 
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              {user ? (
+                <>
+                  <Typography variant="body1" sx={{ mr: 2 }}>
+                    {user.username}
+                  </Typography>
+                  <Avatar
+                    alt={user.username}
+                    src={
+                      user && user.profile_picture ? user.profile_picture : null
+                    }
+                  >
+                    {(!user || !user.profile_picture) &&
+                      user.username.charAt(0).toUpperCase()}
+                  </Avatar>
+                </>
+              ) : (
+                <>
+                  <Typography variant="body1" sx={{ mr: 2 }}>
+                    Loading...
+                  </Typography>
+                  <Avatar></Avatar>
+                </>
+              )}
+            </Box>
+          </Box>
+          <Divider sx={{ mt: 1 }} />
+
+          {/* Main Section*/}
+
+          {/*Main Section  when no Search is done */}
+          {!showSearchResults && (
+            <Container maxWidth="lg" sx={{ mt: 2 }}>
+              <Box
+                sx={{
+                  backgroundColor: "#f5f5f5",
+                  borderRadius: 2,
+                  p: 4,
+                  boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.16)", // Added elevation
+                  border: "1px solid rgba(0, 0, 0, 0.12)", // Added subtle border
+                }}
+              >
                 <Box sx={{ backgroundColor: "white", padding: 3 }}>
-                  {selectedTab === 0 && (
-                    <Box>
-                      <Box
-                        sx={{
-                          border: "1px solid black",
-                          padding: 2,
-                          mt: 2,
-                          ml: 2,
-                          display: "inline-block",
-                          borderRadius: "5px",
-                        }}
+                  <Box
+                    sx={{
+                      border: "1px solid black",
+                      padding: 2,
+                      display: "inline-block",
+                      borderRadius: 3,
+                    }}
+                  >
+                    <Typography
+                      variant="body1"
+                      color="black"
+                      sx={{
+                        fontFamily: "Montserrat, sans-serif",
+                        display: "inline",
+                      }}
+                    >
+                      Search in:
+                    </Typography>
+
+                    <Select
+                      value={selectedCollection}
+                      onChange={(e) => setSelectedCollection(e.target.value)}
+                      variant="standard"
+                      sx={{
+                        marginLeft: "10px",
+                        border: "none",
+                        outline: "none",
+                        "& .MuiSelect-select": {
+                          padding: 0,
+                          fontWeight: "bold",
+                        },
+                        "& .MuiSelect-icon": {
+                          display: "none",
+                        },
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          display: "none",
+                        },
+                        "&:focus .MuiSelect-select": {
+                          borderBottom: `2px solid #FFD700`,
+                        },
+                      }}
+                    >
+                      <MenuItem value="All">All</MenuItem>
+                      <MenuItem value="Lecturers">Lecturers</MenuItem>
+                      <MenuItem value="Students">Students</MenuItem>
+                      <MenuItem value="Freelancers">Freelancers</MenuItem>
+                    </Select>
+                  </Box>
+
+                  {/* Search Query Row Component */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      mt: 2,
+                      gap: 2,
+                    }}
+                  >
+                    <Select
+                      value={searchCategory}
+                      onChange={handleCategoryChange}
+                      variant="outlined"
+                      sx={{
+                        borderRadius: 3,
+
+                        fontFamily: "Montserrat, sans-serif",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      <MenuItem
+                        value="All"
+                        sx={{ fontFamily: "Montserrat, sans-serif" }}
                       >
+                        All
+                      </MenuItem>
+                      <MenuItem
+                        value="Title"
+                        sx={{ fontFamily: "Montserrat, sans-serif" }}
+                      >
+                        Title
+                      </MenuItem>
+                      <MenuItem
+                        value="Genre"
+                        sx={{ fontFamily: "Montserrat, sans-serif" }}
+                      >
+                        Genre
+                      </MenuItem>
+                      <MenuItem
+                        value="Composer"
+                        sx={{ fontFamily: "Montserrat, sans-serif" }}
+                      >
+                        Composer
+                      </MenuItem>
+                      <MenuItem
+                        value="Instrumentation"
+                        sx={{ fontFamily: "Montserrat, sans-serif" }}
+                      >
+                        Instrumentation
+                      </MenuItem>
+                      <MenuItem
+                        value="Emotion"
+                        sx={{ fontFamily: "Montserrat, sans-serif" }}
+                      >
+                        Emotion
+                      </MenuItem>
+                    </Select>
+
+                    <TextField
+                      variant="outlined"
+                      placeholder="Place your search text here ..."
+                      value={searchText}
+                      onChange={handleTextChange}
+                      sx={{
+                        flex: 1,
+                        "& .MuiOutlinedInput-root": {
+                          fontFamily: "Montserrat",
+                          "& fieldset": {
+                            borderColor: "#8BD3E6",
+                          },
+                          "&:hover fieldset": {
+                            borderColor: "#67ADC1",
+                          },
+                          "&.Mui-focused fieldset": {
+                            borderColor: "#67ADC1",
+                          },
+                        },
+                        "& .MuiInputLabel-root": {
+                          fontFamily: "Montserrat",
+                        },
+                      }}
+                    />
+
+                    <Select
+                      value={searchLogic}
+                      onChange={handleLogicChange}
+                      variant="outlined"
+                      sx={{
+                        width: "100px",
+                        fontFamily: "Montserrat, sans-serif",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      <MenuItem
+                        value="AND"
+                        sx={{ fontFamily: "Montserrat, sans-serif" }}
+                      >
+                        AND
+                      </MenuItem>
+                      <MenuItem
+                        value="OR"
+                        sx={{ fontFamily: "Montserrat, sans-serif" }}
+                      >
+                        OR
+                      </MenuItem>
+                      <MenuItem
+                        value="NOT"
+                        sx={{ fontFamily: "Montserrat, sans-serif" }}
+                      >
+                        NOT
+                      </MenuItem>
+                    </Select>
+
+                    <Button
+                      onClick={handleAddInput}
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      sx={{
+                        paddingTop: 2,
+                        paddingBottom: 2,
+                        color: "white",
+                        backgroundColor: "#78BBCC",
+                        fontFamily: "Montserrat, sans-serif",
+                        "&:hover": {
+                          backgroundColor: "#67ADC1",
+                        },
+                      }}
+                    >
+                      ADD TO QUERY
+                    </Button>
+                  </Box>
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      paddingTop: 3,
+                      paddingLeft: 2,
+                      paddingRight: 2,
+                      mt: 2,
+                      gap: 2,
+                    }}
+                  >
+                    <Grid container spacing={3}>
+                      {/* Left Grid */}
+                      <Grid item xs={12} sm={6}>
                         <Typography
-                          variant="body1"
-                          color="black"
-                          sx={{
-                            fontFamily: "Montserrat, sans-serif",
-                            display: "inline",
-                          }}
+                          sx={{ fontFamily: "Montserrat, sans-serif" }}
                         >
-                          Search in:
+                          Query Preview
                         </Typography>
-
-                        <Select
-                          value={selectedCollection}
-                          onChange={(e) =>
-                            setSelectedCollection(e.target.value)
-                          }
-                          variant="standard"
+                        <Box
                           sx={{
-                            marginLeft: "10px",
-                            border: "none",
-                            outline: "none",
-                            "& .MuiSelect-select": {
-                              padding: 0,
-                              fontWeight: "bold",
-                            },
-                            "& .MuiSelect-icon": {
-                              display: "none",
-                            },
-                            "& .MuiOutlinedInput-notchedOutline": {
-                              display: "none",
-                            },
-                            "&:focus .MuiSelect-select": {
-                              borderBottom: `2px solid #FFD700`,
-                            },
+                            borderBottom: "0.5px solid #67ADC1",
+                            width: "100%",
+                            mt: 0.5,
+                            mb: 2,
                           }}
-                        >
-                          <MenuItem value="All">All</MenuItem>
-                          <MenuItem value="Lecturers">Lecturers</MenuItem>
-                          <MenuItem value="Students">Students</MenuItem>
-                          <MenuItem value="Freelancers">Freelancers</MenuItem>
-                        </Select>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          paddingTop: 3,
-                          paddingLeft: 2,
-                          paddingRight: 2,
-                          mt: 2,
-                          gap: 2,
-                        }}
-                      >
-                        <Select
-                          value={searchCategory}
-                          onChange={handleCategoryChange}
-                          variant="outlined"
-                          sx={{
-                            width: "150px",
-                            fontFamily: "Montserrat, sans-serif",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          <MenuItem
-                            value="All"
-                            sx={{ fontFamily: "Montserrat, sans-serif" }}
-                          >
-                            All
-                          </MenuItem>
-                          <MenuItem
-                            value="Title"
-                            sx={{ fontFamily: "Montserrat, sans-serif" }}
-                          >
-                            Title
-                          </MenuItem>
-                          <MenuItem
-                            value="Genre"
-                            sx={{ fontFamily: "Montserrat, sans-serif" }}
-                          >
-                            Genre
-                          </MenuItem>
-                          <MenuItem
-                            value="Composer"
-                            sx={{ fontFamily: "Montserrat, sans-serif" }}
-                          >
-                            Composer
-                          </MenuItem>
-                          <MenuItem
-                            value="Instrumentation"
-                            sx={{ fontFamily: "Montserrat, sans-serif" }}
-                          >
-                            Instrumentation
-                          </MenuItem>
-                          <MenuItem
-                            value="Emotion"
-                            sx={{ fontFamily: "Montserrat, sans-serif" }}
-                          >
-                            Emotion
-                          </MenuItem>
-                        </Select>
-
+                        />
                         <TextField
+                          multiline
+                          rows={4}
                           variant="outlined"
-                          placeholder="Place your search text here ..."
-                          value={searchText}
-                          onChange={handleTextChange}
+                          fullWidth
+                          placeholder="Place your query here ..."
+                          value={queryPreview}
+                          onChange={handleQueryPreviewChange}
                           sx={{
-                            flex: 1,
                             fontFamily: "Montserrat, sans-serif",
+                            marginBottom: "20px",
+                            "& .MuiInputBase-root": {
+                              maxHeight: "120px",
+                              overflowY: "auto",
+                            },
                           }}
                         />
 
-                        <Select
-                          value={searchLogic}
-                          onChange={handleLogicChange}
-                          variant="outlined"
+                        <Box
                           sx={{
-                            width: "100px",
-                            fontFamily: "Montserrat, sans-serif",
-                            fontWeight: "bold",
+                            display: "flex",
+                            justifyContent: "flex-end",
                           }}
                         >
-                          <MenuItem
-                            value="AND"
-                            sx={{ fontFamily: "Montserrat, sans-serif" }}
-                          >
-                            AND
-                          </MenuItem>
-                          <MenuItem
-                            value="OR"
-                            sx={{ fontFamily: "Montserrat, sans-serif" }}
-                          >
-                            OR
-                          </MenuItem>
-                          <MenuItem
-                            value="NOT"
-                            sx={{ fontFamily: "Montserrat, sans-serif" }}
-                          >
-                            NOT
-                          </MenuItem>
-                        </Select>
-
-                        <Button
-                          onClick={handleAddInput}
-                          variant="contained"
-                          startIcon={<AddIcon />}
-                          sx={{
-                            paddingTop: 2,
-                            paddingBottom: 2,
-                            color: "white",
-                            backgroundColor: "#78BBCC",
-                            fontFamily: "Montserrat, sans-serif",
-                            "&:hover": {
-                              backgroundColor: "#67ADC1",
-                            },
-                          }}
-                        >
-                          ADD TO QUERY
-                        </Button>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          paddingTop: 3,
-                          paddingLeft: 2,
-                          paddingRight: 2,
-                          mt: 2,
-                          gap: 2,
-                        }}
-                      >
-                        <Grid container spacing={3}>
-                          {/* Left Grid */}
-                          <Grid item xs={12} sm={6}>
-                            <Typography
-                              sx={{ fontFamily: "Montserrat, sans-serif" }}
-                            >
-                              Query Preview
-                            </Typography>
-                            <Box
-                              sx={{
-                                borderBottom: "0.5px solid #67ADC1",
-                                width: "100%",
-                                mt: 0.5,
-                                mb: 2,
-                              }}
-                            />
-                            <TextField
-                              multiline
-                              rows={4}
-                              variant="outlined"
-                              fullWidth
-                              placeholder="Place your query here ..."
-                              value={queryPreview}
-                              onChange={handleQueryPreviewChange}
-                              sx={{
-                                fontFamily: "Montserrat, sans-serif",
-                                marginBottom: "20px",
-                                "& .MuiInputBase-root": {
-                                  maxHeight: "120px",
-                                  overflowY: "auto",
-                                },
-                              }}
-                            />
-
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "flex-end",
-                              }}
-                            >
-                              {/* <Button
+                          {/* <Button
                                 variant="outlined"
                                 sx={{
                                   fontFamily: "Montserrat, sans-serif",
@@ -937,155 +890,146 @@ export default function CustomerAdvancedSearch() {
                               >
                                 Add Date Range
                               </Button> */}
-                              <Box sx={{ display: "flex", gap: 2 }}>
-                                <Button
-                                  variant="outlined"
-                                  sx={{
-                                    fontFamily: "Montserrat, sans-serif",
-                                    borderColor: "#67ADC1", // Border color stays the same
-                                    color: "#67ADC1", // Ensure the text color is white
-                                    "&:hover": {
-                                      borderColor: "#67ADC1", // Border color stays the same on hover
-                                    },
-                                  }}
-                                  onClick={clearQueryPreview}
-                                >
-                                  Clear
-                                </Button>
-                                <Button
-                                  variant="contained"
-                                  onClick={handleSearch}
-                                  disabled={!queryPreview}
-                                  startIcon={<SearchIcon />} // Add the search icon
-                                  sx={{
-                                    fontFamily: "Montserrat, sans-serif",
-                                    backgroundColor: "#78BBCC", // Set the background color for the contained button
-                                    borderColor: "#78BBCC", // Border color stays the same
-                                    color: "#FFFFFF", // Ensure the text color is white
-                                    "&:hover": {
-                                      backgroundColor: "#67ADC1", // Darker background color on hover
-                                      borderColor: "#78BBCC", // Border color stays the same on hover
-                                    },
-                                  }}
-                                >
-                                  Search
-                                </Button>
-                              </Box>
-                            </Box>
-                          </Grid>
-
-                          {/* Right Grid */}
-                          <Grid item xs={12} sm={6}>
-                            <Box
+                          <Box sx={{ display: "flex", gap: 2 }}>
+                            <Button
+                              variant="outlined"
                               sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                paddingLeft: 2, // Add padding at the start (left)
-                                paddingRight: 2, // Add padding at the end (right)
+                                fontFamily: "Montserrat, sans-serif",
+                                borderColor: "#67ADC1", // Border color stays the same
+                                color: "#67ADC1", // Ensure the text color is white
+                                "&:hover": {
+                                  borderColor: "#67ADC1", // Border color stays the same on hover
+                                },
+                              }}
+                              onClick={clearQueryPreview}
+                            >
+                              Clear
+                            </Button>
+                            <Button
+                              variant="contained"
+                              onClick={handleSearch}
+                              disabled={!queryPreview}
+                              startIcon={<SearchIcon />} // Add the search icon
+                              sx={{
+                                fontFamily: "Montserrat, sans-serif",
+                                backgroundColor: "#78BBCC", // Set the background color for the contained button
+                                borderColor: "#78BBCC", // Border color stays the same
+                                color: "#FFFFFF", // Ensure the text color is white
+                                "&:hover": {
+                                  backgroundColor: "#67ADC1", // Darker background color on hover
+                                  borderColor: "#78BBCC", // Border color stays the same on hover
+                                },
                               }}
                             >
-                              <Typography
-                                sx={{ fontFamily: "Montserrat, sans-serif" }}
-                              >
-                                <span style={{ fontWeight: "bold" }}>
-                                  Boolean:
-                                </span>{" "}
-                                AND, OR, NOT
-                              </Typography>
+                              Search
+                            </Button>
+                          </Box>
+                        </Box>
+                      </Grid>
 
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                }}
-                              >
-                                <Typography
-                                  sx={{
+                      {/* Right Grid */}
+                      <Grid item xs={12} sm={6}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            paddingLeft: 2, // Add padding at the start (left)
+                            paddingRight: 2, // Add padding at the end (right)
+                          }}
+                        >
+                          <Typography
+                            sx={{ fontFamily: "Montserrat, sans-serif" }}
+                          >
+                            <span style={{ fontWeight: "bold" }}>Boolean:</span>{" "}
+                            AND, OR, NOT
+                          </Typography>
+
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <Typography
+                              sx={{
+                                fontFamily: "Montserrat, sans-serif",
+                                fontWeight: "bold", // Make the text bold
+                              }}
+                            >
+                              Field Tags:
+                            </Typography>
+                            <Select
+                              defaultValue="default"
+                              value={sortOption}
+                              onChange={(e) => setSortOption(e.target.value)}
+                              variant="outlined"
+                              sx={{
+                                marginLeft: 2,
+                                fontFamily: "Montserrat, sans-serif",
+                                height: "36px", // Adjust the height here (default is around 56px)
+                                "& .MuiInputBase-root": {
+                                  height: "100%", // Ensures the input area height is also consistent
+                                  padding: "0 12px", // Optional: Adjusts padding inside the input box
+                                },
+                                "& .MuiOutlinedInput-notchedOutline": {
+                                  borderRadius: "4px", // Optional: Customize border radius if needed
+                                },
+                              }}
+                            >
+                              <MenuItem value="default">Default</MenuItem>
+                              <MenuItem value="alphabetical">
+                                Alphabetical
+                              </MenuItem>
+                            </Select>
+                          </Box>
+                        </Box>
+
+                        <Box sx={{ mt: 1 }}>
+                          <Typography
+                            sx={{
+                              fontFamily: "Montserrat, sans-serif",
+                              fontWeight: "bold", // Make the text bold
+                              textAlign: "center",
+                              marginBottom: 1, // Add margin bottom
+                            }}
+                          >
+                            Metadata
+                          </Typography>
+
+                          <Box
+                            sx={{
+                              maxHeight: "200px", // Set a maximum height for the scrollable area
+                              overflowY: "auto", // Enable vertical scrolling
+                              display: "grid", // Use grid layout
+                              gridTemplateColumns: "repeat(3, 1fr)", // Three equal columns
+                              gap: 2, // Space between columns
+                              listStyleType: "none", // Remove default list styling
+                              paddingLeft: 5, // Add padding at the start (left)
+                              paddingRight: 5, // Add padding at the end (right)
+                              fontSize: "0.8rem", // Make text smaller (adjust as needed)
+                            }}
+                          >
+                            {sortedMetadataItems.map((item, index) => (
+                              <li key={index} style={{ marginBottom: "10px" }}>
+                                <div
+                                  style={{
+                                    fontWeight: "bold",
                                     fontFamily: "Montserrat, sans-serif",
-                                    fontWeight: "bold", // Make the text bold
                                   }}
                                 >
-                                  Field Tags:
-                                </Typography>
-                                <Select
-                                  defaultValue="default"
-                                  value={sortOption}
-                                  onChange={(e) =>
-                                    setSortOption(e.target.value)
-                                  }
-                                  variant="outlined"
-                                  sx={{
-                                    marginLeft: 2,
-                                    fontFamily: "Montserrat, sans-serif",
-                                    height: "36px", // Adjust the height here (default is around 56px)
-                                    "& .MuiInputBase-root": {
-                                      height: "100%", // Ensures the input area height is also consistent
-                                      padding: "0 12px", // Optional: Adjusts padding inside the input box
-                                    },
-                                    "& .MuiOutlinedInput-notchedOutline": {
-                                      borderRadius: "4px", // Optional: Customize border radius if needed
-                                    },
-                                  }}
-                                >
-                                  <MenuItem value="default">Default</MenuItem>
-                                  <MenuItem value="alphabetical">
-                                    Alphabetical
-                                  </MenuItem>
-                                </Select>
-                              </Box>
-                            </Box>
-
-                            <Box sx={{ mt: 1 }}>
-                              <Typography
-                                sx={{
-                                  fontFamily: "Montserrat, sans-serif",
-                                  fontWeight: "bold", // Make the text bold
-                                  textAlign: "center",
-                                  marginBottom: 1, // Add margin bottom
-                                }}
-                              >
-                                Metadata
-                              </Typography>
-
-                              <Box
-                                sx={{
-                                  maxHeight: "200px", // Set a maximum height for the scrollable area
-                                  overflowY: "auto", // Enable vertical scrolling
-                                  display: "grid", // Use grid layout
-                                  gridTemplateColumns: "repeat(3, 1fr)", // Three equal columns
-                                  gap: 2, // Space between columns
-                                  listStyleType: "none", // Remove default list styling
-                                  paddingLeft: 5, // Add padding at the start (left)
-                                  paddingRight: 5, // Add padding at the end (right)
-                                  fontSize: "0.8rem", // Make text smaller (adjust as needed)
-                                }}
-                              >
-                                {sortedMetadataItems.map((item, index) => (
-                                  <li
-                                    key={index}
-                                    style={{ marginBottom: "10px" }}
-                                  >
-                                    <div
-                                      style={{
-                                        fontWeight: "bold",
-                                        fontFamily: "Montserrat, sans-serif",
-                                      }}
-                                    >
-                                      {item.code}
-                                    </div>
-                                    <div>{item.label}</div>
-                                  </li>
-                                ))}
-                              </Box>
-                            </Box>
-                          </Grid>
-                        </Grid>
-                      </Box>
-                    </Box>
-                  )}
+                                  {item.code}
+                                </div>
+                                <div>{item.label}</div>
+                              </li>
+                            ))}
+                          </Box>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </Box>
                 </Box>
-              </Paper>
+              </Box>
             </Container>
           )}
           {/* Advanced Search Component End */}
@@ -1123,9 +1067,9 @@ export default function CustomerAdvancedSearch() {
             <Box
               sx={{
                 flexGrow: 1,
-                height: "100%",
+                height: "calc(100vh - 200px)", // Adjust this value based on your header/navigation height
                 width: "100%",
-                overflow: "auto",
+                overflow: "hidden", // Prevent outer box from scrolling
                 p: 2,
               }}
             >
@@ -1137,62 +1081,35 @@ export default function CustomerAdvancedSearch() {
                       p: 2,
                       border: "1px solid #ddd",
                       borderRadius: 1,
-                      height: "100%",
-                      position: "relative",
-                      flexDirection: "column",
+            
                       display: "flex",
+                      flexDirection: "column",
                     }}
                   >
                     <Typography
                       variant="h6"
                       gutterBottom
                       sx={{
-                        fontFamily: "Montserrat, sans-serif", // Apply Montserrat font
-                        textAlign: "center", // Center the text horizontally
+                        fontFamily: "Montserrat, sans-serif",
+                        textAlign: "center",
                       }}
                     >
                       Refine Your Search
                     </Typography>
 
+                    {/* Filters for Genre, Composer, Instrument, Emotion */}
                     <FormControl fullWidth sx={{ mb: 2 }}>
                       <InputLabel>Genre</InputLabel>
                       <Select
-                        multiple // Allow multiple selections
-                        value={selectedGenres} // state for multiple selections
-                        onChange={handleGenreChange} // handler to update selected genres
+                        multiple
+                        value={selectedGenres}
+                        onChange={handleGenreChange}
                         label="Genre"
-                        renderValue={(selected) => selected.join(", ")} // Display selected genres as a comma-separated string
-                        sx={{
-                          borderRadius: "16px", // Apply border-radius to the Select component itself
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderRadius: "16px", // Apply border-radius to the outline when the Select is focused
-                          },
-                          "& .MuiSelect-icon": {
-                            borderRadius: "100%", // Optional: round the dropdown icon
-                          },
-                        }}
+                        renderValue={(selected) => selected.join(", ")}
+                        sx={{ borderRadius: "16px" }}
                       >
-                        {/* Generate MenuItems dynamically from genreList */}
                         {genreList.map((genre) => (
-                          <MenuItem
-                            key={genre}
-                            value={genre}
-                            sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              "&:hover": {
-                                backgroundColor: "#78BBCC", // Hover effect
-                              },
-                              "&.Mui-selected": {
-                                backgroundColor: "#67ADC1", // Selected item effect
-                                color: "#FFFFFF",
-                                "&:hover": {
-                                  backgroundColor: "#67ADC1", // Keep the color when selected and hovered
-                                },
-                              },
-                            }}
-                          >
+                          <MenuItem key={genre} value={genre}>
                             {genre}
                           </MenuItem>
                         ))}
@@ -1202,88 +1119,33 @@ export default function CustomerAdvancedSearch() {
                     <FormControl fullWidth sx={{ mb: 2 }}>
                       <InputLabel>Composer</InputLabel>
                       <Select
-                        multiple // Allow multiple selections
-                        value={selectedComposers} // state for multiple selections
-                        onChange={handleComposerChange} // handler to update selected genres
+                        multiple
+                        value={selectedComposers}
+                        onChange={handleComposerChange}
                         label="Composer"
-                        renderValue={(selected) => selected.join(", ")} // Display selected genres as a comma-separated string
-                        sx={{
-                          borderRadius: "16px", // Apply border-radius to the Select component itself
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderRadius: "16px", // Apply border-radius to the outline when the Select is focused
-                          },
-                          "& .MuiSelect-icon": {
-                            borderRadius: "100%", // Optional: round the dropdown icon
-                          },
-                        }}
+                        renderValue={(selected) => selected.join(", ")}
+                        sx={{ borderRadius: "16px" }}
                       >
-                        {/* Generate MenuItems dynamically from genreList */}
                         {composerList.map((composer) => (
-                          <MenuItem
-                            key={composer}
-                            value={composer}
-                            sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              "&:hover": {
-                                backgroundColor: "#78BBCC", // Hover effect
-                              },
-                              "&.Mui-selected": {
-                                backgroundColor: "#67ADC1", // Selected item effect
-                                color: "#FFFFFF",
-                                "&:hover": {
-                                  backgroundColor: "#67ADC1", // Keep the color when selected and hovered
-                                },
-                              },
-                            }}
-                          >
+                          <MenuItem key={composer} value={composer}>
                             {composer}
                           </MenuItem>
                         ))}
                       </Select>
                     </FormControl>
 
-                    {/* Section refinement dropdown example */}
                     <FormControl fullWidth sx={{ mb: 2 }}>
                       <InputLabel>Instrument</InputLabel>
                       <Select
-                        multiple // Allow multiple selections
-                        value={selectedInstruments} // state for multiple selections
-                        onChange={handleInstrumentChange} // handler to update selected genres
+                        multiple
+                        value={selectedInstruments}
+                        onChange={handleInstrumentChange}
                         label="Instrument"
-                        renderValue={(selected) => selected.join(", ")} // Display selected genres as a comma-separated string
-                        sx={{
-                          borderRadius: "16px", // Apply border-radius to the Select component itself
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderRadius: "16px", // Apply border-radius to the outline when the Select is focused
-                          },
-                          "& .MuiSelect-icon": {
-                            borderRadius: "100%", // Optional: round the dropdown icon
-                          },
-                        }}
+                        renderValue={(selected) => selected.join(", ")}
+                        sx={{ borderRadius: "16px" }}
                       >
-                        {/* Generate MenuItems dynamically from instrumentList */}
                         {instrumentList.map((instrument) => (
-                          <MenuItem
-                            key={instrument}
-                            value={instrument}
-                            sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              "&:hover": {
-                                backgroundColor: "#78BBCC", // Hover effect
-                              },
-                              "&.Mui-selected": {
-                                backgroundColor: "#67ADC1", // Selected item effect
-                                color: "#FFFFFF",
-                                "&:hover": {
-                                  backgroundColor: "#67ADC1", // Keep the color when selected and hovered
-                                },
-                              },
-                            }}
-                          >
+                          <MenuItem key={instrument} value={instrument}>
                             {instrument}
                           </MenuItem>
                         ))}
@@ -1293,42 +1155,15 @@ export default function CustomerAdvancedSearch() {
                     <FormControl fullWidth sx={{ mb: 2 }}>
                       <InputLabel>Emotion</InputLabel>
                       <Select
-                        multiple // Allow multiple selections
-                        value={selectedEmotions} // state for multiple selections
-                        onChange={handleEmotionChange} // handler to update selected genres
+                        multiple
+                        value={selectedEmotions}
+                        onChange={handleEmotionChange}
                         label="Emotion"
-                        renderValue={(selected) => selected.join(", ")} // Display selected genres as a comma-separated string
-                        sx={{
-                          borderRadius: "16px", // Apply border-radius to the Select component itself
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderRadius: "16px", // Apply border-radius to the outline when the Select is focused
-                          },
-                          "& .MuiSelect-icon": {
-                            borderRadius: "100%", // Optional: round the dropdown icon
-                          },
-                        }}
+                        renderValue={(selected) => selected.join(", ")}
+                        sx={{ borderRadius: "16px" }}
                       >
-                        {/* Generate MenuItems dynamically from genreList */}
                         {emotionList.map((emotion) => (
-                          <MenuItem
-                            key={emotion}
-                            value={emotion}
-                            sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              "&:hover": {
-                                backgroundColor: "#78BBCC", // Hover effect
-                              },
-                              "&.Mui-selected": {
-                                backgroundColor: "#67ADC1", // Selected item effect
-                                color: "#FFFFFF",
-                                "&:hover": {
-                                  backgroundColor: "#67ADC1", // Keep the color when selected and hovered
-                                },
-                              },
-                            }}
-                          >
+                          <MenuItem key={emotion} value={emotion}>
                             {emotion}
                           </MenuItem>
                         ))}
@@ -1341,19 +1176,14 @@ export default function CustomerAdvancedSearch() {
                       fullWidth
                       onClick={handleRefineClick}
                       sx={{
-                        backgroundColor: "#78BBCC", // Pastel dark purple
+                        backgroundColor: "#78BBCC",
                         color: "#ffffff",
                         "&:hover": {
-                          backgroundColor: "#67ADC1", // Darker purple on hover
+                          backgroundColor: "#67ADC1",
                         },
                         width: "100%",
                         mb: 2,
                       }}
-                      disabled={
-                        selectedGenres.length === 0 &&
-                        selectedComposers.length === 0 &&
-                        selectedInstruments.length === 0
-                      } // Disable button when both are empty
                     >
                       Refine
                     </Button>
@@ -1362,14 +1192,14 @@ export default function CustomerAdvancedSearch() {
 
                 {/* Search results section on the right */}
                 <Grid item xs={9}>
-                  {searchResults.length === 0 && hasSearched && (
+                  {paginatedResults.length === 0 && hasSearched && (
                     <Typography variant="body1">No results found</Typography>
                   )}
 
-                  {searchResults.length > 0 && (
+                  {paginatedResults.length > 0 && (
                     <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
                       <List>
-                        {searchResults.map((item) => (
+                        {paginatedResults.map((item) => (
                           <ListItemButton
                             key={item._id}
                             onClick={() =>
@@ -1427,6 +1257,22 @@ export default function CustomerAdvancedSearch() {
                           </ListItemButton>
                         ))}
                       </List>
+
+                      {/* Pagination */}
+                      <Pagination
+                        count={Math.ceil(
+                          (hasFiltered
+                            ? filteredResults.length
+                            : searchResults.length) / itemsPerPage
+                        )}
+                        page={page}
+                        onChange={handlePageChange}
+                        sx={{
+                          mt: 3,
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
+                      />
                     </Box>
                   )}
                 </Grid>
