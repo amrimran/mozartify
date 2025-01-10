@@ -828,6 +828,31 @@ app.get("/filter-music-scores", async (req, res) => {
   }
 });
 
+app.post("/check-purchase", async (req, res) => {
+  try {
+    const { score_id, user_id } = req.body;
+
+    // Validate input
+    if (!score_id || !user_id) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing score_id or user_id" });
+    }
+
+    // Find matching documents in the purchases collection
+    const purchases = await PurchaseModel.find({ score_id, user_id });
+
+    if (purchases.length > 0) {
+      return res.json({ success: true, exists: true, data: purchases });
+    } else {
+      return res.json({ success: true, exists: false, data: [] });
+    }
+  } catch (error) {
+    console.error("Error checking purchase:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 app.get("/user-purchases", async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -883,6 +908,24 @@ app.post("/add-to-cart", async (req, res) => {
   } catch (error) {
     console.error("Error updating cart:", error);
     res.status(500).send("Error updating cart.");
+  }
+});
+
+app.post("/submit-rating", async (req, res) => {
+  const { rating, scoreId, userId } = req.body;
+
+  try {
+    // Update the database with the rating
+    await PurchaseModel.findOneAndUpdate(
+      { score_id: scoreId, user_id: userId }, // Find the relevant document
+      { $set: { ratingGiven: rating } }, // Update the rating
+      { new: true } // Return the updated document
+    );
+
+    res.status(200).json({ success: true, message: "Rating submitted!" });
+  } catch (error) {
+    console.error("Error submitting rating:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
@@ -962,7 +1005,7 @@ app.get("/music-scores", async (req, res) => {
 app.get("/popular-music-scores", async (req, res) => {
   try {
     const popularScores = await ABCFileModel.find()
-      .sort({ view_count: -1 })
+      .sort({ downloads: -1 })
       .limit(10);
 
     res.json(popularScores);
@@ -994,7 +1037,11 @@ app.get("/user-liked-scores", async (req, res) => {
 
 app.post("/set-favorites", async (req, res) => {
   const userId = req.session.userId;
-  const { musicScoreId } = req.body;
+  const { musicScoreId, action } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(musicScoreId)) {
+    return res.status(400).json({ message: "Invalid musicScoreId format" });
+  }
 
   try {
     const user = await UserModel.findById(userId);
@@ -1002,14 +1049,16 @@ app.post("/set-favorites", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const isFavorite = user.favorites.includes(musicScoreId);
-
-    if (isFavorite) {
+    if (action === "add") {
+      if (!user.favorites.includes(musicScoreId)) {
+        user.favorites.push(musicScoreId);
+      }
+    } else if (action === "remove") {
       user.favorites = user.favorites.filter(
         (favId) => favId.toString() !== musicScoreId
       );
     } else {
-      user.favorites.push(musicScoreId);
+      return res.status(400).json({ message: "Invalid action specified" });
     }
 
     await user.save();
@@ -1094,14 +1143,15 @@ app.get("/recommendations", async (req, res) => {
 });
 
 const fulfillOrder = async (session) => {
-  const userId = session.client_reference_id; // Ensure this is passed during checkout creation
+  const userId = session.client_reference_id;
   const cartItems = session.display_items;
 
   const purchaseItems = cartItems.map((item) => ({
     user_id: mongoose.Types.ObjectId(userId),
     purchase_date: new Date(),
     price: item.amount_total / 100,
-    score_id: mongoose.Types.ObjectId(item._id), // Assuming each item in cart has a `custom_id` representing the `score_id`
+    score_id: mongoose.Types.ObjectId(item._id),
+    ratingGiven: 0,
   }));
 
   // Add to purchases collection

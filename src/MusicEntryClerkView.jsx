@@ -32,6 +32,7 @@ import { format } from "date-fns";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import StopIcon from "@mui/icons-material/Stop";
 
+
 export default function ClerkMusicScoreView() {
   const { scoreId } = useParams();
   const [abcContent, setAbcContent] = useState("");
@@ -157,6 +158,7 @@ export default function ClerkMusicScoreView() {
     { id: 24, name: "Acoustic Guitar (nylon)" },
     { id: 40, name: "Violin" },
     { id: 42, name: "Cello" },
+    { id: 52, name: "Choir Aahs" },
     { id: 56, name: "Trumpet" },
     { id: 73, name: "Flute" },
   ];
@@ -275,7 +277,7 @@ export default function ClerkMusicScoreView() {
 
     if (!isPlaying) {
       const audioContext = new (window.AudioContext ||
-        window.webkitAudioContext)();
+        window.AudioContext)();
 
       const startPlayback = async () => {
         try {
@@ -487,7 +489,7 @@ export default function ClerkMusicScoreView() {
             sx={{
               flexGrow: 1,
               p: 3,
-              bgcolor: "#F2F2F5",
+              backgroundColor: "#F8F8F8",
               borderRadius: 2,
               maxWidth: "800px",
             }}
@@ -810,7 +812,7 @@ export default function ClerkMusicScoreView() {
               sx={{
                 width: 200,
                 p: 2,
-                bgcolor: "#F2F2F5",
+                backgroundColor: "#F8F8F8",
                 borderRadius: 2,
                 height: "auto",
                 maxHeight: "850px",

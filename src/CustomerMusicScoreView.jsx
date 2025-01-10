@@ -19,30 +19,43 @@ import {
   Switch,
   FormControlLabel,
   Pagination,
+  Skeleton,
+  Snackbar,
+  Alert,
+  PaginationItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import CustomerSidebar from "./CustomerSidebar";
 import { createGlobalStyle } from "styled-components";
-import { ref, getDownloadURL } from "firebase/storage";
-import { storage } from "./firebase";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import abcjs from "abcjs";
 import { Play, Pause, RotateCw } from "lucide-react";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import StopIcon from "@mui/icons-material/Stop";
+import StarIcon from "@mui/icons-material/Star";
+import Rating from "@mui/material/Rating";
 
 export default function CustomerMusicScoreView() {
   const { id } = useParams();
+  const [abcContent, setAbcContent] = useState("");
+  const [metadata, setMetadata] = useState(null);
   const [user, setUser] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [synthesizer, setSynthesizer] = useState(null);
+
   const [musicScore, setMusicScore] = useState();
   const [favorites, setFavorites] = useState([]);
   const [addedToCartScores, setAddedToCartScores] = useState([]);
   const navigate = useNavigate();
-  const [abcContent, setAbcContent] = useState("");
-  const [metadata, setMetadata] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [synthesizer, setSynthesizer] = useState(null);
+
   const [visualObj, setVisualObj] = useState(null);
   const [tempo, setTempo] = useState(100);
   const [isLooping, setIsLooping] = useState(false);
+  const [isStop, setIsStop] = useState(false);
   const [transposition, setTransposition] = useState(0);
   const [instrument, setInstrument] = useState(0);
   const [timingCallbacks, setTimingCallbacks] = useState(null);
@@ -50,19 +63,51 @@ export default function CustomerMusicScoreView() {
   const [page, setPage] = useState(1);
   const abcContainerRef = useRef(null);
 
+  const [purchaseExists, setPurchaseExists] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(loading);
+  const [isRated, setIsRated] = useState(false);
+  const [ratingGiven, setRatingGiven] = useState(null);
+  const [ratingHover, setRatingHover] = useState(-1); // Store the hover value
+
+  const [showRatingInput, setShowRatingInput] = useState(false); // Toggle visibility of rating input
+  const [openTempoDialog, setOpenTempoDialog] = useState(false);
+  const [openTransposeDialog, setOpenTransposeDialog] = useState(false);
+  const [openLoopDialog, setOpenLoopDialog] = useState(false);
+
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    type: "", // Add this to handle snackbar type (e.g., "cart", "favorite", etc.)
+  });
+
+  const ratingLabels = {
+    0.5: "Poor",
+    1: "Fair",
+    1.5: "Okay",
+    2: "Average",
+    2.5: "Good",
+    3: "Very Good",
+    3.5: "Excellent",
+    4: "Amazing",
+    4.5: "Outstanding",
+    5: "Perfect",
+  };
+
   const buttonStyles = {
-    px: 15,
+    px: 10,
     fontFamily: "Montserrat",
     fontWeight: "bold",
     color: "#FFFFFF",
     backgroundColor: "#8BD3E6",
-    border: "1px solid #8BD3E6", // Explicitly define the border
+    border: "1px solid #8BD3E6",
     borderColor: "#8BD3E6",
+    boxShadow: "none",
     "&:hover": {
-      backgroundColor: "#3B3183",
-      color: "#FFFFFF",
-      border: "1px solid #3B3183", // Ensure border remains visible on hover
-      borderColor: "#3B3183",
+      boxShadow: "none",
+      backgroundColor: "#FFFFFF", // Slightly darker blue for hover
+      color: "#8BD3E6", // Keeps the text color consistent
+      borderColor: "#6FBCCF", // Matches the background color for cohesion
     },
   };
 
@@ -70,16 +115,140 @@ export default function CustomerMusicScoreView() {
     fontFamily: "Montserrat",
     fontWeight: "bold",
     color: "#FFFFFF",
+    border: "1px solid #DB2226",
     borderColor: "#DB2226",
     backgroundColor: "#DB2226",
     width: "250px",
     height: "40px",
+    boxShadow: "none",
     "&:hover": {
+      boxShadow: "none",
       backgroundColor: "#FFFFFF",
       color: "#DB2226",
       borderColor: "#DB2226",
     },
   };
+
+  const GlobalStyle = createGlobalStyle`
+  @keyframes skeleton-wave {
+    0% {
+        opacity: 1; /* Fully visible */
+    }
+    50% {
+        opacity: 0.2; /* Make it more transparent for higher contrast */
+    }
+    100% {
+        opacity: 1; /* Fully visible */
+    }
+}
+  
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  * {
+    font-family: 'Montserrat', sans-serif;
+  }
+`;
+
+  const handleLockedTempoClick = () => {
+    if (!purchaseExists) {
+      setOpenTempoDialog(true); // Show the locked feature dialog
+    }
+  };
+
+  const closeTempoDialog = () => {
+    setOpenTempoDialog(false); // Close the dialog
+  };
+
+  const handleLockedTransposeClick = () => {
+    if (!purchaseExists) {
+      setOpenTransposeDialog(true); // Show the locked feature dialog
+    }
+  };
+
+  const closeTransposeDialog = () => {
+    setOpenTransposeDialog(false); // Close the dialog
+  };
+
+  const handleLockedLoopClick = () => {
+    if (!purchaseExists) {
+      setOpenLoopDialog(true); // Show the locked feature dialog
+    }
+  };
+
+  const closeLoopDialog = () => {
+    setOpenLoopDialog(false); // Close the dialog
+  };
+
+  const handleSubmitRating = async () => {
+    if (ratingGiven > 0) {
+      try {
+        // Send the rating to the backend
+        await axios.post("http://localhost:3000/submit-rating", {
+          rating: ratingGiven,
+          scoreId: id, // Assuming you have `id` for the music score
+          userId: user?._id, // Assuming you have `user._id` available
+        });
+
+        // Show a success snackbar
+        setSnackbar({
+          open: true,
+          message: `Thank you for your rating! You rated: ${ratingGiven} stars.`,
+          type: "success",
+        });
+
+        // Close the floating rating input
+        setShowRatingInput(false);
+
+        // Reload the page after a short delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000); // Adjust delay as needed
+      } catch (error) {
+        console.error("Error submitting rating:", error);
+
+        // Show an error snackbar
+        setSnackbar({
+          open: true,
+          message: "Failed to submit your rating. Please try again later.",
+          type: "error",
+        });
+      }
+    } else {
+      // Show an error snackbar if no rating is selected
+      setSnackbar({
+        open: true,
+        message: "Please select a rating before submitting.",
+        type: "error",
+      });
+    }
+  };
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return; // Prevent snackbar from closing on clickaway (optional)
+    }
+
+    setSnackbar({
+      open: false,
+      message: "",
+      type: "",
+    });
+  };
+
+  const instruments = [
+    { id: 0, name: "Piano" },
+    { id: 1, name: "Acoustic Guitar" },
+    { id: 24, name: "Acoustic Guitar (nylon)" },
+    { id: 40, name: "Violin" },
+    { id: 42, name: "Cello" },
+    { id: 52, name: "Choir Aahs" },
+    { id: 56, name: "Trumpet" },
+    { id: 73, name: "Flute" },
+  ];
 
   const stopAndReset = useCallback(() => {
     if (synthesizer) {
@@ -90,16 +259,6 @@ export default function CustomerMusicScoreView() {
     }
     setIsPlaying(false);
   }, [synthesizer, timingCallbacks]);
-
-  const instruments = [
-    { id: 0, name: "Piano" },
-    { id: 1, name: "Acoustic Guitar" },
-    { id: 24, name: "Acoustic Guitar (nylon)" },
-    { id: 40, name: "Violin" },
-    { id: 42, name: "Cello" },
-    { id: 56, name: "Trumpet" },
-    { id: 73, name: "Flute" },
-  ];
 
   useEffect(() => {
     const fetchUserSession = async () => {
@@ -119,12 +278,12 @@ export default function CustomerMusicScoreView() {
         const abcContent = response.data.content;
 
         // Extract tempo (Q value) from the ABC content
-        const tempoMatch = abcContent.match(/Q:\s*1\/4\s*=\s*(\d+)/); // Match 'Q: 1/4=120' or similar
-        const extractedTempo = tempoMatch ? parseInt(tempoMatch[1], 10) : 100; // Default to 100 if not found
+        const tempoMatch = abcContent.match(/Q:\s*1\/4\s*=\s*(\d+)/);
+        const extractedTempo = tempoMatch ? parseInt(tempoMatch[1], 10) : 100;
 
         setAbcContent(response.data.content);
         setMetadata(response.data);
-        setTempo(extractedTempo); // Dynamically set the tempo
+        setTempo(extractedTempo);
 
         renderAbc(response.data.content);
       } catch (error) {
@@ -134,11 +293,81 @@ export default function CustomerMusicScoreView() {
 
     fetchUserSession();
     fetchAbcFileAndMetadata();
-    // Cleanup
+
+    // Cleanup to stop playback on unmount
     return () => {
-      stopAndReset();
+      stopAndReset(); // Properly invoke the function here
     };
   }, [id]);
+
+  const checkPurchase = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/check-purchase",
+        {
+          score_id: id,
+          user_id: user?._id,
+        }
+      );
+
+      if (response.status === 200 || response.status === 201) {
+        const data = response.data;
+
+        if (data.success) {
+          setPurchaseExists(data.exists); // true or false based on backend response
+          console.log(
+            `Check Purchase: ${data.exists ? "Purchase exists" : "No purchase found"}`
+          );
+
+          // Check if ratingGiven is available and set it in state
+          if (data.exists && data.data?.length > 0) {
+            const rating = data.data[0]?.ratingGiven ?? null; // Extract the ratingGiven value
+            setRatingGiven(rating); // Set the ratingGiven value in state
+            setIsRated(rating > 0); // Check if ratingGiven > 0 and set isRated
+          } else {
+            setRatingGiven(null); // If no purchase data, reset ratingGiven
+            setIsRated(false); // If no purchase data, set isRated to false
+          }
+        } else {
+          console.error("Unexpected response format:", data);
+        }
+      } else {
+        console.error("Unexpected response from the server:", response.data);
+      }
+    } catch (error) {
+      if (error.response) {
+        console.error(
+          "Server Error:",
+          error.response.data.message || error.response.statusText
+        );
+      } else if (error.request) {
+        console.error("No response received from the server:", error.request);
+      } else {
+        console.error("Error checking purchase:", error.message);
+      }
+    } finally {
+      setLoading(false); // Always stop loading
+    }
+  };
+
+  useEffect(() => {
+    if (id && user?._id) {
+      setLoading(true);
+      checkPurchase();
+    }
+  }, [id, user]);
+
+  useEffect(() => {
+    if (!loading) {
+      const timeout = setTimeout(() => {
+        setShowSkeleton(false); // Hide the Skeleton after 2 seconds
+      }, 2000);
+
+      return () => clearTimeout(timeout); // Cleanup timeout on component unmount
+    } else {
+      setShowSkeleton(true); // Reset to show Skeleton if loading becomes true again
+    }
+  }, [loading]);
 
   const transposeAbc = useCallback((abc, semitones) => {
     if (!abc) return abc;
@@ -197,54 +426,76 @@ export default function CustomerMusicScoreView() {
 
   useEffect(() => {
     stopAndReset();
-  }, [tempo, isLooping, transposition, instrument, stopAndReset]);
+  }, [tempo, isLooping, transposition, instrument, stopAndReset, isStop]);
 
   const handlePlayback = async () => {
     if (!visualObj) return;
 
     if (!isPlaying) {
-      const audioContext = new (window.AudioContext ||
-        window.webkitAudioContext)();
+      const audioContext = new (window.AudioContext || window.AudioContext)();
 
-      try {
-        // Initialize the synthesizer
-        const newSynth = new abcjs.synth.CreateSynth();
-        setSynthesizer(newSynth);
+      const startPlayback = async () => {
+        try {
+          const newSynth = new abcjs.synth.CreateSynth();
+          setSynthesizer(newSynth);
 
-        await newSynth.init({
-          audioContext,
-          visualObj,
-          millisecondsPerMeasure: (60000 / (tempo * 1.1667)) * 4,
-          options: {
-            soundFontUrl:
-              "https://paulrosen.github.io/midi-js-soundfonts/abcjs/",
-            program: instrument, // MIDI instrument program
-          },
-        });
+          await newSynth.init({
+            audioContext,
+            visualObj,
+            millisecondsPerMeasure: (60000 / (tempo * 1.1667)) * 4,
+            options: {
+              soundFontUrl:
+                "https://paulrosen.github.io/midi-js-soundfonts/abcjs/",
+              program: instrument,
+              onEnded: async () => {
+                if (isLooping && !isStop) {
+                  // Clean up the old synthesizer
+                  newSynth.stop();
+                  setSynthesizer(null);
+                  // Start a new playback
+                  await startPlayback();
+                } else {
+                  stopAndReset();
+                  setIsStop(false);
+                }
+              },
+            },
+          });
 
-        await newSynth.prime();
+          await newSynth.prime();
 
-        setIsPlaying(true);
-
-        // Start playback
-        timingCallbacks?.start();
-        await newSynth.start();
-
-        // Set a manual timeout for playback duration
-        // Set up ended callback
-        newSynth.addEventListener("ended", () => {
-          if (isLooping) {
-            handlePlayback();
-          } else {
-            stopAndReset();
+          // Start playback
+          if (!isPlaying) {
+            setIsPlaying(true);
+            setIsStop(false);
           }
-        });
-      } catch (error) {
-        console.error("Playback error:", error);
-        stopAndReset();
-      }
+
+          timingCallbacks?.start();
+
+          // If purchaseExists is false, limit playback to half the duration
+          if (purchaseExists === false) {
+            const totalTime = newSynth.duration; // Get the total duration of the music in seconds
+            const halfTime = totalTime / 2; // Calculate half the duration
+            newSynth.start(); // Start playback
+            setTimeout(() => {
+              newSynth.stop(); // Stop playback after half the duration
+              setIsPlaying(false);
+            }, halfTime * 1000); // Convert seconds to milliseconds
+          } else {
+            await newSynth.start(); // Full playback if purchaseExists is true
+          }
+        } catch (error) {
+          console.error("Playback error:", error);
+          stopAndReset();
+          setIsStop(false);
+        }
+      };
+
+      // Start the initial playback
+      await startPlayback();
     } else {
       stopAndReset();
+      setIsStop(false);
     }
   };
 
@@ -324,6 +575,11 @@ export default function CustomerMusicScoreView() {
         musicScoreId: id,
       });
       setAddedToCartScores([...addedToCartScores, id]);
+      setSnackbar({
+        open: true,
+        message: "Added to cart successfully!",
+        type: "cart",
+      });
     } catch (error) {
       console.error("Error adding to cart:", error);
     }
@@ -331,22 +587,60 @@ export default function CustomerMusicScoreView() {
 
   const toggleFavorite = async (musicScoreId) => {
     try {
+      const isFavorite = user?.favorites?.includes(musicScoreId);
+
+      // Optimistically update the favorites locally for instant feedback
+      setFavorites((prevFavorites) => {
+        if (isFavorite) {
+          // Remove from favorites
+          return prevFavorites.filter((favId) => favId !== musicScoreId);
+        } else {
+          // Add to favorites
+          return [...prevFavorites, musicScoreId];
+        }
+      });
+
+      // Send the request to the server
       const response = await axios.post("http://localhost:3000/set-favorites", {
         musicScoreId,
+        action: isFavorite ? "remove" : "add", // Explicitly specify the action
       });
+
+      // Update the favorites with the server response (ensures consistency)
       setFavorites(response.data.favorites);
+
+      // Show appropriate snackbar message
+      setSnackbar({
+        open: true,
+        message: isFavorite
+          ? "Removed from favorites successfully!"
+          : "Added to favorites successfully!",
+        type: isFavorite ? "unfavorite" : "favorite",
+        reload: true, // Add a flag to determine whether to reload after snackbar
+      });
     } catch (error) {
       console.error("Error updating favorites:", error);
+
+      // Revert the optimistic update in case of an error
+      setFavorites((prevFavorites) => {
+        if (isFavorite) {
+          // Add back the removed favorite
+          return [...prevFavorites, musicScoreId];
+        } else {
+          // Remove the added favorite
+          return prevFavorites.filter((favId) => favId !== musicScoreId);
+        }
+      });
+
+      // Optionally show an error snackbar
+      setSnackbar({
+        open: true,
+        message: "Failed to update favorites. Please try again.",
+        type: "error",
+        reload: false, // No reload on error
+      });
     }
   };
-
-  const GlobalStyle = createGlobalStyle`
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Montserrat', sans-serif;
-  }
-`;
 
   return (
     <>
@@ -373,7 +667,21 @@ export default function CustomerMusicScoreView() {
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="h4">Music Score View</Typography>
+              {showSkeleton ? (
+                <Skeleton variant="text" width={300} height={40} />
+              ) : (
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontFamily: "Montserrat",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {purchaseExists === false
+                    ? "Music Score Preview"
+                    : "Music Score View"}
+                </Typography>
+              )}
             </Box>
             <Box sx={{ display: "flex", alignItems: "center" }}>
               {user ? (
@@ -407,52 +715,267 @@ export default function CustomerMusicScoreView() {
             sx={{
               display: "flex",
               flexDirection: "row",
-              gap: 2,
-              justifyContent: "center",
               alignItems: "center",
+              justifyContent: "center",
               mb: 3,
+              gap: 4,
+              width: "100%",
             }}
           >
-            <Button
-              variant="contained"
-              startIcon={<ShoppingCartIcon />}
-              onClick={(e) => {
-                addToCart(id);
-              }}
+            {/* Title and Price group */}
+            <Box
               sx={{
-                backgroundColor: "#3b3183",
-                color: "#fff", // White text color
-                "&:hover": {
-                  backgroundColor: "#8B4513", // Darker brown on hover
-                },
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 3,
               }}
             >
-              Add to Cart
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<FavoriteIcon />}
-              onClick={(e) => {
-                toggleFavorite(id);
-              }}
+              {showSkeleton ? (
+                <Skeleton variant="text" width={200} height={50} />
+              ) : (
+                <Typography
+                  variant="h6"
+                  sx={{
+                    maxWidth: "400px",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    fontFamily: "Montserrat",
+                  }}
+                >
+                  Title: <strong>{metadata?.title}</strong>
+                </Typography>
+              )}
+
+              {purchaseExists === false && (
+                <>
+                  {showSkeleton ? (
+                    <Skeleton variant="text" width={100} height={50} />
+                  ) : (
+                    <Typography variant="h6" sx={{ fontFamily: "Montserrat" }}>
+                      Price:{" "}
+                      <strong>
+                        RM{" "}
+                        {metadata?.price
+                          ? Number(metadata.price).toFixed(2)
+                          : "0.00"}
+                      </strong>
+                    </Typography>
+                  )}
+                </>
+              )}
+            </Box>
+
+            <Divider orientation="vertical" flexItem sx={{ height: "40px" }} />
+
+            <Box
               sx={{
-                backgroundColor: "red",
-                color: "#fff", // White text color
-                "&:hover": {
-                  backgroundColor: "#B22222", // Darker red on hover
-                },
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 2,
               }}
             >
-              Add to Favorites
-            </Button>
+              {showSkeleton ? (
+                <Skeleton variant="text" width={100} height={50} />
+              ) : (
+                <Button
+                  variant="contained"
+                  startIcon={<FavoriteIcon />}
+                  onClick={(e) => {
+                    toggleFavorite(id);
+                  }}
+                  sx={{
+                    ...deleteButtonStyles,
+                  }}
+                >
+                  {user?.favorites?.includes(id)
+                    ? "Added to Favorites"
+                    : "Favorites"}
+                </Button>
+              )}
+
+              {purchaseExists === false ? (
+                showSkeleton ? (
+                  <Skeleton variant="text" width={150} height={50} />
+                ) : addedToCartScores.includes(id) ? (
+                  // "Added to Cart" Button
+                  <Button
+                    variant="contained"
+                    startIcon={<ShoppingCartIcon />}
+                    sx={{
+                      px: 5,
+                      fontFamily: "Montserrat",
+                      fontWeight: "bold",
+                      color: "#FFFFFF",
+                      backgroundColor: "#4CAF50", // Green background for added items
+                      "&:hover": {
+                        backgroundColor: "#388E3C", // Darker green for hover
+                      },
+                    }}
+                    disabled // Prevent further interaction with this button
+                  >
+                    Added to Cart
+                  </Button>
+                ) : (
+                  // "Add to Cart" Button
+                  <Button
+                    variant="contained"
+                    startIcon={<ShoppingCartIcon />}
+                    onClick={() => addToCart(id)}
+                    sx={{
+                      ...buttonStyles,
+                      px: 5, // Preserve original styles
+                    }}
+                  >
+                    Add to Cart
+                  </Button>
+                )
+              ) : isRated === false ? (
+                showSkeleton ? (
+                  <Skeleton variant="text" width={150} height={50} />
+                ) : (
+                  <Box sx={{ position: "relative" }}>
+                    {/* Rating Button */}
+                    <Button
+                      variant="contained"
+                      startIcon={<StarIcon />}
+                      onClick={() => {
+                        setShowRatingInput((prev) => !prev); // Toggle the visibility of the rating input
+                      }}
+                      sx={{
+                        fontFamily: "Montserrat",
+                        fontWeight: "bold",
+                        border: "1px solid #FFD700",
+                        backgroundColor: "#FFD700", // Yellow background
+                        color: "#FFFFFF", // White text
+                        boxShadow: "none",
+                        px: 10,
+                        position: "relative",
+                        zIndex: 1, // Ensure button stays above floating input
+                        "&:hover": {
+                          boxShadow: "none",
+                          backgroundColor: "#FFFFFF", // White background on hover
+                          color: "#FFD700", // Yellow text on hover
+                        },
+                      }}
+                    >
+                      Rate
+                    </Button>
+
+                    {/* Floating Rating Input */}
+                    {showRatingInput && (
+                      <Box
+                        sx={{
+                          position: "absolute", // Floating positioning
+                          top: "110%", // Position below the button
+                          left: "50%",
+                          transform: "translateX(-50%)", // Center horizontally
+                          zIndex: 999, // Ensure it's above everything else
+                          backgroundColor: "#FFFFFF", // White background
+                          border: "1px solid #DDD", // Light border
+                          borderRadius: "8px",
+                          boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)", // Subtle shadow
+                          padding: "16px", // Add padding for the floating box
+                          width: "300px", // Fixed width
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 1,
+                        }}
+                      >
+                        <Typography
+                          variant="body1"
+                          sx={{ fontFamily: "Montserrat" }}
+                        >
+                          Select your rating:
+                        </Typography>
+
+                        {/* Rating Component */}
+                        <Rating
+                          name="hover-feedback"
+                          value={ratingGiven} // Persist the selected rating
+                          precision={0.5} // Allows half-star ratings
+                          onChange={(event, newValue) => {
+                            setRatingGiven(newValue); // Update rating value on selection
+                          }}
+                          onChangeActive={(event, newHover) => {
+                            setRatingHover(newHover); // Update hover state
+                          }}
+                          emptyIcon={
+                            <StarIcon
+                              style={{ opacity: 0.55 }}
+                              fontSize="inherit"
+                            />
+                          }
+                        />
+                        {ratingGiven !== null && (
+                          <Box
+                            sx={{
+                              mt: 1,
+                              fontFamily: "Montserrat",
+                              fontSize: "0.9rem",
+                            }}
+                          >
+                            {
+                              ratingLabels[
+                                ratingHover !== -1 ? ratingHover : ratingGiven
+                              ]
+                            }{" "}
+                            {/* Display guide text */}
+                          </Box>
+                        )}
+
+                        <Button
+                          variant="contained"
+                          onClick={handleSubmitRating}
+                          sx={{
+                            mt: 2,
+                            ...buttonStyles,
+                          }}
+                        >
+                          Submit
+                        </Button>
+                      </Box>
+                    )}
+                  </Box>
+                )
+              ) : showSkeleton ? (
+                <Skeleton variant="text" width={150} height={50} />
+              ) : (
+                <Button
+                  variant="contained"
+                  startIcon={<StarIcon sx={{ color: "#FFD700" }} />}
+                  sx={{
+                    fontFamily: "Montserrat",
+                    fontWeight: "bold",
+                    border: "1px solid #000000", // Black border
+                    backgroundColor: "#000000", // Black background
+                    color: "#FFD700", // Yellow text
+                    boxShadow: "none",
+                    px: 10,
+                    cursor: "default", // Non-interactive for the "Rated" state
+                    "&:hover": {
+                      boxShadow: "none", // No hover animation
+                      backgroundColor: "#000000", // Keep black background
+                      color: "#FFD700", // Keep yellow text
+                    },
+                  }}
+                >
+                  {ratingGiven}/5
+                </Button>
+              )}
+            </Box>
           </Box>
+
           <Box sx={{ display: "flex", gap: 4 }}>
             {/* Music Score Preview */}
             <Card
               sx={{
                 flexGrow: 1,
                 p: 3,
-                bgcolor: "#F2F2F5",
+                backgroundColor: "#F8F8F8",
                 borderRadius: 2,
                 maxWidth: "800px",
               }}
@@ -472,27 +995,51 @@ export default function CustomerMusicScoreView() {
                     mb: 2,
                   }}
                 >
-                  {/* Play/Stop Button */}
-                  <Button
-                    onClick={handlePlayback}
-                    variant="contained"
-                    startIcon={isPlaying ? <Pause /> : <Play />}
-                    sx={{
-                      bgcolor: "#3B3183",
-                      "&:hover": { bgcolor: "#2A2355" },
-                      fontFamily: "Montserrat",
-                      px: 3,
-                    }}
-                  >
-                    {isPlaying ? "Stop" : "Play"}
-                  </Button>
+                  <Box display="flex" gap={1}>
+                    {/* Play Button */}
+                    <Button
+                      onClick={handlePlayback}
+                      variant="contained"
+                      sx={{
+                        ...buttonStyles,
+
+                        minWidth: "auto", // Button size fits icon
+                        padding: "8px", // Adjust padding for smaller button
+                      }}
+                    >
+                      <PlayArrowIcon />
+                    </Button>
+
+                    {/* Stop Button */}
+                    <Button
+                      onClick={() => {
+                        setIsStop(true);
+                        stopAndReset();
+                      }}
+                      variant="contained"
+                      sx={{
+                        ...buttonStyles,
+
+                        minWidth: "auto", // Button size fits icon
+                        padding: "8px", // Adjust padding for smaller button
+                      }}
+                    >
+                      <StopIcon />
+                    </Button>
+                  </Box>
 
                   {/* Loop Switch */}
                   <FormControlLabel
                     control={
                       <Switch
                         checked={isLooping}
-                        onChange={(e) => setIsLooping(e.target.checked)}
+                        onChange={(e) => {
+                          if (!purchaseExists) {
+                            handleLockedLoopClick(); // Open dialog if feature is locked
+                          } else {
+                            setIsLooping(e.target.checked); // Enable/disable looping if purchased
+                          }
+                        }}
                         sx={{
                           "& .MuiSwitch-switchBase.Mui-checked": {
                             color: "#8BD3E6", // Set the switch thumb color when checked
@@ -513,6 +1060,55 @@ export default function CustomerMusicScoreView() {
                     }}
                   />
 
+                  {/* Dialog for Loop */}
+                  <Dialog open={openLoopDialog} onClose={closeLoopDialog}>
+                    <DialogTitle
+                      sx={{
+                        fontFamily: "Montserrat",
+                        fontWeight: "bold",
+                        textAlign: "center",
+                      }}
+                    >
+                      Feature Locked
+                    </DialogTitle>
+                    <DialogContent
+                      sx={{
+                        fontFamily: "Montserrat",
+                        display: "flex", // Enable flexbox
+                        flexDirection: "column", // Arrange children vertically
+                        justifyContent: "center", // Center children vertically
+                        alignItems: "center", // Center children horizontally
+                        textAlign: "center", // Center text alignment
+                      }}
+                    >
+                      <Typography>
+                        The loop feature is locked until you purchase this
+                        score. Once purchased, you can enable the loop
+                        functionality as desired.
+                      </Typography>
+                    </DialogContent>
+                    <DialogActions
+                      sx={{
+                        display: "flex", // Enable flexbox
+                        justifyContent: "center", // Center children horizontally
+                        alignItems: "center", // Center children vertically (not necessary for buttons, but for alignment consistency)
+                      }}
+                    >
+                      <Button
+                        onClick={closeLoopDialog}
+                        sx={{
+                          fontFamily: "Montserrat",
+                          fontWeight: "bold",
+                          color: "#FFFFFF",
+                          backgroundColor: "#8BD3E6",
+                          "&:hover": { backgroundColor: "#6FBCCF" },
+                        }}
+                      >
+                        OK
+                      </Button>
+                    </DialogActions>
+                  </Dialog>
+
                   {/* Tempo Controls */}
                   <Box
                     sx={{
@@ -526,43 +1122,136 @@ export default function CustomerMusicScoreView() {
                     >
                       Tempo:
                     </Typography>
-                    <Button
-                      onClick={() => setTempo((prev) => Math.max(40, prev - 1))}
-                      variant="outlined"
-                      size="small"
-                      sx={{ minWidth: 40 }}
-                    >
-                      -
-                    </Button>
-                    <TextField
-                      value={tempo}
-                      onChange={(e) => {
-                        const newValue = parseInt(e.target.value, 10);
-                        if (
-                          !isNaN(newValue) &&
-                          newValue >= 40 &&
-                          newValue <= 200
-                        ) {
-                          setTempo(newValue);
-                        }
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0, // No gap between controls
+                        border: "1px solid rgba(0, 0, 0, 0.23)", // Optional: border for group
+                        borderRadius: 1, // Rounded corners for group
+                        overflow: "hidden", // Ensures clean edges
                       }}
-                      size="small"
-                      variant="outlined"
-                      sx={{ maxWidth: 60 }}
-                    />
-                    <Button
-                      onClick={() =>
-                        setTempo((prev) => Math.min(200, prev + 1))
-                      }
-                      variant="outlined"
-                      size="small"
-                      sx={{ minWidth: 40 }}
                     >
-                      +
-                    </Button>
+                      <Button
+                        onClick={() => {
+                          if (purchaseExists) {
+                            setTempo((prev) => Math.max(40, prev - 1)); // Decrease tempo if unlocked
+                          } else {
+                            handleLockedTempoClick(); // Show dialog for locked feature
+                          }
+                        }}
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          minWidth: 40,
+                          borderRadius: 0, // Removes individual button corners
+                          border: "none", // Removes individual button border
+                          "&:hover": {
+                            border: "none", // Prevents border from appearing on hover
+                            backgroundColor: "#F8F8F8", // Forces white background on hover
+                          },
+                        }}
+                      >
+                        -
+                      </Button>
+                      <TextField
+                        value={tempo}
+                        disabled={!purchaseExists} // Disable tempo editing if locked
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                          maxWidth: 55,
+                          textAlign: "center",
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            border: "none", // Removes TextField border for group cohesion
+                          },
+                          "& .MuiInputBase-input.Mui-disabled": {
+                            WebkitTextFillColor: "#000", // Overrides text color when disabled
+                          },
+                        }}
+                        inputProps={{
+                          style: { textAlign: "center" }, // Centers the input text
+                        }}
+                      />
+                      <Button
+                        onClick={() => {
+                          if (purchaseExists) {
+                            setTempo((prev) => Math.min(200, prev + 1)); // Increase tempo if unlocked
+                          } else {
+                            handleLockedTempoClick(); // Show dialog for locked feature
+                          }
+                        }}
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          minWidth: 40,
+                          borderRadius: 0, // Removes individual button corners
+                          border: "none", // Removes individual button border
+                          "&:hover": {
+                            border: "none", // Prevents border from appearing on hover
+                            backgroundColor: "#F8F8F8", // Forces white background on hover
+                          },
+                        }}
+                      >
+                        +
+                      </Button>
+                    </Box>
                     <Typography sx={{ fontFamily: "Montserrat" }}>
                       BPM
                     </Typography>
+
+                    {/* Dialog for Locked Feature */}
+                    <Dialog open={openTempoDialog} onClose={closeTempoDialog}>
+                      <DialogTitle
+                        sx={{
+                          fontFamily: "Montserrat",
+                          fontWeight: "bold",
+                          textAlign: "center",
+                        }}
+                      >
+                        Feature Locked
+                      </DialogTitle>
+                      <DialogContent
+                        sx={{
+                          fontFamily: "Montserrat",
+                          display: "flex", // Enable flexbox
+                          flexDirection: "column", // Arrange children vertically
+                          justifyContent: "center", // Center children vertically
+                          alignItems: "center", // Center children horizontally
+                          textAlign: "center", // Center text alignment
+                        }}
+                      >
+                        <Typography>
+                          The tempo feature is locked until you purchase this
+                          score. Once purchased, you can adjust the tempo from{" "}
+                          <strong>
+                            <u>40 BPM</u>
+                          </strong>{" "}
+                          to{" "}
+                          <strong>
+                            <u>200 BPM</u>
+                          </strong>
+                          .
+                        </Typography>
+                      </DialogContent>
+                      <DialogActions
+                        sx={{
+                          display: "flex", // Enable flexbox
+                          justifyContent: "center", // Center children horizontally
+                          alignItems: "center", // Center children vertically (not necessary for buttons, but for alignment consistency)
+                        }}
+                      >
+                        <Button
+                          onClick={closeTempoDialog}
+                          sx={{
+                            ...buttonStyles,
+                          }}
+                        >
+                          OK
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
                   </Box>
 
                   {/* Transpose Controls */}
@@ -578,45 +1267,144 @@ export default function CustomerMusicScoreView() {
                     >
                       Transpose:
                     </Typography>
-                    <Button
-                      onClick={() =>
-                        setTransposition((prev) => Math.max(-12, prev - 1))
-                      }
-                      variant="outlined"
-                      size="small"
-                      sx={{ minWidth: 40 }}
-                    >
-                      -
-                    </Button>
-                    <TextField
-                      value={transposition}
-                      onChange={(e) => {
-                        const newValue = parseInt(e.target.value, 10);
-                        if (
-                          !isNaN(newValue) &&
-                          newValue >= -12 &&
-                          newValue <= 12
-                        ) {
-                          setTransposition(newValue);
-                        }
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0, // No gap between controls
+                        border: "1px solid rgba(0, 0, 0, 0.23)", // Optional: border for group
+                        borderRadius: 1, // Rounded corners for group
+                        overflow: "hidden", // Ensures clean edges
                       }}
-                      size="small"
-                      variant="outlined"
-                      sx={{ maxWidth: 45 }}
-                    />
-                    <Button
-                      onClick={() =>
-                        setTransposition((prev) => Math.min(12, prev + 1))
-                      }
-                      variant="outlined"
-                      size="small"
-                      sx={{ minWidth: 40 }}
                     >
-                      +
-                    </Button>
+                      <Button
+                        onClick={() => {
+                          if (!purchaseExists) {
+                            handleLockedTransposeClick(); // Open dialog if the feature is locked
+                          } else {
+                            setTransposition((prev) => Math.max(-12, prev - 1)); // Decrease transpose
+                          }
+                        }}
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          minWidth: 40,
+                          borderRadius: 0, // Removes individual button corners
+                          border: "none", // Removes individual button border
+                          "&:hover": {
+                            border: "none", // Prevents border from appearing on hover
+                            backgroundColor: "#F8F8F8", // Forces white background on hover
+                          },
+                        }}
+                      >
+                        -
+                      </Button>
+                      <TextField
+                        disabled
+                        value={transposition}
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                          maxWidth: 55,
+                          textAlign: "center",
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            border: "none", // Removes TextField border for group cohesion
+                          },
+                          "& .MuiInputBase-input.Mui-disabled": {
+                            WebkitTextFillColor: "#000", // Overrides text color when disabled
+                          },
+                        }}
+                        inputProps={{
+                          style: { textAlign: "center" }, // Centers the input text
+                        }}
+                      />
+                      <Button
+                        onClick={() => {
+                          if (!purchaseExists) {
+                            handleLockedTransposeClick(); // Open dialog if the feature is locked
+                          } else {
+                            setTransposition((prev) => Math.min(12, prev + 1)); // Increase transpose
+                          }
+                        }}
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          minWidth: 40,
+                          borderRadius: 0, // Removes individual button corners
+                          border: "none", // Removes individual button border
+                          "&:hover": {
+                            border: "none", // Prevents border from appearing on hover
+                            backgroundColor: "#F8F8F8", // Forces white background on hover
+                          },
+                        }}
+                      >
+                        +
+                      </Button>
+                    </Box>
                     <Typography sx={{ fontFamily: "Montserrat" }}>
                       semitones
                     </Typography>
+
+                    {/* Dialog for Transpose */}
+                    <Dialog
+                      open={openTransposeDialog}
+                      onClose={closeTransposeDialog}
+                    >
+                      <DialogTitle
+                        sx={{
+                          fontFamily: "Montserrat",
+                          fontWeight: "bold",
+                          textAlign: "center",
+                        }}
+                      >
+                        Feature Locked
+                      </DialogTitle>
+                      <DialogContent
+                        sx={{
+                          fontFamily: "Montserrat",
+                          display: "flex", // Enable flexbox
+                          flexDirection: "column", // Arrange children vertically
+                          justifyContent: "center", // Center children vertically
+                          alignItems: "center", // Center children horizontally
+                          textAlign: "center", // Center text alignment
+                        }}
+                      >
+                        <Typography>
+                          The transpose feature is locked until you purchase
+                          this score. Once purchased, you can adjust the
+                          transpose from{" "}
+                          <strong>
+                            <u>-12 semitones</u>
+                          </strong>{" "}
+                          to{" "}
+                          <strong>
+                            <u>+12 semitones</u>
+                          </strong>
+                          .
+                        </Typography>
+                      </DialogContent>
+                      <DialogActions
+                        sx={{
+                          display: "flex", // Enable flexbox
+                          justifyContent: "center", // Center children horizontally
+                          alignItems: "center", // Center children vertically (not necessary for buttons, but for alignment consistency)
+                        }}
+                      >
+                        <Button
+                          onClick={closeTransposeDialog}
+                          sx={{
+                            fontFamily: "Montserrat",
+                            fontWeight: "bold",
+                            color: "#FFFFFF",
+                            backgroundColor: "#8BD3E6",
+                            "&:hover": { backgroundColor: "#6FBCCF" },
+                          }}
+                        >
+                          OK
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
                   </Box>
 
                   {/* Instrument Selection */}
@@ -641,16 +1429,38 @@ export default function CustomerMusicScoreView() {
                         sx={{
                           fontFamily: "Montserrat", // Apply Montserrat font to the dropdown
                         }}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: {
+                              fontFamily: "Montserrat", // Apply font style to dropdown items
+                            },
+                          },
+                        }}
                       >
                         {instruments.map((inst) => (
                           <MenuItem
                             key={inst.id}
                             value={inst.id}
+                            disabled={!purchaseExists && inst.id !== 0} // Disable all options except Piano if purchaseExists is false
                             sx={{
                               fontFamily: "Montserrat", // Apply Montserrat font to menu items
+                              display: "flex",
+                              justifyContent: "space-between", // Space between name and message
                             }}
                           >
-                            {inst.name}
+                            <span>{inst.name}</span>
+                            {!purchaseExists && inst.id !== 0 && (
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  fontStyle: "italic",
+                                  color: "gray", // Text color for the message
+                                  ml: 2,
+                                }}
+                              >
+                                purchase to unlock more
+                              </Typography>
+                            )}
                           </MenuItem>
                         ))}
                       </Select>
@@ -692,7 +1502,7 @@ export default function CustomerMusicScoreView() {
                 sx={{
                   width: 200,
                   p: 2,
-                  bgcolor: "#F2F2F5",
+                  backgroundColor: "#F8F8F8",
                   borderRadius: 2,
                   height: "auto",
                   maxHeight: "850px",
@@ -703,6 +1513,18 @@ export default function CustomerMusicScoreView() {
                 <CardContent
                   sx={{ bgcolor: "#FFFFFF", borderRadius: 2, p: 0, pl: -1 }}
                 >
+                  <Typography
+                    sx={{
+                      fontFamily: "Montserrat", // Use Montserrat font
+                      textAlign: "center", // Center-align the text horizontally
+                      paddingTop: 2, // Add padding at the top (in theme spacing units)
+                      fontWeight: "bold", // Make it bold
+                      fontSize: "1.25rem", // Increase font size (adjust as needed)
+                    }}
+                  >
+                    Description
+                  </Typography>
+
                   <List>
                     {/* Reordered Fields */}
                     <ListItem>
@@ -852,28 +1674,67 @@ export default function CustomerMusicScoreView() {
 
           <Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>
             <Pagination
-              count={splitContent.length}
+              count={splitContent.length} // Show all pages
               page={page}
-              onChange={handlePageChange}
-              color="primary"
-              sx={{
-                "& .MuiPaginationItem-root": {
-                  borderRadius: 2,
-                  fontFamily: "Montserrat",
-                  backgroundColor: "primary",
-                  color: "#000",
-                  "&.Mui-selected": {
-                    backgroundColor: "#8BD3E6",
-                    color: "#fff",
-                  },
-                  "&:hover": {
-                    backgroundColor: "#FFEE8C",
-                  },
-                },
+              onChange={(event, value) => {
+                if (purchaseExists || value === 1) {
+                  handlePageChange(event, value); // Allow navigation only if purchaseExists or to the first page
+                }
               }}
+              color="primary"
+              renderItem={(item) => (
+                <PaginationItem
+                  {...item}
+                  disabled={!purchaseExists && item.page !== 1} // Disable pages except the first if purchaseExists is false
+                  sx={{
+                    borderRadius: 2,
+                    fontFamily: "Montserrat",
+                    backgroundColor: "primary",
+                    color: item.disabled ? "gray" : "#000", // Gray color for disabled items
+                    "&.Mui-selected": {
+                      backgroundColor: "#8BD3E6",
+                      color: "#fff",
+                    },
+                    "&:hover": {
+                      backgroundColor: item.disabled
+                        ? "transparent"
+                        : "#FFEE8C", // No hover effect for disabled items
+                    },
+                  }}
+                />
+              )}
             />
           </Box>
         </Box>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={2000} // Set the duration before the snackbar disappears
+          onClose={(event, reason) => {
+            if (reason === "clickaway") {
+              return; // Prevent snackbar from closing on clickaway if desired
+            }
+            handleSnackbarClose(); // Close the snackbar
+            if (snackbar.reload) {
+              window.location.reload(); // Reload the page after snackbar closes
+            }
+          }}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        >
+          <Alert
+            onClose={handleSnackbarClose}
+            severity={snackbar.type === "error" ? "error" : "success"}
+            sx={{
+              width: "100%",
+              bgcolor: snackbar.type === "unfavorite" ? "#F44336" : "#4CAF50",
+              color: "white",
+              "& .MuiAlert-icon": {
+                color: "white",
+              },
+            }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Box>
     </>
   );

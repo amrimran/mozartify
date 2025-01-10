@@ -1,7 +1,5 @@
 import React from "react";
 import axios from "axios";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
 import {
   Box,
   List,
@@ -21,13 +19,17 @@ import {
   ExitToApp,
   Search,
 } from "@mui/icons-material";
-import { Link, useLocation } from "react-router-dom";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 
 axios.defaults.withCredentials = true;
 
 const CustomerSidebar = ({ active }) => {
-  const location = useLocation();
+  const currentPath = window.location.pathname;
+
+  const handleNavigation = (path) => {
+    window.location.href = path;
+  };
+
   const navigationItems = [
     {
       path: "/customer-homepage",
@@ -90,8 +92,6 @@ const CustomerSidebar = ({ active }) => {
         zIndex: 1000,
       }}
     >
-      {" "}
-      {/* Blue sidebar */}
       <Box
         sx={{
           width: 225,
@@ -99,7 +99,7 @@ const CustomerSidebar = ({ active }) => {
           display: "flex",
           flexDirection: "column",
           height: "100%",
-          overflowY: "auto", // Enable scrolling if content is too long
+          overflowY: "auto",
         }}
       >
         <Box
@@ -128,13 +128,11 @@ const CustomerSidebar = ({ active }) => {
           />
         </Box>
 
-        {/* Main navigation */}
         <List sx={{ flexGrow: 1 }}>
           {navigationItems.map((item) => (
             <ListItemButton
               key={item.path}
-              component={Link}
-              to={item.path}
+              onClick={() => handleNavigation(item.path)}
               sx={{
                 bgcolor: active === item.key ? "#67ADC1" : "inherit",
                 color: "#FFFFFF",
@@ -160,23 +158,21 @@ const CustomerSidebar = ({ active }) => {
           ))}
         </List>
 
-        {/* Bottom navigation - now in a container that sticks to the bottom */}
         <Box sx={{ mt: "auto", pb: 2 }}>
           <List>
             {bottomNavigationItems.map((item) => (
               <ListItemButton
                 key={item.path}
-                component={Link}
-                to={item.path}
+                onClick={() => handleNavigation(item.path)}
                 sx={{
                   bgcolor:
-                    active === item.key || location.pathname === item.path
+                    active === item.key || currentPath === item.path
                       ? "#67ADC1"
                       : "inherit",
                   color: "#FFFFFF",
                   "&:hover": {
                     bgcolor:
-                      active === item.key || location.pathname === item.path
+                      active === item.key || currentPath === item.path
                         ? "#67ADC1"
                         : "#78BBCC",
                   },
@@ -202,7 +198,6 @@ const CustomerSidebar = ({ active }) => {
           </List>
         </Box>
       </Box>
-      {/* Thin yellow line */}
       <Box sx={{ width: "4px", bgcolor: "#FFEE8C", height: "100%" }} />
     </Box>
   );
