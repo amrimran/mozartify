@@ -150,7 +150,6 @@ export default function ClerkProfile() {
       borderColor: "#B71C1C",
     },
   };
-  
 
   const theme = createTheme({
     typography: {
@@ -549,20 +548,72 @@ export default function ClerkProfile() {
               <Dialog
                 open={editDialogOpen}
                 onClose={() => setEditDialogOpen(false)}
+                PaperProps={{ sx: dialogStyles.dialogPaper }}
               >
-                <DialogTitle>Update Profile Picture</DialogTitle>
-                <DialogContent>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setProfilePictureFile(e.target.files[0])}
-                  />
+                <DialogTitle sx={dialogStyles.title}>
+                  Update Profile Picture
+                </DialogTitle>
+                <DialogContent sx={dialogStyles.content}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 2,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontFamily: "Montserrat, sans-serif",
+                        fontSize: "0.875rem",
+                        color: "#666",
+                        textAlign: "center",
+                      }}
+                    >
+                      Choose an image to update your profile picture.
+                    </Typography>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setProfilePictureFile(e.target.files[0])}
+                      style={{
+                        border: "1px solid #ccc",
+                        padding: "8px 12px",
+                        borderRadius: "8px",
+                        fontFamily: "Montserrat, sans-serif",
+                        fontSize: "0.875rem",
+                        cursor: "pointer",
+                        outline: "none",
+                      }}
+                    />
+                  </Box>
                 </DialogContent>
-                <DialogActions>
-                  <Button onClick={() => setEditDialogOpen(false)}>
-                    Cancel
+                <DialogActions sx={dialogStyles.actions}>
+                  <Button
+                    onClick={() => setEditDialogOpen(false)}
+                    sx={{
+                      px: 3,
+                      borderRadius: "8px",
+                      fontFamily: "Montserrat",
+                      fontWeight: "bold",
+                      color: "#8BD3E6",
+                      backgroundColor: "#FFFFFF",
+                      border: "1px solid #8BD3E6",
+                      "&:hover": {
+                        backgroundColor: "#E6F8FB",
+                        color: "#7AB9C4",
+                        borderColor: "#7AB9C4",
+                      },
+                    }}
+                  >
+                    CANCEL
                   </Button>
-                  <Button onClick={handleUpdateProfilePicture}>Save</Button>
+                  <Button
+                    onClick={handleUpdateProfilePicture}
+                    sx={dialogStyles.button}
+                  >
+                    SAVE
+                  </Button>
                 </DialogActions>
               </Dialog>
 

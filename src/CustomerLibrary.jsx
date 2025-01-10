@@ -201,6 +201,7 @@ export default function CustomerLibrary() {
             flexDirection: "column",
             overflow: "hidden",
             padding: 5,
+            marginLeft: "229px",
           }}
         >
           <Box

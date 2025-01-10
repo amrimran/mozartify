@@ -294,19 +294,17 @@ export default function Landing() {
           variant="outlined"
           size="large"
           sx={{
-            fontFamily: "Montserrat",
-            fontWeight: "normal",
-            backgroundColor: "transparent",
-            color: "#ffffff",
-            borderColor: "#ffffff",
-            "&:hover": {
+            
+              px: 5,
+              fontFamily: "Montserrat",
               fontWeight: "bold",
-              backgroundColor: "#DB2226",
               color: "#FFFFFF",
-              borderColor: "#DB2226",
-              boxShadow: "none", /* Remove any box shadow on hover */
-            },
-            boxShadow: "none", /* Ensure no box shadow is present */
+              backgroundColor: "#8BD3E6",
+              border: "1px solid #8BD3E6",
+              "&:hover": {
+                backgroundColor: "#6FBCCF",
+                borderColor: "#6FBCCF",
+              },
           }}
         >
           Get Started

@@ -424,10 +424,12 @@ export default function CustomerSearch() {
       <GlobalStyle />
       <Box sx={{ display: "flex", minHeight: "100vh" }}>
         <CustomerSidebar />
-          <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column" }}>
+          <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column",             marginLeft: "229px", // 225px (sidebar width) + 4px (yellow line)
+ }}>
         
            <Box
                        sx={{
+                        
                          display: "flex",
                          justifyContent: "space-between",
                          alignItems: "center",

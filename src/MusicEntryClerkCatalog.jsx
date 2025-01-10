@@ -372,7 +372,7 @@ export default function MusicEntryClerkCatalog() {
         ...prevData,
         emotion: "", // Clear previous emotion
         genre: "", // Clear previous genre
-        instrumentation: "", // Clear previous instrument predictions
+        //instrumentation: "", // Clear previous instrument predictions
         gender: "",
       }));
 
@@ -424,19 +424,19 @@ export default function MusicEntryClerkCatalog() {
         genre: genreResponse.data.genre, // Update genre field
       }));
 
-      // Call instrument prediction API
-      const instrumentResponse = await axios.post(
-        "http://127.0.0.1:8000/predict-instrument",
-        {
-          fileUrl: fileUrl, // The URL of the MP3 file from Firebase
-        }
-      );
+      // // Call instrument prediction API
+      // const instrumentResponse = await axios.post(
+      //   "http://127.0.0.1:8000/predict-instrument",
+      //   {
+      //     fileUrl: fileUrl, // The URL of the MP3 file from Firebase
+      //   }
+      // );
 
-      // Update catalogData with the predicted instrumentation
-      setCatalogData((prevData) => ({
-        ...prevData,
-        instrumentation: instrumentResponse.data.top_instruments, // Update instrumentation field
-      }));
+      // // Update catalogData with the predicted instrumentation
+      // setCatalogData((prevData) => ({
+      //   ...prevData,
+      //   instrumentation: instrumentResponse.data.top_instruments, // Update instrumentation field
+      // }));
 
       setDialogTitle("Prediction Complete");
       setDialogMessage("File uploaded and predictions completed successfully!");
@@ -1585,6 +1585,17 @@ export default function MusicEntryClerkCatalog() {
                       onChange={handleInputChange}
                     />
                   </Grid>
+                  <Grid item xs={12} sm={6}>
+                      <TextField
+                        name="instrumentation"
+                        label="Instrumentation"
+                        variant="outlined"
+                        fullWidth
+                        sx={formStyles}
+                        value={catalogData.instrumentation || ""}
+                        onChange={handleInputChange}
+                      />
+                    </Grid>
                 </>
               )}
               {tabIndex === 8 && (
@@ -1947,17 +1958,7 @@ export default function MusicEntryClerkCatalog() {
                       />
                     </Grid>
 
-                    <Grid item xs={12}>
-                      <TextField
-                        name="instrumentation"
-                        label="Instrumentation"
-                        variant="outlined"
-                        fullWidth
-                        sx={formStyles}
-                        value={catalogData.instrumentation || ""}
-                        onChange={handleInputChange}
-                      />
-                    </Grid>
+                    
                   </Grid>
                 </Grid>
               </Grid>

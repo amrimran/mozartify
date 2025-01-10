@@ -238,6 +238,7 @@ export default function CustomerFavorites() {
             flexDirection: "column",
             overflow: "hidden",
             padding: 5,
+            marginLeft: "229px",
           }}
         >
           <Box

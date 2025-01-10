@@ -175,27 +175,27 @@ app.post('/predictGenre', async (req, res) => {
 });
 
 
-// Endpoint for instrument prediction from URL
-app.post('/predictInstrument', async (req, res) => {
-  const { fileUrl } = req.body;
-  if (!fileUrl) {
-    return res.status(400).json({ message: 'No file URL provided.' });
-  }
+// // Endpoint for instrument prediction from URL
+// app.post('/predictInstrument', async (req, res) => {
+//   const { fileUrl } = req.body;
+//   if (!fileUrl) {
+//     return res.status(400).json({ message: 'No file URL provided.' });
+//   }
 
-  try {
-    // Forward the file URL to FastAPI for instrument prediction
-    const genderResponse = await axios.post('http://127.0.0.1:8000/predict-instrument', { fileUrl });
+//   try {
+//     // Forward the file URL to FastAPI for instrument prediction
+//     const genderResponse = await axios.post('http://127.0.0.1:8000/predict-instrument', { fileUrl });
     
-    // Return the response from FastAPI (list of top instruments) to the frontend
-    res.json({
-      instrumentation: response.data.top_instruments,
-    });
+//     // Return the response from FastAPI (list of top instruments) to the frontend
+//     res.json({
+//       instrumentation: response.data.top_instruments,
+//     });
 
-  } catch (error) {
-    console.error('Error predicting instrument:', error);
-    res.status(500).json({ message: 'Error predicting instrument', error: error.message });
-  }
-});
+//   } catch (error) {
+//     console.error('Error predicting instrument:', error);
+//     res.status(500).json({ message: 'Error predicting instrument', error: error.message });
+//   }
+// });
 
 // Additional endpoints
 app.get('/abc-file', async (req, res) => {
