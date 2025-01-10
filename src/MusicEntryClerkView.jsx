@@ -213,53 +213,65 @@ export default function ClerkMusicScoreView() {
     stopAndReset();
   }, [tempo, isLooping, transposition, instrument, stopAndReset, isStop,]);
 
-  // Then, update the handlePlayback function to properly handle stopping:
-const handlePlayback = async () => {
-  if (!visualObj) return;
-
-  if (!isPlaying) {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-    try {
-      const newSynth = new abcjs.synth.CreateSynth();
-      setSynthesizer(newSynth);
-
-      await newSynth.init({
-        audioContext,
-        visualObj,
-        millisecondsPerMeasure: (60000 / (tempo * 1.1667)) * 4,
-        options: {
-          soundFontUrl: "https://paulrosen.github.io/midi-js-soundfonts/abcjs/",
-          program: instrument,
-        },
-      });
-
-      await newSynth.prime();
-      setIsPlaying(true);
-      setIsStop(false); // Reset stop state when starting new playback
-
-      timingCallbacks?.start();
-      await newSynth.start();
-
-      newSynth.addEventListener("ended", () => {
-        if (isLooping && !isStop) {
-          handlePlayback();
-        } else {
+  const handlePlayback = async () => {
+    if (!visualObj) return;
+  
+    if (!isPlaying) {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      const startPlayback = async () => {
+        try {
+          const newSynth = new abcjs.synth.CreateSynth();
+          setSynthesizer(newSynth);
+  
+          await newSynth.init({
+            audioContext,
+            visualObj,
+            millisecondsPerMeasure: (60000 / (tempo * 1.1667)) * 4,
+            options: {
+              soundFontUrl: "https://paulrosen.github.io/midi-js-soundfonts/abcjs/",
+              program: instrument,
+              onEnded: async () => {
+                if (isLooping && !isStop) {
+                  // Clean up the old synthesizer
+                  newSynth.stop();
+                  setSynthesizer(null);
+                  // Start a new playback
+                  await startPlayback();
+                } else {
+                  stopAndReset();
+                  setIsStop(false);
+                }
+              },
+            },
+          });
+  
+          await newSynth.prime();
+          
+          if (!isPlaying) {
+            setIsPlaying(true);
+            setIsStop(false);
+          }
+  
+          timingCallbacks?.start();
+          await newSynth.start();
+  
+        } catch (error) {
+          console.error("Playback error:", error);
           stopAndReset();
           setIsStop(false);
         }
-      });
-
-    } catch (error) {
-      console.error("Playback error:", error);
+      };
+  
+      // Start the initial playback
+      await startPlayback();
+      
+    } else {
       stopAndReset();
       setIsStop(false);
     }
-  } else {
-    stopAndReset();
-    setIsStop(false);
-  }
-};
+  };
+  
   // Split ABC content into pages
   useEffect(() => {
     if (abcContent) {
@@ -500,54 +512,90 @@ const handlePlayback = async () => {
   sx={{
     display: "flex",
     alignItems: "center",
-    gap: 1,
+    gap: 1, // Space between label, controls, and unit
   }}
 >
   <Typography sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}>
     Tempo:
   </Typography>
-  <Button
-    onClick={() => setTempo((prev) => Math.max(40, prev - 1))}
-    variant="outlined"
-    size="small"
-    sx={{ minWidth: 40 }}
-  >
-    -
-  </Button>
-  <TextField
-    value={tempo}
-    onChange={(e) => {
-      const newValue = e.target.value;
-      if (/^\d*$/.test(newValue)) {
-        // Allow only numeric input
-        setTempo(newValue);
-      }
+  <Box
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      gap: 0, // No gap between controls
+      border: "1px solid rgba(0, 0, 0, 0.23)", // Optional: border for group
+      borderRadius: 1, // Rounded corners for group
+      overflow: "hidden", // Ensures clean edges
     }}
-    onBlur={() => {
-      // Validate and clamp the value on blur
-      const numericValue = parseInt(tempo, 10);
-      if (!isNaN(numericValue)) {
-        setTempo(Math.min(Math.max(numericValue, 40), 200));
-      } else {
-        setTempo(40); // Default to 40 if input is invalid or empty
-      }
-    }}
-    size="small"
-    variant="outlined"
-    sx={{ maxWidth: 60, textAlign: "center" }}
-  />
-  <Button
-    onClick={() => setTempo((prev) => Math.min(200, prev + 1))}
-    variant="outlined"
-    size="small"
-    sx={{ minWidth: 40 }}
   >
-    +
-  </Button>
+    <Button
+      onClick={() => setTempo((prev) => Math.max(40, prev - 1))}
+      variant="outlined"
+      size="small"
+      sx={{
+        minWidth: 40,
+        borderRadius: 0, // Removes individual button corners
+        border: "none", // Removes individual button border
+        "&:hover": {
+          border: "none", // Prevents border from appearing on hover
+          backgroundColor: "#F8F8F8", // Forces white background on hover
+        },
+      }}
+    >
+      -
+    </Button>
+    <TextField
+      value={tempo}
+      onChange={(e) => {
+        const newValue = e.target.value;
+        if (/^\d*$/.test(newValue)) {
+          // Allow only numeric input
+          setTempo(newValue);
+        }
+      }}
+      onBlur={() => {
+        // Validate and clamp the value on blur
+        const numericValue = parseInt(tempo, 10);
+        if (!isNaN(numericValue)) {
+          setTempo(Math.min(Math.max(numericValue, 40), 200));
+        } else {
+          setTempo(40); // Default to 40 if input is invalid or empty
+        }
+      }}
+      size="small"
+      variant="outlined"
+      sx={{
+        maxWidth: 55,
+        textAlign: "center",
+        "& .MuiOutlinedInput-notchedOutline": {
+          border: "none", // Removes TextField border for group cohesion
+        },
+      }}
+      inputProps={{
+        style: { textAlign: "center" }, // Centers the input text
+      }}
+    />
+    <Button
+      onClick={() => setTempo((prev) => Math.min(200, prev + 1))}
+      variant="outlined"
+      size="small"
+      sx={{
+        minWidth: 40,
+        borderRadius: 0, // Removes individual button corners
+        border: "none", // Removes individual button border
+        "&:hover": {
+          border: "none", // Prevents border from appearing on hover
+          backgroundColor: "#F8F8F8", // Forces white background on hover
+        },
+      }}
+    >
+      +
+    </Button>
+  </Box>
   <Typography sx={{ fontFamily: "Montserrat" }}>BPM</Typography>
 </Box>
 
-               {/* Transpose Controls */}
+           {/* Transpose Controls */}
 <Box
   sx={{
     display: "flex",
@@ -569,28 +617,24 @@ const handlePlayback = async () => {
     }}
   >
     <Button
-      onClick={() =>
-        setTransposition((prev) => Math.max(-12, prev - 1))
-      }
+      onClick={() => setTransposition((prev) => Math.max(-12, prev - 1))}
       variant="outlined"
       size="small"
       sx={{
         minWidth: 40,
         borderRadius: 0, // Removes individual button corners
         border: "none", // Removes individual button border
+        "&:hover": {
+          border: "none", // Prevents border from appearing on hover
+          backgroundColor: "#F8F8F8", // Forces white background on hover
+        },
       }}
     >
       -
     </Button>
     <TextField
-    disabled
+      disabled
       value={transposition}
-      onChange={(e) => {
-        const newValue = parseInt(e.target.value, 10);
-        if (!isNaN(newValue) && newValue >= -12 && newValue <= 12) {
-          setTransposition(newValue);
-        }
-      }}
       size="small"
       variant="outlined"
       sx={{
@@ -608,15 +652,17 @@ const handlePlayback = async () => {
       }}
     />
     <Button
-      onClick={() =>
-        setTransposition((prev) => Math.min(12, prev + 1))
-      }
+      onClick={() => setTransposition((prev) => Math.min(12, prev + 1))}
       variant="outlined"
       size="small"
       sx={{
         minWidth: 40,
         borderRadius: 0, // Removes individual button corners
         border: "none", // Removes individual button border
+        "&:hover": {
+          border: "none", // Prevents border from appearing on hover
+          backgroundColor: "#F8F8F8", // Forces white background on hover
+        },
       }}
     >
       +
@@ -624,7 +670,6 @@ const handlePlayback = async () => {
   </Box>
   <Typography sx={{ fontFamily: "Montserrat" }}>semitones</Typography>
 </Box>
-
 
                 {/* Instrument Selection */}
                 <Box

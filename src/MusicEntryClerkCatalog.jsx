@@ -124,7 +124,7 @@ const dialogStyles = {
 export default function MusicEntryClerkCatalog() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { fileName } = location.state || {}; 
+  const { fileName } = location.state || {};
   const [originalData, setOriginalData] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
@@ -278,8 +278,8 @@ export default function MusicEntryClerkCatalog() {
       ...prevData,
       [name]: value, // Ensure empty fields are sent as empty strings
     }));
-  }; 
-  
+  };
+
   // Helper function to show dialog
   const showDialog = (title, message, success = true) => {
     setDialogTitle(title);
@@ -305,8 +305,7 @@ export default function MusicEntryClerkCatalog() {
     }
   };
 
-  useEffect(() => {
-  }, [openDialog, dialogTitle, dialogMessage]);
+  useEffect(() => {}, [openDialog, dialogTitle, dialogMessage]);
 
   // Modify handleCoverImageChange
   const handleCoverImageChange = (e) => {
@@ -335,11 +334,11 @@ export default function MusicEntryClerkCatalog() {
   const handleMp3FileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) {
-        setDialogTitle("Error");
-        setDialogMessage("Please select an MP3 file.");
-        setIsSuccess(false);
-        setOpenDialog(true);
-        return;
+      setDialogTitle("Error");
+      setDialogMessage("Please select an MP3 file.");
+      setIsSuccess(false);
+      setOpenDialog(true);
+      return;
     }
 
     try {
@@ -418,69 +417,67 @@ export default function MusicEntryClerkCatalog() {
       }));
 
       setDialogTitle("Prediction Complete");
-setDialogMessage("File uploaded and predictions completed successfully!");
-setIsSuccess(true);
-setOpenDialog(true);
-  
+      setDialogMessage("File uploaded and predictions completed successfully!");
+      setIsSuccess(true);
+      setOpenDialog(true);
     } catch (error) {
-      console.error("Error uploading MP3 or predicting emotion/gender/genre/instrument:", error);
+      console.error(
+        "Error uploading MP3 or predicting emotion/gender/genre/instrument:",
+        error
+      );
 
       // Handle different types of errors with dialog
       let errorMessage = "An unexpected error occurred.";
-      
+
       if (error.response) {
-          errorMessage = `Backend error: ${error.response.data.detail || error.response.statusText}`;
+        errorMessage = `Backend error: ${error.response.data.detail || error.response.statusText}`;
       } else if (error.request) {
-          errorMessage = "Error communicating with the backend. Please try again later.";
+        errorMessage =
+          "Error communicating with the backend. Please try again later.";
       } else {
-          errorMessage = `An error occurred: ${error.message}`;
+        errorMessage = `An error occurred: ${error.message}`;
       }
 
       setDialogTitle("Error");
       setDialogMessage(errorMessage);
       setIsSuccess(false);
       setOpenDialog(true);
-  } finally {
+    } finally {
       setLoading(false);
-  }
-};
-
-
-  
-  
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  try {
-    const response = await fetch("http://localhost:3001/catalog", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(catalogData),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to save data");
     }
+  };
 
-    setOriginalData(catalogData); // Update original data after successful save
-    showDialog("Success", "Data saved successfully");
-    setDialogTitle("Success");
-    setDialogMessage("Data saved successfully");
-    setIsSuccess(true);
-    setOpenDialog(true); // Open the dialog explicitly
-  } catch (error) {
-    console.error("Error saving data:", error);
-    setDialogTitle("Error");
-    setDialogMessage("Failed to save data");
-    setIsSuccess(false);
-    setOpenDialog(true);
-  }
-};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  
+    try {
+      const response = await fetch("http://localhost:3001/catalog", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(catalogData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save data");
+      }
+
+      setOriginalData(catalogData); // Update original data after successful save
+      showDialog("Success", "Data saved successfully");
+      setDialogTitle("Success");
+      setDialogMessage("Data saved successfully");
+      setIsSuccess(true);
+      setOpenDialog(true); // Open the dialog explicitly
+    } catch (error) {
+      console.error("Error saving data:", error);
+      setDialogTitle("Error");
+      setDialogMessage("Failed to save data");
+      setIsSuccess(false);
+      setOpenDialog(true);
+    }
+  };
+
   return (
     <>
       <GlobalStyle />
@@ -528,7 +525,9 @@ const handleSubmit = async (e) => {
               </Typography>
               <Avatar
                 alt={user?.username}
-                src={user && user?.profile_picture ? user?.profile_picture : null}
+                src={
+                  user && user?.profile_picture ? user?.profile_picture : null
+                }
               >
                 {(!user || !user?.profile_picture) &&
                   user?.username.charAt(0).toUpperCase()}
@@ -1759,7 +1758,6 @@ const handleSubmit = async (e) => {
                       <input
                         type="file"
                         accept=".jpg, .jpeg, .png" // Only allow JPG, JPEG, and PNG file types
-
                         hidden
                         onChange={handleCoverImageChange}
                       />
@@ -1928,94 +1926,82 @@ const handleSubmit = async (e) => {
                       />
                     </Grid>
 
-          <Grid item xs={12}>
-            <TextField
-              name="instrumentation"
-              label="Instrumentation"
-              variant="outlined"
-              fullWidth
-              sx={formStyles}
-              value={catalogData.instrumentation || ""}
-              onChange={handleInputChange}
-            />
-          </Grid>
-        </Grid>
-      </Grid>
-    </Grid>
-  )
-}
-<Dialog
-  open={openDialog}
-  onClose={handleCloseDialog}
-  PaperProps={{ sx: dialogStyles.dialogPaper }}
->
-  <DialogTitle sx={dialogStyles.title}>
-    {dialogTitle}
-  </DialogTitle>
-  <DialogContent sx={dialogStyles.content}>
-    <DialogContentText sx={dialogStyles.contentText}>
-      {dialogMessage}
-    </DialogContentText>
-  </DialogContent>
-  <DialogActions sx={dialogStyles.actions}>
-  {dialogTitle === "Prediction Complete" || dialogTitle === "Error" || dialogTitle === "Uploaded" ? (
-      // For prediction success - only show Close button
-      <Button 
-        onClick={handleCloseDialog}
-        sx={dialogStyles.button}
-      >
-        Close
-      </Button>
-    ) : (
-      // For save success - only show Proceed to Homepage button
-      <Button 
-        onClick={() => navigate("/clerk-homepage")}
-        sx={dialogStyles.button}
-      >
-        Proceed to Homepage
-      </Button>
-    )}
-  </DialogActions>
-</Dialog>
-
-
-            
-
-
-
-
-
-
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
-          <Button
-            variant="outlined"
-            size="large"
-            type="submit"
-            sx={{
-              ...buttonStyles,
-              "&:disabled": {
-                backgroundColor: "#E0E0E0",
-                borderColor: "#E0E0E0",
-                color: "#9E9E9E",
-              },
-            }}          >
-            Save Metadata
-          </Button>
-          {tabIndex < 10 && (
-            <Button
-              variant="outlined"
-              size="large"
-              onClick={handleNext}
-              sx={{ ...buttonStyles, ml: 2 }}
+                    <Grid item xs={12}>
+                      <TextField
+                        name="instrumentation"
+                        label="Instrumentation"
+                        variant="outlined"
+                        fullWidth
+                        sx={formStyles}
+                        value={catalogData.instrumentation || ""}
+                        onChange={handleInputChange}
+                      />
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Grid>
+            )}
+            <Dialog
+              open={openDialog}
+              onClose={handleCloseDialog}
+              PaperProps={{ sx: dialogStyles.dialogPaper }}
             >
-              Next
-            </Button>
-          )}
-          
+              <DialogTitle sx={dialogStyles.title}>{dialogTitle}</DialogTitle>
+              <DialogContent sx={dialogStyles.content}>
+                <DialogContentText sx={dialogStyles.contentText}>
+                  {dialogMessage}
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions sx={dialogStyles.actions}>
+                {dialogTitle === "Prediction Complete" ||
+                dialogTitle === "Error" ||
+                dialogTitle === "Uploaded" ? (
+                  // For prediction success - only show Close button
+                  <Button onClick={handleCloseDialog} sx={dialogStyles.button}>
+                    Close
+                  </Button>
+                ) : (
+                  // For save success - only show Proceed to Homepage button
+                  <Button
+                    onClick={() => navigate("/clerk-homepage")}
+                    sx={dialogStyles.button}
+                  >
+                    Proceed to Homepage
+                  </Button>
+                )}
+              </DialogActions>
+            </Dialog>
+
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
+              <Button
+                variant="outlined"
+                size="large"
+                type="submit"
+                sx={{
+                  ...buttonStyles,
+                  "&:disabled": {
+                    backgroundColor: "#E0E0E0",
+                    borderColor: "#E0E0E0",
+                    color: "#9E9E9E",
+                  },
+                }}
+              >
+                Save Metadata
+              </Button>
+              {tabIndex < 10 && (
+                <Button
+                  variant="outlined"
+                  size="large"
+                  onClick={handleNext}
+                  sx={{ ...buttonStyles, ml: 2 }}
+                >
+                  Next
+                </Button>
+              )}
+            </Box>
+          </Box>
         </Box>
       </Box>
-    </Box>
-  </Box>
-</>
-    );
-  }
+    </>
+  );
+}

@@ -17,6 +17,8 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Skeleton,
+  InputAdornment,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import EditIcon from "@mui/icons-material/Edit";
@@ -28,6 +30,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 axios.defaults.withCredentials = true;
 
@@ -37,14 +41,16 @@ export default function ClerkProfile() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [profilePictureFile, setProfilePictureFile] = useState(null);
-  const [profilePictureUrl, setProfilePictureUrl] = useState(null);
-  
+
   // Separate states for password change
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
-  
+  const [showPassword, setShowPassword] = useState(false); // Add showPassword state
+
+  const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
+
   const navigate = useNavigate();
 
   const [dialogConfig, setDialogConfig] = useState({
@@ -52,10 +58,11 @@ export default function ClerkProfile() {
     content: "",
     confirmAction: () => {},
     confirmText: "",
-    cancelText: "Cancel"
+    cancelText: "CANCEL",
   });
 
-  
+ 
+
   const dialogStyles = {
     dialogPaper: {
       borderRadius: "16px",
@@ -86,13 +93,36 @@ export default function ClerkProfile() {
       textTransform: "none",
       fontFamily: "Montserrat",
       fontWeight: "bold",
-      color: "#3B3183",
-      border: "1px solid #3B3183",
+      color: "#FFFFFF",
+    backgroundColor: "#8BD3E6",
+    border: "1px solid #8BD3E6",
+    borderColor: "#8BD3E6",
+      border: "1px solid #8BD3E6",
       borderRadius: "8px",
       padding: "8px 24px",
       "&:hover": {
-        bgcolor: "#ECEFF1",
-      },
+      backgroundColor: "#6FBCCF", // Slightly darker blue for hover
+      color: "#FFFFFF", // Keeps the text color consistent
+      borderColor: "#6FBCCF",
+      boxShadow: "none", // Ensures no shadow on hover
+    },
+    },
+    deletebutton: {
+      textTransform: "none",
+      fontFamily: "Montserrat",
+      fontWeight: "bold",
+      color: "#FFFFFF",
+    backgroundColor: "#DB2226",
+    border: "1px solid #DB2226",
+    borderColor: "#DB2226",
+      borderRadius: "8px",
+      padding: "8px 24px",
+      "&:hover": {
+      backgroundColor: "#B71C1C", // Slightly darker RED for hover
+      color: "#FFFFFF", // Keeps the text color consistent
+      borderColor: "#B71C1C",
+      boxShadow: "none", // Ensures no shadow on hover
+    },
     },
   };
 
@@ -104,11 +134,12 @@ export default function ClerkProfile() {
     backgroundColor: "#8BD3E6",
     border: "1px solid #8BD3E6",
     borderColor: "#8BD3E6",
+    boxShadow: "none", // Correct spelling
     "&:hover": {
-      backgroundColor: "#3B3183",
-      color: "#FFFFFF",
-      border: "1px solid #3B3183",
-      borderColor: "#3B3183",
+      backgroundColor: "#6FBCCF", // Slightly darker blue for hover
+      color: "#FFFFFF", // Keeps the text color consistent
+      borderColor: "#6FBCCF",
+      boxShadow: "none", // Ensures no shadow on hover
     },
     "&:disabled": {
       backgroundColor: "#E0E0E0",
@@ -117,6 +148,20 @@ export default function ClerkProfile() {
     },
   };
 
+  const deleteButtonStyles = {
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    borderColor: "#DB2226",
+    backgroundColor: "#DB2226",
+    width: "250px",
+    height: "40px",
+    "&:hover": {
+      backgroundColor: "#B71C1C", // Slightly darker red
+      color: "#FFFFFF", // Keeps the text color consistent
+      borderColor: "#B71C1C", // Matches the background color for cohesion
+    },
+  };
 
   const theme = createTheme({
     typography: {
@@ -164,18 +209,21 @@ export default function ClerkProfile() {
   const handleUpdateUsername = async () => {
     try {
       // Add loading state if needed
-      const response = await axios.put("http://localhost:3000/user/update-username", {
-        username
-      });
-      
+      const response = await axios.put(
+        "http://localhost:3000/user/update-username",
+        {
+          username,
+        }
+      );
+
       // Update the current user state after successful update
-      setCurrentUser(prev => ({...prev, username}));
-      
+      setCurrentUser((prev) => ({ ...prev, username }));
+
       showDialog({
         title: "Success",
         content: "Username updated successfully!",
         confirmText: "OK",
-        confirmAction: () => setDialogOpen(false)
+        confirmAction: () => setDialogOpen(false),
       });
     } catch (error) {
       console.error("Error updating username:", error);
@@ -183,7 +231,7 @@ export default function ClerkProfile() {
         title: "Error",
         content: error.response?.data?.message || "Failed to update username",
         confirmText: "OK",
-        confirmAction: () => setDialogOpen(false)
+        confirmAction: () => setDialogOpen(false),
       });
     }
   };
@@ -191,9 +239,10 @@ export default function ClerkProfile() {
   const handleDeleteAccount = () => {
     showDialog({
       title: "Delete Account",
-      content: "Are you sure you want to delete your account? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      content:
+        "Are you sure you want to delete your account? This action cannot be undone.",
+      confirmText: "DELETE",
+      cancelText: "CANCEL",
       confirmAction: async () => {
         try {
           await axios.delete("http://localhost:3000/user/delete");
@@ -229,27 +278,27 @@ export default function ClerkProfile() {
         title: "Error",
         content: "New passwords do not match.",
         confirmText: "OK",
-        confirmAction: () => setDialogOpen(false)
+        confirmAction: () => setDialogOpen(false),
       });
       return;
     }
-  
+
     try {
       await axios.put("http://localhost:3000/user/change-password", {
         currentPassword,
-        newPassword
+        newPassword,
       });
-      
+
       // Clear password fields after successful update
       setCurrentPassword("");
       setNewPassword("");
       setConfirmNewPassword("");
-      
+
       showDialog({
         title: "Success",
         content: "Password updated successfully!",
         confirmText: "OK",
-        confirmAction: () => setDialogOpen(false)
+        confirmAction: () => setDialogOpen(false),
       });
     } catch (error) {
       console.error("Error updating password:", error);
@@ -257,34 +306,34 @@ export default function ClerkProfile() {
         title: "Error",
         content: error.response?.data?.message || "Failed to update password",
         confirmText: "OK",
-        confirmAction: () => setDialogOpen(false)
+        confirmAction: () => setDialogOpen(false),
       });
     }
   };
 
   // Add new function for removing profile picture
-const handleRemoveProfilePicture = async () => {
-  try {
-    await axios.put("http://localhost:3000/user/update-profile-picture", {
-      profile_picture_url: null
-    });
-    
-    setCurrentUser(prev => ({...prev, profile_picture: null}));
-    showDialog({
-      title: "Success",
-      content: "Profile picture removed successfully!",
-      confirmText: "OK",
-      confirmAction: () => setDialogOpen(false)
-    });
-  } catch (error) {
-    showDialog({
-      title: "Error",
-      content: "Failed to remove profile picture",
-      confirmText: "OK",
-      confirmAction: () => setDialogOpen(false)
-    });
-  }
-};
+  const handleRemoveProfilePicture = async () => {
+    try {
+      await axios.put("http://localhost:3000/user/update-profile-picture", {
+        profile_picture_url: null,
+      });
+
+      setCurrentUser((prev) => ({ ...prev, profile_picture: null }));
+      showDialog({
+        title: "Success",
+        content: "Profile picture removed successfully!",
+        confirmText: "OK",
+        confirmAction: () => setDialogOpen(false),
+      });
+    } catch (error) {
+      showDialog({
+        title: "Error",
+        content: "Failed to remove profile picture",
+        confirmText: "OK",
+        confirmAction: () => setDialogOpen(false),
+      });
+    }
+  };
 
   const handleUpdateProfilePicture = async () => {
     if (!profilePictureFile) return;
@@ -296,32 +345,31 @@ const handleRemoveProfilePicture = async () => {
       );
       await uploadBytes(storageRef, profilePictureFile);
       const profile_picture_url = await getDownloadURL(storageRef);
-      
+
       await axios.put("http://localhost:3000/user/update-profile-picture", {
-        profile_picture_url
+        profile_picture_url,
       });
-      
-      setCurrentUser(prev => ({...prev, profile_picture: profile_picture_url}));
+
+      setCurrentUser((prev) => ({
+        ...prev,
+        profile_picture: profile_picture_url,
+      }));
       setEditDialogOpen(false);
       showDialog({
         title: "Success",
         content: "Profile picture updated successfully!",
         confirmText: "OK",
-        confirmAction: () => setDialogOpen(false)
+        confirmAction: () => setDialogOpen(false),
       });
     } catch (error) {
       showDialog({
         title: "Error",
         content: "Failed to update profile picture. Please try again.",
         confirmText: "OK",
-        confirmAction: () => setDialogOpen(false)
+        confirmAction: () => setDialogOpen(false),
       });
     }
   };
-
-
-
-  
 
   const GlobalStyle = createGlobalStyle`
     body {
@@ -339,7 +387,6 @@ const handleRemoveProfilePicture = async () => {
         sx={{ display: "flex", height: "100vh", backgroundColor: "#FFFFFF" }}
       >
         {" "}
-       
         <ClerkSidebar />
         <Box
           sx={{
@@ -382,85 +429,153 @@ const handleRemoveProfilePicture = async () => {
                 {username}
               </Typography>
               <Avatar
-                  alt={username}
-                  src={
-                    currentUser && currentUser?.profile_picture
-                      ? currentUser?.profile_picture
-                      : null
-                  }
-                >
-                  {(!currentUser || !currentUser?.profile_picture) &&
-                    username.charAt(0).toUpperCase()}
-                </Avatar>
+                alt={username}
+                src={
+                  currentUser && currentUser?.profile_picture
+                    ? currentUser?.profile_picture
+                    : null
+                }
+              >
+                {(!currentUser || !currentUser?.profile_picture) &&
+                  username.charAt(0).toUpperCase()}
+              </Avatar>
             </Box>
           </Box>
           <Divider sx={{ my: 1 }} />
 
           <Container maxWidth="sm">
-  <Box sx={{ mt: 4 }}>
-    <Box
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      sx={{ mb: 4, position: "relative" }}
-    >
-      <Avatar
-        alt={username}
-        src={currentUser?.profile_picture}
-        sx={{
-          width: 150,
-          height: 150,
-          border: "4px solid #3B3183",
-          mb: 2,
-          position: "relative",
-        }}
-      />
-      <IconButton
-        onClick={() => setEditDialogOpen(true)}
-        sx={{
-          position: "absolute",
-          top: "70%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          bgcolor: "#3B3183",
-          color: "white",
-          
-          boxShadow: 2,
-          "&:hover": {
-            bgcolor: "#2A2462",
-          },
-        }}
-        size="small"
-      >
-        <EditIcon />
-      </IconButton>
-      {currentUser?.profile_picture && (
-        <Button
-          variant="text"
-          color="error"
-          onClick={handleRemoveProfilePicture}
-          sx={{ mt: 1 }}
-        >
-          Remove Picture
-        </Button>
-      )}
-    </Box>
+            <Box sx={{ mt: 4 }}>
+              <Box
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                sx={{ mb: 4, position: "relative" }}
+              >
+                {/* Skeleton loader while data is loading */}
+                {!currentUser ? (
+                  <>
+                    {/* Skeleton for Avatar */}
+                    <Skeleton
+                      variant="circular"
+                      width={150}
+                      height={150}
+                      sx={{ mb: 2 }}
+                    />
 
+                    {/* Skeleton for Edit IconButton */}
+                    <Skeleton
+                      variant="circular"
+                      width={40}
+                      height={40}
+                      sx={{
+                        position: "absolute",
+                        top: "70%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                      }}
+                    />
 
-<Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
-  <DialogTitle>Update Profile Picture</DialogTitle>
-  <DialogContent>
-    <input
-      type="file"
-      accept="image/*"
-      onChange={(e) => setProfilePictureFile(e.target.files[0])}
-    />
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-    <Button onClick={handleUpdateProfilePicture}>Save</Button>
-  </DialogActions>
-</Dialog>
+                    {/* Skeleton for Remove Picture Button */}
+                    <Skeleton
+                      variant="text"
+                      width={120}
+                      height={30}
+                      sx={{ mt: 1 }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Avatar
+                      alt={username}
+                      src={currentUser.profile_picture || null}
+                      sx={{
+                        width: 150,
+                        height: 150,
+                        border: "4px solid #3B3183",
+                        mb: 2,
+                        position: "relative",
+                        backgroundColor: currentUser.profile_picture
+                          ? "transparent"
+                          : "#F2F2F5",
+                        color: "#3B3183",
+                        fontSize: currentUser.profile_picture ? "inherit" : 60,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {!currentUser.profile_picture && (
+                        <Typography
+                          sx={{
+                            fontFamily: "Montserrat",
+                            fontWeight: "bold",
+                            fontSize: 60, // Same as the avatar font size
+                            lineHeight: 1,
+                          }}
+                        >
+                          {username?.charAt(0).toUpperCase()}
+                        </Typography>
+                      )}
+                    </Avatar>
+
+                    {/* Edit IconButton */}
+                    <IconButton
+                      onClick={() => setEditDialogOpen(true)}
+                      sx={{
+                        position: "absolute",
+                        top: "70%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        bgcolor: "#3B3183",
+                        color: "white",
+                        boxShadow: 2,
+                        "&:hover": {
+                          bgcolor: "#2A2462",
+                        },
+                      }}
+                      size="small"
+                    >
+                      <EditIcon />
+                    </IconButton>
+
+                    {/* Remove Picture Button - Always Visible */}
+                    <Button
+                      variant="text"
+                      color="error"
+                      onClick={handleRemoveProfilePicture}
+                      disabled={!currentUser.profile_picture} // Disable when no profile picture
+                      sx={{
+                        mt: 1,
+                        textTransform: "none",
+                        opacity: currentUser.profile_picture ? 1 : 0.5, // Reduce opacity when disabled
+                      }}
+                    >
+                      Remove Picture
+                    </Button>
+                  </>
+                )}
+              </Box>
+
+              {/* Dialog for Updating Profile Picture */}
+              <Dialog
+                open={editDialogOpen}
+                onClose={() => setEditDialogOpen(false)}
+              >
+                <DialogTitle>Update Profile Picture</DialogTitle>
+                <DialogContent>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setProfilePictureFile(e.target.files[0])}
+                  />
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={() => setEditDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleUpdateProfilePicture}>Save</Button>
+                </DialogActions>
+              </Dialog>
 
               {/* Username Section */}
               <Accordion>
@@ -474,15 +589,31 @@ const handleRemoveProfilePicture = async () => {
                     onChange={(e) => setUsername(e.target.value)}
                     fullWidth
                     margin="normal"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Hover outline color
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Focus outline color
+                        },
+                      },
+                    }}
                   />
-                  <Button
-                    variant="contained"
-                    onClick={handleUpdateUsername}
-                    disabled={username === currentUser?.username}
-                    sx={buttonStyles}
+                  <Box
+                    sx={{ display: "flex", justifyContent: "center", mt: 2 }}
                   >
-                    Update Username
-                  </Button>
+                    <Button
+                      variant="contained"
+                      onClick={handleUpdateUsername}
+                      disabled={username === currentUser?.username}
+                      sx={{
+                        ...buttonStyles, // Merge existing buttonStyle
+                      }}
+                    >
+                      UPDATE USERNAME
+                    </Button>
+                  </Box>
                 </AccordionDetails>
               </Accordion>
 
@@ -492,51 +623,134 @@ const handleRemoveProfilePicture = async () => {
                   <Typography fontWeight="bold">Change Password</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
+                  {/* Current Password */}
                   <TextField
                     label="Current Password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     fullWidth
                     margin="normal"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={togglePasswordVisibility}>
+                            {showPassword ? <Visibility /> : <VisibilityOff />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Hover outline color
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Focus outline color
+                        },
+                      },
+                    }}
                   />
+
+                  {/* New Password */}
                   <TextField
                     label="New Password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     fullWidth
                     margin="normal"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={togglePasswordVisibility}>
+                            {showPassword ? <Visibility /> : <VisibilityOff />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Hover outline color
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Focus outline color
+                        },
+                      },
+                    }}
                   />
+
+                  {/* Confirm New Password */}
                   <TextField
                     label="Confirm New Password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
                     fullWidth
                     margin="normal"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={togglePasswordVisibility}>
+                            {showPassword ? <Visibility /> : <VisibilityOff />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Hover outline color
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Focus outline color
+                        },
+                      },
+                    }}
                   />
-                  <Button
-                    variant="contained"
-                    onClick={handleUpdatePassword}
-                    disabled={!currentPassword || !newPassword || !confirmNewPassword}
-                    sx={buttonStyles}
+
+                  {/* Update Password Button */}
+                  <Box
+                    sx={{ display: "flex", justifyContent: "center", mt: 2 }}
                   >
-                    Update Password
-                  </Button>
+                    <Button
+                      variant="contained"
+                      onClick={handleUpdatePassword}
+                      disabled={
+                        !currentPassword || !newPassword || !confirmNewPassword
+                      }
+                      sx={{
+                        ...buttonStyles,
+                        
+                      }}
+                    >
+                      UPDATE PASSWORD
+                    </Button>
+                  </Box>
                 </AccordionDetails>
               </Accordion>
 
-              {/* Delete Account Section */}
-              <Button
-                variant="outlined"
-                color="error"
-                fullWidth
-                sx={{ mt: 3 }}
-                onClick={handleDeleteAccount}
+              <Box
+                sx={{ display: "flex", justifyContent: "center", mt: 3, mb: 3 }}
               >
-                Delete Account
-              </Button>
+                <Button
+  variant="outlined"
+  color="error"
+  fullWidth
+  sx={{
+    ...deleteButtonStyles,
+    width: "100%", // Ensures full width of its container
+    maxWidth: "310px", // Optional: sets a maximum width
+    padding: "12px 24px", // Adds extra padding for a larger button
+    fontSize: "1rem", // Optional: Adjust font size for better readability
+  }}
+  onClick={handleDeleteAccount}
+>
+  DELETE ACCOUNT
+</Button>
+
+              </Box>
             </Box>
           </Container>
         </Box>
@@ -547,9 +761,7 @@ const handleRemoveProfilePicture = async () => {
         onClose={() => setDialogOpen(false)}
         PaperProps={{ sx: dialogStyles.dialogPaper }}
       >
-        <DialogTitle sx={dialogStyles.title}>
-          {dialogConfig.title}
-        </DialogTitle>
+        <DialogTitle sx={dialogStyles.title}>{dialogConfig.title}</DialogTitle>
         <DialogContent sx={dialogStyles.content}>
           <DialogContentText sx={dialogStyles.contentText}>
             {dialogConfig.content}
@@ -567,11 +779,8 @@ const handleRemoveProfilePicture = async () => {
           <Button
             onClick={dialogConfig.confirmAction}
             sx={{
-              ...dialogStyles.button,
-              ...(dialogConfig.confirmText === "Delete" && {
-                color: "#D32F2F",
-                border: "1px solid #D32F2F",
-              }),
+              ...dialogStyles.deletebutton,
+              ...(dialogConfig.confirmText === "DELETE" ? dialogStyles.deletebutton : dialogStyles.button)
             }}
           >
             {dialogConfig.confirmText}
