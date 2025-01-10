@@ -459,6 +459,7 @@ export default function CustomerHomepage() {
     margin: 0;
     padding: 0;
     font-family: 'Montserrat', sans-serif;
+    overflow-y: hidden; /* Prevent vertical scroll */
   }
 
   * {
@@ -494,8 +495,10 @@ export default function CustomerHomepage() {
     fontWeight: "bold",
     color: "#8BD3E6",
     backgroundColor: "#FFFFFF",
+    boxShadow: "none", // Correct spelling
     border: "1px solid #8BD3E6",
     "&:hover": {
+      boxShadow: "none", // Correct spelling
       backgroundColor: "#E6F8FB",
       color: "#7AB9C4",
       borderColor: "#7AB9C4",
@@ -523,7 +526,7 @@ export default function CustomerHomepage() {
   return (
     <>
       <GlobalStyle />
-      <Box sx={{ display: "flex", height: "100vh" }}>
+      <Box sx={{ display: "flex", height: "120vh" }}>
         <Box
           sx={{
             width: 225,
@@ -534,7 +537,7 @@ export default function CustomerHomepage() {
           <CustomerSidebar />
         </Box>
 
-        <Box sx={{ flexGrow: 1, p: 3, pl: 5 }}>
+        <Box sx={{ flexGrow: 1, p: 3, pl: 5, mb: 4 }}>
           <Box
             sx={{
               display: "flex",
@@ -607,9 +610,17 @@ export default function CustomerHomepage() {
                       label="Genre"
                       value={genre}
                       onChange={(e) => setGenre(e.target.value)}
+                      sx={{
+                        fontFamily: "Montserrat",
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Green outline on hover
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Green outline when focused
+                        },
+                      }}
                     >
                       {[
-                        "All",
                         "Baroque",
                         "Children's",
                         "Children's Song",
@@ -620,7 +631,13 @@ export default function CustomerHomepage() {
                         "Rock",
                         "Renaissance Polyphony",
                       ].map((item) => (
-                        <MenuItem key={item} value={item}>
+                        <MenuItem
+                          key={item}
+                          value={item}
+                          sx={{
+                            fontFamily: "Montserrat",
+                          }}
+                        >
                           {item}
                         </MenuItem>
                       ))}
@@ -628,7 +645,9 @@ export default function CustomerHomepage() {
                   </FormControl>
 
                   <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Composer</InputLabel>
+                    <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                      Composer
+                    </InputLabel>
                     <Select
                       label="Composer"
                       value={composer}
@@ -644,7 +663,6 @@ export default function CustomerHomepage() {
                       }}
                     >
                       {[
-                        "All",
                         "Antonio Vivaldi",
                         "Claude Debussy",
                         "Emil Aarestrup",
@@ -657,7 +675,11 @@ export default function CustomerHomepage() {
                         "Larry Shay",
                         "Wolfgang Amadeus Mozart",
                       ].map((composerName) => (
-                        <MenuItem key={composerName} value={composerName}>
+                        <MenuItem
+                          key={composerName}
+                          value={composerName}
+                          sx={{ fontFamily: "Montserrat" }}
+                        >
                           {composerName}
                         </MenuItem>
                       ))}
@@ -963,7 +985,7 @@ export default function CustomerHomepage() {
           ) : (
             <Box
               sx={{
-                height: "calc(80vh)",
+                height: "calc(70vh)",
                 display: "flex",
                 flexDirection: "column",
               }}
@@ -1009,7 +1031,10 @@ export default function CustomerHomepage() {
                         display: "grid",
                         gridTemplateColumns: "repeat(2, 1fr)",
                         gap: 5,
-
+                        scrollbarWidth: "none", // Hide scrollbar for Firefox
+                        "&::-webkit-scrollbar": {
+                          display: "none", // Hide scrollbar for Chrome, Safari, and Edge
+                        },
                         scrollBehavior: "smooth",
                       }}
                     >
@@ -1083,14 +1108,14 @@ export default function CustomerHomepage() {
                                 <Typography
                                   variant="h6"
                                   noWrap
-                                  sx={{ textAlign: "center", mb: 1 }}
+                                  sx={{ textAlign: "center", mb: 1, fontFamily: "Montserrat" }}
                                 >
                                   {score.title}
                                 </Typography>
                                 <Typography
                                   variant="body2"
                                   color="textSecondary"
-                                  sx={{ textAlign: "center" }}
+                                  sx={{ textAlign: "center",  fontFamily: "Montserrat", }}
                                 >
                                   {score.artist}
                                 </Typography>
@@ -1165,6 +1190,10 @@ export default function CustomerHomepage() {
                         gridTemplateColumns: "repeat(2, 1fr)",
                         gap: 5,
                         scrollBehavior: "smooth",
+                        scrollbarWidth: "none", // Hide scrollbar for Firefox
+                        "&::-webkit-scrollbar": {
+                          display: "none", // Hide scrollbar for Chrome, Safari, and Edge
+                        },
                       }}
                     >
                       {popularScores.map((score, index) => (
@@ -1237,14 +1266,14 @@ export default function CustomerHomepage() {
                                 <Typography
                                   variant="h6"
                                   noWrap
-                                  sx={{ textAlign: "center", mb: 1 }}
+                                  sx={{ textAlign: "center", mb: 1 ,  fontFamily: "Montserrat",}}
                                 >
                                   {score.title}
                                 </Typography>
                                 <Typography
                                   variant="body2"
                                   color="textSecondary"
-                                  sx={{ textAlign: "center" }}
+                                  sx={{ textAlign: "center" ,  fontFamily: "Montserrat",}}
                                 >
                                   {score.artist}
                                 </Typography>
