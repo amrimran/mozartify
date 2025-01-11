@@ -25,13 +25,14 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
 import abcjs from "abcjs";
 import { format } from "date-fns";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import StopIcon from "@mui/icons-material/Stop";
-
 
 export default function ClerkMusicScoreView() {
   const { scoreId } = useParams();
@@ -51,6 +52,7 @@ export default function ClerkMusicScoreView() {
   const [page, setPage] = useState(1);
   const abcContainerRef = useRef(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
   const navigate = useNavigate();
 
@@ -66,7 +68,7 @@ export default function ClerkMusicScoreView() {
       borderColor: "#6FBCCF",
     },
   };
-  
+
   const buttonStyles2 = {
     px: 15,
     fontFamily: "Montserrat",
@@ -80,10 +82,10 @@ export default function ClerkMusicScoreView() {
       borderColor: "#7AB9C4",
     },
   };
-  
+
   const deleteButtonStyles = {
-    px:15,
-    py:1,
+    px: 15,
+    py: 1,
     fontFamily: "Montserrat",
     fontWeight: "bold",
     color: "#FFFFFF",
@@ -94,7 +96,7 @@ export default function ClerkMusicScoreView() {
       borderColor: "#B71C1C",
     },
   };
-  
+
   const dialogStyles = {
     dialogPaper: {
       borderRadius: "16px",
@@ -150,7 +152,6 @@ export default function ClerkMusicScoreView() {
       },
     },
   };
-  
 
   const instruments = [
     { id: 0, name: "Piano" },
@@ -276,8 +277,7 @@ export default function ClerkMusicScoreView() {
     if (!visualObj) return;
 
     if (!isPlaying) {
-      const audioContext = new (window.AudioContext ||
-        window.AudioContext)();
+      const audioContext = new (window.AudioContext || window.AudioContext)();
 
       const startPlayback = async () => {
         try {
@@ -399,34 +399,36 @@ export default function ClerkMusicScoreView() {
   };
 
   const handleConfirmDelete = () => {
-    fetch("http://localhost:3001/catalog", {
-      // Replace with the correct backend URL
+    fetch("http://localhost:3001/delete-and-transfer-abc-file", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        filename: metadata.filename, // Use metadata to get the filename
-        deleted: true, // Mark the file as deleted
+        filename: metadata.filename,
       }),
     })
       .then((response) => {
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
-        return response.json(); // Parse the JSON from the response
+        return response.json();
       })
       .then((data) => {
-        if (data.message === "Metadata saved successfully") {
-          // Redirect or update the UI after successful deletion
-          navigate("/clerk-homepage"); // Redirect to the homepage or handle UI update
+        if (
+          data.message === "File successfully transferred to deleted collection"
+        ) {
+          setOpenSnackbar(true); // Show the snackbar
+          setTimeout(() => {
+            navigate("/clerk-homepage");
+          }, 1000); // Navigate after 1 second
         }
       })
       .catch((error) => {
         console.error("Error:", error);
       })
       .finally(() => {
-        setOpenDeleteDialog(false); // Close the dialog
+        setOpenDeleteDialog(false);
       });
   };
 
@@ -1050,6 +1052,27 @@ export default function ClerkMusicScoreView() {
             </DialogActions>
           </Dialog>
         </Box>
+        <Snackbar
+          open={openSnackbar}
+          autoHideDuration={1000}
+          onClose={() => setOpenSnackbar(false)}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        >
+          <Alert
+            severity="error"
+            sx={{
+              width: "100%",
+              backgroundColor: "red",
+              color: "white",
+              "& .MuiAlert-icon": {
+                color: "white",
+              },
+            }}
+            onClose={() => setOpenSnackbar(false)}
+          >
+            Music score successfully deleted
+          </Alert>
+        </Snackbar>
       </Box>
     </Box>
   );

@@ -96,7 +96,7 @@ const sendVerificationEmail = (email, username, token) => {
 
   transporter.sendMail(
     {
-      from: "N.A.S.I.R",
+      from: '"N.A.S.I.R Music System" <nasir.music.system@gmail.com>', 
       to: email,
       subject: "N.A.S.I.R: Email Verification",
       html: emailTemplate,
@@ -133,7 +133,7 @@ const sendAdminApprovalEmail = (adminEmail, username, email) => {
 
   transporter.sendMail(
     {
-      from: "N.A.S.I.R",
+      from: '"N.A.S.I.R Music System" <nasir.music.system@gmail.com>',
       to: adminEmail,
       subject: "N.A.S.I.R: New Music Entry Clerk Approval Needed",
       html: emailTemplate,
@@ -473,7 +473,7 @@ app.post("/forgot-password", async (req, res) => {
 `;
 
     await transporter.sendMail({
-      from: "N.A.S.I.R",
+      from: '"N.A.S.I.R Music System" <nasir.music.system@gmail.com>',
       to: email,
       subject: "N.A.S.I.R: Password Reset",
       html: emailTemplate,
