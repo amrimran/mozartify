@@ -682,7 +682,7 @@ export default function CustomerMusicScoreView() {
 
       // Revert the optimistic update in case of an error
       setFavorites((prevFavorites) => {
-        if (isFavorite) {
+        if (favorites) {
           // Add back the removed favorite
           return [...prevFavorites, musicScoreId];
         } else {

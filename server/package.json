@@ -22,6 +22,7 @@
     "express": "^4.19.2",
     "express-session": "^1.18.0",
     "firebase": "^10.12.4",
+    "firebase-admin": "^13.0.2",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.8.0",
     "mongoose": "^8.5.2",

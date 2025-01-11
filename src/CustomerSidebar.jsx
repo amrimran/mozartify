@@ -26,8 +26,26 @@ axios.defaults.withCredentials = true;
 const CustomerSidebar = ({ active }) => {
   const currentPath = window.location.pathname;
 
-  const handleNavigation = (path) => {
-    window.location.href = path;
+  const handleNavigation = async (path, key) => {
+    if (key === "logout") {
+      try {
+        // Call the backend logout endpoint
+        await axios.get("http://localhost:3000/logout", {
+          withCredentials: true,
+        });
+
+        // Clear any client-side session-related data if needed
+        localStorage.removeItem("loggedInUserId");
+
+        // Redirect to the login page
+        window.location.href = "/login";
+      } catch (error) {
+        console.error("Error during logout:", error);
+        alert("Failed to log out. Please try again.");
+      }
+    } else {
+      window.location.href = path;
+    }
   };
 
   const navigationItems = [
@@ -163,7 +181,7 @@ const CustomerSidebar = ({ active }) => {
             {bottomNavigationItems.map((item) => (
               <ListItemButton
                 key={item.path}
-                onClick={() => handleNavigation(item.path)}
+                onClick={() => handleNavigation(item.path, item.key)} // Pass the key to identify logout
                 sx={{
                   bgcolor:
                     active === item.key || currentPath === item.path
