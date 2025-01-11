@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -11,10 +11,10 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  styled
-} from '@mui/material';
-import axios from 'axios';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+  styled,
+} from "@mui/material";
+import axios from "axios";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 const dialogStyles = {
   dialogPaper: {
@@ -77,68 +77,67 @@ const dialogStyles = {
 
 // Custom styled components
 const OptionButton = styled(Button)(({ theme }) => ({
-  borderRadius: '8px',
-  padding: '8px 16px',
-  margin: '4px',
-  textTransform: 'none',
-  fontFamily: 'Montserrat, sans-serif',
+  borderRadius: "8px",
+  padding: "8px 16px",
+  margin: "4px",
+  textTransform: "none",
+  fontFamily: "Montserrat, sans-serif",
   backgroundColor: theme.palette.grey[100],
   color: theme.palette.text.primary,
-  boxShadow: 'none',
-  '&:hover': {
+  boxShadow: "none",
+  "&:hover": {
     backgroundColor: theme.palette.grey[200],
-    boxShadow: 'none',
+    boxShadow: "none",
   },
-  '&.selected': {
+  "&.selected": {
     backgroundColor: theme.palette.primary.main,
     color: theme.palette.primary.contrastText,
-    '&:hover': {
+    "&:hover": {
       backgroundColor: theme.palette.primary.dark,
     },
   },
 }));
 
 const ActionButton = styled(Button)(({ theme }) => ({
-  width: '100%',
-  padding: '16px',
-  borderRadius: '8px',
-  fontFamily: 'Montserrat, sans-serif',
-  fontWeight: 'bold',
-  color: 'white',
-  textTransform: 'uppercase',
+  width: "100%",
+  padding: "16px",
+  borderRadius: "8px",
+  fontFamily: "Montserrat, sans-serif",
+  fontWeight: "bold",
+  color: "white",
+  textTransform: "uppercase",
   marginTop: theme.spacing(2),
-  boxShadow: 'none',
-  '&:hover': {
-    boxShadow: 'none',
+  boxShadow: "none",
+  "&:hover": {
+    boxShadow: "none",
   },
 }));
-
 
 // Custom theme
 const theme = createTheme({
   typography: {
-    fontFamily: 'Montserrat, sans-serif',
+    fontFamily: "Montserrat, sans-serif",
     h1: {
-      fontSize: '1.25rem',
+      fontSize: "1.25rem",
       fontWeight: 600,
     },
     h2: {
-      fontSize: '1.75rem',
+      fontSize: "1.75rem",
       fontWeight: 700,
     },
     h3: {
-      fontSize: '1.25rem',
+      fontSize: "1.25rem",
       fontWeight: 600,
     },
     subtitle1: {
-      fontSize: '0.875rem',
-      color: '#666',
+      fontSize: "0.875rem",
+      color: "#666",
     },
   },
   palette: {
     primary: {
-      main: '#8BD3E6',
-      dark: '#6FBCCF',
+      main: "#8BD3E6",
+      dark: "#6FBCCF",
     },
   },
   components: {
@@ -153,7 +152,6 @@ const theme = createTheme({
   },
 });
 
-
 const FirstTimeLogin = () => {
   const [composerPreferences, setComposerPreferences] = useState([]);
   const [genrePreferences, setGenrePreferences] = useState([]);
@@ -167,14 +165,14 @@ const FirstTimeLogin = () => {
     emotions: [],
   });
   const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPreferencesOptions = async () => {
       try {
         const response = await axios.get(
-          'http://localhost:3000/preferences-options'
+          "http://localhost:3000/preferences-options"
         );
 
         setOptions({
@@ -185,7 +183,9 @@ const FirstTimeLogin = () => {
 
         setLoading(false);
       } catch (error) {
-        setErrorMessage('Failed to load preferences options. Please try again.');
+        setErrorMessage(
+          "Failed to load preferences options. Please try again."
+        );
         setLoading(false);
       }
     };
@@ -195,16 +195,18 @@ const FirstTimeLogin = () => {
 
   const handleCheckboxChange = (value, type) => {
     const updatePreferences = (prev) =>
-      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value];
+      prev.includes(value)
+        ? prev.filter((item) => item !== value)
+        : [...prev, value];
 
     switch (type) {
-      case 'composer':
+      case "composer":
         setComposerPreferences(updatePreferences(composerPreferences));
         break;
-      case 'genre':
+      case "genre":
         setGenrePreferences(updatePreferences(genrePreferences));
         break;
-      case 'emotion':
+      case "emotion":
         setEmotionPreferences(updatePreferences(emotionPreferences));
         break;
       default:
@@ -214,10 +216,9 @@ const FirstTimeLogin = () => {
 
   useEffect(() => {
     if (errorMessage && errorRef.current) {
-      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      errorRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [errorMessage, errorRef]);
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -227,21 +228,22 @@ const FirstTimeLogin = () => {
       !genrePreferences.length ||
       !emotionPreferences.length
     ) {
-      setErrorMessage('Please select at least one option from each category.');
+      setErrorMessage("Please select at least one option from each category.");
       return;
     }
 
     try {
-      await axios.post('http://localhost:3000/preferences', {
+      await axios.post("http://localhost:3000/preferences", {
         composer_preferences: composerPreferences,
         genre_preferences: genrePreferences,
         emotion_preferences: emotionPreferences,
       });
       setDialogOpen(true); // Show the dialog
       setTimeout(() => {
-        navigate('/customer-homepage'); // Redirect after delay
-      }, 2000);    } catch (error) {
-      setErrorMessage('Failed to save preferences. Please try again.');
+        navigate("/customer-homepage"); // Redirect after delay
+      }, 2000);
+    } catch (error) {
+      setErrorMessage("Failed to save preferences. Please try again.");
     }
   };
 
@@ -249,11 +251,11 @@ const FirstTimeLogin = () => {
     return (
       <Box
         sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, #FFFFFF 0%, #B3E8F2 100%)'
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(135deg, #FFFFFF 0%, #B3E8F2 100%)",
         }}
       >
         <CircularProgress />
@@ -265,10 +267,10 @@ const FirstTimeLogin = () => {
     <ThemeProvider theme={theme}>
       <Box
         sx={{
-          minHeight: '100vh',
+          minHeight: "100vh",
           py: 4,
           px: 2,
-          background: 'linear-gradient(135deg, #FFFFFF 0%, #B3E8F2 100%)'
+          background: "linear-gradient(135deg, #FFFFFF 0%, #B3E8F2 100%)",
         }}
       >
         <Container maxWidth="sm">
@@ -283,11 +285,10 @@ const FirstTimeLogin = () => {
             </Box>
 
             {errorMessage && (
-  <Alert severity="error" ref={errorRef} sx={{ mb: 3 }}>
-    {errorMessage}
-  </Alert>
-)}
-
+              <Alert severity="error" ref={errorRef} sx={{ mb: 3 }}>
+                {errorMessage}
+              </Alert>
+            )}
 
             <form onSubmit={handleSubmit}>
               <Box mb={4}>
@@ -300,8 +301,10 @@ const FirstTimeLogin = () => {
                 {options.composers.map((composer) => (
                   <OptionButton
                     key={composer}
-                    onClick={() => handleCheckboxChange(composer, 'composer')}
-                    className={composerPreferences.includes(composer) ? 'selected' : ''}
+                    onClick={() => handleCheckboxChange(composer, "composer")}
+                    className={
+                      composerPreferences.includes(composer) ? "selected" : ""
+                    }
                   >
                     {composer}
                   </OptionButton>
@@ -318,8 +321,10 @@ const FirstTimeLogin = () => {
                 {options.genres.map((genre) => (
                   <OptionButton
                     key={genre}
-                    onClick={() => handleCheckboxChange(genre, 'genre')}
-                    className={genrePreferences.includes(genre) ? 'selected' : ''}
+                    onClick={() => handleCheckboxChange(genre, "genre")}
+                    className={
+                      genrePreferences.includes(genre) ? "selected" : ""
+                    }
                   >
                     {genre}
                   </OptionButton>
@@ -336,8 +341,10 @@ const FirstTimeLogin = () => {
                 {options.emotions.map((emotion) => (
                   <OptionButton
                     key={emotion}
-                    onClick={() => handleCheckboxChange(emotion, 'emotion')}
-                    className={emotionPreferences.includes(emotion) ? 'selected' : ''}
+                    onClick={() => handleCheckboxChange(emotion, "emotion")}
+                    className={
+                      emotionPreferences.includes(emotion) ? "selected" : ""
+                    }
                   >
                     {emotion}
                   </OptionButton>
@@ -345,11 +352,7 @@ const FirstTimeLogin = () => {
               </Box>
 
               <Box>
-                <ActionButton
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                >
+                <ActionButton type="submit" variant="contained" color="primary">
                   Save
                 </ActionButton>
               </Box>

@@ -16,10 +16,13 @@ import {
   MenuItem,
   Select,
   Grid,
+  Snackbar,
+  Alert,
   InputLabel,
   FormControl,
   Pagination,
 } from "@mui/material";
+import { Favorite, PlayArrow } from "@mui/icons-material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
@@ -80,104 +83,44 @@ export default function MusicEntryClerkSearch() {
   const [filteredResults, setFilteredResults] = useState([]);
   const [hasFiltered, setHasFiltered] = useState(false);
 
+  const [favorites, setFavorites] = useState([]); //store list of user's favorite music scores
+  const [addedToCartScores, setAddedToCartScores] = useState([]); //store list of user's favorite music scores
+  const [purchasedScores, setPurchasedScores] = useState([]); //store list of user's purchased music scores
+
   const [showSearchResults, setShowSearchResults] = useState(false);
 
   const [page, setPage] = useState(1); // Track the current page
   const itemsPerPage = 5; // Number of items per page
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    type: "", // Add this to handle snackbar type (e.g., "cart", "favorite", etc.)
+  });
 
-  const genreList = [
-    "Classical",
-    "Jazz",
-    "Rock",
-    "Pop",
-    "Electronic",
-    "Blues",
-    "Country",
-    "HipHop",
-    "Reggae",
-    "R&B",
-    "Folk",
-    "Metal",
-    "Punk",
-    "Soul",
-    "Opera",
-    "Latin",
-    "Indie",
-    "Experimental",
-    "Techno",
-    "House",
-    "Ambient",
-    "Funk",
-    "Disco",
-    "Psychedelic",
-    "Gospel",
-    "Ska",
-    "Alternative",
-    "NewAge",
-    "World",
-    "Dancehall",
-    "KPop",
-    "Afrobeat",
-    "Reggaeton",
-  ];
+  // Replace the hardcoded lists and add these state variables at the top of your CustomerSearch component:
+  const [genreList, setGenreList] = useState([]);
+  const [composerList, setComposerList] = useState([]);
+  const [instrumentationList, setInstrumentationList] = useState([]); // Changed from instrumentList
+  const [emotionList, setEmotionList] = useState([]);
 
-  const composerList = [
-    "Beethoven",
-    "Chopin",
-    "Debussy",
-    "Erik Satie",
-    "Gershwin",
-    "Holst",
-    "Liszt",
-    "Mozart",
-    "Pachelbel",
-    "Ravel",
-  ];
+  // Add this useEffect hook after your other useEffect hooks:
+  useEffect(() => {
+    const fetchRefineLists = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/refine-search");
+        const { composers, genres, emotions, instrumentation } = response.data;
 
-  const instrumentList = [
-    "All",
-    "Strings",
-    "Woodwind",
-    "Brass",
-    "Percussion",
-    "Keyboard",
-    "Guitar",
-    "Violin",
-    "Cello",
-    "DoubleBass",
-    "Flute",
-    "Clarinet",
-    "Saxophone",
-    "Oboe",
-    "Bassoon",
-    "Trumpet",
-    "Trombone",
-    "FrenchHorn",
-    "Tuba",
-    "Drums",
-    "SnareDrum",
-    "BassDrum",
-    "Cymbals",
-    "Timpani",
-    "Xylophone",
-    "Piano",
-    "Organ",
-    "Harpsichord",
-    "ElectricGuitar",
-    "AcousticGuitar",
-    "BassGuitar",
-    "Harp",
-    "Accordion",
-    "Mandolin",
-    "Sitar",
-    "Bagpipes",
-    "Marimba",
-    "Vibraphone",
-    "Tambourine",
-    "Glockenspiel",
-  ];
+        setComposerList(composers);
+        setGenreList(genres);
+        setEmotionList(emotions);
+        setInstrumentationList(instrumentation); // Changed from instruments
+      } catch (error) {
+        console.error("Error fetching refine search lists:", error);
+      }
+    };
 
-  const emotionList = ["Angry", "Happy", "Relaxed", "Sad"];
+    fetchRefineLists();
+  }, []);
 
   const handlePageChange = (event, value) => {
     setPage(value);
@@ -236,6 +179,14 @@ export default function MusicEntryClerkSearch() {
     setHasFiltered(true); // Set hasFiltered to true after applying filters
   };
 
+  const handleClearFilters = () => {
+    setSelectedGenres([]);
+    setSelectedComposers([]);
+    setSelectedInstruments([]);
+    setSelectedEmotions([]);
+    setHasFiltered(false);
+  };
+
   const paginatedResults = (
     hasFiltered ? filteredResults : searchResults
   ).slice((page - 1) * itemsPerPage, page * itemsPerPage);
@@ -256,6 +207,26 @@ export default function MusicEntryClerkSearch() {
     fetchUser();
   }, [navigate]);
 
+  useEffect(() => {
+    const fetchPurchasedScores = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:3000/user-purchases"
+        );
+
+        const purchasedScoreIds = response.data.map(
+          (purchase) => purchase.score_id
+        );
+
+        setPurchasedScores(purchasedScoreIds);
+      } catch (error) {
+        console.error("Error fetching user's purchased scores:", error);
+        navigate("/login");
+      }
+    };
+    fetchPurchasedScores();
+  }, []);
+
   const fetchMusicScores = async (combinedQueries, selectedCollection) => {
     try {
       const response = await axios.post("http://localhost:3000/search", {
@@ -267,6 +238,69 @@ export default function MusicEntryClerkSearch() {
       setShowSearchResults(true); // Show the search results
     } catch (error) {
       console.error("Error fetching music scores:", error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchAddedToCartScores = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/user-cart");
+
+        if (response.data.length === 0) {
+          setAddedToCartScores([]);
+          return;
+        }
+
+        const AddedScoreIds = response.data.map((added) => added.score_id);
+
+        setAddedToCartScores(AddedScoreIds);
+      } catch (error) {
+        console.error("Error fetching user's cart:", error);
+        navigate("/login");
+      }
+    };
+
+    fetchAddedToCartScores();
+  }, [navigate]);
+
+  const addToCart = async (scoreId) => {
+    try {
+      await axios.post("http://localhost:3000/add-to-cart", {
+        musicScoreId: scoreId,
+      });
+      setAddedToCartScores([...addedToCartScores, scoreId]);
+      setSnackbar({
+        open: true,
+        message: "Added to cart successfully!",
+        type: "cart",
+      });
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+    }
+  };
+
+  const toggleFavorite = async (musicScoreId) => {
+    try {
+      const isFavorite = user?.favorites?.includes(musicScoreId);
+
+      const response = await axios.post("http://localhost:3000/set-favorites", {
+        musicScoreId,
+        action: isFavorite ? "remove" : "add", // Explicitly specify the action
+      });
+      setFavorites(response.data.favorites);
+
+      // Show appropriate snackbar message
+      setSnackbar({
+        open: true,
+        message: isFavorite
+          ? "Removed from favorites successfully!"
+          : "Added to favorites successfully!",
+        type: isFavorite ? "unfavorite" : "favorite",
+        reload: true, // Add a flag to determine whether to reload after snackbar
+      });
+      setFavorites(response.data.favorites);
+    } catch (error) {
+      console.error("Error updating favorites:", error);
     }
   };
 
@@ -342,13 +376,16 @@ export default function MusicEntryClerkSearch() {
     setSearchCriteria(updatedCriteria);
   };
 
-  const searchOptionsMap = {
-    title: "Title",
-    genre: "Genre",
-    emotion: "Emotion",
-    composer: "Composer",
-    artist: "Artist",
-    instrumentation: "Instrumentation",
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return; // Prevent snackbar from closing on clickaway (optional)
+    }
+
+    setSnackbar({
+      open: false,
+      message: "",
+      type: "",
+    });
   };
 
   const collectionOptions = ["All", "Lecturers", "Students", "Freelancers"];
@@ -358,7 +395,6 @@ export default function MusicEntryClerkSearch() {
       margin: 0;
       padding: 0;
       font-family: 'Montserrat', sans-serif;
-      overflow-x:hidden;
     }
   `;
 
@@ -366,7 +402,7 @@ export default function MusicEntryClerkSearch() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", minHeight: "100vh", maxHeight: "100vh" }}>
-        <ClerkSidebar active="searchScore" />
+        <ClerkSidebar active="searchScores" />
         <Box
           sx={{
             flexGrow: 1,
@@ -374,6 +410,7 @@ export default function MusicEntryClerkSearch() {
             display: "flex",
             flexDirection: "column",
             marginLeft: "229px", // 225px (sidebar width) + 4px (yellow line)
+            overflowX: "hidden", // Prevent horizontal scrolling
           }}
         >
           <Box
@@ -665,7 +702,6 @@ export default function MusicEntryClerkSearch() {
           )}
 
           {/* Search Result Component Start */}
-
           {showSearchResults && (
             <Box
               sx={{
@@ -673,48 +709,42 @@ export default function MusicEntryClerkSearch() {
                 alignItems: "center",
                 justifyContent: "flex-start",
                 gap: 2,
-                p: 2,
+                mt: 1,
+                ml: 2,
               }}
             >
               <Button
                 variant="contained"
                 onClick={handleToggleSearchResults}
-                startIcon={<ArrowBackIcon />} // Add the left arrow icon here
-                sx={{
-                  boxShadow: "none",
-                  px: 5,
-                  ...buttonStyles2,
-                }}
+                startIcon={<ArrowBackIcon />}
+                sx={buttonStyles2}
               >
                 Back
               </Button>
 
-              {/* Buttons Container */}
               <Box
                 sx={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "flex-start",
                   gap: 2,
-
-                  overflowX: "auto", // Enable horizontal scrolling
-                  flexGrow: 1, // Allow it to take up the remaining width
-                  maxWidth: "50vw", // Ensure the container is limited to the viewport width
+                  overflowX: "auto",
+                  flexGrow: 1,
+                  maxWidth: "50vw",
                 }}
               >
-                {/* Genre Button */}
                 {hasFiltered && selectedGenres.length > 0 && (
                   <Button
                     sx={{
-                      backgroundColor: "#E4C1F9", // Pastel light purple
-                      color: "black",
-                      borderRadius: 50, // High border-radius for rounded buttons
+                      backgroundColor: "#A2DCEB",
+                      color: "white",
+                      borderRadius: 50,
                       padding: "8px 16px",
                       textTransform: "none",
                       height: "40px",
                       display: "flex",
                       alignItems: "center",
-                      whiteSpace: "nowrap", // Prevent text from wrapping
+                      whiteSpace: "nowrap",
                       fontFamily: "Montserrat",
                     }}
                     disabled
@@ -723,12 +753,11 @@ export default function MusicEntryClerkSearch() {
                   </Button>
                 )}
 
-                {/* Composer Button */}
                 {hasFiltered && selectedComposers.length > 0 && (
                   <Button
                     sx={{
-                      backgroundColor: "#E4C1F9",
-                      color: "black",
+                      backgroundColor: "#A2DCEB",
+                      color: "white",
                       borderRadius: 50,
                       padding: "8px 16px",
                       textTransform: "none",
@@ -744,12 +773,11 @@ export default function MusicEntryClerkSearch() {
                   </Button>
                 )}
 
-                {/* Instrument Button */}
                 {hasFiltered && selectedInstruments.length > 0 && (
                   <Button
                     sx={{
-                      backgroundColor: "#E4C1F9",
-                      color: "#FFFFFF",
+                      backgroundColor: "#A2DCEB",
+                      color: "white",
                       borderRadius: 50,
                       padding: "8px 16px",
                       textTransform: "none",
@@ -765,12 +793,11 @@ export default function MusicEntryClerkSearch() {
                   </Button>
                 )}
 
-                {/* Emotion Button */}
                 {hasFiltered && selectedEmotions.length > 0 && (
                   <Button
                     sx={{
-                      backgroundColor: "#E4C1F9",
-                      color: "black",
+                      backgroundColor: "#A2DCEB",
+                      color: "white",
                       borderRadius: 50,
                       padding: "8px 16px",
                       textTransform: "none",
@@ -793,14 +820,19 @@ export default function MusicEntryClerkSearch() {
             <Box
               sx={{
                 flexGrow: 1,
-                height: "calc(100vh - 200px)", // Adjust this value based on your header/navigation height
+                height: "calc(100vh - 200px)",
                 width: "100%",
-                overflow: "hidden", // Prevent outer box from scrolling
+                overflow: "hidden",
                 p: 2,
               }}
             >
-              <Grid container spacing={2}>
-                {/* Refinement section on the left */}
+              {/* Main content grid */}
+              <Grid
+                container
+                spacing={2}
+                sx={{ flexGrow: 1, overflow: "hidden" }}
+              >
+                {/* Refine search sidebar */}
                 <Grid item xs={3}>
                   <Box
                     sx={{
@@ -814,16 +846,11 @@ export default function MusicEntryClerkSearch() {
                     <Typography
                       variant="h6"
                       gutterBottom
-                      sx={{
-                        fontFamily: "Montserrat, sans-serif",
-                        textAlign: "center",
-                        mb: 2,
-                      }}
+                      sx={{ fontFamily: "Montserrat", textAlign: "center" }}
                     >
                       Refine Your Search
                     </Typography>
 
-                    {/* Filters for Genre, Composer, Instrument, Emotion */}
                     <FormControl fullWidth sx={{ mb: 2 }}>
                       <InputLabel sx={{ fontFamily: "Montserrat" }}>
                         Genre
@@ -892,13 +919,13 @@ export default function MusicEntryClerkSearch() {
 
                     <FormControl fullWidth sx={{ mb: 2 }}>
                       <InputLabel sx={{ fontFamily: "Montserrat" }}>
-                        Instrument
+                        Instrumentation
                       </InputLabel>
                       <Select
                         multiple
                         value={selectedInstruments}
                         onChange={handleInstrumentChange}
-                        label="Instrument"
+                        label="Instrumentation"
                         renderValue={(selected) => selected.join(", ")}
                         sx={{
                           borderRadius: "16px",
@@ -911,7 +938,7 @@ export default function MusicEntryClerkSearch() {
                           },
                         }}
                       >
-                        {instrumentList.map((instrument) => (
+                        {instrumentationList.map((instrument) => (
                           <MenuItem
                             key={instrument}
                             value={instrument}
@@ -957,6 +984,15 @@ export default function MusicEntryClerkSearch() {
                     </FormControl>
 
                     <Box sx={{ flexGrow: 1 }} />
+                    {/* Add Clear Refine button */}
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      onClick={handleClearFilters}
+                      sx={{ ...buttonStyles2, mb: 2 }}
+                    >
+                      Clear
+                    </Button>
                     <Button
                       variant="contained"
                       fullWidth
@@ -968,97 +1004,126 @@ export default function MusicEntryClerkSearch() {
                   </Box>
                 </Grid>
 
-                {/* Search results section on the right */}
                 <Grid item xs={9}>
-                  {paginatedResults.length === 0 && hasSearched && (
-                    <Typography sx={{ fontFamily: "Montserrat" }}>
-                      No results found
-                    </Typography>
-                  )}
-
-                  {paginatedResults.length > 0 && (
-                    <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
-                      <List>
-                        {paginatedResults.map((item) => (
-                          <ListItemButton
-                            key={item._id}
-                            onClick={() =>
-                              navigate(`/clerk-music-score-view/${item._id}`)
-                            }
-                            sx={{
-                              "& .MuiTypography-root": {
-                                fontFamily: "Montserrat",
-                              },
-                            }}
-                          >
-                            <ListItemText
-                              primary={
-                                <Typography
-                                  sx={{
-                                    fontFamily: "Montserrat",
-                                    fontWeight: "bold",
-                                  }}
-                                >
-                                  {item.title}
-                                </Typography>
-                              }
-                              secondary={
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontFamily: "Montserrat" }}
-                                >
-                                  {`Genre: ${item.genre} | Composer: ${item.composer} | Artist: ${item.artist}`}
-                                </Typography>
-                              }
-                            />
-                          </ListItemButton>
-                        ))}
-                      </List>
-
-                      {/* Pagination */}
-                      <Box
-                        sx={{
-                          mt: 3,
-                          display: "flex",
-                          justifyContent: "center",
-                        }}
+                  <Box
+                    sx={{
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
+                    {" "}
+                    {paginatedResults.length === 0 && hasSearched && (
+                      <Typography
+                        variant="body1"
+                        sx={{ fontFamily: "Montserrat" }}
                       >
-                        <Pagination
-                          count={Math.ceil(
-                            (hasFiltered
-                              ? filteredResults.length
-                              : searchResults.length) / itemsPerPage
-                          )}
-                          page={page}
-                          onChange={handlePageChange}
-                          sx={{
-                            "& .MuiPaginationItem-root": {
-                              borderRadius: 2,
-                              fontFamily: "Montserrat",
-                              backgroundColor: "primary",
-                              color: "#000",
-                              "&.Mui-selected": {
-                                backgroundColor: "#8BD3E6", // Blue for selected
-                                color: "#fff",
+                        No results found
+                      </Typography>
+                    )}
+                    {paginatedResults.length > 0 && (
+                      <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
+                        <List>
+                          {paginatedResults.map((item) => (
+                            <ListItemButton
+                              key={item._id}
+                              onClick={() =>
+                                navigate(`/clerk-music-score-view/${item._id}`)
+                              }
+                            >
+                              <ListItemText
+                                primary={
+                                  <Typography
+                                    sx={{
+                                      fontFamily: "Montserrat",
+                                      fontWeight: "bold",
+                                    }}
+                                  >
+                                    {item.title}
+                                  </Typography>
+                                }
+                                secondary={
+                                  <Typography
+                                    variant="body2"
+                                    sx={{ fontFamily: "Montserrat" }}
+                                  >
+                                    {`Genre: ${item.genre} | Composer: ${item.composer} | Artist: ${item.artist}`}
+                                  </Typography>
+                                }
+                              />
+                            </ListItemButton>
+                          ))}
+                        </List>
+
+                        <Box sx={{ mt: "auto", py: 2 }}>
+                          <Pagination
+                            count={Math.ceil(
+                              (hasFiltered
+                                ? filteredResults.length
+                                : searchResults.length) / itemsPerPage
+                            )}
+                            page={page}
+                            onChange={handlePageChange}
+                            sx={{
+                              mt: 3,
+                              display: "flex",
+                              justifyContent: "center",
+                              "& .MuiPaginationItem-root": {
+                                borderRadius: 2,
+                                fontFamily: "Montserrat",
+                                backgroundColor: "primary",
+                                color: "#000",
+                                "&.Mui-selected": {
+                                  backgroundColor: "#8BD3E6", // Blue for selected
+                                  color: "#fff",
+                                  "&:hover": {
+                                    backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
+                                  },
+                                },
                                 "&:hover": {
-                                  backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
+                                  backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
                                 },
                               },
-                              "&:hover": {
-                                backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
-                              },
-                            },
-                          }}
-                        />
+                            }}
+                          />
+                        </Box>
                       </Box>
-                    </Box>
-                  )}
+                    )}
+                  </Box>
                 </Grid>
               </Grid>
             </Box>
           )}
-
           {/* Search Result Frontend Component End */}
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={2000} // Set the duration before the snackbar disappears
+            onClose={(event, reason) => {
+              if (reason === "clickaway") {
+                return; // Prevent snackbar from closing on clickaway if desired
+              }
+              handleSnackbarClose(); // Close the snackbar
+              if (snackbar.reload) {
+                window.location.reload(); // Reload the page after snackbar closes
+              }
+            }}
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          >
+            <Alert
+              onClose={handleSnackbarClose}
+              severity={snackbar.type === "error" ? "error" : "success"}
+              sx={{
+                width: "100%",
+                bgcolor: snackbar.type === "unfavorite" ? "#F44336" : "#4CAF50",
+                color: "white",
+                "& .MuiAlert-icon": {
+                  color: "white",
+                },
+              }}
+            >
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
         </Box>
       </Box>
     </>

@@ -298,7 +298,6 @@ app.post("/login", async (req, res) => {
         .json({ message: "Invalid username/email or password" });
     }
 
-
     // Reset failed login attempts after a successful login
     user.failedLoginAttempts = 0;
     user.lockUntil = null;
@@ -357,7 +356,6 @@ app.get("/logout", async (req, res) => {
   }
 });
 
-
 app.get("/preferences-options", async (req, res) => {
   try {
     const composers = await ABCFileModel.distinct("composer");
@@ -415,6 +413,20 @@ app.post("/preferences", async (req, res) => {
     if (client) {
       await client.close();
     }
+  }
+});
+
+app.get("/refine-search", async (req, res) => {
+  try {
+    const composers = await ABCFileModel.distinct("composer");
+    const genres = await ABCFileModel.distinct("genre");
+    const emotions = await ABCFileModel.distinct("emotion");
+    const instrumentation = await ABCFileModel.distinct("instrumentation");
+
+    res.status(200).json({ composers, genres, emotions, instrumentation });
+  } catch (error) {
+    console.error("Error fetching preferences:", error);
+    res.status(500).json({ error: "Failed to fetch preferences." });
   }
 });
 
