@@ -200,12 +200,18 @@ app.post('/predictGenre', async (req, res) => {
 // Additional endpoints
 app.get('/abc-file', async (req, res) => {
   try {
-    const abcFiles = await ABCFileModel.find({ deleted: false }).sort({ _id: -1 });
+    const { sortOrder = 'desc', sortBy = '_id' } = req.query;
+    const mongoSortOrder = sortOrder === 'asc' ? 1 : -1;
+    
+    const abcFiles = await ABCFileModel.find({ deleted: false })
+      .sort({ [sortBy]: mongoSortOrder });
+    
     res.status(200).json(abcFiles);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching files', error: err.message });
   }
 });
+
 
 app.get('/abc-file/:identifier', async (req, res) => {
   try {

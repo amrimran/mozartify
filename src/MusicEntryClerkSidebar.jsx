@@ -301,12 +301,13 @@ const ClerkSidebar = ({ active, disableActiveTab }) => {
               textTransform: "none",
               fontFamily: "Montserrat",
               fontWeight: "bold",
-              color: "#3B3183",
-              border: "1px solid #3B3183",
+              color: "white",
+              background: "#8BD3E6",
+              border: "1px solid #8BD3E6",
               borderRadius: "8px",
               padding: "8px 24px",
               "&:hover": {
-                bgcolor: "#ECEFF1",
+                bgcolor: "#6FBCCF",
               },
             }}
           >

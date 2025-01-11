@@ -36,8 +36,8 @@ import TestSearch from "./testSearch";
 import FileDownloaderPage from './FileDownloaderPage';
 import Success from "./Success";
 import Cancel from "./Cancel";
-// import MusicEntryClerkSearch from "./MusicEntryClerkSearch";
-// import MusicEntryClerkAdvSearch from "./MusicEntryClerkAdvSearch";
+import MusicEntryClerkSearch from "./MusicEntryClerkSearch";
+import MusicEntryClerkAdvSearch from "./MusicEntryClerkAdvSearch";
 import EmailVerification from "./EmailVerification";
 
 
@@ -88,8 +88,8 @@ function App() {
         <Route path="/cancel" element={<Cancel />} />
         <Route path="/test-session" element={<TestSession />} />
         <Route path="/test-search" element={<TestSearch />} />
-        {/* <Route path="/clerk-search" element={<MusicEntryClerkSearch />} />
-        <Route path="/clerk-search/clerk-advanced-search" element={<MusicEntryClerkAdvSearch />} /> */}
+        <Route path="/clerk-search" element={<MusicEntryClerkSearch />} />
+        <Route path="/clerk-search/clerk-advanced-search" element={<MusicEntryClerkAdvSearch />} />
         <Route path="/verify-email" element={<EmailVerification />} />
 
 

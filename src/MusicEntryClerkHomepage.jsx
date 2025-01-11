@@ -25,8 +25,9 @@ import { FilterAlt } from "@mui/icons-material";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
+import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
 
-// Add animation keyframes to GlobalStyle
+// Update animation keyframes to 2 seconds
 const GlobalStyle = createGlobalStyle`
   @keyframes skeleton-wave {
     0% {
@@ -127,6 +128,8 @@ export default function MusicEntryClerkHomepage() {
   const [emotion, setEmotion] = useState("");
 
   const [page, setPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [sortBy, setSortBy] = useState("_id"); // Add this state
 
   const navigate = useNavigate();
   const itemsPerPage = 12;
@@ -146,26 +149,84 @@ export default function MusicEntryClerkHomepage() {
     fetchUser();
   }, [navigate]);
 
+  const fetchMusicScores = async (order = "desc", field = "_id") => {
+    setLoading(true);
+    try {
+      // Add setTimeout to create a 2-second delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const response = await axios.get("http://localhost:3001/abc-file");
+      const transformedScores = response.data.map((score) => ({
+        ...score,
+        _id: score._id.$oid || score._id.toString() || score._id,
+        title: String(score.title || "Untitled"),
+        artist: String(score.artist || "Unknown Artist"),
+      }));
+
+      // Custom sorting logic
+      const sortedScores = transformedScores.sort((a, b) => {
+        const valueA = a[field] ? a[field].toString().toLowerCase() : "";
+        const valueB = b[field] ? b[field].toString().toLowerCase() : "";
+
+        if (field === "title") {
+          const isUnknownA = a.title === "Untitled";
+          const isUnknownB = b.title === "Untitled";
+
+          if (isUnknownA && !isUnknownB) return 1; // Untitled items go to the back
+          if (!isUnknownA && isUnknownB) return -1;
+
+          // If titles are known, sort by title; otherwise, sort by artist
+          return order === "asc"
+            ? valueA.localeCompare(valueB) ||
+                a.artist.toLowerCase().localeCompare(b.artist.toLowerCase())
+            : valueB.localeCompare(valueA) ||
+                b.artist.toLowerCase().localeCompare(a.artist.toLowerCase());
+        }
+
+        if (field === "artist") {
+          const isUnknownA = a.artist === "Unknown Artist";
+          const isUnknownB = b.artist === "Unknown Artist";
+
+          if (isUnknownA && !isUnknownB) return 1; // Unknown Artist items go to the back
+          if (!isUnknownA && isUnknownB) return -1;
+
+          // If artists are known, sort by artist; otherwise, sort by title
+          return order === "asc"
+            ? valueA.localeCompare(valueB) ||
+                a.title.toLowerCase().localeCompare(b.title.toLowerCase())
+            : valueB.localeCompare(valueA) ||
+                b.title.toLowerCase().localeCompare(a.title.toLowerCase());
+        }
+
+        // Default sorting for other fields
+        return order === "asc"
+          ? valueA.localeCompare(valueB)
+          : valueB.localeCompare(valueA);
+      });
+
+      setMusicScores(transformedScores);
+    } catch (error) {
+      console.error("Error fetching music scores:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update useEffect to include sortBy
   useEffect(() => {
-    const fetchMusicScores = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get("http://localhost:3001/abc-file");
-        const transformedScores = response.data.map((score) => ({
-          ...score,
-          _id: score._id.$oid || score._id.toString() || score._id,
-          title: String(score.title || "Untitled"),
-          artist: String(score.artist || "Unknown Artist"),
-        }));
-        setMusicScores(transformedScores);
-      } catch (error) {
-        console.error("Error fetching music scores:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchMusicScores();
-  }, []);
+    fetchMusicScores(sortOrder, sortBy);
+  }, [sortOrder, sortBy]);
+
+  // Modify the sort toggle handler
+  const handleSortToggle = () => {
+    const newOrder = sortOrder === "asc" ? "desc" : "asc";
+    setSortOrder(newOrder);
+  };
+
+  // Add handler for changing sort field
+  const handleSortByChange = (field) => {
+    setSortBy(field);
+  };
 
   useEffect(() => {
     // When search query changes, reset filters
@@ -193,30 +254,55 @@ export default function MusicEntryClerkHomepage() {
   }, [searchQuery]);
 
   const SkeletonCard = () => (
-    <Card sx={{ width: 210, boxShadow: "none" }}>
-      <Skeleton
-        variant="rectangular"
-        width={200}
-        height={280}
-        sx={{
-          borderRadius: 10,
-          animation: "skeleton-wave 1.5s ease-in-out 0.5s infinite",
-        }}
-      />
-      <CardContent>
+    <Card
+      sx={{
+        width: 210,
+        boxShadow: "none",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
+      <Box sx={{ padding: "10px" }}>
         <Skeleton
-          width="80%"
-          height={28}
+          variant="rectangular"
+          width={200}
+          height={280}
+          sx={{
+            borderRadius: 10,
+            animation: "skeleton-wave 1s ease-in-out infinite",
+          }}
+        />
+      </Box>
+      <CardContent
+        sx={{
+          padding: "16px 8px",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          "&:last-child": {
+            paddingBottom: "16px",
+          },
+        }}
+      >
+        <Skeleton
+          variant="text"
+          width="70%"
+          height={24}
           sx={{
             mb: 1,
-            animation: "skeleton-wave 1.5s ease-in-out 0.5s infinite",
+            animation: "skeleton-wave 1s ease-in-out infinite",
+            borderRadius: 0.5,
           }}
         />
         <Skeleton
-          width="60%"
+          variant="text"
+          width="50%"
           height={20}
           sx={{
-            animation: "skeleton-wave 1.5s ease-in-out 0.5s infinite",
+            animation: "skeleton-wave 1s ease-in-out infinite",
+            borderRadius: 0.5,
           }}
         />
       </CardContent>
@@ -325,42 +411,115 @@ export default function MusicEntryClerkHomepage() {
         >
           <ClerkSidebar active="dashboard" />
         </Box>
+
         <Box sx={{ flexGrow: 1, p: 3, pl: 5 }}>
           <Box
             sx={{
               display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
+              alignItems: "center", // Align all items vertically
+              justifyContent: "space-between",
               mb: 3,
-              gap: 2, // Space between search bar and filter button
+              mt: 2,
+              position: "relative",
+              height: 48, // Fixed height for consistency
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              {/* Sort field selector */}
+              <Select
+                value={sortBy}
+                onChange={(e) => handleSortByChange(e.target.value)}
+                sx={{
+                  height: 40,
+                  minWidth: 120,
+                  fontFamily: "Montserrat",
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#8BD3E6",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#8BD3E6",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#8BD3E6",
+                  },
+                }}
+              >
+                <MenuItem value="_id" sx={{ fontFamily: "Montserrat" }}>
+                  Date Added
+                </MenuItem>
+                <MenuItem value="title" sx={{ fontFamily: "Montserrat" }}>
+                  Title
+                </MenuItem>
+                <MenuItem value="artist" sx={{ fontFamily: "Montserrat" }}>
+                  Artist
+                </MenuItem>
+              </Select>
+
+              {/* Sort order toggle */}
+              <IconButton
+                onClick={handleSortToggle}
+                sx={{
+                  color: "#8BD3E6",
+                  height: 40,
+                  width: 40,
+                  "&:hover": {
+                    backgroundColor: "rgba(139, 211, 230, 0.1)",
+                  },
+                }}
+              >
+                {sortOrder === "asc" ? <ArrowUpward /> : <ArrowDownward />}
+              </IconButton>
+            </Box>
+
+            {/* Search and filter container */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                flex: 1,
+                maxWidth: 700,
+                mx: 4,
+              }}
+            >
               <Paper
                 component="form"
                 sx={{
-                  p: "6px 10px",
+                  p: "2px 4px",
                   display: "flex",
                   alignItems: "center",
-                  width: 600,
+                  width: "100%",
+                  height: 40,
                   border: "1px solid #8BD3E6",
                   borderRadius: "50px",
                 }}
               >
                 <InputBase
-                  sx={{ ml: 1, flex: 1, fontFamily: "Montserrat" }}
+                  sx={{
+                    ml: 2,
+                    flex: 1,
+                    fontFamily: "Montserrat",
+                    height: "100%",
+                  }}
                   placeholder="Look for music scores here..."
-                  inputProps={{ "aria-label": "search music scores" }}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </Paper>
               <IconButton
-                sx={{ p: "10px", ml: 2 }}
-                aria-label="filter"
+                sx={{
+                  height: 40,
+                  width: 40,
+                }}
                 onClick={() => setIsDrawerOpen(true)}
               >
-                <FilterAlt sx={{ color: "#00000" }} />
+                <FilterAlt />
               </IconButton>
 
               <Drawer
@@ -572,32 +731,25 @@ export default function MusicEntryClerkHomepage() {
               </Drawer>
             </Box>
 
+            {/* User info container */}
             <Box
               sx={{
-                position: "absolute",
-                top: 28,
-                right: 40,
                 display: "flex",
                 alignItems: "center",
+                gap: 2,
               }}
             >
               {user ? (
                 <>
-                  <Typography
-                    variant="body1"
-                    sx={{ mr: 2, fontFamily: "Montserrat" }}
-                  >
+                  <Typography variant="body1" sx={{ fontFamily: "Montserrat" }}>
                     {user?.username}
                   </Typography>
                   <Avatar
                     alt={user?.username}
-                    src={
-                      user && user?.profile_picture
-                        ? user?.profile_picture
-                        : null
-                    }
+                    src={user?.profile_picture || null}
+                    sx={{ height: 40, width: 40 }}
                   >
-                    {(!user || !user?.profile_picture) &&
+                    {!user?.profile_picture &&
                       user?.username.charAt(0).toUpperCase()}
                   </Avatar>
                 </>
@@ -610,7 +762,7 @@ export default function MusicEntryClerkHomepage() {
                     sx={{
                       mr: 2,
                       fontFamily: "Montserrat",
-                      animation: "skeleton-wave 1.5s ease-in-out 0.5s infinite",
+                      animation: "skeleton-wave 1s ease-in-out infinite",
                     }}
                   />
                   <Skeleton variant="circular" width={40} height={40} />
@@ -763,79 +915,7 @@ export default function MusicEntryClerkHomepage() {
               </Typography>
             )}
           </Box>
-          {/* {paginatedScores.length > 0 ? (
-            paginatedScores.map((score) => (
-              <Card
-                key={score._id}
-                sx={{
-                  width: 210,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  boxShadow: "none",
-                  cursor: "pointer",
-                }}
-                onClick={() => handleCardClick(score._id)}
-              >
-                <CardMedia
-                  component="img"
-                  height={280}
-                  image={score.coverImageUrl}
-                  alt={score.title}
-                  sx={{
-                    border: "2px solid #000",
-                    borderRadius: 10,
-                    width: 200,
-                  }}
-                />
-                <CardContent
-                  sx={{
-                    flexGrow: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontFamily: "Montserrat",
-                    width: "100%",
-                    textAlign: "center",
-                  }}
-                >
-                  <Typography
-                    variant="h6"
-                    noWrap
-                    sx={{
-                      mb: 1,
-                      fontFamily: "Montserrat",
-                      textOverflow: "ellipsis",
-                      overflow: "hidden",
-                      whiteSpace: "nowrap",
-                      width: "100%",
-                    }}
-                  >
-                    {score.title}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    noWrap
-                    sx={{
-                      fontFamily: "Montserrat",
-                      textOverflow: "ellipsis",
-                      overflow: "hidden",
-                      whiteSpace: "nowrap",
-                      width: "100%",
-                    }}
-                  >
-                    {score.artist}
-                  </Typography>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Typography variant="body2" sx={{ fontFamily: "Montserrat" }}>
-              No scores found
-            </Typography>
-          )} */}
+
           {paginatedScores.length > 0 && (
             <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
               <Pagination
@@ -850,11 +930,14 @@ export default function MusicEntryClerkHomepage() {
                     backgroundColor: "primary",
                     color: "#000",
                     "&.Mui-selected": {
-                      backgroundColor: "#8BD3E6",
+                      backgroundColor: "#8BD3E6", // Blue for selected
                       color: "#fff",
+                      "&:hover": {
+                        backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
+                      },
                     },
                     "&:hover": {
-                      backgroundColor: "#FFEE8C",
+                      backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
                     },
                   },
                 }}
