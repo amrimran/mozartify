@@ -80,7 +80,6 @@ export default function MusicEntryClerkSearch() {
   const [filteredResults, setFilteredResults] = useState([]);
   const [hasFiltered, setHasFiltered] = useState(false);
 
-
   const [showSearchResults, setShowSearchResults] = useState(false);
 
   const [page, setPage] = useState(1); // Track the current page
@@ -237,7 +236,6 @@ export default function MusicEntryClerkSearch() {
     setHasFiltered(true); // Set hasFiltered to true after applying filters
   };
 
-
   const paginatedResults = (
     hasFiltered ? filteredResults : searchResults
   ).slice((page - 1) * itemsPerPage, page * itemsPerPage);
@@ -258,8 +256,6 @@ export default function MusicEntryClerkSearch() {
     fetchUser();
   }, [navigate]);
 
- 
-
   const fetchMusicScores = async (combinedQueries, selectedCollection) => {
     try {
       const response = await axios.post("http://localhost:3000/search", {
@@ -273,7 +269,6 @@ export default function MusicEntryClerkSearch() {
       console.error("Error fetching music scores:", error);
     }
   };
-
 
   const handleSearch = () => {
     const combinedQueries = searchCriteria.reduce((acc, criteria, index) => {
@@ -693,7 +688,6 @@ export default function MusicEntryClerkSearch() {
               >
                 Back
               </Button>
-              
 
               {/* Buttons Container */}
               <Box
@@ -823,7 +817,7 @@ export default function MusicEntryClerkSearch() {
                       sx={{
                         fontFamily: "Montserrat, sans-serif",
                         textAlign: "center",
-                        mb:2,
+                        mb: 2,
                       }}
                     >
                       Refine Your Search
@@ -999,7 +993,12 @@ export default function MusicEntryClerkSearch() {
                           >
                             <ListItemText
                               primary={
-                                <Typography sx={{ fontFamily: "Montserrat", fontWeight:"bold" }}>
+                                <Typography
+                                  sx={{
+                                    fontFamily: "Montserrat",
+                                    fontWeight: "bold",
+                                  }}
+                                >
                                   {item.title}
                                 </Typography>
                               }
@@ -1012,10 +1011,6 @@ export default function MusicEntryClerkSearch() {
                                 </Typography>
                               }
                             />
-
-
-                           
-
                           </ListItemButton>
                         ))}
                       </List>
