@@ -230,98 +230,133 @@ app.get("/verify-email", async (req, res) => {
   }
 });
 
+app.get("/login", async (req, res) => {
+  try {
+    // Check if there's an active session
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "No active session" });
+    }
+
+    // Find the user
+    const user = await UserModel.findById(req.session.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Return the same information as the POST login endpoint
+    res.json({
+      message: "Success",
+      userId: user._id,
+      role: user.role,
+      first_timer: user.first_timer,
+      approval: user.approval,
+    });
+  } catch (err) {
+    console.error("Server error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // Backend (Express)
 app.post("/login", async (req, res) => {
   const { username_or_email, password } = req.body;
 
-  // Input validation
-  if (!username_or_email || !password) {
-    return res.status(400).json({
-      message: "Username/email and password are required",
-    });
-  }
-
   try {
-    // Find the user by email or username
     const user = await UserModel.findOne({
-      $or: [
-        { email: username_or_email.toLowerCase() }, // Case insensitive search
-        { username: username_or_email.toLowerCase() },
-      ],
+      $or: [{ email: username_or_email }, { username: username_or_email }],
     });
 
     if (!user) {
-      return res.status(400).json({
-        message: "Invalid username/email or password",
+      return res
+        .status(400)
+        .json({ message: "Invalid username/email or password" });
+    }
+
+    // Check if the account is locked
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      return res.status(403).json({
+        message: `Account locked. Please try again after ${Math.ceil(
+          (user.lockUntil - Date.now()) / 60000
+        )} minutes.`,
       });
     }
 
-    // Always use bcrypt compare for consistency
-    let isPasswordValid = false;
-
-    if (user.password.startsWith("$2b$")) {
-      // Password is already hashed
-      isPasswordValid = await bcrypt.compare(password, user.password);
-    } else {
-      // Legacy plain text password - compare and update if valid
-      isPasswordValid = password === user.password;
-
-      if (isPasswordValid) {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        user.password = hashedPassword;
-        await user.save();
-      }
-    }
+    // Compare the hashed password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return res.status(400).json({
-        message: "Invalid username/email or password",
-      });
+      user.failedLoginAttempts += 1;
+
+      // Lock account after 10 failed attempts
+      if (user.failedLoginAttempts >= 10) {
+        user.lockUntil = new Date(Date.now() + 60 * 60 * 1000); // Lock for 1 hour
+      }
+
+      await user.save();
+      return res
+        .status(400)
+        .json({ message: "Invalid username/email or password" });
     }
 
-    // Check approval status for music entry clerk
-    if (user.role === "music_entry_clerk" && user.approval === "pending") {
+
+    // Reset failed login attempts after a successful login
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
+
+    // Check if the user is already logged in on another device
+    if (user.sessionId && user.sessionId !== req.session.id) {
       return res.status(403).json({
-        message: "Your account is awaiting approval. Please contact the admin.",
+        message:
+          "You are already logged in on another device/browser. Please log out first.",
       });
     }
 
-    // Create session
-    req.session.userId = user._id;
-    req.session.role = user.role; // Store role in session
+    // Save session ID to prevent multiple device logins
+    user.sessionId = req.session.id;
+    await user.save();
 
-    return new Promise((resolve, reject) => {
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error:", err);
-          reject(err);
-        }
-        resolve();
-      });
-    })
-      .then(() => {
-        res.json({
-          message: "Success",
-          userId: user._id,
-          role: user.role,
-          first_timer: user.first_timer,
-          approval: user.approval,
-        });
-      })
-      .catch((err) => {
-        res.status(500).json({
-          message: "Error saving session",
-          error: err.message,
-        });
-      });
+    req.session.userId = user._id;
+
+    res.json({
+      message: "Success",
+      userId: user._id,
+      role: user.role,
+      first_timer: user.first_timer,
+      approval: user.approval,
+    });
   } catch (err) {
     console.error("Server error:", err);
-    res.status(500).json({
-      message: "Internal server error",
-      error: err.message,
-    });
+    res.status(500).json({ message: "Internal server error" });
   }
 });
+
+// Endpoint to handle logout and clear session ID
+app.get("/logout", async (req, res) => {
+  try {
+    const userId = req.session.userId; // Retrieve the logged-in user's ID from the session
+
+    if (userId) {
+      // Find the user in the database and set sessionId to null
+      await UserModel.findByIdAndUpdate(userId, { sessionId: null });
+
+      // Destroy the session
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Session destroy error:", err);
+          return res.status(500).json({ message: "Failed to log out" });
+        }
+
+        res.json({ message: "Logged out successfully" });
+      });
+    } else {
+      res.status(400).json({ message: "No active session to log out" });
+    }
+  } catch (err) {
+    console.error("Error during logout:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 
 app.get("/preferences-options", async (req, res) => {
   try {
@@ -668,24 +703,24 @@ app.get("/current-user", isAuthenticated, (req, res) => {
     });
 });
 
-app.delete("/user/delete", async (req, res) => {
-  const userId = req.session.userId;
+// app.delete("/user/delete", async (req, res) => {
+//   const userId = req.session.userId;
 
-  try {
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+//   try {
+//     if (!userId) {
+//       return res.status(401).json({ message: "Unauthorized" });
+//     }
 
-    const user = await UserModel.findByIdAndDelete(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+//     const user = await UserModel.findByIdAndDelete(userId);
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
 
-    res.json({ message: "Account deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err });
-  }
-});
+//     res.json({ message: "Account deleted successfully" });
+//   } catch (err) {
+//     res.status(500).json({ message: "Server error", error: err });
+//   }
+// });
 
 app.get("/search-music-scores", async (req, res) => {
   const { query } = req.query;

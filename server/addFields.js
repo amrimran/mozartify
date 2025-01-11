@@ -11,19 +11,19 @@ mongoose
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // Define Feedback schema
-const feedbackSchema = new mongoose.Schema({}, { strict: false });
-const Feedback = mongoose.model("Feedback", feedbackSchema);
+const userSchema = new mongoose.Schema({}, { strict: false });
+const User = mongoose.model("User", userSchema);
 
 // Update all documents in the Feedback collection
 const updateFeedbackFields = async () => {
   try {
-    const result = await Feedback.updateMany(
+    const result = await User.updateMany(
       {},
       {
         $set: {
-          feedbackDate: new Date(), // Set feedbackDate to current date
-          replyMessage: null,      // Set replyMessage to null
-          replyDate: null,         // Set replyDate to null
+          failedLoginAttempts: 0, // Add default value
+          lockUntil: null, // Add default value
+          sessionId: null, // Add default value
         },
       }
     );

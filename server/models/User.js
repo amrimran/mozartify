@@ -21,14 +21,13 @@ const UserSchema = new mongoose.Schema({
     required: true,
     default: true,
   }, // Indicates if the user is logging in for the first time
+  failedLoginAttempts: { type: Number, default: 0 }, // To track login attempts
+  lockUntil: { type: Date, default: null }, // Lockout period
+  sessionId: { type: String, default: null }, // To track active session
   composer_preferences: [{ type: String }], // List of preferred composers
   genre_preferences: [{ type: String }], // List of preferred genres
   emotion_preferences: [{ type: String }], // List of preferred emotions
 });
-
-// // Add a compound index to ensure unique username + role and email + role
-// userSchema.index({ username: 1, role: 1 }, { unique: true });
-// userSchema.index({ email: 1, role: 1 }, { unique: true });
 
 const UserModel = mongoose.model("User", UserSchema);
 
