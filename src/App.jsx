@@ -18,6 +18,7 @@ import MusicEntryClerkHomepage from "./MusicEntryClerkHomepage";
 import MusicEntryClerkUpload from "./MusicEntryClerkUpload";
 import MusicEntryClerkPreview from "./MusicEntryClerkPreview";
 import MusicEntryClerkCatalog from "./MusicEntryClerkCatalog";
+import ScrollControlledVideo from "./ScrollControlledVideo";
 import CustomerInbox from "./CustomerInbox";
 import MusicEntryClerkEdit from "./MusicEntryClerkEdit";
 import MusicEntryClerkProfile from "./MusicEntryClerkProfile";
@@ -84,6 +85,7 @@ function App() {
         <Route path="/admin-manage-users" element={<AdminManageUsers />} />
         <Route path="/admin-edit" element={<AdminEdit />} />
         <Route path="/admin-catalog" element={<AdminCatalog />} />
+        <Route path="/scroll-controlled-video" element={<ScrollControlledVideo />} />
         <Route path="/success" element={<Success />} />
         <Route path="/cancel" element={<Cancel />} />
         <Route path="/test-session" element={<TestSession />} />

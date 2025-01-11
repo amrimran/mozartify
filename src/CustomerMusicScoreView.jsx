@@ -94,6 +94,65 @@ export default function CustomerMusicScoreView() {
     5: "Perfect",
   };
 
+  const dialogStyles = {
+    dialogPaper: {
+      borderRadius: "16px",
+      padding: "10px",
+      fontFamily: "Montserrat",
+    },
+    title: {
+      fontFamily: "Montserrat",
+      fontWeight: "bold",
+      fontSize: "20px",
+      textAlign: "center",
+    },
+    content: {
+      fontFamily: "Montserrat",
+      textAlign: "center",
+    },
+    contentText: {
+      fontFamily: "Montserrat",
+      fontSize: "16px",
+      color: "#555",
+    },
+    actions: {
+      justifyContent: "center",
+      gap: "12px",
+      marginTop: "8px",
+    },
+    button: {
+      textTransform: "none",
+      fontFamily: "Montserrat",
+      fontWeight: "bold",
+      color: "#FFFFFF",
+      backgroundColor: "#8BD3E6",
+      border: "1px solid #8BD3E6",
+      borderRadius: "8px",
+      padding: "8px 24px",
+      boxShadow: "none",
+      "&:hover": {
+        boxShadow: "none",
+
+        backgroundColor: "#6FBCCF",
+        borderColor: "#6FBCCF",
+      },
+    },
+    deletebutton: {
+      textTransform: "none",
+      fontFamily: "Montserrat",
+      fontWeight: "bold",
+      color: "#FFFFFF",
+      backgroundColor: "#DB2226",
+      border: "1px solid #DB2226",
+      borderRadius: "8px",
+      padding: "8px 24px",
+      "&:hover": {
+        backgroundColor: "#B71C1C",
+        borderColor: "#B71C1C",
+      },
+    },
+  };
+
   const buttonStyles = {
     px: 10,
     fontFamily: "Montserrat",
@@ -1202,27 +1261,30 @@ export default function CustomerMusicScoreView() {
                     </Typography>
 
                     {/* Dialog for Locked Feature */}
-                    <Dialog open={openTempoDialog} onClose={closeTempoDialog}>
+                    <Dialog
+                      open={openTempoDialog}
+                      onClose={closeTempoDialog}
+                      PaperProps={{
+                        sx: dialogStyles.dialogPaper,
+                      }}
+                    >
                       <DialogTitle
                         sx={{
-                          fontFamily: "Montserrat",
-                          fontWeight: "bold",
-                          textAlign: "center",
+                          ...dialogStyles.title,
                         }}
                       >
                         Feature Locked
                       </DialogTitle>
                       <DialogContent
                         sx={{
-                          fontFamily: "Montserrat",
-                          display: "flex", // Enable flexbox
-                          flexDirection: "column", // Arrange children vertically
-                          justifyContent: "center", // Center children vertically
-                          alignItems: "center", // Center children horizontally
-                          textAlign: "center", // Center text alignment
+                          ...dialogStyles.content,
                         }}
                       >
-                        <Typography>
+                        <Typography
+                          sx={{
+                            ...dialogStyles.contentText,
+                          }}
+                        >
                           The tempo feature is locked until you purchase this
                           score. Once purchased, you can adjust the tempo from{" "}
                           <strong>
@@ -1237,15 +1299,13 @@ export default function CustomerMusicScoreView() {
                       </DialogContent>
                       <DialogActions
                         sx={{
-                          display: "flex", // Enable flexbox
-                          justifyContent: "center", // Center children horizontally
-                          alignItems: "center", // Center children vertically (not necessary for buttons, but for alignment consistency)
+                          ...dialogStyles.actions,
                         }}
                       >
                         <Button
                           onClick={closeTempoDialog}
                           sx={{
-                            ...buttonStyles,
+                            ...dialogStyles.button,
                           }}
                         >
                           OK

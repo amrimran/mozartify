@@ -13,6 +13,7 @@
     "@stripe/react-stripe-js": "^2.8.0",
     "@stripe/stripe-js": "^4.3.0",
     "axios": "^1.7.3",
+    "bcrypt": "^5.1.1",
     "connect-mongo": "^5.1.0",
     "connect-mongodb-session": "^5.0.0",
     "cors": "^2.8.5",
@@ -31,6 +32,7 @@
     "xml2abc": "https://wim.vree.org/js/xml2abc.tgz"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
     "nodemon": "^3.1.4"
   },
   "description": ""
