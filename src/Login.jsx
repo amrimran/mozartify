@@ -130,53 +130,66 @@ export default function Login() {
     };
   }, []);
 
-  const handleLogin = (e) => {
+  // Frontend (React) - Modified handleLogin
+  const handleLogin = async (e) => {
     e.preventDefault();
-
-    // Clear any previous error message
     setErrorMessage("");
 
-    axios
-      .post("http://localhost:3000/login", { username_or_email, password })
-      .then((result) => {
-        const { message, role, first_timer, approval } = result.data;
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/login",
+        { username_or_email, password },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true, // Important for session cookies
+        }
+      );
 
-        if (message === "Success") {
-          // Check role and handle navigation
-          if (role === "music_entry_clerk" && approval === "pending") {
-            setErrorMessage(
-              "Your account is awaiting approval. Please contact the admin."
-            );
-          } else if (first_timer && role === "customer") {
-            navigate("/first-time-login");
-          } else if (role === "customer") {
-            navigate("/customer-homepage");
-          } else if (role === "music_entry_clerk") {
+      const { message, role, first_timer, approval } = response.data;
+
+      if (message === "Success") {
+        switch (role) {
+          case "music_entry_clerk":
+            if (approval === "pending") {
+              setErrorMessage(
+                "Your account is awaiting approval. Please contact the admin."
+              );
+              return;
+            }
             navigate("/clerk-homepage");
-          } else if (role === "admin") {
+            break;
+          case "customer":
+            navigate(first_timer ? "/first-time-login" : "/customer-homepage");
+            break;
+          case "admin":
             navigate("/admin-dashboard");
-          } else {
+            break;
+          default:
             navigate("/login");
-          }
-        } else {
-          // Generic error handling if "message" is not "Success"
-          setErrorMessage("Login failed. Please try again.");
         }
-      })
-      .catch((err) => {
-        console.error("Login error:", err);
+      }
+    } catch (err) {
+      console.error("Login error:", err);
 
-        // Handle specific error responses from the backend
-        if (err.response && err.response.status === 403) {
-          setErrorMessage(err.response.data.message); // Display the backend error message
-        } else if (err.response && err.response.status === 400) {
-          setErrorMessage("Invalid username/email or password");
-        } else {
-          setErrorMessage(
-            "An unexpected error occurred. Please try again later."
-          );
-        }
-      });
+      if (err.response) {
+        // Server responded with error
+        const errorMessage =
+          err.response.data.message || "Login failed. Please try again.";
+        setErrorMessage(errorMessage);
+      } else if (err.request) {
+        // Request made but no response
+        setErrorMessage(
+          "Unable to connect to server. Please check your internet connection."
+        );
+      } else {
+        // Error in request setup
+        setErrorMessage(
+          "An unexpected error occurred. Please try again later."
+        );
+      }
+    }
   };
 
   const handleClickShowPassword = () => {

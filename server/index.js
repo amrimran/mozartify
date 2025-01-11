@@ -11,6 +11,8 @@ const { PythonShell } = require("python-shell");
 const path = require("path");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const bodyParser = require("body-parser");
+const bcrypt = require("bcrypt");
+const SALT_ROUNDS = 10; // Number of hashing rounds
 
 const UserModel = require("./models/User");
 const PurchaseModel = require("./models/Purchase");
@@ -20,11 +22,12 @@ const ABCFileModel = require("./models/ABCFile");
 
 const app = express();
 
-app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:5173",
-    credentials: true,
+    origin: "http://localhost:5173", // Your frontend URL
+    credentials: true, // Important for cookies/sessions
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type"],
   })
 );
 
@@ -51,6 +54,7 @@ app.use(
   })
 );
 
+app.use(express.json());
 mongoose.connect(process.env.DB_URI);
 
 const transporter = nodemailer.createTransport({
@@ -168,10 +172,13 @@ app.post("/signup", async (req, res) => {
       }
     }
 
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
     const newUser = new UserModel({
       username,
       email,
-      password,
+      password: hashedPassword, // Store hashed password
       role,
       approval: role === "customer" ? "approved" : "pending",
       first_timer: true,
@@ -181,7 +188,7 @@ app.post("/signup", async (req, res) => {
 
     if (role === "customer") {
       const token = jwt.sign(
-        { username, email, password, role },
+        { username, email, role },
         process.env.JWT_SECRET,
         { expiresIn: "1h" }
       );
@@ -223,50 +230,96 @@ app.get("/verify-email", async (req, res) => {
   }
 });
 
+// Backend (Express)
 app.post("/login", async (req, res) => {
   const { username_or_email, password } = req.body;
+
+  // Input validation
+  if (!username_or_email || !password) {
+    return res.status(400).json({
+      message: "Username/email and password are required",
+    });
+  }
 
   try {
     // Find the user by email or username
     const user = await UserModel.findOne({
-      $or: [{ email: username_or_email }, { username: username_or_email }],
+      $or: [
+        { email: username_or_email.toLowerCase() }, // Case insensitive search
+        { username: username_or_email.toLowerCase() },
+      ],
     });
 
     if (!user) {
-      return res.status(400).json({ message: "No record existed" });
+      return res.status(400).json({
+        message: "Invalid username/email or password",
+      });
     }
 
-    if (user.password !== password) {
-      return res.status(400).json({ message: "The password is incorrect" });
+    // Always use bcrypt compare for consistency
+    let isPasswordValid = false;
+
+    if (user.password.startsWith("$2b$")) {
+      // Password is already hashed
+      isPasswordValid = await bcrypt.compare(password, user.password);
+    } else {
+      // Legacy plain text password - compare and update if valid
+      isPasswordValid = password === user.password;
+
+      if (isPasswordValid) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user.password = hashedPassword;
+        await user.save();
+      }
     }
 
-    // Check if the user is a "music_entry_clerk" and their approval is pending
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        message: "Invalid username/email or password",
+      });
+    }
+
+    // Check approval status for music entry clerk
     if (user.role === "music_entry_clerk" && user.approval === "pending") {
       return res.status(403).json({
         message: "Your account is awaiting approval. Please contact the admin.",
       });
     }
 
-    // Save the session if the user is approved or does not require approval
+    // Create session
     req.session.userId = user._id;
-    req.session.save((err) => {
-      if (err) {
-        console.log("Session save error:", err);
-        return res
-          .status(500)
-          .json({ message: "Session save error", error: err });
-      }
-      res.json({
-        message: "Success",
-        userId: user._id,
-        role: user.role,
-        first_timer: user.first_timer,
-        approval: user.approval, // Pass approval status to the frontend
+    req.session.role = user.role; // Store role in session
+
+    return new Promise((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          reject(err);
+        }
+        resolve();
       });
-    });
+    })
+      .then(() => {
+        res.json({
+          message: "Success",
+          userId: user._id,
+          role: user.role,
+          first_timer: user.first_timer,
+          approval: user.approval,
+        });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          message: "Error saving session",
+          error: err.message,
+        });
+      });
   } catch (err) {
     console.error("Server error:", err);
-    res.status(500).json({ message: "Server error", error: err });
+    res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
+    });
   }
 });
 
@@ -395,12 +448,10 @@ app.post("/reset-password", async (req, res) => {
     // Validate the new password
     const passwordRegex = /^(?=.*\d)[a-zA-Z\d]{8,}$/; // At least 8 characters, includes one number
     if (!passwordRegex.test(newPassword)) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Password must be at least 8 characters long and include a number",
-        });
+      return res.status(400).json({
+        message:
+          "Password must be at least 8 characters long and include a number",
+      });
     }
 
     // Fetch the user by ID
@@ -411,8 +462,11 @@ app.post("/reset-password", async (req, res) => {
       return res.status(400).json({ message: "Invalid or expired token" });
     }
 
-    // Update the user's password (not hashed, as per your request)
-    user.password = newPassword;
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    // Update the user's password
+    user.password = hashedPassword;
     await user.save();
 
     // Send success response
@@ -536,13 +590,30 @@ app.put("/user/change-password", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Simple string comparison since password is stored as plain text
-    if (currentPassword !== user.password) {
+    // Compare the current password
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+    if (!isPasswordValid) {
       return res.status(400).json({ message: "Current password is incorrect" });
     }
 
-    // Update with new password (as plain string)
-    user.password = newPassword;
+    // Validate the new password
+    const passwordRegex = /^(?=.*\d)[a-zA-Z\d]{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({
+        message:
+          "Password must be at least 8 characters long and include a number",
+      });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    // Update the password
+    user.password = hashedPassword;
     await user.save();
 
     res.json({ message: "Password updated successfully" });
