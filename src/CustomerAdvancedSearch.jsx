@@ -5,8 +5,8 @@ import {
   Divider,
   Box,
   List,
-  Tabs,
-  Tab,
+  Snackbar,
+  Alert,
   ListItemIcon,
   ListItemText,
   ListItemButton,
@@ -69,110 +69,70 @@ export default function CustomerAdvancedSearch() {
   const [selectedInstruments, setselectedInstruments] = useState([]);
   const [selectedEmotions, setselectedEmotions] = useState([]);
   const [queryPreview, setQueryPreview] = useState("");
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    type: "", // Add this to handle snackbar type (e.g., "cart", "favorite", etc.)
+  });
 
-  //search results refine variables
-  const genreList = [
-    "Classical",
-    "Jazz",
-    "Rock",
-    "Pop",
-    "Electronic",
-    "Blues",
-    "Country",
-    "HipHop",
-    "Reggae",
-    "R&B",
-    "Folk",
-    "Metal",
-    "Punk",
-    "Soul",
-    "Opera",
-    "Latin",
-    "Indie",
-    "Experimental",
-    "Techno",
-    "House",
-    "Ambient",
-    "Funk",
-    "Disco",
-    "Psychedelic",
-    "Gospel",
-    "Ska",
-    "Alternative",
-    "NewAge",
-    "World",
-    "Dancehall",
-    "KPop",
-    "Afrobeat",
-    "Reggaeton",
-  ];
+  // Replace the hardcoded lists and add these state variables at the top of your CustomerSearch component:
+  const [genreList, setGenreList] = useState([]);
+  const [composerList, setComposerList] = useState([]);
+  const [instrumentationList, setInstrumentationList] = useState([]); // Changed from instrumentList
+  const [emotionList, setEmotionList] = useState([]);
 
-  const composerList = [
-    "Beethoven",
-    "Chopin",
-    "Debussy",
-    "Erik Satie",
-    "Gershwin",
-    "Holst",
-    "Liszt",
-    "Mozart",
-    "Pachelbel",
-    "Ravel",
-  ];
+  // Add this useEffect hook after your other useEffect hooks:
+  useEffect(() => {
+    const fetchRefineLists = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/refine-search");
+        const { composers, genres, emotions, instrumentation } = response.data;
 
-  const instrumentList = [
-    "All",
-    "Strings",
-    "Woodwind",
-    "Brass",
-    "Percussion",
-    "Keyboard",
-    "Guitar",
-    "Violin",
-    "Cello",
-    "DoubleBass",
-    "Flute",
-    "Clarinet",
-    "Saxophone",
-    "Oboe",
-    "Bassoon",
-    "Trumpet",
-    "Trombone",
-    "FrenchHorn",
-    "Tuba",
-    "Drums",
-    "SnareDrum",
-    "BassDrum",
-    "Cymbals",
-    "Timpani",
-    "Xylophone",
-    "Piano",
-    "Organ",
-    "Harpsichord",
-    "ElectricGuitar",
-    "AcousticGuitar",
-    "BassGuitar",
-    "Harp",
-    "Accordion",
-    "Mandolin",
-    "Sitar",
-    "Bagpipes",
-    "Marimba",
-    "Vibraphone",
-    "Tambourine",
-    "Glockenspiel",
-  ];
+        setComposerList(composers);
+        setGenreList(genres);
+        setEmotionList(emotions);
+        setInstrumentationList(instrumentation); // Changed from instruments
+      } catch (error) {
+        console.error("Error fetching refine search lists:", error);
+      }
+    };
 
-  const emotionList = [
-    "Energetic",
-    "Happy",
-    "Joyful",
-    "Majestic",
-    "Melancholic",
-    "Peaceful",
-    "Relaxed",
-    "Sad",
-  ];
+    fetchRefineLists();
+  }, []);
+
+  const buttonStyles2 = {
+    px: 5,
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#8BD3E6",
+    backgroundColor: "#FFFFFF",
+    border: "1px solid #8BD3E6",
+    borderColor: "#8BD3E6",
+    boxShadow: "none",
+    "&:hover": {
+      boxShadow: "none",
+      backgroundColor: "#E6F8FB", // Subtle light blue hover effect
+      color: "#7AB9C4", // Slightly darker shade of the text
+      borderColor: "#7AB9C4", // Matches the text color for consistency
+    },
+  };
+
+  const buttonStyles = {
+    px: 10,
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    backgroundColor: "#8BD3E6",
+    border: "1px solid #8BD3E6",
+    borderColor: "#8BD3E6",
+    boxShadow: "none",
+    "&:hover": {
+      boxShadow: "none",
+      backgroundColor: "#6FBCCF", // Slightly darker blue for hover
+      color: "#FFFFFF", // Keeps the text color consistent
+      borderColor: "#6FBCCF", // Matches the background color for cohesion
+    },
+  };
 
   //search results refine functions
   const handlePageChange = (event, value) => {
@@ -429,6 +389,11 @@ export default function CustomerAdvancedSearch() {
         musicScoreId: scoreId,
       });
       setAddedToCartScores([...addedToCartScores, scoreId]);
+      setSnackbar({
+        open: true,
+        message: "Added to cart successfully!",
+        type: "cart",
+      });
     } catch (error) {
       console.error("Error adding to cart:", error);
     }
@@ -436,8 +401,22 @@ export default function CustomerAdvancedSearch() {
 
   const toggleFavorite = async (musicScoreId) => {
     try {
+      const isFavorite = user?.favorites?.includes(musicScoreId);
+
       const response = await axios.post("http://localhost:3000/set-favorites", {
         musicScoreId,
+        action: isFavorite ? "remove" : "add", // Explicitly specify the action
+      });
+      setFavorites(response.data.favorites);
+
+      // Show appropriate snackbar message
+      setSnackbar({
+        open: true,
+        message: isFavorite
+          ? "Removed from favorites successfully!"
+          : "Added to favorites successfully!",
+        type: isFavorite ? "unfavorite" : "favorite",
+        reload: true, // Add a flag to determine whether to reload after snackbar
       });
       setFavorites(response.data.favorites);
     } catch (error) {
@@ -531,7 +510,6 @@ export default function CustomerAdvancedSearch() {
   };
   const handleSearch = () => {
     const combinedQueries = parseQueryPreview(queryPreview);
-    alert(JSON.stringify(combinedQueries, null, 2));
 
     setShowSearchResults(true); // change from basic search to search result on main section
 
@@ -552,13 +530,16 @@ export default function CustomerAdvancedSearch() {
     setShowSearchResults(!showSearchResults); // Toggle the visibility of the search results
   };
 
-  const searchOptionsMap = {
-    title: "Title",
-    genre: "Genre",
-    emotion: "Emotion",
-    composer: "Composer",
-    artist: "Artist",
-    instrumentation: "Instrumentation",
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return; // Prevent snackbar from closing on clickaway (optional)
+    }
+
+    setSnackbar({
+      open: false,
+      message: "",
+      type: "",
+    });
   };
 
   const GlobalStyle = createGlobalStyle`
@@ -679,6 +660,7 @@ export default function CustomerAdvancedSearch() {
                         marginLeft: "10px",
                         border: "none",
                         outline: "none",
+                        fontFamily: "'Montserrat', sans-serif",
                         "& .MuiSelect-select": {
                           padding: 0,
                           fontWeight: "bold",
@@ -689,15 +671,46 @@ export default function CustomerAdvancedSearch() {
                         "& .MuiOutlinedInput-notchedOutline": {
                           display: "none",
                         },
-                        "&:focus .MuiSelect-select": {
-                          borderBottom: `2px solid #FFD700`,
+                        "&:hover:not(.Mui-disabled):before": {
+                          borderBottom: "2px solid #8BD3E6",
+                        },
+                        "&:focus-within:before": {
+                          borderBottom: "2px solid #8BD3E6",
                         },
                       }}
                     >
-                      <MenuItem value="All">All</MenuItem>
-                      <MenuItem value="Lecturers">Lecturers</MenuItem>
-                      <MenuItem value="Students">Students</MenuItem>
-                      <MenuItem value="Freelancers">Freelancers</MenuItem>
+                      <MenuItem
+                        value="All"
+                        sx={{
+                          fontFamily: "'Montserrat', sans-serif",
+                        }}
+                      >
+                        All
+                      </MenuItem>
+                      <MenuItem
+                        value="Lecturers"
+                        sx={{
+                          fontFamily: "'Montserrat', sans-serif",
+                        }}
+                      >
+                        Lecturers
+                      </MenuItem>
+                      <MenuItem
+                        value="Students"
+                        sx={{
+                          fontFamily: "'Montserrat', sans-serif",
+                        }}
+                      >
+                        Students
+                      </MenuItem>
+                      <MenuItem
+                        value="Freelancers"
+                        sx={{
+                          fontFamily: "'Montserrat', sans-serif",
+                        }}
+                      >
+                        Freelancers
+                      </MenuItem>
                     </Select>
                   </Box>
 
@@ -844,10 +857,10 @@ export default function CustomerAdvancedSearch() {
                         color: "white",
                         backgroundColor: "#78BBCC",
                         fontFamily: "Montserrat, sans-serif",
-                        boxShadow:"none",
+                        boxShadow: "none",
                         "&:hover": {
                           backgroundColor: "#67ADC1",
-                          boxShadow:"none",
+                          boxShadow: "none",
                         },
                       }}
                     >
@@ -910,7 +923,6 @@ export default function CustomerAdvancedSearch() {
                             },
                             mb: 3,
                           }}
-                          
                         />
 
                         <Box
@@ -935,14 +947,7 @@ export default function CustomerAdvancedSearch() {
                           <Box sx={{ display: "flex", gap: 2 }}>
                             <Button
                               variant="outlined"
-                              sx={{
-                                fontFamily: "Montserrat, sans-serif",
-                                borderColor: "#67ADC1", // Border color stays the same
-                                color: "#67ADC1", // Ensure the text color is white
-                                "&:hover": {
-                                  borderColor: "#67ADC1", // Border color stays the same on hover
-                                },
-                              }}
+                              sx={buttonStyles2}
                               onClick={clearQueryPreview}
                             >
                               Clear
@@ -952,16 +957,7 @@ export default function CustomerAdvancedSearch() {
                               onClick={handleSearch}
                               disabled={!queryPreview}
                               startIcon={<SearchIcon />} // Add the search icon
-                              sx={{
-                                fontFamily: "Montserrat, sans-serif",
-                                backgroundColor: "#78BBCC", // Set the background color for the contained button
-                                borderColor: "#78BBCC", // Border color stays the same
-                                color: "#FFFFFF", // Ensure the text color is white
-                                "&:hover": {
-                                  backgroundColor: "#67ADC1", // Darker background color on hover
-                                  borderColor: "#78BBCC", // Border color stays the same on hover
-                                },
-                              }}
+                              sx={buttonStyles}
                             >
                               Search
                             </Button>
@@ -1009,18 +1005,38 @@ export default function CustomerAdvancedSearch() {
                               sx={{
                                 marginLeft: 2,
                                 fontFamily: "Montserrat, sans-serif",
-                                height: "36px", // Adjust the height here (default is around 56px)
+                                height: "36px", // Adjust the height of the Select component
                                 "& .MuiInputBase-root": {
-                                  height: "100%", // Ensures the input area height is also consistent
-                                  padding: "0 12px", // Optional: Adjusts padding inside the input box
+                                  height: "100%", // Consistent height for the input area
+                                  padding: "0 12px", // Padding inside the input box
                                 },
                                 "& .MuiOutlinedInput-notchedOutline": {
-                                  borderRadius: "4px", // Optional: Customize border radius if needed
+                                  borderRadius: "4px", // Custom border radius
+                                  borderColor: "#8BD3E6", // Optional: Light blue border by default
                                 },
+                                "&:hover .MuiOutlinedInput-notchedOutline": {
+                                  borderColor: "#8BD3E6", // Light blue border on hover
+                                },
+                                "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                  {
+                                    borderColor: "#8BD3E6", // Light blue border on focus
+                                  },
                               }}
                             >
-                              <MenuItem value="default">Default</MenuItem>
-                              <MenuItem value="alphabetical">
+                              <MenuItem
+                                value="default"
+                                sx={{
+                                  fontFamily: "Montserrat, sans-serif",
+                                }}
+                              >
+                                Default
+                              </MenuItem>
+                              <MenuItem
+                                value="alphabetical"
+                                sx={{
+                                  fontFamily: "Montserrat, sans-serif",
+                                }}
+                              >
                                 Alphabetical
                               </MenuItem>
                             </Select>
@@ -1084,24 +1100,110 @@ export default function CustomerAdvancedSearch() {
                 alignItems: "center",
                 justifyContent: "flex-start",
                 gap: 2,
-                p: 2,
+                mt: 1,
+                ml: 2,
               }}
             >
               <Button
                 variant="contained"
                 onClick={handleToggleSearchResults}
-                startIcon={<ArrowBackIcon />} // Add the left arrow icon here
-                sx={{
-                  mt: 2,
-                  backgroundColor: "#78BBCC",
-                  color: "#ffffff",
-                  "&:hover": {
-                    backgroundColor: "#67ADC1",
-                  },
-                }}
+                startIcon={<ArrowBackIcon />}
+                sx={buttonStyles2}
               >
                 Back
               </Button>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                  gap: 2,
+                  overflowX: "auto",
+                  flexGrow: 1,
+                  maxWidth: "50vw",
+                }}
+              >
+                {hasFiltered && selectedGenres.length > 0 && (
+                  <Button
+                    sx={{
+                      backgroundColor: "#A2DCEB",
+                      color: "white",
+                      borderRadius: 50,
+                      padding: "8px 16px",
+                      textTransform: "none",
+                      height: "40px",
+                      display: "flex",
+                      alignItems: "center",
+                      whiteSpace: "nowrap",
+                      fontFamily: "Montserrat",
+                    }}
+                    disabled
+                  >
+                    {getButtonText("Genre", selectedGenres)}
+                  </Button>
+                )}
+
+                {hasFiltered && selectedComposers.length > 0 && (
+                  <Button
+                    sx={{
+                      backgroundColor: "#A2DCEB",
+                      color: "white",
+                      borderRadius: 50,
+                      padding: "8px 16px",
+                      textTransform: "none",
+                      height: "40px",
+                      display: "flex",
+                      alignItems: "center",
+                      whiteSpace: "nowrap",
+                      fontFamily: "Montserrat",
+                    }}
+                    disabled
+                  >
+                    {getButtonText("Composer", selectedComposers)}
+                  </Button>
+                )}
+
+                {hasFiltered && selectedInstruments.length > 0 && (
+                  <Button
+                    sx={{
+                      backgroundColor: "#A2DCEB",
+                      color: "white",
+                      borderRadius: 50,
+                      padding: "8px 16px",
+                      textTransform: "none",
+                      height: "40px",
+                      display: "flex",
+                      alignItems: "center",
+                      whiteSpace: "nowrap",
+                      fontFamily: "Montserrat",
+                    }}
+                    disabled
+                  >
+                    {getButtonText("Instrumentation", selectedInstruments)}
+                  </Button>
+                )}
+
+                {hasFiltered && selectedEmotions.length > 0 && (
+                  <Button
+                    sx={{
+                      backgroundColor: "#A2DCEB",
+                      color: "white",
+                      borderRadius: 50,
+                      padding: "8px 16px",
+                      textTransform: "none",
+                      height: "40px",
+                      display: "flex",
+                      alignItems: "center",
+                      whiteSpace: "nowrap",
+                      fontFamily: "Montserrat",
+                    }}
+                    disabled
+                  >
+                    {getButtonText("Emotion", selectedEmotions)}
+                  </Button>
+                )}
+              </Box>
             </Box>
           )}
 
@@ -1109,21 +1211,25 @@ export default function CustomerAdvancedSearch() {
             <Box
               sx={{
                 flexGrow: 1,
-                height: "calc(100vh - 200px)", // Adjust this value based on your header/navigation height
+                height: "calc(100vh - 200px)",
                 width: "100%",
-                overflow: "hidden", // Prevent outer box from scrolling
+                overflow: "hidden",
                 p: 2,
               }}
             >
-              <Grid container spacing={2}>
-                {/* Refinement section on the left */}
+              {/* Main content grid */}
+              <Grid
+                container
+                spacing={2}
+                sx={{ flexGrow: 1, overflow: "hidden" }}
+              >
+                {/* Refine search sidebar */}
                 <Grid item xs={3}>
                   <Box
                     sx={{
                       p: 2,
                       border: "1px solid #ddd",
                       borderRadius: 1,
-
                       display: "flex",
                       flexDirection: "column",
                     }}
@@ -1131,27 +1237,38 @@ export default function CustomerAdvancedSearch() {
                     <Typography
                       variant="h6"
                       gutterBottom
-                      sx={{
-                        fontFamily: "Montserrat, sans-serif",
-                        textAlign: "center",
-                      }}
+                      sx={{ fontFamily: "Montserrat", textAlign: "center" }}
                     >
                       Refine Your Search
                     </Typography>
 
-                    {/* Filters for Genre, Composer, Instrument, Emotion */}
                     <FormControl fullWidth sx={{ mb: 2 }}>
-                      <InputLabel>Genre</InputLabel>
+                      <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                        Genre
+                      </InputLabel>
                       <Select
                         multiple
                         value={selectedGenres}
                         onChange={handleGenreChange}
                         label="Genre"
                         renderValue={(selected) => selected.join(", ")}
-                        sx={{ borderRadius: "16px" }}
+                        sx={{
+                          borderRadius: "16px",
+                          fontFamily: "Montserrat",
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#8BD3E6",
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#8BD3E6",
+                          },
+                        }}
                       >
                         {genreList.map((genre) => (
-                          <MenuItem key={genre} value={genre}>
+                          <MenuItem
+                            key={genre}
+                            value={genre}
+                            sx={{ fontFamily: "Montserrat" }}
+                          >
                             {genre}
                           </MenuItem>
                         ))}
@@ -1159,17 +1276,32 @@ export default function CustomerAdvancedSearch() {
                     </FormControl>
 
                     <FormControl fullWidth sx={{ mb: 2 }}>
-                      <InputLabel>Composer</InputLabel>
+                      <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                        Composer
+                      </InputLabel>
                       <Select
                         multiple
                         value={selectedComposers}
                         onChange={handleComposerChange}
                         label="Composer"
                         renderValue={(selected) => selected.join(", ")}
-                        sx={{ borderRadius: "16px" }}
+                        sx={{
+                          borderRadius: "16px",
+                          fontFamily: "Montserrat",
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#8BD3E6",
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#8BD3E6",
+                          },
+                        }}
                       >
                         {composerList.map((composer) => (
-                          <MenuItem key={composer} value={composer}>
+                          <MenuItem
+                            key={composer}
+                            value={composer}
+                            sx={{ fontFamily: "Montserrat" }}
+                          >
                             {composer}
                           </MenuItem>
                         ))}
@@ -1177,17 +1309,32 @@ export default function CustomerAdvancedSearch() {
                     </FormControl>
 
                     <FormControl fullWidth sx={{ mb: 2 }}>
-                      <InputLabel>Instrument</InputLabel>
+                      <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                        Instrumentation
+                      </InputLabel>
                       <Select
                         multiple
                         value={selectedInstruments}
                         onChange={handleInstrumentChange}
-                        label="Instrument"
+                        label="Instrumentation"
                         renderValue={(selected) => selected.join(", ")}
-                        sx={{ borderRadius: "16px" }}
+                        sx={{
+                          borderRadius: "16px",
+                          fontFamily: "Montserrat",
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#8BD3E6",
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#8BD3E6",
+                          },
+                        }}
                       >
-                        {instrumentList.map((instrument) => (
-                          <MenuItem key={instrument} value={instrument}>
+                        {instrumentationList.map((instrument) => (
+                          <MenuItem
+                            key={instrument}
+                            value={instrument}
+                            sx={{ fontFamily: "Montserrat" }}
+                          >
                             {instrument}
                           </MenuItem>
                         ))}
@@ -1195,17 +1342,32 @@ export default function CustomerAdvancedSearch() {
                     </FormControl>
 
                     <FormControl fullWidth sx={{ mb: 2 }}>
-                      <InputLabel>Emotion</InputLabel>
+                      <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                        Emotion
+                      </InputLabel>
                       <Select
                         multiple
                         value={selectedEmotions}
                         onChange={handleEmotionChange}
                         label="Emotion"
                         renderValue={(selected) => selected.join(", ")}
-                        sx={{ borderRadius: "16px" }}
+                        sx={{
+                          borderRadius: "16px",
+                          fontFamily: "Montserrat",
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#8BD3E6",
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#8BD3E6",
+                          },
+                        }}
                       >
                         {emotionList.map((emotion) => (
-                          <MenuItem key={emotion} value={emotion}>
+                          <MenuItem
+                            key={emotion}
+                            value={emotion}
+                            sx={{ fontFamily: "Montserrat" }}
+                          >
                             {emotion}
                           </MenuItem>
                         ))}
@@ -1213,116 +1375,179 @@ export default function CustomerAdvancedSearch() {
                     </FormControl>
 
                     <Box sx={{ flexGrow: 1 }} />
+                    {/* Add Clear Refine button */}
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      onClick={handleClearFilters}
+                      sx={{ ...buttonStyles2, mb: 2 }}
+                    >
+                      Clear
+                    </Button>
                     <Button
                       variant="contained"
                       fullWidth
                       onClick={handleRefineClick}
-                      sx={{
-                        backgroundColor: "#78BBCC",
-                        color: "#ffffff",
-                        "&:hover": {
-                          backgroundColor: "#67ADC1",
-                        },
-                        width: "100%",
-                        mb: 2,
-                      }}
+                      sx={buttonStyles}
                     >
                       Refine
                     </Button>
                   </Box>
                 </Grid>
 
-                {/* Search results section on the right */}
                 <Grid item xs={9}>
-                  {paginatedResults.length === 0 && hasSearched && (
-                    <Typography variant="body1">No results found</Typography>
-                  )}
-
-                  {paginatedResults.length > 0 && (
-                    <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
-                      <List>
-                        {paginatedResults.map((item) => (
-                          <ListItemButton
-                            key={item._id}
-                            onClick={() =>
-                              navigate(
-                                `/customer-library/customer-music-score-view/${item._id}`
-                              )
-                            }
-                          >
-                            <ListItemText
-                              primary={item.title}
-                              secondary={`Genre: ${item.genre} | Composer: ${item.composer} | Artist: ${item.artist}`}
-                            />
-
-                            <ListItemIcon>
-                              {!purchasedScores.includes(item._id) &&
-                                !addedToCartScores.includes(item._id) && (
-                                  <IconButton
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      addToCart(item._id);
+                  <Box
+                    sx={{
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
+                    {" "}
+                    {paginatedResults.length === 0 && hasSearched && (
+                      <Typography
+                        variant="body1"
+                        sx={{ fontFamily: "Montserrat" }}
+                      >
+                        No results found
+                      </Typography>
+                    )}
+                    {paginatedResults.length > 0 && (
+                      <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
+                        <List>
+                          {paginatedResults.map((item) => (
+                            <ListItemButton
+                              key={item._id}
+                              onClick={() =>
+                                navigate(
+                                  `/customer-library/customer-music-score-view/${item._id}`
+                                )
+                              }
+                            >
+                              <ListItemText
+                                primary={
+                                  <Typography
+                                    sx={{
+                                      fontFamily: "Montserrat",
+                                      fontWeight: "bold",
                                     }}
                                   >
-                                    <ShoppingCartIcon />
-                                  </IconButton>
-                                )}
-                            </ListItemIcon>
+                                    {item.title}
+                                  </Typography>
+                                }
+                                secondary={
+                                  <Typography
+                                    variant="body2"
+                                    sx={{ fontFamily: "Montserrat" }}
+                                  >
+                                    {`Genre: ${item.genre} | Composer: ${item.composer} | Artist: ${item.artist}`}
+                                  </Typography>
+                                }
+                              />
 
-                            <ListItemIcon>
-                              <IconButton
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleFavorite(item._id);
-                                }}
-                              >
-                                <Favorite
-                                  color={
-                                    favorites.includes(item._id)
-                                      ? "error"
-                                      : "disabled"
-                                  }
-                                />
-                              </IconButton>
-                            </ListItemIcon>
+                              <ListItemIcon>
+                                {!purchasedScores.includes(item._id) &&
+                                  !addedToCartScores.includes(item._id) && (
+                                    <IconButton
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        addToCart(item._id);
+                                      }}
+                                    >
+                                      <ShoppingCartIcon />
+                                    </IconButton>
+                                  )}
+                              </ListItemIcon>
 
-                            <ListItemIcon>
-                              <IconButton
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // Handle play button action here
-                                }}
-                              >
-                                <PlayArrow />
-                              </IconButton>
-                            </ListItemIcon>
-                          </ListItemButton>
-                        ))}
-                      </List>
+                              <ListItemIcon>
+                                <IconButton
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleFavorite(item._id);
+                                  }}
+                                >
+                                  <Favorite
+                                    color={
+                                      favorites.includes(item._id)
+                                        ? "error"
+                                        : "disabled"
+                                    }
+                                  />
+                                </IconButton>
+                              </ListItemIcon>
+                            </ListItemButton>
+                          ))}
+                        </List>
 
-                      {/* Pagination */}
-                      <Pagination
-                        count={Math.ceil(
-                          (hasFiltered
-                            ? filteredResults.length
-                            : searchResults.length) / itemsPerPage
-                        )}
-                        page={page}
-                        onChange={handlePageChange}
-                        sx={{
-                          mt: 3,
-                          display: "flex",
-                          justifyContent: "center",
-                        }}
-                      />
-                    </Box>
-                  )}
+                        <Box sx={{ mt: "auto", py: 2 }}>
+                          <Pagination
+                            count={Math.ceil(
+                              (hasFiltered
+                                ? filteredResults.length
+                                : searchResults.length) / itemsPerPage
+                            )}
+                            page={page}
+                            onChange={handlePageChange}
+                            sx={{
+                              mt: 3,
+                              display: "flex",
+                              justifyContent: "center",
+                              "& .MuiPaginationItem-root": {
+                                borderRadius: 2,
+                                fontFamily: "Montserrat",
+                                backgroundColor: "primary",
+                                color: "#000",
+                                "&.Mui-selected": {
+                                  backgroundColor: "#8BD3E6", // Blue for selected
+                                  color: "#fff",
+                                  "&:hover": {
+                                    backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
+                                  },
+                                },
+                                "&:hover": {
+                                  backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
+                                },
+                              },
+                            }}
+                          />
+                        </Box>
+                      </Box>
+                    )}
+                  </Box>
                 </Grid>
               </Grid>
             </Box>
           )}
-
           {/* Search Result Frontend Component End */}
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={2000} // Set the duration before the snackbar disappears
+            onClose={(event, reason) => {
+              if (reason === "clickaway") {
+                return; // Prevent snackbar from closing on clickaway if desired
+              }
+              handleSnackbarClose(); // Close the snackbar
+              if (snackbar.reload) {
+                window.location.reload(); // Reload the page after snackbar closes
+              }
+            }}
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          >
+            <Alert
+              onClose={handleSnackbarClose}
+              severity={snackbar.type === "error" ? "error" : "success"}
+              sx={{
+                width: "100%",
+                bgcolor: snackbar.type === "unfavorite" ? "#F44336" : "#4CAF50",
+                color: "white",
+                "& .MuiAlert-icon": {
+                  color: "white",
+                },
+              }}
+            >
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
         </Box>
       </Box>
     </>
