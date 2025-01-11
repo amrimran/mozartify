@@ -25,7 +25,6 @@ axios.defaults.withCredentials = true;
 
 const CustomerSidebar = ({ active }) => {
   const currentPath = window.location.pathname;
-
   const handleNavigation = async (path, key) => {
     if (key === "logout") {
       try {

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios"; // Add this import
 import {
   Box,
   List,
@@ -29,6 +30,28 @@ const ClerkSidebar = ({ active, disableActiveTab }) => {
   const location = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate(); // Initialize useNavigate
+
+  const handleNavigation = async (path, key) => {
+    if (key === "logout") {
+      try {
+        // Call the backend logout endpoint
+        await axios.get("http://localhost:3000/logout", {
+          withCredentials: true,
+        });
+
+        // Clear any client-side session-related data if needed
+        localStorage.removeItem("loggedInUserId");
+
+        // Redirect to the login page
+        window.location.href = "/login";
+      } catch (error) {
+        console.error("Error during logout:", error);
+        alert("Failed to log out. Please try again.");
+      }
+    } else {
+      window.location.href = path;
+    }
+  };
 
   const navigationItems = [
     {
@@ -76,7 +99,12 @@ const ClerkSidebar = ({ active, disableActiveTab }) => {
       icon: <AccountCircleIcon />,
       key: "profile",
     },
-    { path: "/login", label: "Logout", icon: <ExitToAppIcon />, key: "logout" },
+    {
+      path: "/login",
+      label: "Logout",
+      icon: <ExitToAppIcon />,
+      key: "logout",
+    },
   ];
 
   // Define keyframes for the animation
@@ -101,11 +129,9 @@ const ClerkSidebar = ({ active, disableActiveTab }) => {
     ) {
       setDialogOpen(true);
     } else if (tabKey !== active) {
-      const targetPath = navigationItems.find(
-        (item) => item.key === tabKey
-      )?.path;
-      if (targetPath) {
-        window.location.href = targetPath;
+      const targetItem = navigationItems.find((item) => item.key === tabKey);
+      if (targetItem) {
+        handleNavigation(targetItem.path, targetItem.key);
       }
     }
   };
@@ -213,8 +239,7 @@ const ClerkSidebar = ({ active, disableActiveTab }) => {
           {bottomNavigationItems.map((item) => (
             <ListItemButton
               key={item.path}
-              component={Link}
-              to={item.path}
+              onClick={() => handleNavigation(item.path, item.key)}
               sx={{
                 bgcolor:
                   active === item.key || location.pathname === item.path
