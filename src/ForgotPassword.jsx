@@ -6,6 +6,8 @@ import {
   TextField,
   Button,
   CircularProgress,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { createGlobalStyle } from "styled-components";
@@ -17,60 +19,119 @@ const FormContainer = styled(Box)(({ theme }) => ({
   backgroundColor: "#FFFFFF",
   borderRadius: "20px",
   boxShadow: "0px 3px 6px rgba(0,0,0,1)",
-  padding: 80,
-  width: "100%", // Ensure it takes full width of the screen for smaller devices
-  maxWidth: 500, // Set a max width for larger screens
-  minWidth: 300, // Set a minimum width for the form to prevent it from becoming too wide
+  padding: theme.spacing(4),
+  width: "60%",
+  maxWidth: "400px",
+  minWidth: "280px",
   display: "flex",
   flexDirection: "column",
   justifyContent: "center",
   alignItems: "center",
   fontFamily: "Montserrat",
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  margin: "0 auto",
+  
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(3),
+    width: "80%",
+    minWidth: "240px",
+    maxWidth: "320px"
+  },
+  
+  [theme.breakpoints.between('sm', 'md')]: {
+    padding: theme.spacing(3.5),
+    width: "65%",
+    maxWidth: "360px"
+  },
+  
+  [theme.breakpoints.between('md', 'lg')]: {
+    padding: theme.spacing(4),
+    width: "55%",
+    maxWidth: "400px"
+  },
+  
+  [theme.breakpoints.up('xl')]: {
+    padding: theme.spacing(5),
+    maxWidth: "450px",
+    width: "50%"
+  }
 }));
 
-const BackgroundContainer = styled(Box)(() => ({
+const BackgroundContainer = styled(Box)(({ theme }) => ({
   backgroundColor: "#f5f5f5",
   backgroundImage: `url(${backgroundImage})`,
   backgroundSize: "cover",
   backgroundRepeat: "no-repeat",
   backgroundAttachment: "fixed",
-  backgroundPosition: "right",
+  backgroundPosition: "center",
   minHeight: "100vh",
   width: "100vw",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  flexDirection: "column",
+  position: "relative",
   margin: 0,
   overflow: "hidden",
   fontFamily: "Montserrat",
+  
+  [theme.breakpoints.down('sm')]: {
+    backgroundPosition: "center",
+    minHeight: "100dvh" // Use dynamic viewport height for mobile
+  },
+  
+  [theme.breakpoints.up('xl')]: {
+    backgroundPosition: "center"
+  }
 }));
 
-const LoginButton = styled(Button)({
-  width: "200px",
+const LoginButton = styled(Button)(({ theme }) => ({
+  width: "180px",
   marginTop: "16px",
-  padding: "8px 80px",
+  padding: "10px 32px",
   fontFamily: "Montserrat",
   fontWeight: "bold",
   color: "#8BD3E6",
   backgroundColor: "#FFFFFF",
   border: "1px solid #8BD3E6",
+  borderRadius: "8px",
   "&:hover": {
     backgroundColor: "#E6F8FB",
     color: "#7AB9C4",
     borderColor: "#7AB9C4",
   },
-});
+  
+  [theme.breakpoints.down('sm')]: {
+    width: "140px",
+    padding: "8px 24px",
+    fontSize: "0.875rem",
+    marginTop: "8px"
+  },
+  
+  [theme.breakpoints.between('sm', 'md')]: {
+    width: "160px",
+    padding: "9px 28px",
+    fontSize: "0.9rem"
+  },
+  
+  [theme.breakpoints.up('xl')]: {
+    width: "200px",
+    padding: "12px 36px",
+    fontSize: "1rem"
+  }
 
-const SubmitButton = styled(Button)({
-  width: "200px",
+  
+}));
+
+const SubmitButton = styled(Button)(({ theme }) => ({
+  width: "180px",
   marginTop: "16px",
-  padding: "8px 80px",
+  padding: "10px 32px",
   fontFamily: "Montserrat",
   fontWeight: "bold",
   color: "#FFFFFF",
   backgroundColor: "#8BD3E6",
   border: "1px solid #8BD3E6",
+  borderRadius: "8px",
   "&:hover": {
     backgroundColor: "#6FBCCF",
     borderColor: "#6FBCCF",
@@ -80,46 +141,73 @@ const SubmitButton = styled(Button)({
     borderColor: "#ccc",
     color: "#FFFFFF",
   },
-});
+  
+  [theme.breakpoints.down('sm')]: {
+    width: "140px",
+    padding: "8px 24px",
+    fontSize: "0.875rem",
+    marginTop: "8px"
+  },
+  
+  [theme.breakpoints.between('sm', 'md')]: {
+    width: "160px",
+    padding: "9px 28px",
+    fontSize: "0.9rem"
+  },
+  
+  [theme.breakpoints.up('xl')]: {
+    width: "200px",
+    padding: "12px 36px",
+    fontSize: "1rem"
+  }
 
-const textFieldStyles = {
+  
+
+}));
+
+const getTextFieldStyles = (theme) => ({
   "& label.Mui-focused": {
-    color: "#8BD3E6", // Primary color for focused label
-    fontWeight: "bold", // Emphasis on focus
+    color: "#8BD3E6",
+    fontWeight: "bold",
   },
   fontFamily: "Montserrat",
   "& .MuiInputBase-root": {
     fontFamily: "Montserrat",
-    borderRadius: "12px", // Slightly more rounded corners
-    boxShadow: "0px 4px 6px rgba(139, 211, 230, 0.2)", // Subtle shadow in primary color
-    backgroundColor: "rgba(235, 251, 255, 0.9)", // Complementary light cyan for background
+    borderRadius: "12px",
+    boxShadow: "0px 4px 6px rgba(139, 211, 230, 0.2)",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    [theme.breakpoints.down('sm')]: {
+      fontSize: "0.875rem",
+    },
+    [theme.breakpoints.up('xl')]: {
+      fontSize: "1.1rem",
+    }
   },
   "& .MuiFormLabel-root": {
     fontFamily: "Montserrat",
-    fontSize: "15px", // Readable font size
-    color: "#467B89", // Muted teal for a clean look
-  },
-  "& .MuiInput-underline:after": {
-    borderBottomColor: "#8BD3E6", // Primary color for underline focus
-    transform: "scaleX(1)", // Smooth underline animation
-    borderWidth: "2px", // Enhanced visibility
+    fontSize: "15px",
+    color: "#467B89",
+    [theme.breakpoints.down('sm')]: {
+      fontSize: "0.875rem",
+    },
+    [theme.breakpoints.up('xl')]: {
+      fontSize: "1.1rem",
+    }
   },
   "& .MuiOutlinedInput-root": {
     "& fieldset": {
-      borderColor: "#C8EAF2", // Light complementary color for default border
+      borderColor: "#C8EAF2",
     },
     "&:hover fieldset": {
-      borderColor: "#8BD3E6", // Primary color for hover
-      boxShadow: "0px 6px 16px rgba(139, 211, 230, 0.4)", // Glow effect on hover
+      borderColor: "#8BD3E6",
+      boxShadow: "0px 6px 16px rgba(139, 211, 230, 0.4)",
     },
     "&.Mui-focused fieldset": {
-      borderColor: "#8BD3E6", // Primary color for focus
-      boxShadow: "0px 8px 20px rgba(139, 211, 230, 0.6)", // Stronger shadow for focus
-    },
-    borderRadius: "12px", // Consistent design with input base
-    backgroundColor: "rgba(255, 255, 255, 0.9)", // Neutral white for contrast
-  },
-};
+      borderColor: "#8BD3E6",
+      boxShadow: "0px 8px 20px rgba(139, 211, 230, 0.6)",
+    }
+  }
+});
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -130,22 +218,23 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 export default function ForgotPassword() {
-  const [email, setEmail] = useState(""); // Track the email value
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
+  const isXLScreen = useMediaQuery(theme.breakpoints.up('xl'));
+  
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [disabled, setDisabled] = useState(false); // Track if the button should be disabled
-  const timeoutRef = useRef(null); // Ref to store timeout ID
+  const [disabled, setDisabled] = useState(false);
+  const timeoutRef = useRef(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Prevent multiple submissions
-    if (loading || disabled) {
-      return;
-    }
+    if (loading || disabled) return;
 
     setLoading(true);
-    setMessage(""); // Clear previous messages
+    setMessage("");
 
     axios
       .post("http://localhost:3000/forgot-password", { email })
@@ -154,17 +243,14 @@ export default function ForgotPassword() {
           text: "We have sent you an email to reset your password.",
           type: "success",
         });
-
-        // Disable the button for 1 minute
         setDisabled(true);
         timeoutRef.current = setTimeout(() => {
-          setDisabled(false); // Re-enable the button after 1 minute
-        }, 60000); // 60000ms = 1 minute
+          setDisabled(false);
+        }, 60000);
       })
       .catch((error) => {
-        // Handle specific error messages from the backend
         if (error.response && error.response.status === 400) {
-          setMessage({ text: error.response.data.message, type: "error" }); // Show error message in red
+          setMessage({ text: error.response.data.message, type: "error" });
         } else {
           setMessage({
             text: "An error occurred. Please try again.",
@@ -177,15 +263,19 @@ export default function ForgotPassword() {
       });
   };
 
-  // Reset the disable timer when email changes
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
-
-    // Clear timeout and re-enable the button
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       setDisabled(false);
     }
+  };
+
+  const getLogoSize = () => {
+    if (isMobile) return "60px";
+    if (isTablet) return "75px";
+    if (isXLScreen) return "120px";
+    return "90px";
   };
 
   return (
@@ -193,12 +283,8 @@ export default function ForgotPassword() {
       <style>
         {`
           @keyframes rotateLogo {
-            0% {
-              transform: rotate(0deg); // Start from 0 degrees
-            }
-            100% {
-              transform: rotate(360deg); // Rotate to 360 degrees
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
           }
         `}
       </style>
@@ -208,31 +294,38 @@ export default function ForgotPassword() {
           src={SidebarMozartifyLogo}
           alt="MozartifyIcon"
           style={{
-            position: "fixed", // Fix the position relative to the viewport
-            top: 10, // Place it at the top of the screen
-            left: 10, // Place it at the left of the screen
-            maxWidth: "100%", // Ensure it scales properly
-            maxHeight: "90px", // Set a fixed height for the logo
-            zIndex: 10, // Ensure it's always on top of other elements
-            animation: "rotateLogo 5s linear infinite", // Apply the rotation animation
+            position: "fixed",
+            top: isMobile ? 5 : 10,
+            left: isMobile ? 5 : 10,
+            maxHeight: getLogoSize(),
+            zIndex: 10,
+            animation: "rotateLogo 5s linear infinite",
+            cursor: "pointer"
           }}
-          onClick={() => window.location.replace("http://localhost:5173")} // Redirect on click
+          onClick={() => window.location.replace("http://localhost:5173")}
         />
         <FormContainer component="form" onSubmit={handleSubmit}>
           <Typography
-            variant="h5"
+            variant={isMobile ? "h6" : isXLScreen ? "h4" : "h5"}
             align="center"
             fontWeight="bold"
             gutterBottom
-            sx={{ fontFamily: "Montserrat", marginBottom: 1 }}
+            sx={{ 
+              fontFamily: "Montserrat", 
+              marginBottom: isMobile ? 0.5 : 1 
+            }}
           >
             Forgot Password
           </Typography>
           <Typography
-            variant="body1"
+            variant={isMobile ? "body2" : isXLScreen ? "h6" : "body1"}
             align="center"
             color="textSecondary"
-            sx={{ fontFamily: "Montserrat", marginBottom: 3 }}
+            sx={{ 
+              fontFamily: "Montserrat", 
+              marginBottom: isMobile ? 2 : 3,
+              padding: isMobile ? "0 10px" : 0
+            }}
           >
             Enter your email to request a password reset link
           </Typography>
@@ -242,22 +335,22 @@ export default function ForgotPassword() {
             margin="normal"
             variant="outlined"
             required
-            value={email} // The value should be controlled here
-            onChange={handleEmailChange} // Proper state update and reset on change
-            sx={textFieldStyles}
+            value={email}
+            onChange={handleEmailChange}
+            sx={getTextFieldStyles(theme)}
           />
-          {/* Reserve space for the error or success message */}
           <Typography
-            color={message.type === "error" ? "error" : "black"} // Red for error, default for success
-            variant="body2"
+            color={message.type === "error" ? "error" : "black"}
+            variant={isMobile ? "body2" : "body1"}
             sx={{
               mt: 2,
               fontFamily: "Montserrat",
-              textAlign: "center", // Centers the text horizontally
-              minHeight: "24px", // Reserve space for a single line of text
+              textAlign: "center",
+              minHeight: "24px",
+              fontSize: isMobile ? "0.75rem" : isXLScreen ? "1.1rem" : "0.875rem"
             }}
           >
-            {message.text || " "} {/* Placeholder to maintain space */}
+            {message.text || " "}
           </Typography>
 
           <Box
@@ -265,8 +358,9 @@ export default function ForgotPassword() {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              gap: 2,
+              gap: isMobile ? 1 : 2,
               mt: 0,
+              flexDirection: "row"
             }}
           >
             <LoginButton to="/login" component={Link}>
@@ -274,7 +368,10 @@ export default function ForgotPassword() {
             </LoginButton>
             <SubmitButton type="submit" disabled={loading || disabled}>
               {loading ? (
-                <CircularProgress size={24} sx={{ color: "#FFFFFF" }} />
+                <CircularProgress 
+                  size={isMobile ? 20 : 24} 
+                  sx={{ color: "#FFFFFF" }} 
+                />
               ) : (
                 "Submit"
               )}

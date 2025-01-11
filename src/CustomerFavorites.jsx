@@ -18,6 +18,8 @@ import {
   TextField,
   Select,
   MenuItem,
+  Snackbar,
+  Alert
 } from "@mui/material";
 import {
   FavoriteBorder,
@@ -56,6 +58,12 @@ export default function CustomerFavorites() {
   const [emotion, setEmotion] = useState("");
 
   const navigate = useNavigate();
+
+  const [snackbar, setSnackbar] = useState({
+      open: false,
+      message: "",
+      type: "",
+    });
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -207,14 +215,71 @@ export default function CustomerFavorites() {
     }
   };
 
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return; // Prevent snackbar from closing on clickaway (optional)
+    }
+
+    setSnackbar({
+      open: false,
+      message: "",
+      type: "",
+    });
+  };
   const toggleFavorite = async (musicScoreId) => {
     try {
+      const isFavorite = user?.favorites?.includes(musicScoreId);
+
+      // Optimistically update the favorites locally for instant feedback
+      setFavorites((prevFavorites) => {
+        if (isFavorite) {
+          // Remove from favorites
+          return prevFavorites.filter((favId) => favId !== musicScoreId);
+        } else {
+          // Add to favorites
+          return [...prevFavorites, musicScoreId];
+        }
+      });
+
+      // Send the request to the server
       const response = await axios.post("http://localhost:3000/set-favorites", {
         musicScoreId,
+        action: isFavorite ? "remove" : "add", // Explicitly specify the action
       });
+
+      // Update the favorites with the server response (ensures consistency)
       setFavorites(response.data.favorites);
+
+      // Show appropriate snackbar message
+      setSnackbar({
+        open: true,
+        message: isFavorite
+          ? "Removed from favorites successfully!"
+          : "Added to favorites successfully!",
+        type: isFavorite ? "unfavorite" : "favorite",
+        reload: true, // Add a flag to determine whether to reload after snackbar
+      });
     } catch (error) {
       console.error("Error updating favorites:", error);
+
+      // Revert the optimistic update in case of an error
+      setFavorites((prevFavorites) => {
+        if (favorites) {
+          // Add back the removed favorite
+          return [...prevFavorites, musicScoreId];
+        } else {
+          // Remove the added favorite
+          return prevFavorites.filter((favId) => favId !== musicScoreId);
+        }
+      });
+
+      // Optionally show an error snackbar
+      setSnackbar({
+        open: true,
+        message: "Failed to update favorites. Please try again.",
+        type: "error",
+        reload: false, // No reload on error
+      });
     }
   };
 
@@ -538,6 +603,35 @@ export default function CustomerFavorites() {
             </List>
           </Box>
         </Box>
+        <Snackbar
+                open={snackbar.open}
+                autoHideDuration={2000} // Set the duration before the snackbar disappears
+                onClose={(event, reason) => {
+                  if (reason === "clickaway") {
+                    return; // Prevent snackbar from closing on clickaway if desired
+                  }
+                  handleSnackbarClose(); // Close the snackbar
+                  if (snackbar.reload) {
+                    window.location.reload(); // Reload the page after snackbar closes
+                  }
+                }}
+                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+              >
+                <Alert
+                  onClose={handleSnackbarClose}
+                  severity={snackbar.type === "error" ? "error" : "success"}
+                  sx={{
+                    width: "100%",
+                    bgcolor: snackbar.type === "unfavorite" ? "#F44336" : "#4CAF50",
+                    color: "white",
+                    "& .MuiAlert-icon": {
+                      color: "white",
+                    },
+                  }}
+                >
+                  {snackbar.message}
+                </Alert>
+              </Snackbar>
       </Box>
     </>
   );

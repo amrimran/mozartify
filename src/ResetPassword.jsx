@@ -8,6 +8,8 @@ import {
   Typography,
   Dialog,
   DialogContent,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { createGlobalStyle } from "styled-components";
@@ -23,70 +25,55 @@ const GlobalStyle = createGlobalStyle`
     margin: 0;
     padding: 0;
     font-family: 'Montserrat', sans-serif;
-    overflow-y: hidden; /* Hide vertical scroll */
+    overflow-y: auto; /* Changed to auto for better mobile experience */
   }
 
   html {
-    overflow-x: hidden; /* Ensure horizontal overflow is hidden */
+    overflow-x: hidden;
   }
 `;
 
 const dialogStyles = {
   dialogPaper: {
     borderRadius: "16px",
-    padding: "10px",
+    padding: {
+      xs: "8px",
+      sm: "10px",
+    },
+    width: {
+      xs: "90%",
+      sm: "auto",
+    },
+    maxWidth: {
+      xs: "95%",
+      sm: "400px",
+    },
     fontFamily: "Montserrat",
   },
   title: {
     fontFamily: "Montserrat",
     fontWeight: "bold",
-    fontSize: "20px",
+    fontSize: {
+      xs: "18px",
+      sm: "20px",
+    },
     textAlign: "center",
   },
   content: {
     fontFamily: "Montserrat",
     textAlign: "center",
+    padding: {
+      xs: "12px",
+      sm: "24px",
+    },
   },
   contentText: {
     fontFamily: "Montserrat",
-    fontSize: "16px",
+    fontSize: {
+      xs: "14px",
+      sm: "16px",
+    },
     color: "#555",
-  },
-  actions: {
-    justifyContent: "center",
-    gap: "12px",
-    marginTop: "8px",
-  },
-  button: {
-    textTransform: "none",
-    fontFamily: "Montserrat",
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    backgroundColor: "#8BD3E6",
-    border: "1px solid #8BD3E6",
-    borderRadius: "8px",
-    padding: "8px 24px",
-    boxShadow: "none",
-    "&:hover": {
-      boxShadow: "none",
-
-      backgroundColor: "#6FBCCF",
-      borderColor: "#6FBCCF",
-    },
-  },
-  deletebutton: {
-    textTransform: "none",
-    fontFamily: "Montserrat",
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    backgroundColor: "#DB2226",
-    border: "1px solid #DB2226",
-    borderRadius: "8px",
-    padding: "8px 24px",
-    "&:hover": {
-      backgroundColor: "#B71C1C",
-      borderColor: "#B71C1C",
-    },
   },
 };
 
@@ -98,6 +85,11 @@ const CustomButton = styled(Button)(({ theme }) => ({
   backgroundColor: "#8BD3E6",
   border: "1px solid #8BD3E6",
   boxShadow: "none",
+  padding: "10px 24px",
+  [theme.breakpoints.down("sm")]: {
+    padding: "8px 16px",
+    fontSize: "14px",
+  },
   "&:hover": {
     boxShadow: "none",
     backgroundColor: "#6FBCCF",
@@ -105,7 +97,7 @@ const CustomButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-const textFieldStyles = {
+const textFieldStyles = (theme) => ({
   "& label.Mui-focused": {
     color: "#8BD3E6",
     fontWeight: "bold",
@@ -115,11 +107,17 @@ const textFieldStyles = {
     fontFamily: "Montserrat",
     borderRadius: "12px",
     boxShadow: "0px 4px 6px rgba(139, 211, 230, 0.2)",
-    backgroundColor: "rgba(235, 251, 255, 0.9)",
+    backgroundColor: "rgba(255, 255a, 255, 0.9)",
+    [theme.breakpoints.down("sm")]: {
+      fontSize: "14px",
+    },
   },
   "& .MuiFormLabel-root": {
     fontFamily: "Montserrat",
-    fontSize: "15px",
+    fontSize: {
+      xs: "14px",
+      sm: "15px",
+    },
     color: "#467B89",
   },
   "& .MuiOutlinedInput-root": {
@@ -134,33 +132,42 @@ const textFieldStyles = {
       borderColor: "#8BD3E6",
       boxShadow: "0px 8px 20px rgba(139, 211, 230, 0.6)",
     },
-    borderRadius: "12px",
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
   },
-};
+});
 
-const FormContainer = styled(Box)({
+const FormContainer = styled(Box)(({ theme }) => ({
   backgroundColor: "#FFFFFF",
   borderRadius: "12px",
   boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
   padding: "32px",
   width: "100%",
   maxWidth: "400px",
+  margin: theme.spacing(2),
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
   fontFamily: "Montserrat",
-});
+  [theme.breakpoints.down("sm")]: {
+    padding: "20px",
+    margin: theme.spacing(1),
+    maxWidth: "95%",
+  },
+}));
 
-const MessageContainer = styled(Box)({
-  height: "24px", // Reserve space for the message
+const MessageContainer = styled(Box)(({ theme }) => ({
+  height: "24px",
   marginTop: "15px",
   textAlign: "center",
   fontFamily: "Montserrat",
-});
+  [theme.breakpoints.down("sm")]: {
+    height: "20px",
+    marginTop: "10px",
+    fontSize: "14px",
+  },
+}));
 
-const PageContainer = styled(Box)({
+const PageContainer = styled(Box)(({ theme }) => ({
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
@@ -168,9 +175,29 @@ const PageContainer = styled(Box)({
   backgroundImage: `url(${BgImage})`,
   backgroundSize: "cover",
   backgroundPosition: "center",
-  overflow: "hidden",
-  fontFamily: "Montserrat",
-});
+  padding: theme.spacing(2),
+  [theme.breakpoints.down("sm")]: {
+    padding: theme.spacing(1),
+  },
+}));
+
+const Logo = styled("img")(({ theme }) => ({
+  position: "fixed",
+  top: 10,
+  left: 10,
+  maxWidth: "90px",
+  cursor: "pointer",
+  zIndex: 10,
+  animation: "rotateLogo 5s linear infinite",
+  [theme.breakpoints.down("sm")]: {
+    maxWidth: "60px",
+    top: 5,
+    left: 5,
+  },
+  [theme.breakpoints.up("xl")]: {
+    maxWidth: "120px",
+  },
+}));
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -183,6 +210,8 @@ const ResetPassword = () => {
   const query = new URLSearchParams(useLocation().search);
   const token = query.get("token");
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -220,37 +249,32 @@ const ResetPassword = () => {
       <style>
         {`
           @keyframes rotateLogo {
-            0% {
-              transform: rotate(0deg); // Start from 0 degrees
-            }
-            100% {
-              transform: rotate(360deg); // Rotate to 360 degrees
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
           }
         `}
       </style>
       <GlobalStyle />
       <PageContainer>
-        <img
+        <Logo
           src={SidebarMozartifyLogo}
           alt="MozartifyIcon"
-          style={{
-            position: "fixed", // Fix the position relative to the viewport
-            top: 10, // Place it at the top of the screen
-            left: 10, // Place it at the left of the screen
-            maxWidth: "100%", // Ensure it scales properly
-            maxHeight: "90px", // Set a fixed height for the logo
-            zIndex: 10, // Ensure it's always on top of other elements
-            animation: "rotateLogo 5s linear infinite", // Apply the rotation animation
-          }}
-          onClick={() => window.location.replace("http://localhost:5173")} // Redirect on click
+          onClick={() => window.location.replace("http://localhost:5173")}
         />
         <FormContainer>
           <Typography
-            variant="h5"
+            variant={isMobile ? "h6" : "h5"}
             component="h2"
             mb={2}
-            sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
+            sx={{
+              fontFamily: "Montserrat",
+              fontWeight: "bold",
+              fontSize: {
+                xs: "1.25rem",
+                sm: "1.5rem",
+                md: "1.75rem",
+              },
+            }}
           >
             Reset Password
           </Typography>
@@ -268,7 +292,14 @@ const ResetPassword = () => {
                 endAdornment: (
                   <Button
                     onClick={() => setShowPassword(!showPassword)}
-                    sx={{ minWidth: 0, padding: 0, color: "#8BD3E6" }}
+                    sx={{
+                      minWidth: 0,
+                      padding: 0,
+                      color: "#8BD3E6",
+                      "& .MuiSvgIcon-root": {
+                        fontSize: isMobile ? "1.2rem" : "1.5rem",
+                      },
+                    }}
                   >
                     {showPassword ? <Visibility /> : <VisibilityOff />}
                   </Button>
@@ -289,7 +320,14 @@ const ResetPassword = () => {
                 endAdornment: (
                   <Button
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    sx={{ minWidth: 0, padding: 0, color: "#8BD3E6" }}
+                    sx={{
+                      minWidth: 0,
+                      padding: 0,
+                      color: "#8BD3E6",
+                      "& .MuiSvgIcon-root": {
+                        fontSize: isMobile ? "1.2rem" : "1.5rem",
+                      },
+                    }}
                   >
                     {showConfirmPassword ? <Visibility /> : <VisibilityOff />}
                   </Button>
@@ -302,7 +340,13 @@ const ResetPassword = () => {
                 <Typography
                   variant="body2"
                   color={message.includes("success") ? "green" : "error"}
-                  sx={{ fontFamily: "Montserrat" }} // Apply Montserrat
+                  sx={{
+                    fontFamily: "Montserrat",
+                    fontSize: {
+                      xs: "12px",
+                      sm: "14px",
+                    },
+                  }}
                 >
                   {message}
                 </Typography>
@@ -314,19 +358,14 @@ const ResetPassword = () => {
             </CustomButton>
           </form>
         </FormContainer>
-        {/* Dialog for success message */}
+        
         <Dialog
           open={openDialog}
           PaperProps={{
-            sx: dialogStyles.dialogPaper, // Apply dialogPaper styles
+            sx: dialogStyles.dialogPaper,
           }}
         >
-          <DialogContent
-            sx={{
-              textAlign: "center",
-              fontFamily: "Montserrat", // Ensure consistent font
-            }}
-          >
+          <DialogContent sx={dialogStyles.content}>
             <Typography sx={dialogStyles.title}>
               Password reset successfully!
             </Typography>

@@ -8,6 +8,8 @@ import {
   Button,
   InputAdornment,
   IconButton,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { createGlobalStyle } from "styled-components";
@@ -17,12 +19,14 @@ import backgroundImage from "./assets/loginWP.png";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 
 const buttonStyles = {
-  px: 15,
+  px: { xs: 6, sm: 8, md: 10 }, // Reduced padding
+  py: { xs: 1, sm: 1.5 }, // Added vertical padding
   fontFamily: "Montserrat",
   fontWeight: "bold",
   color: "#FFFFFF",
   backgroundColor: "#8BD3E6",
   border: "1px solid #8BD3E6",
+  fontSize: { xs: "14px", sm: "15px" }, // Reduced font size
   "&:hover": {
     backgroundColor: "#6FBCCF",
     borderColor: "#6FBCCF",
@@ -33,30 +37,60 @@ const FormContainer = styled(Box)(({ theme }) => ({
   backgroundColor: "#FFFFFF",
   borderRadius: "20px",
   boxShadow: "0px 3px 6px rgba(0,0,0,1)",
-  padding: 80,
-  width: "60%",
+  padding: "40px", // Reduced base padding
+  width: "90%", // Default width for mobile
+  maxWidth: "400px", // Reduced from 500px
   display: "flex",
   flexDirection: "column",
   justifyContent: "center",
   alignItems: "center",
   fontFamily: "Montserrat",
-  maxWidth: 500,
+  margin: "20px",
+
+  // Responsive adjustments
+  [theme.breakpoints.down("sm")]: {
+    padding: "25px",
+    width: "75%",
+    maxWidth: "320px",
+  },
+
+  [theme.breakpoints.up("md")]: {
+    width: "50%",
+    padding: "35px",
+  },
 }));
 
-const BackgroundContainer = styled(Box)(() => ({
+const BackgroundContainer = styled(Box)(({ theme }) => ({
   backgroundImage: `url(${backgroundImage})`,
   backgroundSize: "cover",
   backgroundRepeat: "no-repeat",
-  backgroundPosition: "left top",
+  backgroundPosition: "center",
   minHeight: "100vh",
-  width: "100vw",
+  width: "100%",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
   flexDirection: "column",
   margin: 0,
-  overflow: "hidden",
+  padding: { xs: "16px", sm: "24px", md: "32px" }, // Responsive padding
+  overflow: "auto",
   fontFamily: "Montserrat",
+}));
+
+const Logo = styled("img")(({ theme }) => ({
+  position: "fixed", // Changed back to fixed for consistent top-left positioning
+  top: "20px", // Explicit positioning
+  left: "20px", // Explicit positioning
+  width: "auto", // Let width adjust based on height
+  height: { xs: "60px", sm: "70px", md: "80px" }, // Increased sizes
+  maxWidth: "80px", // Increased maximum width
+  zIndex: 10,
+  cursor: "pointer",
+  "@media (max-width: 600px)": {
+    height: "50px",
+    top: "15px",
+    left: "15px",
+  },
 }));
 
 const GlobalStyle = createGlobalStyle`
@@ -65,44 +99,56 @@ const GlobalStyle = createGlobalStyle`
     padding: 0;
     font-family: 'Montserrat', sans-serif;
   }
+  
+  @media (max-width: 600px) {
+    html {
+      font-size: 14px;
+    }
+  }
 `;
 
 const textFieldStyles = {
   "& label.Mui-focused": {
-    color: "#8BD3E6", // Primary color for focused label
-    fontWeight: "bold", // Emphasis on focus
+    color: "#8BD3E6",
+    fontWeight: "bold",
   },
   fontFamily: "Montserrat",
   "& .MuiInputBase-root": {
     fontFamily: "Montserrat",
-    borderRadius: "12px", // Slightly more rounded corners
-    boxShadow: "0px 4px 6px rgba(139, 211, 230, 0.2)", // Subtle shadow in primary color
-    backgroundColor: "rgba(235, 251, 255, 0.9)", // Complementary light cyan for background
+    borderRadius: "12px",
+    boxShadow: "0px 4px 6px rgba(139, 211, 230, 0.2)",
+    backgroundColor: "rgba(235, 251, 255, 0.9)",
+    // Adjust input height
+    height: { xs: "45px", sm: "50px" },
   },
   "& .MuiFormLabel-root": {
     fontFamily: "Montserrat",
-    fontSize: "15px", // Readable font size
-    color: "#467B89", // Muted teal for a clean look
-  },
-  "& .MuiInput-underline:after": {
-    borderBottomColor: "#8BD3E6", // Primary color for underline focus
-    transform: "scaleX(1)", // Smooth underline animation
-    borderWidth: "2px", // Enhanced visibility
+    fontSize: { xs: "13px", sm: "14px" }, // Reduced font sizes
+    color: "#467B89",
+    transform: "translate(14px, 14px) scale(1)", // Adjust label position
+    "&.Mui-focused, &.MuiInputLabel-shrink": {
+      transform: "translate(14px, -9px) scale(0.75)",
+    },
   },
   "& .MuiOutlinedInput-root": {
     "& fieldset": {
-      borderColor: "#C8EAF2", // Light complementary color for default border
+      borderColor: "#C8EAF2",
     },
     "&:hover fieldset": {
-      borderColor: "#8BD3E6", // Primary color for hover
-      boxShadow: "0px 6px 16px rgba(139, 211, 230, 0.4)", // Glow effect on hover
+      borderColor: "#8BD3E6",
+      boxShadow: "0px 6px 16px rgba(139, 211, 230, 0.4)",
     },
     "&.Mui-focused fieldset": {
-      borderColor: "#8BD3E6", // Primary color for focus
-      boxShadow: "0px 8px 20px rgba(139, 211, 230, 0.6)", // Stronger shadow for focus
+      borderColor: "#8BD3E6",
+      boxShadow: "0px 8px 20px rgba(139, 211, 230, 0.6)",
     },
-    borderRadius: "12px", // Consistent design with input base
-    backgroundColor: "rgba(255, 255, 255, 0.9)", // Neutral white for contrast
+    borderRadius: "12px",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+  },
+  marginBottom: { xs: 1, sm: 1.5 }, // Reduced margins
+  "& .MuiInputBase-input": {
+    padding: { xs: "10px 14px", sm: "12px 14px" }, // Reduced padding
+    fontSize: { xs: "14px", sm: "15px" }, // Reduced font size
   },
 };
 
@@ -111,19 +157,24 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const navigate = useNavigate();
 
   useEffect(() => {
     // Check if there's a session cookie by making a request to the login endpoint
-    axios.get("http://localhost:3000/login", { withCredentials: true })
+    axios
+      .get("http://localhost:3000/login", { withCredentials: true })
       .then((response) => {
         const { message, role, first_timer, approval } = response.data;
-        
+
         if (message === "Success") {
           // Handle navigation based on role and approval status
           if (role === "music_entry_clerk" && approval === "pending") {
-            setErrorMessage("Your account is awaiting approval. Please contact the admin.");
+            setErrorMessage(
+              "Your account is awaiting approval. Please contact the admin."
+            );
           } else if (first_timer && role === "customer") {
             navigate("/first-time-login");
           } else if (role === "customer") {
@@ -209,11 +260,12 @@ export default function Login() {
       <style>
         {`
           @keyframes rotateLogo {
-            0% {
-              transform: rotate(0deg); // Start from 0 degrees
-            }
-            100% {
-              transform: rotate(360deg); // Rotate to 360 degrees
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          @media (max-width: 600px) {
+            .rotate-animation {
+              animation: none;
             }
           }
         `}
@@ -221,28 +273,27 @@ export default function Login() {
       <GlobalStyle />
 
       <BackgroundContainer>
-        <img
+        <Logo
           src={SidebarMozartifyLogo}
           alt="MozartifyIcon"
+          className={isMobile ? "" : "rotate-animation"}
           style={{
-            position: "fixed", // Fix the position relative to the viewport
-            top: 10, // Place it at the top of the screen
-            left: 10, // Place it at the left of the screen
-            maxWidth: "100%", // Ensure it scales properly
-            maxHeight: "90px", // Set a fixed height for the logo
-            zIndex: 10, // Ensure it's always on top of other elements
-            animation: "rotateLogo 5s linear infinite", // Apply the rotation animation
+            animation: isMobile ? "none" : "rotateLogo 5s linear infinite",
           }}
-          onClick={() => window.location.replace("http://localhost:5173")} // Redirect on click
+          onClick={() => window.location.replace("http://localhost:5173")}
         />
 
         <FormContainer component="form" onSubmit={handleLogin}>
           <Typography
-            variant="h5"
+            variant={isMobile ? "h6" : "h5"}
             align="center"
             fontWeight="bold"
             gutterBottom
-            sx={{ fontFamily: "Montserrat", marginBottom: 1 }}
+            sx={{
+              fontFamily: "Montserrat",
+              marginBottom: { xs: 0.5, sm: 1 },
+              fontSize: { xs: "1.1rem", sm: "1.5rem" },
+            }}
           >
             Hello, welcome back!
           </Typography>
@@ -250,10 +301,16 @@ export default function Login() {
             variant="body1"
             align="center"
             color="textSecondary"
-            sx={{ fontFamily: "Montserrat", marginBottom: 3 }}
+            sx={{
+              fontFamily: "Montserrat",
+              marginBottom: { xs: 2, sm: 3 },
+              fontSize: { xs: "0.875rem", sm: "1rem" },
+              padding: { xs: "0 10px", sm: 0 },
+            }}
           >
             Log in using the information you provided during registration
           </Typography>
+
           <TextField
             fullWidth
             label="Username or Email Address"
@@ -264,6 +321,7 @@ export default function Login() {
             onChange={(e) => setUsernameOrEmail(e.target.value)}
             sx={textFieldStyles}
           />
+
           <TextField
             fullWidth
             label="Password"
@@ -276,7 +334,11 @@ export default function Login() {
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton onClick={handleClickShowPassword} edge="end">
+                  <IconButton
+                    onClick={handleClickShowPassword}
+                    edge="end"
+                    sx={{ padding: { xs: "4px", sm: "8px" } }}
+                  >
                     {showPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </InputAdornment>
@@ -291,32 +353,28 @@ export default function Login() {
               display: "flex",
               justifyContent: "end",
               alignItems: "center",
-              mt: 2,
+              mt: { xs: 1, sm: 2 },
             }}
           >
-            <Link to="/forgot-password" style={{ color: "#000000" }}>
+            <Link
+              to="/forgot-password"
+              style={{
+                color: "#000000",
+                fontSize: isMobile ? "0.875rem" : "1rem",
+              }}
+            >
               Forgot Password?
             </Link>
           </Box>
-          {!errorMessage && (
-            <Typography
-              color="white"
-              variant="body2"
-              sx={{
-                mt: 2,
-                fontFamily: "Montserrat, sans-serif",
-              }}
-            >
-              no error
-            </Typography>
-          )}
+
           {errorMessage && (
             <Typography
               color="error"
               variant="body2"
               sx={{
-                mt: 2,
-                fontFamily: "Montserrat, sans-serif",
+                mt: { xs: 1, sm: 2 },
+                fontFamily: "Montserrat",
+                fontSize: { xs: "0.75rem", sm: "0.875rem" },
               }}
             >
               {errorMessage}
@@ -325,21 +383,28 @@ export default function Login() {
 
           <Button
             variant="outlined"
-            size="large"
+            size={isMobile ? "medium" : "large"}
             type="submit"
             sx={{
-              mt: 2,
+              mt: { xs: 2, sm: 3 },
               ...buttonStyles,
+              width: { xs: "100%", sm: "auto" },
             }}
           >
             Login Now
           </Button>
+
           <Typography
             variant="body2"
             align="center"
-            sx={{ mt: 2, fontFamily: "Montserrat", color: "#00000" }}
+            sx={{
+              mt: { xs: 2, sm: 3 },
+              fontFamily: "Montserrat",
+              color: "#000000",
+              fontSize: { xs: "0.75rem", sm: "0.875rem" },
+            }}
           >
-            Don’t have an account?{" "}
+            Don't have an account?{" "}
             <Link
               to="/signup"
               style={{
