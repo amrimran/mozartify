@@ -8,6 +8,7 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const axios = require('axios');
 const ABCFileModel = require('./models/ABCFile'); // Import the ABCFile model
+const DeletedABCFile = require('./models/deletedABCFile'); 
 
 const app = express();
 app.use(express.json());
@@ -312,6 +313,45 @@ app.post('/catalog', async (req, res) => {
     res.status(200).json({ message: 'Metadata saved successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Error saving metadata', error: err.message });
+  }
+});
+
+app.post('/delete-and-transfer-abc-file', async (req, res) => {
+  try {
+    const { filename } = req.body;
+
+    // Find the original file
+    const originalFile = await ABCFileModel.findOne({ filename });
+    
+    if (!originalFile) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    // Create a new document in the DeletedABCFile collection
+    const deletedFile = new DeletedABCFile({
+      ...originalFile.toObject(),
+      dateUploaded: originalFile.dateUploaded || new Date(),
+      deleted: true,
+      downloads: originalFile.downloads || 0,
+      downloadEvents: originalFile.downloadEvents || []
+    });
+
+    // Save the file to the deleted collection
+    await deletedFile.save();
+
+    // Update the original document to mark it as deleted
+    await ABCFileModel.findOneAndDelete({ filename });
+
+    res.status(200).json({ 
+      message: 'File successfully transferred to deleted collection',
+      deletedFile
+    });
+  } catch (err) {
+    console.error('Error in delete and transfer:', err);
+    res.status(500).json({ 
+      message: 'Error transferring file to deleted collection', 
+      error: err.message 
+    });
   }
 });
 
