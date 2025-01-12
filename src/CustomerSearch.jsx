@@ -21,6 +21,7 @@ import {
   InputLabel,
   FormControl,
   Pagination,
+  Skeleton,
 } from "@mui/material";
 import { Favorite, PlayArrow } from "@mui/icons-material";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -89,6 +90,8 @@ export default function CustomerSearch() {
   const [purchasedScores, setPurchasedScores] = useState([]); //store list of user's purchased music scores
 
   const [showSearchResults, setShowSearchResults] = useState(false);
+
+  const [loading, setLoading] = useState(true);
 
   const [page, setPage] = useState(1); // Track the current page
   const itemsPerPage = 5; // Number of items per page
@@ -263,6 +266,15 @@ export default function CustomerSearch() {
 
     fetchAddedToCartScores();
   }, [navigate]);
+
+  useEffect(() => {
+    // Simulate loading delay
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const addToCart = async (scoreId) => {
     try {
@@ -1036,54 +1048,95 @@ export default function CustomerSearch() {
                             >
                               <ListItemText
                                 primary={
-                                  <Typography
-                                    sx={{
-                                      fontFamily: "Montserrat",
-                                      fontWeight: "bold",
-                                    }}
-                                  >
-                                    {item.title}
-                                  </Typography>
+                                  loading ? (
+                                    <Skeleton
+                                      variant="text"
+                                      width={150}
+                                      height={24}
+                                      sx={{
+                                        mr: 2,
+                                        fontFamily: "Montserrat",
+                                        animation: "wave",
+                                      }}
+                                    />
+                                  ) : (
+                                    <Typography
+                                      variant="body1"
+                                      sx={{
+                                        fontFamily: "Montserrat",
+                                        fontWeight: "bold",
+                                        fontSize: { xs: "0.9rem", sm: "1rem" },
+                                      }}
+                                    >
+                                      {item.title}
+                                    </Typography>
+                                  )
                                 }
                                 secondary={
-                                  <Typography
-                                    variant="body2"
-                                    sx={{ fontFamily: "Montserrat" }}
-                                  >
-                                    {`Genre: ${item.genre} | Composer: ${item.composer} | Artist: ${item.artist}`}
-                                  </Typography>
+                                  loading ? (
+                                    <Skeleton
+                                      variant="text"
+                                      width={400}
+                                      height={24}
+                                      sx={{
+                                        mr: 2,
+                                        fontFamily: "Montserrat",
+                                        animation: "wave",
+                                      }}
+                                    />
+                                  ) : (
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        fontFamily: "Montserrat",
+                                        color: "black",
+                                        fontSize: {
+                                          xs: "0.8rem",
+                                          sm: "0.9rem",
+                                        },
+                                        mt: { xs: 1, sm: 0 },
+                                      }}
+                                    >
+                                      Genre: {item.genre} | Composer:{" "}
+                                      {item.composer} | Artist: {item.artist}
+                                    </Typography>
+                                  )
                                 }
                               />
 
                               <ListItemIcon>
-                                {!purchasedScores.includes(item._id) &&
-                                  !addedToCartScores.includes(item._id) && (
-                                    <IconButton
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        addToCart(item._id);
-                                      }}
-                                    >
-                                      <ShoppingCartIcon />
-                                    </IconButton>
-                                  )}
+                                {loading
+                                  ? null
+                                  : !purchasedScores.includes(item._id) &&
+                                    !addedToCartScores.includes(item._id) && (
+                                      <IconButton
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          addToCart(item._id);
+                                        }}
+                                      >
+                                        <ShoppingCartIcon />
+                                      </IconButton>
+                                    )}
                               </ListItemIcon>
 
                               <ListItemIcon>
-                                <IconButton
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleFavorite(item._id);
-                                  }}
-                                >
-                                  <Favorite
-                                    color={
-                                      favorites.includes(item._id)
-                                        ? "error"
-                                        : "disabled"
-                                    }
-                                  />
-                                </IconButton>
+                                {loading ? null : (
+                                  <IconButton
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleFavorite(item._id);
+                                    }}
+                                  >
+                                    <Favorite
+                                      color={
+                                        favorites.includes(item._id)
+                                          ? "error"
+                                          : "disabled"
+                                      }
+                                    />
+                                  </IconButton>
+                                )}
                               </ListItemIcon>
                             </ListItemButton>
                           ))}

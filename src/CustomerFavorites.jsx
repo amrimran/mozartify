@@ -30,7 +30,6 @@ import {
   Favorite,
   FilterAlt,
   Menu as MenuIcon,
-
 } from "@mui/icons-material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { useNavigate } from "react-router-dom";
@@ -65,6 +64,8 @@ export default function CustomerFavorites() {
   const [composer, setComposer] = useState("");
   const [instrumentation, setInstrumentation] = useState("");
   const [emotion, setEmotion] = useState("");
+
+  const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
 
@@ -187,6 +188,15 @@ export default function CustomerFavorites() {
       setCurrentScores(unfilteredScores);
     }
   }, [searchQuery]);
+
+  useEffect(() => {
+    // Simulate loading delay
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const applyFilters = (scores) => {
     return scores.filter((score) => {
@@ -317,62 +327,62 @@ export default function CustomerFavorites() {
         100% { opacity: 1; }
       }
     `;
-  
-    const buttonStyles = {
-      px: 10,
-      fontFamily: "Montserrat",
-      fontWeight: "bold",
-      color: "#FFFFFF",
-      backgroundColor: "#8BD3E6",
-      border: "1px solid #8BD3E6",
-      borderColor: "#8BD3E6",
-      boxShadow: "none", // Correct spelling
-      "&:hover": {
-        backgroundColor: "#6FBCCF", // Slightly darker blue for hover
-        color: "#FFFFFF", // Keeps the text color consistent
-        borderColor: "#6FBCCF",
-        boxShadow: "none", // Ensures no shadow on hover
-      },
-      "&:disabled": {
-        backgroundColor: "#E0E0E0",
-        borderColor: "#E0E0E0",
-        color: "#9E9E9E",
-      },
-    };
-  
-    const buttonStyles2 = {
-      px: 10,
-      fontFamily: "Montserrat",
-      fontWeight: "bold",
-      color: "#8BD3E6",
-      backgroundColor: "#FFFFFF",
-      boxShadow: "none", // Correct spelling
-      border: "1px solid #8BD3E6",
-      "&:hover": {
-        boxShadow: "none", // Correct spelling
-        backgroundColor: "#E6F8FB",
-        color: "#7AB9C4",
-        borderColor: "#7AB9C4",
-      },
-    };
-  
-    const deleteButtonStyles = {
-      px: 10,
-  
-      fontFamily: "Montserrat",
-      fontWeight: "bold",
-      color: "#FFFFFF",
-      borderColor: "#DB2226",
-      backgroundColor: "#DB2226",
-  
+
+  const buttonStyles = {
+    px: 10,
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    backgroundColor: "#8BD3E6",
+    border: "1px solid #8BD3E6",
+    borderColor: "#8BD3E6",
+    boxShadow: "none", // Correct spelling
+    "&:hover": {
+      backgroundColor: "#6FBCCF", // Slightly darker blue for hover
+      color: "#FFFFFF", // Keeps the text color consistent
+      borderColor: "#6FBCCF",
       boxShadow: "none", // Ensures no shadow on hover
-      "&:hover": {
-        backgroundColor: "#B71C1C", // Slightly darker red
-        color: "#FFFFFF", // Keeps the text color consistent
-        borderColor: "#B71C1C", // Matches the background color for cohesion
-        boxShadow: "none", // Ensures no shadow on hover
-      },
-    };
+    },
+    "&:disabled": {
+      backgroundColor: "#E0E0E0",
+      borderColor: "#E0E0E0",
+      color: "#9E9E9E",
+    },
+  };
+
+  const buttonStyles2 = {
+    px: 10,
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#8BD3E6",
+    backgroundColor: "#FFFFFF",
+    boxShadow: "none", // Correct spelling
+    border: "1px solid #8BD3E6",
+    "&:hover": {
+      boxShadow: "none", // Correct spelling
+      backgroundColor: "#E6F8FB",
+      color: "#7AB9C4",
+      borderColor: "#7AB9C4",
+    },
+  };
+
+  const deleteButtonStyles = {
+    px: 10,
+
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    borderColor: "#DB2226",
+    backgroundColor: "#DB2226",
+
+    boxShadow: "none", // Ensures no shadow on hover
+    "&:hover": {
+      backgroundColor: "#B71C1C", // Slightly darker red
+      color: "#FFFFFF", // Keeps the text color consistent
+      borderColor: "#B71C1C", // Matches the background color for cohesion
+      boxShadow: "none", // Ensures no shadow on hover
+    },
+  };
 
   return (
     <>
@@ -686,35 +696,39 @@ export default function CustomerFavorites() {
                 alignItems: "center",
               }}
             >
-              {user ? (
-                <>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      mr: 2,
-                      fontFamily: "Montserrat",
-                      display: { xs: "none", sm: "block" },
-                    }}
-                  >
-                    {user?.username}
-                  </Typography>
-                  <Avatar
-                    alt={user?.username}
-                    src={user?.profile_picture || null}
-                  >
-                    {!user?.profile_picture &&
-                      user?.username.charAt(0).toUpperCase()}
-                  </Avatar>
-                </>
-              ) : (
+              {loading ? (
                 <>
                   <Skeleton
                     variant="text"
                     width={100}
                     height={24}
-                    sx={{ mr: 2 }}
+                    sx={{
+                      mr: 2,
+                      fontFamily: "Montserrat",
+                      animation: "wave",
+                    }}
                   />
                   <Skeleton variant="circular" width={40} height={40} />
+                </>
+              ) : (
+                <>
+                  <Typography
+                    variant="body1"
+                    sx={{ mr: 2, fontFamily: "Montserrat" }}
+                  >
+                    {user?.username}
+                  </Typography>
+                  <Avatar
+                    alt={user?.username}
+                    src={
+                      user && user?.profile_picture
+                        ? user?.profile_picture
+                        : null
+                    }
+                  >
+                    {(!user || !user?.profile_picture) &&
+                      user?.username.charAt(0).toUpperCase()}
+                  </Avatar>
                 </>
               )}
             </Box>
@@ -733,22 +747,37 @@ export default function CustomerFavorites() {
             >
               Favorites
             </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                fontFamily: "Montserrat",
-                fontWeight: "medium",
-              }}
-            >
-              You have{" "}
-              <Box
-                component="span"
-                sx={{ fontWeight: "bold", color: "#8BD3E6" }}
+            {loading ? (
+              <>
+                <Skeleton
+                  variant="text"
+                  width={200}
+                  height={24}
+                  sx={{
+                    mr: 2,
+                    fontFamily: "Montserrat",
+                    animation: "wave",
+                  }}
+                />
+              </>
+            ) : (
+              <Typography
+                variant="body1"
+                sx={{
+                  fontFamily: "Montserrat",
+                  fontWeight: "medium",
+                }}
               >
-                {currentScores.length > 99 ? "99+" : currentScores.length}
-              </Box>{" "}
-              liked scores
-            </Typography>
+                You have{" "}
+                <Box
+                  component="span"
+                  sx={{ fontWeight: "bold", color: "#8BD3E6" }}
+                >
+                  {currentScores.length > 99 ? "99+" : currentScores.length}
+                </Box>{" "}
+                scores
+              </Typography>
+            )}
           </Box>
 
           <Box sx={{ flexGrow: 1, overflow: "auto", p: { xs: 1, sm: 2 } }}>
@@ -769,30 +798,56 @@ export default function CustomerFavorites() {
                 >
                   <ListItemText
                     primary={
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          fontFamily: "Montserrat",
-                          fontWeight: "bold",
-                          fontSize: { xs: "0.9rem", sm: "1rem" },
-                        }}
-                      >
-                        {item.title}
-                      </Typography>
+                      loading ? (
+                        <Skeleton
+                          variant="text"
+                          width={150}
+                          height={24}
+                          sx={{
+                            mr: 2,
+                            fontFamily: "Montserrat",
+                            animation: "wave",
+                          }}
+                        />
+                      ) : (
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            fontFamily: "Montserrat",
+                            fontWeight: "bold",
+                            fontSize: { xs: "0.9rem", sm: "1rem" },
+                          }}
+                        >
+                          {item.title}
+                        </Typography>
+                      )
                     }
                     secondary={
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "Montserrat",
-                          color: "black",
-                          fontSize: { xs: "0.8rem", sm: "0.9rem" },
-                          mt: { xs: 1, sm: 0 },
-                        }}
-                      >
-                        Genre: {item.genre} | Composer: {item.composer} |
-                        Artist: {item.artist}
-                      </Typography>
+                      loading ? (
+                        <Skeleton
+                          variant="text"
+                          width={400}
+                          height={24}
+                          sx={{
+                            mr: 2,
+                            fontFamily: "Montserrat",
+                            animation: "wave",
+                          }}
+                        />
+                      ) : (
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "Montserrat",
+                            color: "black",
+                            fontSize: { xs: "0.8rem", sm: "0.9rem" },
+                            mt: { xs: 1, sm: 0 },
+                          }}
+                        >
+                          Genre: {item.genre} | Composer: {item.composer} |
+                          Artist: {item.artist}
+                        </Typography>
+                      )
                     }
                   />
 
@@ -802,34 +857,37 @@ export default function CustomerFavorites() {
                       mt: { xs: 1, sm: 0 },
                     }}
                   >
-                    {!purchasedScores.includes(item._id) &&
-                      !addedToCartScores.includes(item._id) && (
-                        <IconButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addToCart(item._id);
-                          }}
-                        >
-                          <ShoppingCartIcon />
-                        </IconButton>
-                      )}
+                    {loading
+                      ? null
+                      : !purchasedScores.includes(item._id) &&
+                        !addedToCartScores.includes(item._id) && (
+                          <IconButton
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCart(item._id);
+                            }}
+                          >
+                            <ShoppingCartIcon />
+                          </IconButton>
+                        )}
                   </ListItemIcon>
 
                   <ListItemIcon>
-                    <IconButton
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(item._id);
-                      }}
-                    >
-                      <Favorite
-                        color={
-                          favorites.includes(item._id) ? "error" : "disabled"
-                        }
-                      />
-                    </IconButton>
+                    {loading ? null : (
+                      <IconButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(item._id);
+                        }}
+                      >
+                        <Favorite
+                          color={
+                            favorites.includes(item._id) ? "error" : "disabled"
+                          }
+                        />
+                      </IconButton>
+                    )}
                   </ListItemIcon>
-              
                 </ListItemButton>
               ))}
             </List>
