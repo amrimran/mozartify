@@ -265,7 +265,7 @@ export default function CustomerMusicScoreView() {
         // Reload the page after a short delay
         setTimeout(() => {
           window.location.reload();
-        }, 2000); // Adjust delay as needed
+        }, 1000); // Adjust delay as needed
       } catch (error) {
         console.error("Error submitting rating:", error);
 

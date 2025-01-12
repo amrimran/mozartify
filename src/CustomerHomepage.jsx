@@ -63,11 +63,10 @@ export default function CustomerHomepage() {
   const [page, setPage] = useState(1);
   const [itemsPerPage] = useState(5);
   const [snackbar, setSnackbar] = useState({
-      open: false,
-      message: "",
-      type: "",
-    });
-  
+    open: false,
+    message: "",
+    type: "",
+  });
 
   const navigate = useNavigate();
   const scrollContainerRef = useRef(null);
@@ -382,7 +381,6 @@ export default function CustomerHomepage() {
 `;
 
   useEffect(() => {
-    setLoading(true);
     try {
       axios
         .get("http://localhost:3000/popular-music-scores")
@@ -394,8 +392,6 @@ export default function CustomerHomepage() {
         });
     } catch (error) {
       console.error("Error fetching popular music scores:", error);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -484,8 +480,14 @@ export default function CustomerHomepage() {
     0% {
       opacity: 1;
     }
+    25% {
+      opacity: 0.25;
+    }
     50% {
-      opacity: 0.4;
+      opacity: 0.5;
+    }
+    75% {
+      opacity: 0.75;
     }
     100% {
       opacity: 1;
@@ -560,6 +562,15 @@ export default function CustomerHomepage() {
       boxShadow: "none", // Ensures no shadow on hover
     },
   };
+
+  useEffect(() => {
+    // Simulate loading delay
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <>
@@ -832,7 +843,21 @@ export default function CustomerHomepage() {
                 alignItems: "center",
               }}
             >
-              {user ? (
+              {loading ? (
+                <>
+                  <Skeleton
+                    variant="text"
+                    width={100}
+                    height={24}
+                    sx={{
+                      mr: 2,
+                      fontFamily: "Montserrat",
+                     animation:"wave",
+                    }}
+                  />
+                  <Skeleton variant="circular" width={40} height={40} />
+                </>
+              ) : (
                 <>
                   <Typography
                     variant="body1"
@@ -851,20 +876,6 @@ export default function CustomerHomepage() {
                     {(!user || !user?.profile_picture) &&
                       user?.username.charAt(0).toUpperCase()}
                   </Avatar>
-                </>
-              ) : (
-                <>
-                  <Skeleton
-                    variant="text"
-                    width={100}
-                    height={24}
-                    sx={{
-                      mr: 2,
-                      fontFamily: "Montserrat",
-                      animation: "skeleton-wave 1.5s ease-in-out 0.5s infinite",
-                    }}
-                  />
-                  <Skeleton variant="circular" width={40} height={40} />
                 </>
               )}
             </Box>
@@ -1129,63 +1140,17 @@ export default function CustomerHomepage() {
                     >
                       {popularScores.map((score, index) => (
                         <Box key={index}>
-                          <Link
-                            to={`/customer-music-score-view/${score._id}`}
-                            style={{ textDecoration: "none" }}
-                          >
-                            <Card
-                              sx={{
-                                width: 200,
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "space-between",
-                                boxShadow: "none",
-                              }}
-                            >
-                              <CardMedia
-                                component="img"
+                          {loading ? (
+                            <Card sx={{ width: 200, boxShadow: "none" }}>
+                              <Skeleton
+                                variant="rectangular"
                                 height={280}
-                                image={
-                                  score.coverImageUrl || "placeholder-image-url"
-                                }
-                                alt={score.title || "No Title Available"}
                                 sx={{
-                                  border: "2px solid #000",
                                   borderRadius: 10,
                                   width: 200,
-                                  padding: "10px",
-                                  boxSizing: "border-box",
-                                  display: score.coverImageUrl
-                                    ? "block"
-                                    : "none",
+                                  animation:"wave"
                                 }}
                               />
-                              {!score.coverImageUrl && (
-                                <Box
-                                  sx={{
-                                    height: 280,
-                                    width: 200,
-                                    border: "2px solid #000",
-                                    borderRadius: 10,
-                                    padding: "10px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    boxSizing: "border-box",
-                                    backgroundColor: "#f5f5f5",
-                                  }}
-                                >
-                                  <Typography
-                                    sx={{
-                                      fontFamily: "Montserrat",
-                                      color: "#000",
-                                      textAlign: "center",
-                                    }}
-                                  >
-                                    No Cover Image Available
-                                  </Typography>
-                                </Box>
-                              )}
                               <CardContent
                                 sx={{
                                   flexGrow: 1,
@@ -1194,30 +1159,119 @@ export default function CustomerHomepage() {
                                   justifyContent: "center",
                                 }}
                               >
-                                <Typography
-                                  variant="h6"
-                                  noWrap
+                                <Skeleton
+                                  variant="text"
+                                  width="80%"
+                                  height={32}
                                   sx={{
-                                    textAlign: "center",
-                                    mb: 1,
-                                    fontFamily: "Montserrat",
+                                    mx: "auto",
+                                    animation:"wave",
                                   }}
-                                >
-                                  {score.title}
-                                </Typography>
-                                <Typography
-                                  variant="body2"
-                                  color="textSecondary"
+                                />
+                                <Skeleton
+                                  variant="text"
+                                  width="60%"
+                                  height={24}
                                   sx={{
-                                    textAlign: "center",
-                                    fontFamily: "Montserrat",
+                                    mx: "auto",
+                                    animation:
+                                      "wave",
                                   }}
-                                >
-                                  {score.artist}
-                                </Typography>
+                                />
                               </CardContent>
                             </Card>
-                          </Link>
+                          ) : (
+                            <Link
+                              to={`/customer-music-score-view/${score._id}`}
+                              style={{ textDecoration: "none" }}
+                            >
+                              <Card
+                                sx={{
+                                  width: 200,
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  justifyContent: "space-between",
+                                  boxShadow: "none",
+                                }}
+                              >
+                                <CardMedia
+                                  component="img"
+                                  height={280}
+                                  image={
+                                    score.coverImageUrl ||
+                                    "placeholder-image-url"
+                                  }
+                                  alt={score.title || "No Title Available"}
+                                  sx={{
+                                    border: "2px solid #000",
+                                    borderRadius: 10,
+                                    width: 200,
+                                    padding: "10px",
+                                    boxSizing: "border-box",
+                                    display: score.coverImageUrl
+                                      ? "block"
+                                      : "none",
+                                  }}
+                                />
+                                {!score.coverImageUrl && (
+                                  <Box
+                                    sx={{
+                                      height: 280,
+                                      width: 200,
+                                      border: "2px solid #000",
+                                      borderRadius: 10,
+                                      padding: "10px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      boxSizing: "border-box",
+                                      backgroundColor: "#f5f5f5",
+                                    }}
+                                  >
+                                    <Typography
+                                      sx={{
+                                        fontFamily: "Montserrat",
+                                        color: "#000",
+                                        textAlign: "center",
+                                      }}
+                                    >
+                                      No Cover Image Available
+                                    </Typography>
+                                  </Box>
+                                )}
+                                <CardContent
+                                  sx={{
+                                    flexGrow: 1,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  <Typography
+                                    variant="h6"
+                                    noWrap
+                                    sx={{
+                                      textAlign: "center",
+                                      mb: 1,
+                                      fontFamily: "Montserrat",
+                                    }}
+                                  >
+                                    {score.title}
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    color="textSecondary"
+                                    sx={{
+                                      textAlign: "center",
+                                      fontFamily: "Montserrat",
+                                    }}
+                                  >
+                                    {score.artist}
+                                  </Typography>
+                                </CardContent>
+                              </Card>
+                            </Link>
+                          )}
                         </Box>
                       ))}
                     </Box>
@@ -1284,65 +1338,20 @@ export default function CustomerHomepage() {
                         },
                       }}
                     >
-                      {popularScores.map((score, index) => (
+                      {recommendedScores.map((score, index) => (
                         <Box key={index}>
-                          <Link
-                            to={`/customer-music-score-view/${score._id}`}
-                            style={{ textDecoration: "none" }}
-                          >
-                            <Card
-                              sx={{
-                                width: 200,
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "space-between",
-                                boxShadow: "none",
-                              }}
-                            >
-                              <CardMedia
-                                component="img"
+                          {loading ? (
+                            <Card sx={{ width: 200, boxShadow: "none" }}>
+                              <Skeleton
+                                variant="rectangular"
                                 height={280}
-                                image={
-                                  score.coverImageUrl || "placeholder-image-url"
-                                }
-                                alt={score.title || "No Title Available"}
                                 sx={{
-                                  border: "2px solid #000",
                                   borderRadius: 10,
                                   width: 200,
-                                  padding: "10px",
-                                  boxSizing: "border-box",
-                                  display: score.coverImageUrl
-                                    ? "block"
-                                    : "none",
+                                  animation:
+                                    "wave",
                                 }}
                               />
-                              {!score.coverImageUrl && (
-                                <Box
-                                  sx={{
-                                    height: 280,
-                                    width: 200,
-                                    border: "2px solid #000",
-                                    borderRadius: 10,
-                                    padding: "10px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    boxSizing: "border-box",
-                                    backgroundColor: "#f5f5f5",
-                                  }}
-                                >
-                                  <Typography
-                                    sx={{
-                                      fontFamily: "Montserrat",
-                                      color: "#000",
-                                      textAlign: "center",
-                                    }}
-                                  >
-                                    No Cover Image Available
-                                  </Typography>
-                                </Box>
-                              )}
                               <CardContent
                                 sx={{
                                   flexGrow: 1,
@@ -1351,30 +1360,120 @@ export default function CustomerHomepage() {
                                   justifyContent: "center",
                                 }}
                               >
-                                <Typography
-                                  variant="h6"
-                                  noWrap
+                                <Skeleton
+                                  variant="text"
+                                  width="80%"
+                                  height={32}
                                   sx={{
-                                    textAlign: "center",
-                                    mb: 1,
-                                    fontFamily: "Montserrat",
+                                    mx: "auto",
+                                    animation:
+                                      "wave",
                                   }}
-                                >
-                                  {score.title}
-                                </Typography>
-                                <Typography
-                                  variant="body2"
-                                  color="textSecondary"
+                                />
+                                <Skeleton
+                                  variant="text"
+                                  width="60%"
+                                  height={24}
                                   sx={{
-                                    textAlign: "center",
-                                    fontFamily: "Montserrat",
+                                    mx: "auto",
+                                    animation:
+                                      "wave",
                                   }}
-                                >
-                                  {score.artist}
-                                </Typography>
+                                />
                               </CardContent>
                             </Card>
-                          </Link>
+                          ) : (
+                            <Link
+                              to={`/customer-music-score-view/${score._id}`}
+                              style={{ textDecoration: "none" }}
+                            >
+                              <Card
+                                sx={{
+                                  width: 200,
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  justifyContent: "space-between",
+                                  boxShadow: "none",
+                                }}
+                              >
+                                <CardMedia
+                                  component="img"
+                                  height={280}
+                                  image={
+                                    score.coverImageUrl ||
+                                    "placeholder-image-url"
+                                  }
+                                  alt={score.title || "No Title Available"}
+                                  sx={{
+                                    border: "2px solid #000",
+                                    borderRadius: 10,
+                                    width: 200,
+                                    padding: "10px",
+                                    boxSizing: "border-box",
+                                    display: score.coverImageUrl
+                                      ? "block"
+                                      : "none",
+                                  }}
+                                />
+                                {!score.coverImageUrl && (
+                                  <Box
+                                    sx={{
+                                      height: 280,
+                                      width: 200,
+                                      border: "2px solid #000",
+                                      borderRadius: 10,
+                                      padding: "10px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      boxSizing: "border-box",
+                                      backgroundColor: "#f5f5f5",
+                                    }}
+                                  >
+                                    <Typography
+                                      sx={{
+                                        fontFamily: "Montserrat",
+                                        color: "#000",
+                                        textAlign: "center",
+                                      }}
+                                    >
+                                      No Cover Image Available
+                                    </Typography>
+                                  </Box>
+                                )}
+                                <CardContent
+                                  sx={{
+                                    flexGrow: 1,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  <Typography
+                                    variant="h6"
+                                    noWrap
+                                    sx={{
+                                      textAlign: "center",
+                                      mb: 1,
+                                      fontFamily: "Montserrat",
+                                    }}
+                                  >
+                                    {score.title}
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    color="textSecondary"
+                                    sx={{
+                                      textAlign: "center",
+                                      fontFamily: "Montserrat",
+                                    }}
+                                  >
+                                    {score.artist}
+                                  </Typography>
+                                </CardContent>
+                              </Card>
+                            </Link>
+                          )}
                         </Box>
                       ))}
                     </Box>
@@ -1385,34 +1484,34 @@ export default function CustomerHomepage() {
           )}
         </Box>
         <Snackbar
-                open={snackbar.open}
-                autoHideDuration={2000} // Set the duration before the snackbar disappears
-                onClose={(event, reason) => {
-                  if (reason === "clickaway") {
-                    return; // Prevent snackbar from closing on clickaway if desired
-                  }
-                  handleSnackbarClose(); // Close the snackbar
-                  if (snackbar.reload) {
-                    window.location.reload(); // Reload the page after snackbar closes
-                  }
-                }}
-                anchorOrigin={{ vertical: "top", horizontal: "center" }}
-              >
-                <Alert
-                  onClose={handleSnackbarClose}
-                  severity={snackbar.type === "error" ? "error" : "success"}
-                  sx={{
-                    width: "100%",
-                    bgcolor: snackbar.type === "unfavorite" ? "#F44336" : "#4CAF50",
-                    color: "white",
-                    "& .MuiAlert-icon": {
-                      color: "white",
-                    },
-                  }}
-                >
-                  {snackbar.message}
-                </Alert>
-              </Snackbar>
+          open={snackbar.open}
+          autoHideDuration={2000} // Set the duration before the snackbar disappears
+          onClose={(event, reason) => {
+            if (reason === "clickaway") {
+              return; // Prevent snackbar from closing on clickaway if desired
+            }
+            handleSnackbarClose(); // Close the snackbar
+            if (snackbar.reload) {
+              window.location.reload(); // Reload the page after snackbar closes
+            }
+          }}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        >
+          <Alert
+            onClose={handleSnackbarClose}
+            severity={snackbar.type === "error" ? "error" : "success"}
+            sx={{
+              width: "100%",
+              bgcolor: snackbar.type === "unfavorite" ? "#F44336" : "#4CAF50",
+              color: "white",
+              "& .MuiAlert-icon": {
+                color: "white",
+              },
+            }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Box>
     </>
   );

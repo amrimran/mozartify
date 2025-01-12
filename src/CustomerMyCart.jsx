@@ -12,14 +12,21 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   IconButton,
   Button,
   Paper,
+  ThemeProvider,
+  createTheme,
+  Skeleton,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import CustomerSidebar from "./CustomerSidebar";
 import { createGlobalStyle } from "styled-components";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
+import PaymentIcon from "@mui/icons-material/Payment";
 
 axios.defaults.withCredentials = true;
 
@@ -27,20 +34,71 @@ export default function CustomerMyCart() {
   const [user, setUser] = useState(null);
   const [cartItemIDs, setCartItemIDs] = useState([]);
   const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [page, setPage] = useState(0);
+  const [rowsPerPage] = useState(3);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const [fadeIn, setFadeIn] = useState(false);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await axios.get("http://localhost:3000/current-user");
-        setUser(response.data);
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-        navigate("/login");
+  const theme = createTheme({
+    typography: {
+      fontFamily: "Montserrat, sans-serif",
+      h4: {
+        fontWeight: 700,
+      },
+      h5: {
+        fontWeight: 500,
+      },
+      h6: {
+        fontWeight: 500,
+      },
+      body1: {
+        fontWeight: 400,
+      },
+    },
+    components: {
+      MuiTableCell: {
+        styleOverrides: {
+          root: {
+            fontFamily: "Montserrat, sans-serif",
+          },
+        },
+      },
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            fontFamily: "Montserrat, sans-serif",
+            fontWeight: 500,
+          },
+        },
+      },
+    },
+  });
+
+  const requestSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+
+    const sortedItems = [...cartItems].sort((a, b) => {
+      if (key === "price") {
+        return direction === "asc"
+          ? parseFloat(a[key]) - parseFloat(b[key])
+          : parseFloat(b[key]) - parseFloat(a[key]);
       }
-    };
-    fetchUser();
-  }, [navigate]);
+      return direction === "asc"
+        ? a[key].localeCompare(b[key])
+        : b[key].localeCompare(a[key]);
+    });
+    setCartItems(sortedItems);
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
 
   const fetchCartItemIDs = async () => {
     try {
@@ -97,6 +155,100 @@ export default function CustomerMyCart() {
     }
   };
 
+  useEffect(() => {
+    const fetchUser = async () => {
+      setLoading(true);
+      setFadeIn(false);
+      try {
+        const response = await axios.get("http://localhost:3000/current-user");
+        setTimeout(() => {
+          setUser(response.data);
+          setLoading(false);
+          // Add a small delay before triggering fade in
+          setTimeout(() => {
+            setFadeIn(true);
+          }, 100);
+        }, 1000);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+        setLoading(false);
+        navigate("/login");
+      }
+    };
+    fetchUser();
+  }, [navigate]);
+
+  const buttonStyles = {
+    px: 6,
+    py: 1,
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    backgroundColor: "#8BD3E6",
+    border: "1px solid #8BD3E6",
+    borderColor: "#8BD3E6",
+    boxShadow: "none", // Correct spelling
+    "&:hover": {
+      backgroundColor: "#6FBCCF", // Slightly darker blue for hover
+      color: "#FFFFFF", // Keeps the text color consistent
+      borderColor: "#6FBCCF",
+      boxShadow: "none", // Ensures no shadow on hover
+    },
+    "&:disabled": {
+      backgroundColor: "#E0E0E0",
+      borderColor: "#E0E0E0",
+      color: "#9E9E9E",
+    },
+    "& .MuiButton-startIcon": {
+      "& > *:first-of-type": {
+        fontSize: "2rem",
+      },
+    },
+  };
+
+  const SortableTableHeader = ({ label, field }) => (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+      }}
+    >
+      <Typography sx={{ fontWeight: 700, color: "#ffffff" }}>
+        {label}
+      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center" }}>
+        <Typography
+          onClick={() => requestSort(field)}
+          sx={{
+            cursor: "pointer",
+            color:
+              sortConfig.key === field && sortConfig.direction === "asc"
+                ? "#ffffff"
+                : "rgba(255,255,255,0.5)",
+            fontSize: "14px",
+            mr: 0.5,
+          }}
+        >
+          {field === "price" ? "1↑" : "A↑"}
+        </Typography>
+        <Typography
+          onClick={() => requestSort(field)}
+          sx={{
+            cursor: "pointer",
+            color:
+              sortConfig.key === field && sortConfig.direction === "desc"
+                ? "#ffffff"
+                : "rgba(255,255,255,0.5)",
+            fontSize: "14px",
+          }}
+        >
+          {field === "price" ? "9↓" : "Z↓"}
+        </Typography>
+      </Box>
+    </Box>
+  );
+
   const stripe = useStripe();
   const elements = useElements();
 
@@ -132,11 +284,16 @@ export default function CustomerMyCart() {
   }
 `;
 
+  const currentItems = cartItems.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <GlobalStyle />
       <Box display="flex">
-      <CustomerSidebar active ='cart'/>
+        <CustomerSidebar active="cart" />
         <Box
           sx={{
             flexGrow: 1,
@@ -157,29 +314,18 @@ export default function CustomerMyCart() {
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="h4">My Cart</Typography>
-              <Box ml={2}>
-                <Box
-                  sx={{
-                    minWidth: 50,
-                    height: 50,
-                    backgroundColor: "#D3D3D3",
-                    borderRadius: "50%",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    padding: "0 10px",
-                  }}
-                >
-                  <Typography variant="h5" sx={{ color: "#4B4B4B" }}>
-                    {cartItems.length > 99 ? "99+" : cartItems.length}
-                  </Typography>
-                </Box>
-              </Box>
+              <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                My Cart
+              </Typography>
             </Box>
 
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              {user ? (
+              {loading ? (
+                <>
+                  <Skeleton variant="text" width={100} sx={{ mr: 2 }} />
+                  <Skeleton variant="circular" width={40} height={40} />
+                </>
+              ) : user ? (
                 <>
                   <Typography variant="body1" sx={{ mr: 2 }}>
                     {user.username}
@@ -218,61 +364,240 @@ export default function CustomerMyCart() {
             </Box>
           ) : (
             <>
-              <TableContainer component={Paper} sx={{ mt: 2 }}>
+              <TableContainer
+                component={Paper}
+                sx={{
+                  mt: 2,
+                  "& .MuiTable-root": {
+                    borderCollapse: "collapse",
+                  },
+                  "& .MuiTableCell-root": {
+                    borderBottom: "1px solid rgba(224, 224, 224, 1)",
+                    padding: "16px",
+                  },
+                  "& .MuiTableRow-root": {
+                    "&:last-child .MuiTableCell-root": {
+                      borderBottom: "none",
+                    },
+                  },
+                }}
+              >
                 <Table>
                   <TableHead
-                    sx={{ color: "white", backgroundColor: "#67ADC1" }}
+                    sx={{
+                      backgroundColor: "#8BD3E6",
+                      "& .MuiTableCell-root": {
+                        borderBottom: "none",
+                      },
+                    }}
                   >
                     <TableRow>
-                      <TableCell sx={{ color: "#ffffff" }}>#</TableCell>
-                      <TableCell sx={{ color: "#ffffff" }}>Title</TableCell>
-                      <TableCell sx={{ color: "#ffffff" }}>Composer</TableCell>
-                      <TableCell sx={{ color: "#ffffff" }}>Price</TableCell>
-                      <TableCell sx={{ color: "#ffffff" }}>Action</TableCell>
+                      <TableCell sx={{ width: "60px", color: "#ffffff", p: 2 }}>
+                        <Typography sx={{ fontWeight: 700, color: "#ffffff" }}>
+                          #
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ width: "400px", p: 2 }}>
+                        <SortableTableHeader label="Title" field="title" />
+                      </TableCell>
+                      <TableCell sx={{ width: "200px", p: 2 }}>
+                        <SortableTableHeader
+                          label="Composer"
+                          field="composer"
+                        />
+                      </TableCell>
+                      <TableCell sx={{ width: "150px", p: 2 }}>
+                        <SortableTableHeader label="Genre" field="genre" />
+                      </TableCell>
+                      <TableCell sx={{ width: "120px", p: 2 }}>
+                        <SortableTableHeader label="Price" field="price" />
+                      </TableCell>
+                      <TableCell sx={{ width: "100px", p: 2 }}>
+                        <Typography sx={{ fontWeight: 700, color: "#ffffff" }}>
+                          Action
+                        </Typography>
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {cartItems.map((item, index) => (
-                      <TableRow
-                        key={item._id}
-                        sx={{
-                          "&:last-child td, &:last-child th": { border: 0 },
-                        }}
-                      >
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>{item.title}</TableCell>
-                        <TableCell>{item.composer}</TableCell>
-                        <TableCell>RM {item.price}</TableCell>
-                        <TableCell>
-                          <IconButton
-                            onClick={() => handleRemoveItem(item._id)}
+                    {loading
+                      ? // Skeleton loading rows
+                        [...Array(3)].map((_, index) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <Skeleton />
+                            </TableCell>
+                            <TableCell>
+                              <Box
+                                sx={{ display: "flex", alignItems: "center" }}
+                              >
+                                <Skeleton
+                                  variant="rectangular"
+                                  width={100}
+                                  height={60}
+                                />
+                                <Skeleton width={150} sx={{ ml: 2 }} />
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton width={40} />
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      : currentItems.map((item, index) => (
+                          <TableRow
+                            key={item._id}
+                            sx={{
+                              opacity: 0,
+                              animation:
+                                "fadeInFromLeft 1.0s ease-in-out forwards",
+                              "@keyframes fadeInFromLeft": {
+                                "0%": {
+                                  opacity: 0,
+                                  transform: "translateX(-10px)", // Start from the left
+                                },
+                                "100%": {
+                                  opacity: 1,
+                                  transform: "translateX(0)", // End at its original position
+                                },
+                              },
+                            }}
                           >
-                            <DeleteIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                            <TableCell sx={{ width: "60px", p: 2 }}>
+                              {page * rowsPerPage + index + 1}
+                            </TableCell>
+                            <TableCell
+                              sx={{
+                                width: "400px",
+                                display: "flex",
+                                alignItems: "center",
+                                p: 2,
+                              }}
+                            >
+                              <img
+                                src={item.coverImageUrl}
+                                alt={item.title}
+                                style={{
+                                  width: "90px",
+                                  height: "auto",
+                                  maxHeight: "70px",
+                                  objectFit: "contain",
+                                }}
+                              />
+                              <Box
+                                ml={2}
+                                sx={{
+                                  fontWeight: 700,
+                                  color: "black",
+                                  maxWidth: "250px",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {item.title}
+                              </Box>
+                            </TableCell>
+                            <TableCell
+                              sx={{
+                                width: "200px",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                p: 2,
+                              }}
+                            >
+                              {item.composer}
+                            </TableCell>
+                            <TableCell
+                              sx={{
+                                width: "150px",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                p: 2,
+                              }}
+                            >
+                              {item.genre}
+                            </TableCell>
+                            <TableCell
+                              sx={{
+                                width: "120px",
+                                fontWeight: 700,
+                                color: "green",
+                                p: 2,
+                              }}
+                            >
+                              RM {parseFloat(item.price).toFixed(2)}
+                            </TableCell>
+                            <TableCell
+                              sx={{
+                                width: "100px",
+                                p: 2,
+                              }}
+                            >
+                              <IconButton
+                                onClick={() => handleRemoveItem(item._id)}
+                                sx={{
+                                  color: "red",
+                                  "&:hover": { color: "#d32f2f" },
+                                }}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                   </TableBody>
                 </Table>
+                <TablePagination
+                  rowsPerPageOptions={[3]}
+                  component="div"
+                  count={cartItems.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  sx={{
+                    ".MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows":
+                      {
+                        margin: 0,
+                      },
+                  }}
+                />
               </TableContainer>
               <Box
                 display="flex"
-                justifyContent="space-between"
+                justifyContent="flex-end"
                 alignItems="center"
+                gap={2}
                 mt={2}
               >
-                <Typography variant="h6">
-                  Subtotal: RM {subtotal.toFixed(2)}
+                <Typography variant="h6">Subtotal: </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    color: "green",
+                    textDecoration: "underline",
+                  }}
+                >
+                  RM {subtotal.toFixed(2)}
                 </Typography>
                 <Button
                   variant="contained"
                   onClick={handleStripeCheckout}
+                  startIcon={<PaymentIcon />}
                   sx={{
-                    backgroundColor: "#3b1830", // Set background color
-                    color: "#ffffff", // Set text color
-                    "&:hover": {
-                      backgroundColor: "#2e162b", // Darker shade for hover effect
-                    },
+                    ...buttonStyles,
                   }}
                 >
                   Pay
@@ -282,6 +607,6 @@ export default function CustomerMyCart() {
           )}
         </Box>
       </Box>
-    </>
+    </ThemeProvider>
   );
 }

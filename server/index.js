@@ -96,7 +96,7 @@ const sendVerificationEmail = (email, username, token) => {
 
   transporter.sendMail(
     {
-      from: '"N.A.S.I.R Music System" <nasir.music.system@gmail.com>', 
+      from: '"N.A.S.I.R Music System" <nasir.music.system@gmail.com>',
       to: email,
       subject: "N.A.S.I.R: Email Verification",
       html: emailTemplate,
@@ -1211,52 +1211,113 @@ app.get("/api/image-path", async (req, res) => {
   }
 });
 
-let cachedRecommendations = {};
+const calculateRecommendations = async (userId) => {
+  try {
+    // Get user and their preferences
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Get all available scores
+    let allScores = await ABCFileModel.find({});
+
+    // Calculate scores for each music piece based on user preferences
+    const scoredMusic = allScores.map((music) => {
+      let score = 0;
+      let matchCount = 0;
+
+      // Check composer preference match (highest weight: 0.4)
+      if (user.composer_preferences.includes(music.composer)) {
+        score += 0.4;
+        matchCount++;
+      }
+
+      // Check genre preference match (weight: 0.35)
+      if (user.genre_preferences.includes(music.genre)) {
+        score += 0.35;
+        matchCount++;
+      }
+
+      // Check emotion preference match (weight: 0.25)
+      if (user.emotion_preferences.includes(music.emotion)) {
+        score += 0.25;
+        matchCount++;
+      }
+
+      // Bonus points for multiple matches
+      if (matchCount > 1) {
+        score += 0.1 * matchCount;
+      }
+
+      // Avoid recommending music that's already in favorites
+      if (user.favorites.includes(music._id)) {
+        score = 0;
+      }
+
+      return {
+        score,
+        musicData: music,
+      };
+    });
+
+    // Sort by score and get top recommendations
+    const sortedRecommendations = scoredMusic
+      .sort((a, b) => b.score - a.score)
+      .filter((item) => item.score > 0) // Only include items with matches
+      .map((item) => item.musicData);
+
+    // Limit to 10 recommendations but ensure variety
+    const recommendations = [];
+    const usedGenres = new Set();
+    let index = 0;
+
+    while (
+      recommendations.length < 10 &&
+      index < sortedRecommendations.length
+    ) {
+      const currentMusic = sortedRecommendations[index];
+
+      // Ensure genre diversity in recommendations
+      if (!usedGenres.has(currentMusic.genre) || usedGenres.size >= 5) {
+        recommendations.push(currentMusic);
+        usedGenres.add(currentMusic.genre);
+      }
+
+      index++;
+    }
+
+    // If we have fewer than 10 recommendations, fill with popular items
+    if (recommendations.length < 10) {
+      const popularScores = await ABCFileModel.find({
+        _id: {
+          $nin: [...recommendations.map((r) => r._id), ...user.favorites],
+        },
+      })
+        .sort({ downloads: -1 })
+        .limit(10 - recommendations.length);
+
+      recommendations.push(...popularScores);
+    }
+
+    return recommendations;
+  } catch (error) {
+    console.error("Error generating recommendations:", error);
+    throw error;
+  }
+};
 
 app.get("/recommendations", async (req, res) => {
   try {
-    const sessionId = req.sessionID;
-
     if (!req.session.userId) {
       return res.status(401).json({ error: "User not logged in" });
     }
 
-    if (cachedRecommendations[sessionId]) {
-      return res.json(cachedRecommendations[sessionId]);
-    }
-
-    const user = await UserModel.findById(req.session.userId);
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    const { genre_preferences, composer_preferences, emotion_preferences } =
-      user;
-
-    let allScores = await ABCFileModel.find({
-      $or: [
-        { genre: { $in: genre_preferences } },
-        { composer: { $in: composer_preferences } },
-        { emotion: { $in: emotion_preferences } },
-      ],
-    });
-
-    const limit = Math.min(allScores.length, 10);
-    let recommendedScores = [];
-
-    for (let i = 0; i < limit; i++) {
-      const randomIndex = Math.floor(Math.random() * allScores.length);
-      recommendedScores.push(allScores[randomIndex]);
-      allScores.splice(randomIndex, 1);
-    }
-
-    // Cache the recommendations for this session
-    cachedRecommendations[sessionId] = recommendedScores;
-
-    res.json(recommendedScores);
+    const recommendations = await calculateRecommendations(req.session.userId);
+    res.json(recommendations);
   } catch (error) {
-    return res.status(500).json({ error: "Internal Server Error" });
+    console.error('Error in recommendations endpoint:', error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -1367,8 +1428,27 @@ app.post("/complete-purchase", async (req, res) => {
       })
     );
 
+    // Insert purchase items
     await PurchaseModel.insertMany(purchaseItems);
 
+    // After saving the cart, check for duplicates
+    for (const item of purchaseItems) {
+      const { user_id, score_id } = item;
+
+      // Find duplicates with the same user_id and score_id
+      const duplicates = await PurchaseModel.find({
+        user_id,
+        score_id,
+      });
+
+      if (duplicates.length > 1) {
+        // Delete one of the duplicates (you can adjust the deletion logic as needed)
+        const duplicateToDelete = duplicates[1]; // Keep the first one, delete the second
+        await PurchaseModel.deleteOne({ _id: duplicateToDelete._id });
+      }
+    }
+
+    // Clear the cart
     cart.score_ids = [];
     await cart.save();
 

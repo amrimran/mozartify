@@ -371,27 +371,31 @@ const AdminManageUsers = () => {
           >
             {tabTitles[activeTab]}
           </Typography>
-          {activeTab !== "customers" && (
-            <Button
-              startIcon={<AddIcon />}
-              sx={{
-                bgcolor: "#8BD3E6",
-                color: "white",
-                "&:hover": { bgcolor: "#3B3183" },
-                textTransform: "none",
-                fontFamily: "Montserrat",
-              }}
-              onClick={() => {
-                setNewUser({
-                  ...newUser,
-                  role: activeTab === "clerks" ? "music_entry_clerk" : "admin",
-                });
-                setOpenModal(true);
-              }}
-            >
-              Add
-            </Button>
-          )}
+
+          <Button
+            startIcon={<AddIcon />}
+            sx={{
+              bgcolor: "#8BD3E6",
+              color: "white",
+              "&:hover": { bgcolor: "#3B3183" },
+              textTransform: "none",
+              fontFamily: "Montserrat",
+            }}
+            onClick={() => {
+              setNewUser({
+                ...newUser,
+                role:
+                  activeTab === "clerks"
+                    ? "music_entry_clerk"
+                    : activeTab === "admins"
+                      ? "admin"
+                      : "customer",
+              });
+              setOpenModal(true);
+            }}
+          >
+            Add
+          </Button>
         </Box>
         {activeUsers.length > 0 ? (
           <Box

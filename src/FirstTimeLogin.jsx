@@ -15,6 +15,31 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { createGlobalStyle } from "styled-components";
+
+const GlobalStyle = createGlobalStyle`
+  @keyframes skeleton-wave {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  * {
+    font-family: 'Montserrat', sans-serif;
+  }
+`;
 
 const dialogStyles = {
   dialogPaper: {
@@ -264,109 +289,116 @@ const FirstTimeLogin = () => {
   }
 
   return (
-    <ThemeProvider theme={theme}>
-      <Box
-        sx={{
-          minHeight: "100vh",
-          py: 4,
-          px: 2,
-          background: "linear-gradient(135deg, #FFFFFF 0%, #B3E8F2 100%)",
-        }}
-      >
-        <Container maxWidth="sm">
-          <Paper elevation={3}>
-            <Box textAlign="center" mb={3}>
-              <Typography variant="h2" gutterBottom>
-                Tell Us About Your Music Taste
-              </Typography>
-              <Typography variant="subtitle1">
-                Select your preferences to personalize your experience.
-              </Typography>
-            </Box>
-
-            {errorMessage && (
-              <Alert severity="error" ref={errorRef} sx={{ mb: 3 }}>
-                {errorMessage}
-              </Alert>
-            )}
-
-            <form onSubmit={handleSubmit}>
-              <Box mb={4}>
-                <Typography variant="h3" gutterBottom>
-                  Favorite Composers
+    <>
+      <GlobalStyle />
+      <ThemeProvider theme={theme}>
+        <Box
+          sx={{
+            minHeight: "100vh",
+            py: 4,
+            px: 2,
+            background: "linear-gradient(135deg, #FFFFFF 0%, #B3E8F2 100%)",
+          }}
+        >
+          <Container maxWidth="sm">
+            <Paper elevation={3}>
+              <Box textAlign="center" mb={3}>
+                <Typography variant="h2" gutterBottom>
+                  Tell Us About Your Music Taste
                 </Typography>
-                <Typography variant="subtitle1" gutterBottom>
-                  You may choose more than one
+                <Typography variant="subtitle1">
+                  Select your preferences to personalize your experience.
                 </Typography>
-                {options.composers.map((composer) => (
-                  <OptionButton
-                    key={composer}
-                    onClick={() => handleCheckboxChange(composer, "composer")}
-                    className={
-                      composerPreferences.includes(composer) ? "selected" : ""
-                    }
+              </Box>
+
+              {errorMessage && (
+                <Alert severity="error" ref={errorRef} sx={{ mb: 3 }}>
+                  {errorMessage}
+                </Alert>
+              )}
+
+              <form onSubmit={handleSubmit}>
+                <Box mb={4}>
+                  <Typography variant="h3" gutterBottom>
+                    Favorite Composers
+                  </Typography>
+                  <Typography variant="subtitle1" gutterBottom>
+                    You may choose more than one
+                  </Typography>
+                  {options.composers.map((composer) => (
+                    <OptionButton
+                      key={composer}
+                      onClick={() => handleCheckboxChange(composer, "composer")}
+                      className={
+                        composerPreferences.includes(composer) ? "selected" : ""
+                      }
+                    >
+                      {composer}
+                    </OptionButton>
+                  ))}
+                </Box>
+
+                <Box mb={4}>
+                  <Typography variant="h3" gutterBottom>
+                    Favorite Genres
+                  </Typography>
+                  <Typography variant="subtitle1" gutterBottom>
+                    You may choose more than one
+                  </Typography>
+                  {options.genres.map((genre) => (
+                    <OptionButton
+                      key={genre}
+                      onClick={() => handleCheckboxChange(genre, "genre")}
+                      className={
+                        genrePreferences.includes(genre) ? "selected" : ""
+                      }
+                    >
+                      {genre}
+                    </OptionButton>
+                  ))}
+                </Box>
+
+                <Box mb={2}>
+                  <Typography variant="h3" gutterBottom>
+                    Preferred Emotions
+                  </Typography>
+                  <Typography variant="subtitle1" gutterBottom>
+                    You may choose more than one
+                  </Typography>
+                  {options.emotions.map((emotion) => (
+                    <OptionButton
+                      key={emotion}
+                      onClick={() => handleCheckboxChange(emotion, "emotion")}
+                      className={
+                        emotionPreferences.includes(emotion) ? "selected" : ""
+                      }
+                    >
+                      {emotion}
+                    </OptionButton>
+                  ))}
+                </Box>
+
+                <Box>
+                  <ActionButton
+                    type="submit"
+                    variant="contained"
+                    color="primary"
                   >
-                    {composer}
-                  </OptionButton>
-                ))}
-              </Box>
-
-              <Box mb={4}>
-                <Typography variant="h3" gutterBottom>
-                  Favorite Genres
-                </Typography>
-                <Typography variant="subtitle1" gutterBottom>
-                  You may choose more than one
-                </Typography>
-                {options.genres.map((genre) => (
-                  <OptionButton
-                    key={genre}
-                    onClick={() => handleCheckboxChange(genre, "genre")}
-                    className={
-                      genrePreferences.includes(genre) ? "selected" : ""
-                    }
-                  >
-                    {genre}
-                  </OptionButton>
-                ))}
-              </Box>
-
-              <Box mb={2}>
-                <Typography variant="h3" gutterBottom>
-                  Preferred Emotions
-                </Typography>
-                <Typography variant="subtitle1" gutterBottom>
-                  You may choose more than one
-                </Typography>
-                {options.emotions.map((emotion) => (
-                  <OptionButton
-                    key={emotion}
-                    onClick={() => handleCheckboxChange(emotion, "emotion")}
-                    className={
-                      emotionPreferences.includes(emotion) ? "selected" : ""
-                    }
-                  >
-                    {emotion}
-                  </OptionButton>
-                ))}
-              </Box>
-
-              <Box>
-                <ActionButton type="submit" variant="contained" color="primary">
-                  Save
-                </ActionButton>
-              </Box>
-            </form>
-          </Paper>
-        </Container>
-      </Box>
-      <Dialog open={dialogOpen}>
-        <DialogTitle sx={dialogStyles.title}>Great Taste!</DialogTitle>
-        <DialogContent sx={dialogStyles.content}>
-          <Typography variant="body1">Ready to explore?</Typography>
-        </DialogContent>
-      </Dialog>
-    </ThemeProvider>
+                    Save
+                  </ActionButton>
+                </Box>
+              </form>
+            </Paper>
+          </Container>
+        </Box>
+        <Dialog open={dialogOpen}>
+          <DialogTitle sx={dialogStyles.title}>Great Taste!</DialogTitle>
+          <DialogContent sx={dialogStyles.content}>
+            <Typography variant="body1">Ready to explore?</Typography>
+          </DialogContent>
+        </Dialog>
+      </ThemeProvider>
+    </>
   );
 };
 

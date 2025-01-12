@@ -8,6 +8,7 @@ const User = require("./models/User");
 const DeletedUser = require("./models/DeletedUser");
 const Purchase = require("./models/Purchase");
 
+const bcrypt = require("bcryptjs");
 
 const app = express();
 
@@ -15,6 +16,7 @@ const app = express();
 app.use(express.json());
 
 const allowedOrigins = ["http://localhost:3000", "http://localhost:5173"];
+
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -69,12 +71,35 @@ app.post("/users", async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
 
+    // Validate required fields
     if (!username || !email || !password || !role) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    // Save the user directly; compound index ensures uniqueness
-    const newUser = new User(req.body);
+    // Check if the email or username already exists
+    const existingUser = await User.findOne({
+      $or: [{ username }, { email }],
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        error: "User with this username or email already exists",
+      });
+    }
+
+    // Hash the password before saving the user
+    const salt = await bcrypt.genSalt(10); // Generate salt
+    const hashedPassword = await bcrypt.hash(password, salt); // Hash the password
+
+    // Create the user object with hashed password
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword, // Store hashed password
+      role, // Store user role
+    });
+
+    // Save the new user
     const savedUser = await newUser.save();
     res.status(201).json(savedUser);
   } catch (error) {
@@ -85,7 +110,7 @@ app.post("/users", async (req, res) => {
       // Determine which field caused the duplication
       const duplicateField = Object.keys(error.keyPattern).join(", ");
       res.status(400).json({
-        error: `Duplicate entry for ${duplicateField}. A user with this ${duplicateField} and role already exists.`,
+        error: `Duplicate entry for ${duplicateField}. A user with this ${duplicateField} already exists.`,
       });
     } else {
       res.status(500).json({ error: "Failed to create user" });
@@ -256,11 +281,13 @@ app.get("/admin/stats", async (req, res) => {
   try {
     const totalUsers = await User.countDocuments({ role: "customer" }); // Filter by role
     const totalUploads = await ABCFile.countDocuments();
+
     const totalPurchases = await Purchase.aggregate([
       { $group: { _id: null, total: { $sum: 1 } } },
     ]);
     const purchaseCount =
       totalPurchases.length > 0 ? totalPurchases[0].total : 0;
+
 
     // Aggregate uploads by month
     const uploadsByMonth = await ABCFile.aggregate([
