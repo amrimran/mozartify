@@ -419,7 +419,7 @@ export default function Landing() {
             size="large"
             sx={{
               px: { xs: 4, sm: 5 },
-              py: { xs: 1, sm: 1.5 },
+              py: { xs: 1, sm: 1 },
               fontFamily: "Montserrat",
               fontWeight: "bold",
               color: "#FFFFFF",

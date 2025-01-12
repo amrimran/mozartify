@@ -234,7 +234,7 @@ const CustomButton = styled(Button)(({ theme }) => ({
   marginTop: theme.spacing(1),
   width: "100%",
   maxWidth: "300px",
-  padding: theme.spacing(1.5),
+  padding: theme.spacing(1),
   fontFamily: "Montserrat",
   fontWeight: "bold",
   color: "#FFFFFF",

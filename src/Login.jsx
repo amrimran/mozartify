@@ -20,7 +20,7 @@ import SidebarMozartifyLogo from "./assets/mozartify.png";
 
 const buttonStyles = {
   px: { xs: 6, sm: 8, md: 10 }, // Reduced padding
-  py: { xs: 1, sm: 1.5 }, // Added vertical padding
+  py: { xs: 1, sm: 1 }, // Added vertical padding
   fontFamily: "Montserrat",
   fontWeight: "bold",
   color: "#FFFFFF",

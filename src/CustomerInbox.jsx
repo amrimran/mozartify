@@ -1,13 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box,
-  Avatar,
-  Divider,
   Typography,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Button,
   Table,
   TableBody,
@@ -17,43 +11,307 @@ import {
   TableRow,
   Paper,
   IconButton,
-  Grid,
   TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Avatar,
+  Divider,
+  TablePagination,
+  Skeleton,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import ReplyIcon from "@mui/icons-material/Reply";
+import ChatIcon from "@mui/icons-material/Chat";
+import SendIcon from "@mui/icons-material/Send";
+import CloseIcon from "@mui/icons-material/Close";
+import ImageIcon from "@mui/icons-material/Image";
 import AddIcon from "@mui/icons-material/Add";
+
 import { useNavigate } from "react-router-dom";
-import { createGlobalStyle } from "styled-components";
-import { styled } from "@mui/material/styles";
 import axios from "axios";
-import ScrollableCell from "./ScrollableCell";
 import CustomerSidebar from "./CustomerSidebar";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
-axios.defaults.withCredentials = true;
-
-const CustomAddIcon = styled(AddIcon)(({ theme }) => ({
-  color: "white",
-  borderRadius: "50%",
-  padding: theme.spacing(0.5),
-}));
-
-const GlobalStyle = createGlobalStyle`
-body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Montserrat', sans-serif;
-}
-`;
-
-export default function CustomerInbox() {
+const CustomerInbox = () => {
   const [feedbackData, setFeedbackData] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
-  const [replyMessage, setReplyMessage] = useState("");
-  const [isReplyDialogOpen, setReplyDialogOpen] = useState(false);
-
+  const [newReply, setNewReply] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [isNewFeedbackOpen, setIsNewFeedbackOpen] = useState(false);
+
+  // New Feedback Form States
+  const [title, setTitle] = useState("");
+  const [detail, setDetail] = useState("");
+  const [image, setImage] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [page, setPage] = useState(0); // Current page (zero-indexed)
+  const [rowsPerPage, setRowsPerPage] = useState(5); // Number of rows per page
+
+  const drawerRef = useRef(null);
+
+  const chatContainerRef = useRef(null);
+
+  // Configure axios with credentials
+  axios.defaults.withCredentials = true;
+
+  const uploadImageToFirebase = async (file) => {
+    const storage = getStorage();
+    const timestamp = Date.now();
+    const fileName = `feedback_attachments/${timestamp}_${file.name}`;
+    const storageRef = ref(storage, fileName);
+
+    await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(storageRef);
+    return downloadURL;
+  };
+
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    type: "success",
+    reload: false,
+  });
+
+  const handleSnackbarClose = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  const showNotification = (message, type = "success", reload = false) => {
+    setSnackbar({
+      open: true,
+      message,
+      type,
+      reload,
+    });
+  };
+
+  const TableRowSkeleton = () => (
+    <TableRow
+      sx={{
+        opacity: isLoading ? 1 : 0,
+        transition: "opacity 0.3s ease-in-out",
+      }}
+    >
+      {/* Title column */}
+      <TableCell>
+        <Skeleton
+          animation="pulse"
+          height={24}
+          width="70%"
+          sx={{
+            transform: "scale(1, 0.8)",
+            backgroundColor: "#f5f5f5",
+            "&::after": {
+              background:
+                "linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.04), transparent)",
+            },
+          }}
+        />
+      </TableCell>
+
+      {/* Last Updated column */}
+      <TableCell>
+        <Skeleton
+          animation="pulse"
+          height={24}
+          width="40%"
+          sx={{
+            transform: "scale(1, 0.8)",
+            backgroundColor: "#f5f5f5",
+            "&::after": {
+              background:
+                "linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.04), transparent)",
+            },
+          }}
+        />
+      </TableCell>
+
+      {/* Status column */}
+      <TableCell>
+        <Skeleton
+          animation="pulse"
+          height={24}
+          width="30%"
+          sx={{
+            transform: "scale(1, 0.8)",
+            backgroundColor: "#f5f5f5",
+            "&::after": {
+              background:
+                "linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.04), transparent)",
+            },
+          }}
+        />
+      </TableCell>
+
+      {/* Actions column */}
+      <TableCell>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          {/* Chat and Delete icon skeletons */}
+          {[1, 2].map((index) => (
+            <Skeleton
+              key={index}
+              animation="pulse"
+              variant="circular"
+              width={30}
+              height={30}
+              sx={{
+                backgroundColor: "#f5f5f5",
+                "&::after": {
+                  background:
+                    "linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.04), transparent)",
+                },
+              }}
+            />
+          ))}
+        </Box>
+      </TableCell>
+    </TableRow>
+  );
+
+  const TableHeadSkeleton = () => (
+    <TableHead sx={{ bgcolor: "#8BD3E6" }}>
+      <TableRow>
+        {["Title", "Last Updated", "Status", "Actions"].map((header, index) => (
+          <TableCell
+            key={index} // Use index as the key since `header` is unused now
+            sx={{
+              position: "relative",
+              color: "white",
+              fontFamily: "'Montserrat', sans-serif",
+              textTransform: "uppercase",
+              fontWeight: "bold",
+              fontSize: "14px",
+              padding: "16px",
+              borderBottom: "1px solid #8BD3E6",
+              overflow: "hidden",
+            }}
+          >
+            <Skeleton
+              animation="wave"
+              sx={{
+                backgroundColor: "rgba(255, 255, 255, 0.3)",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                "&::after": {
+                  background:
+                    "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)",
+                },
+              }}
+            />
+          </TableCell>
+        ))}
+      </TableRow>
+    </TableHead>
+  );
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5000000) {
+        // 5MB limit
+        setError("Image size must be less than 5MB");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPreviewUrl(reader.result);
+        setImage(file);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const paginatedFeedbackData = feedbackData.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0); // Reset to the first page
+  };
+
+  // Update the handleSubmitFeedback function to show notifications
+  const handleSubmitFeedback = async () => {
+    if (!title.trim() || !detail.trim()) {
+      showNotification("Title and detail are required", "error");
+      return;
+    }
+
+    try {
+      let attachmentUrl = null;
+      if (image) {
+        attachmentUrl = await uploadImageToFirebase(image);
+      }
+
+      const feedbackData = {
+        title,
+        detail,
+        user_id: currentUser?._id,
+        username: currentUser?.username,
+        status: "pending", // Default status is pending
+        attachment_url: attachmentUrl,
+      };
+
+      const response = await axios.post(
+        "http://localhost:3002/api/feedback",
+        feedbackData
+      );
+
+      setFeedbackData((prev) => [...prev, response.data]);
+      setIsNewFeedbackOpen(false);
+      // Reset form
+      setTitle("");
+      setDetail("");
+      setImage(null);
+      setPreviewUrl("");
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      setError("Failed to submit feedback");
+    }
+  };
+
+  const getStatusDisplay = (feedback) => {
+    return feedback.status || "pending"; // Default to "pending" if status is not set
+  };
+
+  const buttonStyles = {
+    px: 2,
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    backgroundColor: "#8BD3E6",
+    border: "1px solid #8BD3E6",
+    borderColor: "#8BD3E6",
+    boxShadow: "none", // Correct spelling
+    "&:hover": {
+      backgroundColor: "#6FBCCF", // Slightly darker blue for hover
+      color: "#FFFFFF", // Keeps the text color consistent
+      borderColor: "#6FBCCF",
+      boxShadow: "none", // Ensures no shadow on hover
+    },
+    "&:disabled": {
+      backgroundColor: "#E0E0E0",
+      borderColor: "#E0E0E0",
+      color: "#9E9E9E",
+    },
+  };
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -65,26 +323,27 @@ export default function CustomerInbox() {
         navigate("/login");
       }
     };
-
     fetchCurrentUser();
   }, [navigate]);
 
   const fetchFeedbackData = async () => {
-    axios
-      .get(`http://localhost:3002/api/feedback`)
-      .then((response) => {
-        const userFeedbacks = response.data.filter(
-          (feedback) => feedback.user_id === currentUser._id
-        );
-        if (userFeedbacks.length === 0) {
-          console.log("No feedback data found for the current user.");
-        } else {
-          setFeedbackData(userFeedbacks);
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      });
+    if (!currentUser?._id) return;
+
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        `http://localhost:3002/api/feedback?userId=${currentUser._id}`
+      );
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      setFeedbackData(response.data);
+      setError(null);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setError("Failed to load feedback messages");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -93,513 +352,825 @@ export default function CustomerInbox() {
     }
   }, [currentUser]);
 
+  // Update the handleDelete function to show notifications
   const handleDelete = async (id) => {
     try {
-      await axios.delete(
-        `http://localhost:3002/api/feedback/delete/${feedbackIdToDelete}`
-      );
-      fetchFeedbackData();
-      setDeleteDialog(false);
+      await axios.delete(`http://localhost:3002/api/feedback/delete/${id}`);
+      setFeedbackData((prev) => prev.filter((feedback) => feedback._id !== id));
+      showNotification("Feedback deleted successfully");
     } catch (error) {
-      console.error("There was an error deleting the feedback!", error);
+      console.error("Error deleting feedback:", error);
+      showNotification("Failed to delete feedback", "error");
     }
   };
-  const handleReplySend = async () => {
-    if (!replyMessage.trim()) return;
+
+  const handleOpenChat = (feedback) => {
+    setSelectedFeedback(feedback);
+    const messages = [
+      {
+        type: "feedback",
+        content: feedback.detail,
+        date: feedback.feedbackDate,
+        attachment: feedback.attachment_url,
+        sender: "customer",
+      },
+      ...(feedback.replies || []).map((reply) => ({
+        type: "reply",
+        content: reply.message,
+        date: reply.date,
+        sender: reply.sender || "admin",
+      })),
+    ];
+
+    setChatMessages(messages);
+    setDrawerOpen(true);
+  };
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (
+        drawerOpen &&
+        drawerRef.current &&
+        !drawerRef.current.contains(event.target)
+      ) {
+        setDrawerOpen(false); // Close the drawer
+      }
+    };
+
+    // Attach the event listener when the drawer is open
+    if (drawerOpen) {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }
+
+    // Cleanup the event listener
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [drawerOpen]);
+
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  // Update the handleSendReply function to show notifications
+  const handleSendReply = async () => {
+    if (!newReply.trim() || !selectedFeedback) return;
 
     try {
-      await axios.post(
-        `http://localhost:3003/api/feedback/reply/${selectedFeedback._id}`,
+      const response = await axios.post(
+        `http://localhost:3002/api/feedback/reply/${selectedFeedback._id}`,
         {
-          replyMessage, // Send replyMessage as expected by the backend
+          message: newReply,
         }
       );
-      setReplyMessage("");
-      setReplyDialogOpen(false);
-      fetchFeedbackData();
+
+      const newMessage = {
+        type: "reply",
+        content: newReply,
+        date: new Date(),
+        sender: "customer",
+      };
+
+      setChatMessages((prev) => [...prev, newMessage]);
+      setNewReply("");
+
+      setFeedbackData((prev) =>
+        prev.map((feedback) =>
+          feedback._id === selectedFeedback._id ? response.data : feedback
+        )
+      );
+      showNotification("Reply sent successfully");
     } catch (error) {
       console.error("Error sending reply:", error);
+      showNotification(
+        error.response?.data?.message || "Failed to send reply",
+        "error"
+      );
     }
   };
 
-  const [deleteDialog, setDeleteDialog] = useState(false); // To control the dialog open/close state
-  const [feedbackIdToDelete, setFeedbackIdToDelete] = useState(null); // Store the feedback ID to delete
-
-  // Function to open the delete confirmation dialog
-  const handleDeleteConfirmation = (id) => {
-    setFeedbackIdToDelete(id);
-    setDeleteDialog(true);
-  };
-
-  const handleDeleteCancel = () => {
-    setDeleteDialog(false);
-  };
-
-  const handleReplyOpen = (feedback) => {
-    setSelectedFeedback(feedback);
-    setReplyDialogOpen(true);
-  };
-
-  const handleReplyClose = () => {
-    setReplyDialogOpen(false);
-    setReplyMessage("");
+  const isSenderMessage = (message) => {
+    return message.sender === "customer";
   };
 
   return (
-    <>
-      <GlobalStyle />
-      <Box sx={{ display: "flex", height: "100vh" }}>
-      <CustomerSidebar active ='inbox'/>
+    <Box sx={{ display: "flex", height: "100vh" }}>
+      <CustomerSidebar active="inbox" />
+
+      <Box
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          ml: "240px",
+          opacity: isLoading ? 0.9 : 1,
+          transition: "opacity 0.3s ease-in-out",
+        }}
+      >
+        {" "}
         <Box
           sx={{
-            flexGrow: 1,
             display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            padding: 5,
-            marginLeft: "229px",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+            mt: 3,
           }}
         >
-          <Box
+          <Typography
+            variant="h4"
+            sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
+          >
+            Inbox
+          </Typography>
+
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            {isLoading ? (
+              <>
+                <Skeleton
+                  animation="wave"
+                  width={100}
+                  height={24}
+                  sx={{ mr: 2 }}
+                />
+                <Skeleton
+                  animation="wave"
+                  variant="circular"
+                  width={40}
+                  height={40}
+                />
+              </>
+            ) : (
+              <>
+                <Typography
+                  variant="body1"
+                  sx={{ mr: 2, fontFamily: "Montserrat" }}
+                >
+                  {currentUser ? currentUser.username : "Admin"}
+                </Typography>
+                <Avatar
+                  alt={currentUser ? currentUser.username : null}
+                  src={
+                    currentUser && currentUser.profile_picture
+                      ? currentUser.profile_picture
+                      : null
+                  }
+                >
+                  {(!currentUser || !currentUser.profile_picture) && currentUser
+                    ? currentUser.username.charAt(0).toUpperCase()
+                    : null}
+                </Avatar>
+              </>
+            )}
+          </Box>
+        </Box>
+        <Divider sx={{ my: 1, mb: 4 }} />
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+            mb: 3,
+            mt: 3,
+          }}
+        >
+          <Button
+            variant="contained"
+            onClick={() => setIsNewFeedbackOpen(true)}
+            sx={buttonStyles}
+            startIcon={<AddIcon />} // Add the plus icon
+          >
+            Add New Feedback
+          </Button>
+        </Box>
+        <TableContainer
+          component={Paper}
+          sx={{
+            boxShadow: 1,
+            borderRadius: 2,
+            overflow: "hidden",
+            transition: "opacity 0.3s ease-in-out",
+          }}
+        >
+          <Table>
+            {/* Table Head */}
+            {isLoading ? (
+              <TableHeadSkeleton />
+            ) : (
+              <TableHead sx={{ bgcolor: "#8BD3E6" }}>
+                <TableRow>
+                  {["Title", "Last Updated", "Status", "Actions"].map(
+                    (header) => (
+                      <TableCell
+                        key={header}
+                        sx={{
+                          color: "white",
+                          fontFamily: "'Montserrat', sans-serif",
+                          textTransform: "uppercase",
+                          fontWeight: "bold",
+                          fontSize: "14px",
+                          padding: "16px",
+                          borderBottom: "1px solid #8BD3E6",
+                        }}
+                      >
+                        {header}
+                      </TableCell>
+                    )
+                  )}
+                </TableRow>
+              </TableHead>
+            )}
+
+            {/* Table Body */}
+            <TableBody>
+              {isLoading
+                ? [...Array(rowsPerPage)].map((_, index) => (
+                    <TableRowSkeleton key={index} />
+                  ))
+                : paginatedFeedbackData.map((row) => (
+                    <TableRow
+                      key={row._id}
+                      sx={{
+                        opacity: 0,
+                        animation: "fadeIn 0.3s ease-in-out forwards",
+                        "@keyframes fadeIn": {
+                          "0%": {
+                            opacity: 0,
+                            transform: "translateY(10px)",
+                          },
+                          "100%": {
+                            opacity: 1,
+                            transform: "translateY(0)",
+                          },
+                        },
+                      }}
+                    >
+                      <TableCell
+                        sx={{
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontSize: "14px",
+                          padding: "16px",
+                          color: "#333",
+                        }}
+                      >
+                        {row.title}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontSize: "14px",
+                          padding: "16px",
+                          color: "#666",
+                        }}
+                      >
+                        {new Date(
+                          row.replies?.length > 0
+                            ? row.replies[row.replies.length - 1].date
+                            : row.feedbackDate
+                        ).toLocaleDateString("en-GB")}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontSize: "14px",
+                          textTransform: "capitalize",
+                          padding: "16px",
+                          color:
+                            row.status === "resolved" ? "#28A745" : "#FFB400",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {getStatusDisplay(row)}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          padding: "16px",
+                          display: "flex",
+                          gap: "8px",
+                        }}
+                      >
+                        <IconButton
+                          onClick={() => handleOpenChat(row)}
+                          sx={{
+                            color: "#8BD3E6",
+                            padding: "6px",
+                            borderRadius: "8px",
+                            ":hover": {
+                              bgcolor: "transparent", // Prevents the background from appearing on hover
+                            },
+                          }}
+                        >
+                          <ChatIcon sx={{ fontSize: "20px" }} />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => handleDelete(row._id)}
+                          sx={{
+                            color: "#DB2226",
+                            ":hover": {
+                              bgcolor: "transparent", // Prevents the background from appearing on hover
+                            },
+                          }}
+                        >
+                          <DeleteIcon sx={{ fontSize: "20px" }} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+            </TableBody>
+          </Table>
+
+          {/* Pagination */}
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={feedbackData.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-              mt: 3,
+              fontFamily: "'Montserrat', sans-serif",
+              "& .MuiTablePagination-root": {
+                fontFamily: "'Montserrat', sans-serif",
+              },
+              "& .MuiTablePagination-selectLabel": {
+                fontFamily: "'Montserrat', sans-serif",
+              },
+              "& .MuiTablePagination-select": {
+                fontFamily: "'Montserrat', sans-serif",
+              },
+              "& .MuiTablePagination-selectIcon": {
+                fontFamily: "'Montserrat', sans-serif",
+              },
+              "& .MuiTablePagination-displayedRows": {
+                fontFamily: "'Montserrat', sans-serif",
+              },
+              "& .MuiTablePagination-menuItem": {
+                fontFamily: "'Montserrat', sans-serif",
+              },
+              "& .MuiTablePagination-actions": {
+                fontFamily: "'Montserrat', sans-serif",
+              },
+            }}
+          />
+        </TableContainer>
+      </Box>
+
+      <Box
+        ref={drawerRef}
+        sx={{
+          position: "fixed",
+          right: drawerOpen ? 0 : "-400px",
+          top: 0,
+          width: "400px",
+          height: "100vh",
+          bgcolor: "white",
+          boxShadow: "-4px 0 12px rgba(0, 0, 0, 0.15)",
+          transition: "right 0.3s ease",
+          display: "flex",
+          flexDirection: "column",
+          fontFamily: "'Montserrat', sans-serif",
+        }}
+      >
+        {/* Drawer Header */}
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: "#8BD3E6",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              color: "white",
+              fontFamily: "'Montserrat', sans-serif",
+              fontWeight: "bold",
+              fontSize: "18px",
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              textOverflow: "ellipsis",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="h4">Inbox</Typography>
+            {selectedFeedback?.title}
+          </Typography>
+          <IconButton
+            onClick={() => setDrawerOpen(false)}
+            sx={{
+              color: "white",
+              "&:hover": {
+                bgcolor: "rgba(255, 255, 255, 0.2)",
+              },
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
+
+        {/* Chat Messages */}
+        <Box
+          ref={chatContainerRef}
+          sx={{
+            flexGrow: 1,
+            overflowY: "auto",
+            p: 2,
+            bgcolor: "#F8FAFC",
+          }}
+        >
+          {chatMessages.map((message, index) => (
+            <Box
+              key={index}
+              sx={{
+                mb: 2,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: isSenderMessage(message)
+                  ? "flex-end"
+                  : "flex-start",
+              }}
+            >
+              <Box
+                sx={{
+                  maxWidth: "80%",
+                  p: 2,
+                  borderRadius: 2,
+                  bgcolor: isSenderMessage(message) ? "#8BD3E6" : "#FFFFFF",
+                  color: isSenderMessage(message) ? "white" : "black",
+                  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontFamily: "'Montserrat', sans-serif",
+                    fontSize: "14px",
+                  }}
+                >
+                  {message.content}
+                </Typography>
+                {message.attachment && (
+                  <Box sx={{ mt: 1 }}>
+                    <img
+                      src={message.attachment}
+                      alt="Attachment"
+                      style={{
+                        maxWidth: "100%",
+                        borderRadius: "8px",
+                        border: "1px solid #ddd",
+                      }}
+                    />
+                  </Box>
+                )}
+                <Typography
+                  variant="caption"
+                  sx={{
+                    display: "block",
+                    mt: 1,
+                    opacity: 0.7,
+                    fontFamily: "'Montserrat', sans-serif",
+                  }}
+                >
+                  {new Date(message.date).toLocaleString("en-GB", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                </Typography>
+              </Box>
             </Box>
+          ))}
+        </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              {currentUser ? (
-                <>
-                  <Typography variant="body1" sx={{ mr: 2 }}>
-                    {currentUser.username}
-                  </Typography>
-                  <Avatar
-                    alt={currentUser.username}
-                    src={
-                      currentUser && currentUser.profile_picture
-                        ? currentUser.profile_picture
-                        : null
-                    }
-                  >
-                    {(!currentUser || !currentUser.profile_picture) &&
-                      currentUser.username.charAt(0).toUpperCase()}
-                  </Avatar>
-                </>
-              ) : (
-                <>
-                  <Typography variant="body1" sx={{ mr: 2 }}>
-                    Loading...
-                  </Typography>
-                  <Avatar></Avatar>
-                </>
-              )}
-            </Box>
-          </Box>
-
-          <Box>
-            <Divider />
-
-            <Box sx={{ mt: 4, display: "flex", justifyContent: "flex-end" }}>
-              <Button
-                variant="contained"
-                onClick={() =>
-                  navigate(`/customer-inbox/customer-add-new-feedback`)
+        {/* Reply Box */}
+        <Box
+          sx={{
+            p: 2,
+            borderTop: "1px solid #E0E0E0",
+            bgcolor: "#FFFFFF",
+          }}
+        >
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="Type your reply..."
+              value={newReply}
+              onChange={(e) => setNewReply(e.target.value)}
+              size="small"
+              multiline // Allows the text field to grow vertically for long content
+              maxRows={4} // Limit the number of rows it can grow to
+              onKeyPress={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendReply();
                 }
-                sx={{
-                  backgroundColor: "#67ADC1", // Base background color
-                  color: "#fff", // White text color
-                  fontFamily: "Montserrat, sans-serif",
-                  textTransform: "none",
-                  padding: 0,
-                  "&:hover": {
-                    backgroundColor: "#FFEE8C",
-                    color: "#000000",
-                    "& .icon-box": {
-                      backgroundColor: "#67ADC1", // Change the box to the button's color
-                    },
-                    "& .MuiSvgIcon-root": {
-                      color: "#ffffff", // Change icon color to black on hover
-                    },
+              }}
+              sx={{
+                bgcolor: "#F8FAFC",
+                fontFamily: "'Montserrat', sans-serif",
+                fontSize: "14px",
+                "& .MuiOutlinedInput-root": {
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: "14px",
+                },
+                "& .MuiOutlinedInput-input": {
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: "14px",
+                  lineHeight: "1.5",
+                },
+                "& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline":
+                  {
+                    borderColor: "#8BD3E6", // Change border on hover
                   },
-                }}
-              >
-                <Box
-                  className="icon-box"
-                  sx={{
-                    backgroundColor: "#FFEE8C", // Initial color of the box
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "40px",
-                    "&:hover": {
-                      backgroundColor: "#67ADC1", // Change to the button's color on hover
-                    },
-                    borderRadius: 1,
-                  }}
-                >
-                  <CustomAddIcon sx={{ color: "#000" }} />{" "}
-                </Box>
-
-                <Box sx={{ paddingLeft: "10px", paddingRight: "16px" }}>
-                  Add New Feedback
-                </Box>
-              </Button>
-            </Box>
-
-            <Box sx={{ mt: 2 }}>
-              <Dialog
-                open={deleteDialog}
-                onClose={handleDeleteCancel}
-                sx={{
-                  "& .MuiDialog-paper": {
-                    borderRadius: "12px", // Add border radius to the dialog
-                    fontFamily: "Montserrat", // Apply Montserrat font to the dialog
+                "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+                  {
+                    borderColor: "#8BD3E6", // Keep border consistent on focus
                   },
-                }}
-              >
-                <DialogTitle
-                  sx={{
-                    fontFamily: "Montserrat",
-                    fontWeight: "bold",
-                    color: "#3B3183",
-                  }}
-                >
-                  Delete Feedback
-                </DialogTitle>
-                <DialogContent sx={{ fontFamily: "Montserrat" }}>
-                  Are you sure you want to delete this feedback?
-                </DialogContent>
-                <DialogActions>
-                  <Button
-                    onClick={handleDeleteCancel}
-                    variant="outlined"
-                    sx={{
-                      fontFamily: "Montserrat",
-                      color: "#8BD3E6", // Pastel color text
-                      borderColor: "#8BD3E6", // Pastel color border
-                      "&:hover": {
-                        borderColor: "#8BD3E6", // Hover color for border
-                        color: "#8BD3E6", // Hover color for text
-                      },
-                    }}
-                  >
-                    No
-                  </Button>
-                  <Button
-                    onClick={handleDelete}
-                    variant="contained"
-                    color="error"
-                    sx={{
-                      fontFamily: "Montserrat",
-                      backgroundColor: "#E53935", // Red background color
-                      color: "#fff", // White text color
-                      "&:hover": {
-                        backgroundColor: "#D32F2F", // Darker red on hover
-                      },
-                    }}
-                  >
-                    Yes
-                  </Button>
-                </DialogActions>
-              </Dialog>
+              }}
+              InputProps={{
+                sx: {
+                  "&::placeholder": {
+                    fontFamily: "'Montserrat', sans-serif",
+                    fontSize: "14px",
+                  },
+                },
+              }}
+            />
 
-              <TableContainer component={Paper}>
-                <Table sx={{ minWidth: 650 }} aria-label="simple table">
-                  <TableHead
-                    sx={{ color: "black", backgroundColor: "#67ADC1" }}
-                  >
-                    <TableRow>
-                      <TableCell sx={{ color: "#ffffff" }}>No.</TableCell>
-                      <TableCell sx={{ color: "#ffffff" }}>Title</TableCell>
-                      <TableCell sx={{ color: "#ffffff" }}>Detail</TableCell>
-                      <TableCell sx={{ color: "#ffffff" }}>
-                        Attachment
-                      </TableCell>
-                      <TableCell sx={{ color: "#ffffff" }}>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {feedbackData.map((row, index) => (
-                      <TableRow key={row._id}>
-                        <TableCell component="th" scope="row">
-                          {index + 1}
-                        </TableCell>
-                        <TableCell>{row.title}</TableCell>
-                        <ScrollableCell content={row.detail} />
-                        <TableCell>
-                          {row.attachment_url ? (
-                            <a
-                              href={row.attachment_url}
-                              style={{ color: "red" }}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              View Attachment
-                            </a>
-                          ) : (
-                            <span style={{ color: "grey" }}>No attachment</span>
-                          )}
-                        </TableCell>
-                        <TableCell sx={{ fontFamily: "Montserrat" }}>
-                          <IconButton onClick={() => handleReplyOpen(row)}>
-                            <ReplyIcon sx={{ color: "#3B3183" }} />
-                          </IconButton>
-                          <IconButton
-                            onClick={() => handleDeleteConfirmation(row._id)}
-                          >
-                            <DeleteIcon sx={{ color: "#FF5722" }} />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
+            <IconButton
+              onClick={handleSendReply}
+              sx={{
+                color: "#8BD3E6",
+                "&:hover": {
+                  bgcolor: "transparent", // Prevents the background from appearing on hover
+                  color: "#6FBCCF",
+                },
+              }}
+            >
+              <SendIcon />
+            </IconButton>
           </Box>
         </Box>
       </Box>
 
       <Dialog
-        open={isReplyDialogOpen}
-        onClose={handleReplyClose}
-        maxWidth="lg"
+        open={isNewFeedbackOpen}
+        onClose={() => setIsNewFeedbackOpen(false)}
+        maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: "16px",
+            padding: "16px",
+            fontFamily: "Montserrat",
+          },
+        }}
       >
         <DialogTitle
           sx={{
-            display: "flex", // Use flexbox
-            justifyContent: "center", // Center horizontally
-            alignItems: "center", // Center vertically
+            bgcolor: "#67ADC1",
+            color: "white",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
             fontFamily: "Montserrat",
             fontWeight: "bold",
-            color: "#3B3183",
+            fontSize: "20px",
+            textAlign: "center",
+            borderRadius: 2,
           }}
         >
-          {selectedFeedback?.replyMessage &&
-          selectedFeedback.replyMessage.trim() !== ""
-            ? "Replied Feedback"
-            : "Unreplied Feedback"}
+          New Feedback
+          <IconButton
+            onClick={() => setIsNewFeedbackOpen(false)}
+            sx={{ color: "white" }}
+          >
+            <CloseIcon />
+          </IconButton>
         </DialogTitle>
 
-        <DialogContent>
-          <Grid container spacing={2}>
-            {/* Left side of the Dialog */}
-            <Grid
-              item
-              xs={
-                selectedFeedback?.attachment_url &&
-                selectedFeedback.attachment_url.match(/\.(jpeg|jpg|gif|png)$/i)
-                  ? 4 // Left side will take up 4 parts if the image is landscape
-                  : 6
-              } // Left side will take up 6 parts if the image is portrait
-              sx={{ display: "flex", flexDirection: "column" }}
-            >
-              <Box
-                sx={{
-                  bgcolor: "grey.200", // Grey background color
-                  borderRadius: "8px", // Border radius
-                  padding: "16px", // Padding around the text
-                  mb:
-                    selectedFeedback?.replyMessage &&
-                    selectedFeedback.replyMessage.trim() !== ""
-                      ? 2
-                      : 0,
-                  height: "100%",
-                }}
+        <DialogContent
+          sx={{
+            mt: 2,
+            fontFamily: "Montserrat",
+            textAlign: "center",
+          }}
+        >
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            {error && (
+              <Typography
+                color="error"
+                sx={{ mb: 2, fontFamily: "Montserrat" }}
               >
-                <Typography
-                  variant="h6" // Header Typography for "Reply"
+                {error}
+              </Typography>
+            )}
+            <TextField
+              label="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              fullWidth
+              required
+              variant="outlined"
+              sx={{
+                fontFamily: "Montserrat",
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: "#8BD3E6", // Default border color
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#6FBCCF", // Darker blue on hover
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#8BD3E6", // Keep blue on focus
+                  },
+                },
+                "& .MuiInputLabel-root": {
+                  fontFamily: "Montserrat",
+                },
+                "& .MuiOutlinedInput-input": {
+                  fontFamily: "Montserrat",
+                },
+              }}
+            />
+
+            <TextField
+              label="Detail"
+              value={detail}
+              onChange={(e) => setDetail(e.target.value)}
+              fullWidth
+              required
+              multiline
+              rows={4}
+              variant="outlined"
+              sx={{
+                fontFamily: "Montserrat",
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: "#8BD3E6", // Default border color
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#6FBCCF", // Darker blue on hover
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#8BD3E6", // Keep blue on focus
+                  },
+                },
+                "& .MuiInputLabel-root": {
+                  fontFamily: "Montserrat",
+                },
+                "& .MuiOutlinedInput-input": {
+                  fontFamily: "Montserrat",
+                },
+              }}
+            />
+
+            <Box sx={{ mt: 2 }}>
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                id="image-upload"
+                onChange={handleImageChange}
+              />
+              <label htmlFor="image-upload">
+                <Button
+                  variant="outlined"
+                  component="span"
+                  startIcon={<ImageIcon />}
                   sx={{
-                    color: "#3B3183", // Color for the header
+                    color: "#67ADC1",
+                    borderColor: "#67ADC1",
                     fontFamily: "Montserrat",
                     fontWeight: "bold",
-                    mb: 1, // Margin below the header
-                    textAlign: "center", // Right-align the header
+                    textTransform: "uppercase",
+                    ":hover": {
+                      borderColor: "#67ADC1",
+                    },
                   }}
                 >
-                  Feedback
-                </Typography>
+                  Attach Image
+                </Button>
+              </label>
+            </Box>
 
-                <Typography
-                  variant="body1" // Body typography for the detail text
+            {previewUrl && (
+              <Box sx={{ position: "relative", mt: 2 }}>
+                <img
+                  src={previewUrl}
+                  alt="Preview"
+                  style={{
+                    maxWidth: "100%",
+                    borderRadius: "4px",
+                    border: "1px solid #ddd", // Thin border added
+                  }}
+                />
+                <IconButton
+                  onClick={() => {
+                    setImage(null);
+                    setPreviewUrl("");
+                  }}
                   sx={{
-                    fontFamily: "Montserrat",
-                    height: "100%", // Set a fixed height (adjust as necessary)
-                    overflowY: "auto", // Make it scrollable if the content exceeds the height
-                    textAlign: "justify",
+                    position: "absolute",
+                    top: 8,
+                    right: 8,
+                    bgcolor: "white",
+                    "&:hover": { bgcolor: "white" },
                   }}
                 >
-                  {selectedFeedback?.detail}
-                </Typography>
+                  <CloseIcon />
+                </IconButton>
               </Box>
-
-              {/* Show divider and replyMessage if it exists */}
-              {selectedFeedback?.replyMessage &&
-                selectedFeedback.replyMessage.trim() !== "" && (
-                  <>
-                    <Divider sx={{ bgcolor: "grey", my: 2 }} />
-                    <Box
-                      sx={{
-                        bgcolor: "#B3E5FC", // Lighter blue background color
-                        borderRadius: "8px", // Border radius
-                        padding: "16px", // Padding around the text
-                        mb: 2, // Margin at the bottom
-                      }}
-                    >
-                      <Typography
-                        variant="h6" // Header Typography for "Reply"
-                        sx={{
-                          color: "#3B3183", // Color for the header
-                          fontFamily: "Montserrat",
-                          fontWeight: "bold",
-                          mb: 1, // Margin below the header
-                          textAlign: "right", // Right-align the header
-                        }}
-                      >
-                        Reply
-                      </Typography>
-
-                      <Typography
-                        variant="body1" // Body typography for the reply message
-                        sx={{
-                          fontFamily: "Montserrat",
-                          height: "175px", // Set a fixed height (adjust as necessary)
-                          overflowY: "auto", // Make it scrollable if the content exceeds the height
-                          textAlign: "justify", // Justify the text alignment
-                        }}
-                      >
-                        {selectedFeedback?.replyMessage}
-                      </Typography>
-                    </Box>
-                  </>
-                )}
-            </Grid>
-
-            {/* Right side of the Dialog */}
-            <Grid
-              item
-              xs={
-                selectedFeedback?.attachment_url &&
-                selectedFeedback.attachment_url.match(/\.(jpeg|jpg|gif|png)$/i)
-                  ? 8 // Right side will take up 8 parts if the image is landscape
-                  : 6
-              } // Right side will take up 6 parts if the image is portrait
-              sx={{ display: "flex", flexDirection: "column" }}
-            >
-              <Typography
-                variant="h6" // Header Typography for "Reply"
-                sx={{
-                  color: "#3B3183", // Color for the header
-                  fontFamily: "Montserrat",
-                  fontWeight: "bold",
-                  mb: 1, // Margin below the header
-                  textAlign: "center", // Right-align the header
-                }}
-              >
-                Attachment
-              </Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center", // Horizontally center the content
-                  justifyContent: "center", // Vertically center the content
-                  height: "100%", // Ensure full height for centering
-                  border: "1px solid black", // Black border
-                  borderRadius: "8px", // Rounded corners (adjust as needed)
-                  padding: "10px", // Padding around the content
-                }}
-              >
-                {/* Box for the Image with defined height and width */}
-                {selectedFeedback?.attachment_url &&
-                  selectedFeedback.attachment_url.trim() !== "" && (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center", // Horizontally center the image box
-                        alignItems: "center", // Vertically center the image box
-                        padding: "10px", // Padding around the image to create space
-                        bgcolor: "#E0F7FA", // Lighter background color for the box
-                        borderRadius: "8px", // Border radius for the image container
-                        width: "100%", // Full width to match the grid
-                        height: "auto", // Make the height auto to maintain aspect ratio of image
-                        maxHeight: "350px", // Max height for the container box (adjust as needed)
-                        maxWidth: "100%", // Max width for the image container
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          maxWidth: "100%", // Ensure the inner box takes up the full width
-                          maxHeight: "100%", // Ensure the inner box does not exceed container size
-                          overflow: "auto", // Prevent overflow if image is too large
-                          textAlign: "center", // Center-align the text
-                          alignContent: "center",
-                        }}
-                      >
-                        <img
-                          src={selectedFeedback.attachment_url}
-                          alt="Attachment"
-                          style={{
-                            width: "100%", // Make the image take up the full width of the box
-                            height: "auto", // Maintain aspect ratio (portrait or landscape)
-                            objectFit: "contain", // Scale the image while maintaining its aspect ratio
-                          }}
-                        />
-                      </Box>
-                    </Box>
-                  )}
-
-                {(!selectedFeedback?.attachment_url ||
-                  selectedFeedback.attachment_url.trim() === "") && (
-                  <Typography
-                    sx={{
-                      fontFamily: "Montserrat",
-                      color: "#3B3183",
-                      marginTop: "20px",
-                      textAlign: "center",
-                    }}
-                  >
-                    This Feedback doesn't have any attachment.
-                  </Typography>
-                )}
-              </Box>
-            </Grid>
-          </Grid>
+            )}
+          </Box>
         </DialogContent>
 
-        <DialogActions>
-          {/* Cancel Button */}
+        <DialogActions
+          sx={{
+            justifyContent: "center",
+            gap: "12px",
+            marginTop: "8px",
+            fontFamily: "Montserrat",
+          }}
+        >
           <Button
-            onClick={handleReplyClose}
-            variant="outlined" // Outlined variant for the button
-            color="primary" // Use primary color for both outlined and contained styles
+            onClick={() => setIsNewFeedbackOpen(false)}
+            variant="outlined"
             sx={{
+              textTransform: "uppercase",
               fontFamily: "Montserrat",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#8BD3E6", // Text color
-              borderColor: "#8BD3E6", // Border color
-              "&:hover": {
-                bgcolor: "#fafafa", // Even lighter grey background on hover
-                borderColor: "#8BD3E6", // Border color stays #8BD3E6 on hover
+              fontWeight: "bold",
+              color: "#67ADC1",
+              borderColor: "#67ADC1",
+              padding: "8px 24px",
+              ":hover": {
+                borderColor: "#67ADC1",
               },
             }}
           >
-            {selectedFeedback?.replyMessage &&
-            selectedFeedback.replyMessage.trim() !== ""
-              ? "Close"
-              : "Cancel"}
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmitFeedback}
+            variant="contained"
+            sx={{
+              textTransform: "uppercase",
+              fontFamily: "Montserrat",
+              fontWeight: "bold",
+              color: "#FFFFFF",
+              backgroundColor: "#8BD3E6",
+              border: "1px solid #8BD3E6",
+              borderRadius: "8px",
+              padding: "8px 24px",
+              boxShadow: "none",
+              "&:hover": {
+                boxShadow: "none",
+                backgroundColor: "#6FBCCF",
+                borderColor: "#6FBCCF",
+              },
+            }}
+          >
+            Submit
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={2000}
+        onClose={(event, reason) => {
+          if (reason === "clickaway") {
+            return;
+          }
+          handleSnackbarClose();
+          if (snackbar.reload) {
+            window.location.reload();
+          }
+        }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.type === "error" ? "error" : "success"}
+          sx={{
+            width: "100%",
+            bgcolor: snackbar.type === "error" ? "#F44336" : "#4CAF50",
+            color: "white",
+            "& .MuiAlert-icon": {
+              color: "white",
+            },
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
-}
+};
+
+export default CustomerInbox;

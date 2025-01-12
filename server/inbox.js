@@ -1,3 +1,4 @@
+// server.js
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
@@ -49,16 +50,17 @@ const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
 db.once("open", () => {});
 
+// Create feedback endpoint
 app.post("/api/feedback", upload.none(), async (req, res) => {
-  const { username, title, detail, user_id } = req.body;
-  const attachment_url = req.body["attachment_url"];
+  const { username, title, detail, user_id, attachment_url } = req.body;
 
   const feedback = new Feedback({
     username,
     title,
     detail,
-    attachment_url: attachment_url,
+    attachment_url,
     user_id,
+    status: 'pending' // Set default status
   });
 
   try {
@@ -69,6 +71,7 @@ app.post("/api/feedback", upload.none(), async (req, res) => {
   }
 });
 
+// Get feedback endpoint
 app.get("/api/feedback", async (req, res) => {
   const { userId } = req.query;
 
@@ -85,12 +88,75 @@ app.get("/api/feedback", async (req, res) => {
   }
 });
 
+// Delete feedback endpoint
 app.delete("/api/feedback/delete/:id", async (req, res) => {
   try {
     const { id } = req.params;
     await Feedback.findByIdAndDelete(id);
     res.status(200).json({ message: "Feedback deleted successfully" });
   } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Update reply endpoint
+app.post("/api/feedback/reply/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { message, sender } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ message: "Message is required" });
+    }
+
+    const updatedFeedback = await Feedback.findByIdAndUpdate(
+      id,
+      {
+        $push: {
+          replies: {
+            message,
+            date: new Date(),
+            sender: sender || 'customer'
+          },
+        },
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedFeedback) {
+      return res.status(404).json({ message: "Feedback not found" });
+    }
+
+    res.status(200).json(updatedFeedback);
+  } catch (error) {
+    console.error("Error in reply endpoint:", error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// New endpoint to update feedback status (admin only)
+app.patch("/api/feedback/status/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status || !['pending', 'resolved'].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const updatedFeedback = await Feedback.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedFeedback) {
+      return res.status(404).json({ message: "Feedback not found" });
+    }
+
+    res.status(200).json(updatedFeedback);
+  } catch (error) {
+    console.error("Error updating feedback status:", error);
     res.status(400).json({ message: error.message });
   }
 });
