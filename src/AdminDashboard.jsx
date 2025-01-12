@@ -59,11 +59,19 @@ const buttonStyles = {
   fontWeight: "bold",
   color: "#FFFFFF",
   backgroundColor: "#8BD3E6",
+  border: "1px solid #8BD3E6",
   borderColor: "#8BD3E6",
+  boxShadow: "none", // Correct spelling
   "&:hover": {
-    backgroundColor: "#FFFFFF",
-    color: "#8BD3E6",
-    borderColor: "#8BD3E6",
+    backgroundColor: "#6FBCCF", // Slightly darker blue for hover
+    color: "#FFFFFF", // Keeps the text color consistent
+    borderColor: "#6FBCCF",
+    boxShadow: "none", // Ensures no shadow on hover
+  },
+  "&:disabled": {
+    backgroundColor: "#E0E0E0",
+    borderColor: "#E0E0E0",
+    color: "#9E9E9E",
   },
 };
 
@@ -72,7 +80,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [uploadsData, setUploadsData] = useState(null);
   const [purchasesData, setPurchasesData] = useState(null);
-  const [totalFeedbacks, setTotalFeedbacks] = useState(0);
+  const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0);
   const [statsData, setStatsData] = useState([
     {
       title: "Total Customers",
@@ -89,7 +97,7 @@ export default function AdminDashboard() {
       ),
     },
     {
-      title: "Inbox Notifications",
+      title: "Pending Feedbacks",
       value: "0",
       icon: <NotificationsOutlined sx={{ fontSize: 40, color: "#FF5722" }} />,
       button: (
@@ -133,11 +141,14 @@ export default function AdminDashboard() {
         const uploadsChange =
           monthlyUploads[monthlyUploads.length - 1] -
           (monthlyUploads[monthlyUploads.length - 2] || 0);
-        
-        // Fix: Calculate the actual change between current and previous month
-        const currentMonthPurchases = monthlyPurchases[monthlyPurchases.length - 1] || 0;
-        const previousMonthPurchases = monthlyPurchases[monthlyPurchases.length - 2] || 0;
-        const purchasesChange = currentMonthPurchases - previousMonthPurchases;
+
+          const currentDate = new Date();
+          const currentMonthIndex = currentDate.getMonth();
+          const previousMonthIndex = currentMonthIndex === 0 ? 11 : currentMonthIndex - 1;
+          
+          const currentMonthPurchases = monthlyPurchases[currentMonthIndex] || 0;
+          const previousMonthPurchases = monthlyPurchases[previousMonthIndex] || 0;
+          const purchasesChange = currentMonthPurchases - previousMonthPurchases;
 
         setStatsData((prevStats) => [
           {
@@ -153,7 +164,7 @@ export default function AdminDashboard() {
           {
             ...prevStats[3],
             value: totalPurchases.toString(),
-            change: purchasesChange, // Now using the correct change calculation
+            change: purchasesChange, // Will show the difference from previous month (or full amount if first month)
           },
         ]);
 
@@ -220,24 +231,25 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchFeedbacks = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:3003/admin/feedbacks"
-        );
-        const feedbackCount = response.data.totalFeedbacks;
-        setTotalFeedbacks(feedbackCount);
-
+        const response = await axios.get("http://localhost:3003/admin/feedbacks");
+        
+        // Get both the feedbacks array and the total count
+        const { feedbacks, totalFeedbacks } = response.data;
+        setPendingFeedbackCount(totalFeedbacks);
+        
+        // Update the stats data
         setStatsData((prevStats) => {
           const newStats = [...prevStats];
           newStats[1] = {
             ...newStats[1],
-            value: feedbackCount.toString(),
+            value: totalFeedbacks.toString(),
             button: (
               <Button
                 variant="outlined"
                 sx={{ mt: 2, width: "100%", ...buttonStyles }}
                 onClick={() => navigate("/admin-inbox")}
               >
-                Inbox
+                Inbox 
               </Button>
             ),
           };
@@ -247,10 +259,11 @@ export default function AdminDashboard() {
         console.error("Error fetching feedbacks:", error);
       }
     };
-
+  
     fetchFeedbacks();
   }, [navigate]);
-
+  
+  
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,

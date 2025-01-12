@@ -19,6 +19,10 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
@@ -29,6 +33,7 @@ import axios from "axios";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { format } from "date-fns";
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -65,7 +70,6 @@ const formStyles = {
   width: "90%",
 };
 
-
 const buttonStyles = {
   px: 10,
   fontFamily: "Montserrat",
@@ -84,7 +88,6 @@ const buttonStyles = {
     color: "#9E9E9E",
   },
 };
-
 
 const dialogStyles = {
   dialogPaper: {
@@ -141,7 +144,6 @@ const dialogStyles = {
     },
   },
 };
-
 
 export default function MusicEntryClerkCatalog() {
   const navigate = useNavigate();
@@ -469,8 +471,52 @@ export default function MusicEntryClerkCatalog() {
     }
   };
 
+  // Add this validation function before the handleSubmit function
+  const validateRequiredFields = (data) => {
+    const requiredFields = {
+      title: "Title",
+      artist: "Artist",
+      composer: "Composer",
+      price: "Price",
+      collection: "Collection",
+      dateUploaded: "Date Uploaded",
+      emotion: "Emotion",
+      genre: "Genre",
+    };
+
+    const missingFields = [];
+
+    // Check each required field
+    Object.entries(requiredFields).forEach(([field, label]) => {
+      if (!data[field] || data[field].trim() === "") {
+        missingFields.push(label);
+      }
+    });
+
+    // Price validation
+    if (data.price && (isNaN(data.price) || parseFloat(data.price) <= 0)) {
+      missingFields.push("Valid Price (must be greater than 0)");
+    }
+
+    return missingFields;
+  };
+
+  // Update the handleSubmit function
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate all required fields
+    const missingFields = validateRequiredFields(catalogData);
+
+    if (missingFields.length > 0) {
+      setDialogTitle("Missing Required Fields");
+      setDialogMessage(
+        `Please fill in the following required fields:\n${missingFields.join(", ")}`
+      );
+      setIsSuccess(false);
+      setOpenDialog(true);
+      return;
+    }
 
     try {
       const response = await fetch("http://localhost:3001/catalog", {
@@ -485,12 +531,11 @@ export default function MusicEntryClerkCatalog() {
         throw new Error("Failed to save data");
       }
 
-      setOriginalData(catalogData); // Update original data after successful save
-      showDialog("Success", "Data saved successfully.");
+      setOriginalData(catalogData);
       setDialogTitle("Success");
       setDialogMessage("Data saved successfully.");
       setIsSuccess(true);
-      setOpenDialog(true); // Open the dialog explicitly
+      setOpenDialog(true);
     } catch (error) {
       console.error("Error saving data:", error);
       setDialogTitle("Error");
@@ -604,19 +649,6 @@ export default function MusicEntryClerkCatalog() {
                 <>
                   <Grid item xs={12} sm={6}>
                     <TextField
-                      name="filename"
-                      label="Filename"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.filename}
-                      onChange={handleInputChange}
-                      required
-                      disabled
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
                       name="title"
                       label="Title"
                       variant="outlined"
@@ -629,93 +661,7 @@ export default function MusicEntryClerkCatalog() {
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <TextField
-                      name="alternativeTitle"
-                      label="Alternative Title"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.alternativeTitle}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="identifier"
-                      label="Identifier"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.identifier}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="uri"
-                      label="URI"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.uri}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="permalink"
-                      label="Permalink"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.permalink}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="element"
-                      label="Element"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.element}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DatePicker
-                        label="Date Uploaded"
-                        value={
-                          catalogData.dateUploaded
-                            ? new Date(catalogData.dateUploaded)
-                            : null
-                        }
-                        onChange={(newValue) => {
-                          handleInputChange({
-                            target: {
-                              name: "dateUploaded",
-                              value: newValue.toISOString(),
-                            },
-                          });
-                        }}
-                        slots={{ textField: TextField }}
-                        slotProps={{
-                          textField: {
-                            variant: "outlined",
-                            fullWidth: true,
-                            sx: formStyles,
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
-                </>
-              )}
-              {tabIndex === 1 && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
+                      required
                       name="artist"
                       label="Artist"
                       variant="outlined"
@@ -723,6 +669,41 @@ export default function MusicEntryClerkCatalog() {
                       sx={formStyles}
                       value={catalogData.artist}
                       onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      required
+                      name="composer"
+                      label="Composer"
+                      variant="outlined"
+                      fullWidth
+                      sx={formStyles}
+                      value={catalogData.composer}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      required
+                      name="price"
+                      label="Price"
+                      variant="outlined"
+                      fullWidth
+                      sx={formStyles}
+                      value={catalogData.price}
+                      onChange={handleInputChange}
+                
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment
+                            position="start"
+                            sx={{ fontFamily: "Montserrat" }}
+                          >
+                            RM
+                          </InputAdornment>
+                        ),
+                      }}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -738,15 +719,106 @@ export default function MusicEntryClerkCatalog() {
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <TextField
-                      name="composer"
-                      label="Composer"
+                      name="instrumentation"
+                      label="Instrumentation"
                       variant="outlined"
                       fullWidth
                       sx={formStyles}
-                      value={catalogData.composer}
+                      value={catalogData.instrumentation || ""}
                       onChange={handleInputChange}
                     />
                   </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        ...formStyles,
+                        "& .MuiInputBase-root": {
+                          fontFamily: "Montserrat", // Apply Montserrat font
+                        },
+                        "& .MuiInputLabel-root": {
+                          fontFamily: "Montserrat", // Apply Montserrat font to the label
+                        },
+                      }}
+                      required
+                    >
+                      <InputLabel id="collection-label">Collection</InputLabel>
+                      <Select
+                        labelId="collection-label"
+                        name="collection"
+                        value={catalogData.collection}
+                        onChange={handleInputChange}
+                        label="Collection"
+                        required
+                      >
+                        <MenuItem
+                          value="Student"
+                          sx={{ fontFamily: "Montserrat" }}
+                        >
+                          Student
+                        </MenuItem>
+                        <MenuItem
+                          value="Lecturers"
+                          sx={{ fontFamily: "Montserrat" }}
+                        >
+                          Lecturers
+                        </MenuItem>
+                        <MenuItem
+                          value="Freelancers"
+                          sx={{ fontFamily: "Montserrat" }}
+                        >
+                          Freelancers
+                        </MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                      <DatePicker
+                        label="Date Uploaded"
+                        value={
+                          catalogData.dateUploaded
+                            ? new Date(catalogData.dateUploaded)
+                            : null
+                        }
+                        onChange={(newValue) => {
+                          handleInputChange({
+                            target: {
+                              name: "dateUploaded",
+                              value: newValue ? newValue.toISOString() : "",
+                            },
+                          });
+                        }}
+                        format="dd/MM/yyyy" // Ensures the date is displayed in dd/MM/yyyy format
+                        slots={{ textField: TextField }}
+                        slotProps={{
+                          textField: {
+                            variant: "outlined",
+                            fullWidth: true,
+                            required: true, // Makes the field required
+                            sx: formStyles,
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </Grid>
+                </>
+              )}
+              {tabIndex === 1 && (
+                <>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      name="identifier"
+                      label="Identifier"
+                      variant="outlined"
+                      fullWidth
+                      sx={formStyles}
+                      value={catalogData.identifier}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+
                   <Grid item xs={12} sm={6}>
                     <TextField
                       name="composerTimePeriod"
@@ -813,14 +885,15 @@ export default function MusicEntryClerkCatalog() {
                       onChange={handleInputChange}
                     />
                   </Grid>
+
                   <Grid item xs={12} sm={6}>
                     <TextField
-                      name="collection"
-                      label="Collection"
+                      name="element"
+                      label="Element"
                       variant="outlined"
                       fullWidth
                       sx={formStyles}
-                      value={catalogData.collection}
+                      value={catalogData.element}
                       onChange={handleInputChange}
                     />
                   </Grid>
@@ -1166,18 +1239,6 @@ export default function MusicEntryClerkCatalog() {
                       onChange={handleInputChange}
                     />
                   </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="emotion"
-                      label="Emotion"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.emotion} // Assuming you have this in your catalogData state
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
                 </>
               )}
               {tabIndex === 4 && (
@@ -1276,6 +1337,17 @@ export default function MusicEntryClerkCatalog() {
                 <>
                   <Grid item xs={12} sm={6}>
                     <TextField
+                      name="alternativeTitle"
+                      label="Alternative Title"
+                      variant="outlined"
+                      fullWidth
+                      sx={formStyles}
+                      value={catalogData.alternativeTitle}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
                       name="copyright"
                       label="Copyright"
                       variant="outlined"
@@ -1349,23 +1421,6 @@ export default function MusicEntryClerkCatalog() {
                       sx={formStyles}
                       value={catalogData.numberInPublication}
                       onChange={handleInputChange}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="price"
-                      label="Price"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.price}
-                      onChange={handleInputChange}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">RM</InputAdornment>
-                        ),
-                      }}
                     />
                   </Grid>
                 </>
@@ -1586,16 +1641,16 @@ export default function MusicEntryClerkCatalog() {
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                      <TextField
-                        name="instrumentation"
-                        label="Instrumentation"
-                        variant="outlined"
-                        fullWidth
-                        sx={formStyles}
-                        value={catalogData.instrumentation || ""}
-                        onChange={handleInputChange}
-                      />
-                    </Grid>
+                    <TextField
+                      name="uri"
+                      label="URI"
+                      variant="outlined"
+                      fullWidth
+                      sx={formStyles}
+                      value={catalogData.uri}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
                 </>
               )}
               {tabIndex === 8 && (
@@ -1707,6 +1762,17 @@ export default function MusicEntryClerkCatalog() {
                       fullWidth
                       sx={formStyles}
                       value={catalogData.timeOfProsper}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      name="permalink"
+                      label="Permalink"
+                      variant="outlined"
+                      fullWidth
+                      sx={formStyles}
+                      value={catalogData.permalink}
                       onChange={handleInputChange}
                     />
                   </Grid>
@@ -1924,6 +1990,7 @@ export default function MusicEntryClerkCatalog() {
                   <Grid container direction="column" spacing={2}>
                     <Grid item xs={12}>
                       <TextField
+                        required
                         name="emotion"
                         label="Emotion"
                         variant="outlined"
@@ -1948,6 +2015,7 @@ export default function MusicEntryClerkCatalog() {
 
                     <Grid item xs={12}>
                       <TextField
+                        required
                         name="genre"
                         label="Genre"
                         variant="outlined"
@@ -1957,8 +2025,6 @@ export default function MusicEntryClerkCatalog() {
                         onChange={handleInputChange}
                       />
                     </Grid>
-
-                    
                   </Grid>
                 </Grid>
               </Grid>
@@ -1976,6 +2042,7 @@ export default function MusicEntryClerkCatalog() {
               </DialogContent>
               <DialogActions sx={dialogStyles.actions}>
                 {dialogTitle === "Prediction Complete" ||
+                dialogTitle === "Missing Required Fields" ||
                 dialogTitle === "Error" ||
                 dialogTitle === "Uploaded" ? (
                   // For prediction success - only show Close button

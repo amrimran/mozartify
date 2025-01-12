@@ -343,13 +343,19 @@ app.get("/admin/stats", async (req, res) => {
 
 app.get("/admin/feedbacks", async (req, res) => {
   try {
-    const totalFeedbacks = await Feedback.countDocuments();
-    res.status(200).json({ totalFeedbacks });
+    // Fetch all feedbacks with status "pending"
+    const pendingFeedbacks = await Feedback.find({ status: "pending" });
+    const totalPendingFeedbacks = pendingFeedbacks.length;
+
+    // Respond with both the count and the feedbacks
+    res.status(200).json({ feedbacks: pendingFeedbacks, totalFeedbacks: totalPendingFeedbacks });
   } catch (error) {
     console.error("Error fetching feedbacks:", error);
     res.status(500).json({ error: "Failed to fetch feedbacks" });
   }
 });
+
+
 
 // Handle invalid routes
 app.use((req, res) => {
