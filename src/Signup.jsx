@@ -91,24 +91,25 @@ const FormContainer = styled(Box)(({ theme }) => ({
   boxShadow: "0px 3px 6px rgba(0,0,0,1)",
   width: "90%", // Default for mobile
   maxWidth: "450px",
-  minHeight: "auto", // Changed from fixed height
-  maxHeight: "90vh", // Maximum height relative to viewport
-  height: "auto", // Auto height based on content
+  height: "fit-content", // Changed to fit-content
   display: "flex",
   flexDirection: "column",
   justifyContent: "center",
   alignItems: "center",
   margin: "20px",
-  overflowY: "auto",
-  overflowX: "hidden",
+  padding: "20px",
   boxSizing: "border-box",
+  gap: "15px", // Add consistent spacing between elements
+
+  "& > *:last-child": {
+    marginBottom: "0", // Ensure last element doesn't add extra space
+  },
 
   // Mobile screens and small height
   [theme.breakpoints.down("sm")]: {
     width: "95%",
     padding: theme.spacing(2),
     margin: "10px",
-    maxHeight: "85vh",
     "& .MuiTypography-h5": {
       fontSize: "1.2rem",
     },
@@ -121,26 +122,22 @@ const FormContainer = styled(Box)(({ theme }) => ({
   [theme.breakpoints.between("sm", "md")]: {
     width: "70%",
     padding: theme.spacing(3),
-    maxHeight: "80vh",
   },
 
   // Laptop screens
   [theme.breakpoints.between("md", "lg")]: {
     width: "60%",
     padding: theme.spacing(3, 4),
-    maxHeight: "75vh",
   },
 
   // Desktop screens
   [theme.breakpoints.up("lg")]: {
     width: "50%",
     padding: theme.spacing(4),
-    maxHeight: "70vh",
   },
 
   // Landscape mode adjustments
   "@media (orientation: landscape) and (max-height: 600px)": {
-    maxHeight: "95vh",
     padding: theme.spacing(2),
     "& .MuiTextField-root": {
       marginTop: "4px",
@@ -161,9 +158,15 @@ const FormContainer = styled(Box)(({ theme }) => ({
 
   // Large height screens
   "@media (min-height: 1000px)": {
-    maxHeight: "60vh",
-    justifyContent: "space-around",
     padding: theme.spacing(6),
+    justifyContent: "space-around",
+  },
+
+  // Add padding to the parent container that holds the form elements
+  "& > .MuiBox-root": {
+    width: "100%",
+    padding: "0 16px",
+    boxSizing: "border-box",
   },
 }));
 
@@ -223,6 +226,7 @@ const GlobalStyle = createGlobalStyle`
     padding: 0;
     font-family: 'Montserrat', sans-serif;
     overflow-x: hidden;
+    overflow-y: hidden;
   }
 `;
 
@@ -459,41 +463,37 @@ export default function Signup() {
           onClick={() => window.location.replace("http://localhost:5173")}
         />
         <FormContainer component="form" onSubmit={handleSubmit}>
-  
-            <Typography
-              variant={isMobile ? "h6" : "h5"}
-              align="center"
-              fontFamily="Montserrat"
-              fontWeight="bold"
-              sx={{
-                fontSize: {
-                  xs: "1.25rem",
-                  sm: "1.5rem",
-                  md: "1.75rem",
-                },
-              }}
-            >
-              Sign up to <span style={{ color: "#8BD3E6" }}>N.A.S.I.R</span>
-            </Typography>
-          
+          <Typography
+            variant={isMobile ? "h6" : "h5"}
+            align="center"
+            fontFamily="Montserrat"
+            fontWeight="bold"
+            sx={{
+              fontSize: {
+                xs: "1.25rem",
+                sm: "1.5rem",
+                md: "1.75rem",
+              },
+            }}
+          >
+            Sign up to <span style={{ color: "#8BD3E6" }}>N.A.S.I.R</span>
+          </Typography>
 
-       
-            <Typography
-              variant="body1"
-              align="center"
-              color="textSecondary"
-              fontFamily="Montserrat"
-              sx={{
-                fontSize: {
-                  xs: "0.875rem",
-                  sm: "0.9rem",
-                  md: "1rem",
-                },
-              }}
-            >
-              Please fill this form to create an account
-            </Typography>
-          
+          <Typography
+            variant="body1"
+            align="center"
+            color="textSecondary"
+            fontFamily="Montserrat"
+            sx={{
+              fontSize: {
+                xs: "0.875rem",
+                sm: "0.9rem",
+                md: "1rem",
+              },
+            }}
+          >
+            Please fill this form to create an account
+          </Typography>
 
           <Box sx={{ width: "100%", mt: { xs: 1, sm: 2 } }}>
             <FormElementSpacer>
