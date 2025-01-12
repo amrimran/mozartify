@@ -71,7 +71,7 @@ export default function AdminDashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploadsData, setUploadsData] = useState(null);
-  const [downloadsData, setDownloadsData] = useState(null);
+  const [purchasesData, setPurchasesData] = useState(null);
   const [totalFeedbacks, setTotalFeedbacks] = useState(0);
   const [statsData, setStatsData] = useState([
     {
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
       change: null,
     },
     {
-      title: "Total Downloads",
+      title: "Total Purchases",
       value: "0",
       icon: <CloudDownload sx={{ fontSize: 40, color: "#FF9800" }} />,
       change: null,
@@ -124,18 +124,20 @@ export default function AdminDashboard() {
         const response = await axios.get("http://localhost:3003/admin/stats");
         const {
           monthlyUploads,
-          monthlyDownloads,
+          monthlyPurchases,
           totalUsers,
           totalUploads,
-          totalDownloads,
+          totalPurchases,
         } = response.data;
 
         const uploadsChange =
           monthlyUploads[monthlyUploads.length - 1] -
           (monthlyUploads[monthlyUploads.length - 2] || 0);
-        const downloadsChange =
-          monthlyDownloads[monthlyDownloads.length - 1] -
-          (monthlyDownloads[monthlyDownloads.length - 2] || 0);
+        
+        // Fix: Calculate the actual change between current and previous month
+        const currentMonthPurchases = monthlyPurchases[monthlyPurchases.length - 1] || 0;
+        const previousMonthPurchases = monthlyPurchases[monthlyPurchases.length - 2] || 0;
+        const purchasesChange = currentMonthPurchases - previousMonthPurchases;
 
         setStatsData((prevStats) => [
           {
@@ -150,8 +152,8 @@ export default function AdminDashboard() {
           },
           {
             ...prevStats[3],
-            value: totalDownloads.toString(),
-            change: downloadsChange,
+            value: totalPurchases.toString(),
+            change: purchasesChange, // Now using the correct change calculation
           },
         ]);
 
@@ -182,12 +184,12 @@ export default function AdminDashboard() {
           ],
         });
 
-        setDownloadsData({
+        setPurchasesData({
           labels,
           datasets: [
             {
-              label: "Downloads",
-              data: monthlyDownloads,
+              label: "Purchases",
+              data: monthlyPurchases,
               borderColor: "rgba(153, 102, 255, 0.6)",
               backgroundColor: "rgba(153, 102, 255, 0.3)",
               tension: 0.4,
@@ -317,11 +319,12 @@ export default function AdminDashboard() {
                 {loading ? "Loading..." : user?.username || "Admin"}
               </Typography>
               <Avatar
-                alt={user? user.username : null}
+                alt={user ? user.username : null}
                 src={user && user.profile_picture ? user.profile_picture : null}
               >
-                {(!user || !user.profile_picture) &&
-                  user? user.username.charAt(0).toUpperCase():null}
+                {(!user || !user.profile_picture) && user
+                  ? user.username.charAt(0).toUpperCase()
+                  : null}
               </Avatar>
             </Box>
           </Box>
@@ -343,8 +346,8 @@ export default function AdminDashboard() {
                 placeholder: "Loading chart...",
               },
               {
-                title: "Download Trends",
-                data: downloadsData,
+                title: "Purchase Trends",
+                data: purchasesData,
                 chart: Line,
                 maxWidth: "550px",
                 placeholder: "Loading chart...",

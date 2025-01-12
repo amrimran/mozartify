@@ -4,12 +4,9 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const ABCFile = require("./models/ABCFile");
 const Feedback = require("./models/Feedback");
-const User= require("./models/User");
-const DeletedUser= require("./models/DeletedUser"); 
-
-
-
-
+const User = require("./models/User");
+const DeletedUser = require("./models/DeletedUser");
+const Purchase = require("./models/Purchase");
 
 
 const app = express();
@@ -33,10 +30,12 @@ app.use(
 
 // MongoDB Connection
 mongoose
-  .connect(process.env.DB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.DB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("MongoDB connected successfully"))
   .catch((err) => console.error("MongoDB connection error:", err));
-
 
 // Routes
 app.get("/", (req, res) => {
@@ -100,7 +99,9 @@ app.put("/users/:id", async (req, res) => {
 
     // Validate fields
     if (!username || !email || !role) {
-      return res.status(400).json({ error: "Username, email, and role are required" });
+      return res
+        .status(400)
+        .json({ error: "Username, email, and role are required" });
     }
 
     // Update user
@@ -117,7 +118,8 @@ app.put("/users/:id", async (req, res) => {
     // Handle MongoDB unique constraint errors
     if (error.code === 11000) {
       res.status(400).json({
-        error: "Duplicate entry. A user with this email or username already exists.",
+        error:
+          "Duplicate entry. A user with this email or username already exists.",
       });
     } else {
       res.status(500).json({ error: "Failed to update user" });
@@ -154,8 +156,6 @@ app.post("/api/feedback/reply/:id", async (req, res) => {
   }
 });
 
-
-
 // Add user to deletedusers
 app.post("/deletedusers", async (req, res) => {
   try {
@@ -167,7 +167,9 @@ app.post("/deletedusers", async (req, res) => {
 
     const existingDeletedUser = await DeletedUser.findOne({ email });
     if (existingDeletedUser) {
-      return res.status(400).json({ error: "User already exists in deletedusers" });
+      return res
+        .status(400)
+        .json({ error: "User already exists in deletedusers" });
     }
 
     const deletedUser = new DeletedUser({
@@ -223,14 +225,15 @@ app.put("/users/:id/approval", async (req, res) => {
   }
 });
 
-
 // Delete a user by ID
 app.delete("/users/:id", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    const existingDeletedUser = await DeletedUser.findOne({ email: user.email });
+    const existingDeletedUser = await DeletedUser.findOne({
+      email: user.email,
+    });
     if (!existingDeletedUser) {
       const deletedUser = new DeletedUser(user.toObject());
       await deletedUser.save();
@@ -238,21 +241,26 @@ app.delete("/users/:id", async (req, res) => {
 
     await User.findByIdAndDelete(req.params.id);
 
-    res.json({ message: "User deleted successfully and transferred to deletedusers collection" });
+    res.json({
+      message:
+        "User deleted successfully and transferred to deletedusers collection",
+    });
   } catch (error) {
     console.error("Error deleting user:", error);
     res.status(500).json({ error: "Failed to delete user" });
   }
 });
 
-
 // Fetch total statistics for dashboard
 app.get("/admin/stats", async (req, res) => {
   try {
     const totalUsers = await User.countDocuments({ role: "customer" }); // Filter by role
     const totalUploads = await ABCFile.countDocuments();
-    const totalDownloads = await ABCFile.aggregate([{ $group: { _id: null, total: { $sum: "$downloads" } } }]);
-    const downloadCount = totalDownloads.length > 0 ? totalDownloads[0].total : 0;
+    const totalPurchases = await Purchase.aggregate([
+      { $group: { _id: null, total: { $sum: 1 } } },
+    ]);
+    const purchaseCount =
+      totalPurchases.length > 0 ? totalPurchases[0].total : 0;
 
     // Aggregate uploads by month
     const uploadsByMonth = await ABCFile.aggregate([
@@ -267,13 +275,12 @@ app.get("/admin/stats", async (req, res) => {
       },
     ]);
 
-    // Aggregate downloads by month
-    const downloadsByMonth = await ABCFile.aggregate([
-      { $unwind: "$downloadEvents" }, // Decompose the downloadEvents array
+    // Aggregate purchases by month
+    const purchasesByMonth = await Purchase.aggregate([
       {
         $group: {
-          _id: { $month: "$downloadEvents.timestamp" }, // Group by month
-          count: { $sum: 1 }, // Count downloads per month
+          _id: { $month: "$purchase_date" }, // Group by month
+          count: { $sum: 1 }, // Count purchases per month
         },
       },
       {
@@ -283,28 +290,29 @@ app.get("/admin/stats", async (req, res) => {
 
     // Prepare monthly stats for response
     const monthlyUploads = Array(12).fill(0);
-    const monthlyDownloads = Array(12).fill(0);
+    const monthlyPurchases = Array(12).fill(0);
 
     uploadsByMonth.forEach((upload) => {
       monthlyUploads[upload._id - 1] = upload.count; // _id is the month number (1-12)
     });
 
-    downloadsByMonth.forEach((download) => {
-      monthlyDownloads[download._id - 1] = download.count; // _id is the month number (1-12)
+    purchasesByMonth.forEach((purchase) => {
+      monthlyPurchases[purchase._id - 1] = purchase.count; // _id is the month number (1-12)
     });
 
     res.json({
       totalUsers,
       totalUploads,
-      totalDownloads: downloadCount,
+      totalPurchases: purchaseCount,
       monthlyUploads,
-      monthlyDownloads,
+      monthlyPurchases,
     });
   } catch (error) {
     console.error("Error fetching admin stats:", error);
     res.status(500).json({ error: "Failed to fetch stats" });
   }
 });
+
 
 app.get("/admin/feedbacks", async (req, res) => {
   try {
@@ -315,8 +323,6 @@ app.get("/admin/feedbacks", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch feedbacks" });
   }
 });
-
-
 
 // Handle invalid routes
 app.use((req, res) => {

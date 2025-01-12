@@ -22,6 +22,7 @@ import {
   Skeleton,
   Snackbar,
   Alert,
+  Tooltip,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ChatIcon from "@mui/icons-material/Chat";
@@ -54,6 +55,8 @@ const CustomerInbox = () => {
   const [previewUrl, setPreviewUrl] = useState("");
   const [page, setPage] = useState(0); // Current page (zero-indexed)
   const [rowsPerPage, setRowsPerPage] = useState(5); // Number of rows per page
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+
 
   const drawerRef = useRef(null);
 
@@ -92,6 +95,41 @@ const CustomerInbox = () => {
       reload,
     });
   };
+
+  const handleSort = (key) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+  
+  const sortedFeedbackData = [...feedbackData].sort((a, b) => {
+    if (sortConfig.key) {
+      const valueA = sortConfig.key === "date"
+        ? new Date(
+            a.replies?.length > 0
+              ? a.replies[a.replies.length - 1].date
+              : a.feedbackDate
+          )
+        : a[sortConfig.key];
+      const valueB = sortConfig.key === "date"
+        ? new Date(
+            b.replies?.length > 0
+              ? b.replies[b.replies.length - 1].date
+              : b.feedbackDate
+          )
+        : b[sortConfig.key];
+  
+      if (valueA < valueB) {
+        return sortConfig.direction === "asc" ? -1 : 1;
+      }
+      if (valueA > valueB) {
+        return sortConfig.direction === "asc" ? 1 : -1;
+      }
+    }
+    return 0;
+  });
+  
 
   const TableRowSkeleton = () => (
     <TableRow
@@ -551,7 +589,9 @@ const CustomerInbox = () => {
             boxShadow: 1,
             borderRadius: 2,
             overflow: "hidden",
-            transition: "opacity 0.3s ease-in-out",
+            "& .MuiTable-root": {
+              tableLayout: "fixed", // Force table to have fixed layout
+            },
           }}
         >
           <Table>
@@ -560,36 +600,60 @@ const CustomerInbox = () => {
               <TableHeadSkeleton />
             ) : (
               <TableHead sx={{ bgcolor: "#8BD3E6" }}>
-                <TableRow>
-                  {["Title", "Last Updated", "Status", "Actions"].map(
-                    (header) => (
-                      <TableCell
-                        key={header}
-                        sx={{
-                          color: "white",
-                          fontFamily: "'Montserrat', sans-serif",
-                          textTransform: "uppercase",
-                          fontWeight: "bold",
-                          fontSize: "14px",
-                          padding: "16px",
-                          borderBottom: "1px solid #8BD3E6",
-                        }}
-                      >
-                        {header}
-                      </TableCell>
-                    )
-                  )}
-                </TableRow>
-              </TableHead>
+  <TableRow>
+    {[
+      { label: "Title", key: "title" },
+      { label: "Last Updated", key: "date" },
+      { label: "Status", key: "status" },
+      { label: "Actions", key: null },
+    ].map((header, index) => (
+      <TableCell
+        key={index}
+        onClick={() => header.key && handleSort(header.key)}
+        sx={{
+          color: "white",
+          fontFamily: "'Montserrat', sans-serif",
+          textTransform: "uppercase",
+          fontWeight: "bold",
+          fontSize: "14px",
+          padding: "16px",
+          borderBottom: "1px solid #8BD3E6",
+          cursor: header.key ? "pointer" : "default",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {header.label}
+          {header.key && (
+            <Typography
+              component="span"
+              sx={{
+                fontSize: "12px",
+                color: sortConfig.key === header.key ? "white" : "rgba(255, 255, 255, 0.7)",
+                fontWeight: sortConfig.key === header.key ? "bold" : "normal",
+              }}
+            >
+              {sortConfig.key === header.key
+                ? sortConfig.direction === "asc"
+                  ? "▲"
+                  : "▼"
+                : "▲ ▼"}
+            </Typography>
+          )}
+        </Box>
+      </TableCell>
+    ))}
+  </TableRow>
+</TableHead>
+
             )}
 
             {/* Table Body */}
             <TableBody>
-              {isLoading
-                ? [...Array(rowsPerPage)].map((_, index) => (
-                    <TableRowSkeleton key={index} />
-                  ))
-                : paginatedFeedbackData.map((row) => (
+  {isLoading
+    ? [...Array(rowsPerPage)].map((_, index) => <TableRowSkeleton key={index} />)
+    : sortedFeedbackData
+        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+        .map((row) => (
                     <TableRow
                       key={row._id}
                       sx={{
@@ -607,16 +671,37 @@ const CustomerInbox = () => {
                         },
                       }}
                     >
-                      <TableCell
-                        sx={{
-                          fontFamily: "'Montserrat', sans-serif",
-                          fontSize: "14px",
-                          padding: "16px",
-                          color: "#333",
-                        }}
-                      >
-                        {row.title}
-                      </TableCell>
+                       <TableCell
+                                                sx={{
+                                                  fontFamily: "'Montserrat', sans-serif",
+                                                  fontSize: "14px",
+                                                  padding: "16px",
+                                                  color: "#333",
+                                                  maxWidth: "100px", // Limit width to trigger ellipsis
+                                                  whiteSpace: "nowrap", // Prevent wrapping
+                                                  overflow: "hidden", // Hide overflowing text
+                                                  textOverflow: "ellipsis", // Add ellipsis for overflowing text
+                                                }}
+                                              >
+                                                <Tooltip
+                                                  title={row.title || ""}
+                                                  arrow
+                                                  componentsProps={{
+                                                    tooltip: {
+                                                      sx: {
+                                                        fontFamily: "'Montserrat', sans-serif", // Set Montserrat font
+                                                        fontSize: "14px", // Ensure consistent font size
+                                                        padding: "8px 12px", // Add padding for better appearance
+                                                        borderRadius: "4px", // Optional: Rounded edges for better look
+                                                        bgcolor: "rgba(128, 128, 128, 1)", // Grey background
+                                                        color: "#fff", // White text color
+                                                      },
+                                                    },
+                                                  }}
+                                                >
+                                                  <span>{row.title}</span>
+                                                </Tooltip>
+                                              </TableCell>
                       <TableCell
                         sx={{
                           fontFamily: "'Montserrat', sans-serif",
@@ -972,33 +1057,37 @@ const CustomerInbox = () => {
               </Typography>
             )}
             <TextField
-              label="Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              fullWidth
-              required
-              variant="outlined"
-              sx={{
-                fontFamily: "Montserrat",
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": {
-                    borderColor: "#8BD3E6", // Default border color
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "#6FBCCF", // Darker blue on hover
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#8BD3E6", // Keep blue on focus
-                  },
-                },
-                "& .MuiInputLabel-root": {
-                  fontFamily: "Montserrat",
-                },
-                "& .MuiOutlinedInput-input": {
-                  fontFamily: "Montserrat",
-                },
-              }}
-            />
+  label="Title"
+  value={title}
+  onChange={(e) => setTitle(e.target.value)}
+  fullWidth
+  required
+  variant="outlined"
+  inputProps={{
+    maxLength: 50, // Limit input to 50 characters
+  }}
+  sx={{
+    fontFamily: "Montserrat",
+    "& .MuiOutlinedInput-root": {
+      "& fieldset": {
+        borderColor: "#8BD3E6", // Default border color
+      },
+      "&:hover fieldset": {
+        borderColor: "#6FBCCF", // Darker blue on hover
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: "#8BD3E6", // Keep blue on focus
+      },
+    },
+    "& .MuiInputLabel-root": {
+      fontFamily: "Montserrat",
+    },
+    "& .MuiOutlinedInput-input": {
+      fontFamily: "Montserrat",
+    },
+  }}
+/>
+
 
             <TextField
               label="Detail"

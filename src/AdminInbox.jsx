@@ -17,6 +17,7 @@ import {
   Alert,
   Divider,
   TablePagination,
+  Tooltip,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ChatIcon from "@mui/icons-material/Chat";
@@ -42,6 +43,7 @@ const AdminInbox = () => {
   const [page, setPage] = useState(0); // Current page (zero-indexed)
   const [rowsPerPage, setRowsPerPage] = useState(5); // Number of rows per page
   const [isLoading, setIsLoading] = useState(true);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -52,6 +54,42 @@ const AdminInbox = () => {
 
   // Configure axios with credentials
   axios.defaults.withCredentials = true;
+
+  const handleSort = (key) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  const sortedFeedbackData = [...feedbackData].sort((a, b) => {
+    if (sortConfig.key) {
+      const valueA =
+        sortConfig.key === "date"
+          ? new Date(
+              a.replies?.length > 0
+                ? a.replies[a.replies.length - 1].date
+                : a.feedbackDate
+            )
+          : a[sortConfig.key];
+      const valueB =
+        sortConfig.key === "date"
+          ? new Date(
+              b.replies?.length > 0
+                ? b.replies[b.replies.length - 1].date
+                : b.feedbackDate
+            )
+          : b[sortConfig.key];
+
+      if (valueA < valueB) {
+        return sortConfig.direction === "asc" ? -1 : 1;
+      }
+      if (valueA > valueB) {
+        return sortConfig.direction === "asc" ? 1 : -1;
+      }
+    }
+    return 0;
+  });
 
   const handleSnackbarClose = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
@@ -196,7 +234,6 @@ const AdminInbox = () => {
       </TableRow>
     </TableHead>
   );
-  
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -446,7 +483,9 @@ const AdminInbox = () => {
             boxShadow: 1,
             borderRadius: 2,
             overflow: "hidden",
-            transition: "opacity 0.3s ease-in-out",
+            "& .MuiTable-root": {
+              tableLayout: "fixed", // Force table to have fixed layout
+            },
           }}
         >
           <Table>
@@ -457,14 +496,15 @@ const AdminInbox = () => {
               <TableHead sx={{ bgcolor: "#8BD3E6" }}>
                 <TableRow>
                   {[
-                    "Customer",
-                    "Title",
-                    "Last Updated",
-                    "Status",
-                    "Actions",
-                  ].map((header) => (
+                    { label: "Customer", key: "username" },
+                    { label: "Title", key: "title" },
+                    { label: "Last Updated", key: "date" },
+                    { label: "Status", key: "status" },
+                    { label: "Actions", key: null },
+                  ].map((header, index) => (
                     <TableCell
-                      key={header}
+                      key={index}
+                      onClick={() => header.key && handleSort(header.key)}
                       sx={{
                         color: "white",
                         fontFamily: "'Montserrat', sans-serif",
@@ -473,9 +513,41 @@ const AdminInbox = () => {
                         fontSize: "14px",
                         padding: "16px",
                         borderBottom: "1px solid #8BD3E6",
+                        cursor: header.key ? "pointer" : "default",
                       }}
                     >
-                      {header}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        {header.label}
+                        {header.key && (
+                          <Typography
+                            component="span"
+                            sx={{
+                              fontSize: "12px",
+                              color:
+                                sortConfig.key === header.key
+                                  ? "white"
+                                  : "rgba(255, 255, 255, 0.7)",
+                              fontWeight:
+                                sortConfig.key === header.key
+                                  ? "bold"
+                                  : "normal",
+                            }}
+                          >
+                            {sortConfig.key === header.key
+                              ? sortConfig.direction === "asc"
+                                ? "▲" // Highlight active ascending sort
+                                : "▼" // Highlight active descending sort
+                              : "▲ ▼"}{" "}
+                            {/* Show inactive arrows */}
+                          </Typography>
+                        )}
+                      </Box>
                     </TableCell>
                   ))}
                 </TableRow>
@@ -487,139 +559,161 @@ const AdminInbox = () => {
                 ? [...Array(rowsPerPage)].map((_, index) => (
                     <TableRowSkeleton key={index} />
                   ))
-                : paginatedFeedbackData.map((row) => (
-                    <TableRow
-                      key={row._id}
-                      sx={{
-                        opacity: 0,
-                        animation: "fadeIn 0.3s ease-in-out forwards",
-                        "@keyframes fadeIn": {
-                          "0%": {
-                            opacity: 0,
-                            transform: "translateY(10px)",
+                : sortedFeedbackData
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((row) => (
+                      <TableRow
+                        key={row._id}
+                        sx={{
+                          opacity: 0,
+                          animation: "fadeIn 0.3s ease-in-out forwards",
+                          "@keyframes fadeIn": {
+                            "0%": {
+                              opacity: 0,
+                              transform: "translateY(10px)",
+                            },
+                            "100%": {
+                              opacity: 1,
+                              transform: "translateY(0)",
+                            },
                           },
-                          "100%": {
-                            opacity: 1,
-                            transform: "translateY(0)",
-                          },
-                        },
-                      }}
-                    >
-                      <TableCell
-                        sx={{
-                          fontFamily: "'Montserrat', sans-serif",
-                          fontSize: "14px",
-                          padding: "16px",
-                          color: "#333",
-                          maxWidth: "200px",
-                          whiteSpace: "normal",
-                          wordBreak: "break-word",
-                          overflowWrap: "break-word",
                         }}
                       >
-                        {row.username}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          fontFamily: "'Montserrat', sans-serif",
-                          fontSize: "14px",
-                          padding: "16px",
-                          color: "#333",
-                          maxWidth: "200px",
-                          whiteSpace: "normal",
-                          wordBreak: "break-word",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {row.title}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          fontFamily: "'Montserrat', sans-serif",
-                          fontSize: "14px",
-                          padding: "16px",
-                          color: "#666",
-                        }}
-                      >
-                        {new Date(
-                          row.replies?.length > 0
-                            ? row.replies[row.replies.length - 1].date
-                            : row.feedbackDate
-                        ).toLocaleDateString("en-GB")}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          fontFamily: "'Montserrat', sans-serif",
-                          fontSize: "14px",
-                          textTransform: "uppercase",
-                          padding: "16px",
-                          color:
-                            row.status === "resolved" ? "#28A745" : "#FFB400",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {row.status || "pending"}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          padding: "16px",
-                          display: "flex",
-                          gap: "8px",
-                          justifyContent: "start", // Align icons properly
-                        }}
-                      >
-                        {/* Resolve Icon */}
-                        <IconButton
-                          onClick={() =>
-                            row.status !== "resolved" &&
-                            handleMarkAsResolved(row._id)
-                          }
-                          disabled={row.status === "resolved"}
+                        <TableCell
                           sx={{
+                            fontFamily: "'Montserrat', sans-serif",
+                            fontSize: "14px",
+                            padding: "16px",
+                            color: "#333",
+                            maxWidth: "200px",
+                            whiteSpace: "normal",
+                            wordBreak: "break-word",
+                            overflowWrap: "break-word",
+                          }}
+                        >
+                          {row.username}
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            fontFamily: "'Montserrat', sans-serif",
+                            fontSize: "14px",
+                            padding: "16px",
+                            color: "#333",
+                            maxWidth: "100px", // Limit width to trigger ellipsis
+                            whiteSpace: "nowrap", // Prevent wrapping
+                            overflow: "hidden", // Hide overflowing text
+                            textOverflow: "ellipsis", // Add ellipsis for overflowing text
+                          }}
+                        >
+                          <Tooltip
+                            title={row.title || ""}
+                            arrow
+                            componentsProps={{
+                              tooltip: {
+                                sx: {
+                                  fontFamily: "'Montserrat', sans-serif", // Set Montserrat font
+                                  fontSize: "14px", // Ensure consistent font size
+                                  padding: "8px 12px", // Add padding for better appearance
+                                  borderRadius: "4px", // Optional: Rounded edges for better look
+                                  bgcolor: "rgba(128, 128, 128, 1)", // Grey background
+                                  color: "#fff", // White text color
+                                },
+                              },
+                            }}
+                          >
+                            <span>{row.title}</span>
+                          </Tooltip>
+                        </TableCell>
+
+                        <TableCell
+                          sx={{
+                            fontFamily: "'Montserrat', sans-serif",
+                            fontSize: "14px",
+                            padding: "16px",
+                            color: "#666",
+                          }}
+                        >
+                          {new Date(
+                            row.replies?.length > 0
+                              ? row.replies[row.replies.length - 1].date
+                              : row.feedbackDate
+                          ).toLocaleDateString("en-GB")}
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            fontFamily: "'Montserrat', sans-serif",
+                            fontSize: "14px",
+                            textTransform: "uppercase",
+                            padding: "16px",
                             color:
-                              row.status === "resolved" ? "#CCCCCC" : "#28A745", // Grey color for disabled
-                            ":hover": {
-                              bgcolor: "transparent",
-                            },
-                            cursor:
-                              row.status === "resolved"
-                                ? "not-allowed"
-                                : "pointer", // Show not-allowed cursor when disabled
+                              row.status === "resolved" ? "#28A745" : "#FFB400",
+                            fontWeight: "bold",
                           }}
                         >
-                          <CheckCircleIcon sx={{ fontSize: "20px" }} />
-                        </IconButton>
-
-                        {/* Chat Icon */}
-                        <IconButton
-                          onClick={() => handleOpenChat(row)}
+                          {row.status || "pending"}
+                        </TableCell>
+                        <TableCell
                           sx={{
-                            color: "#8BD3E6",
-                            padding: "6px",
-                            borderRadius: "8px",
-                            ":hover": {
-                              bgcolor: "transparent",
-                            },
+                            padding: "16px",
+                            display: "flex",
+                            gap: "8px",
+                            justifyContent: "start", // Align icons properly
                           }}
                         >
-                          <ChatIcon sx={{ fontSize: "20px" }} />
-                        </IconButton>
+                          {/* Resolve Icon */}
+                          <IconButton
+                            onClick={() =>
+                              row.status !== "resolved" &&
+                              handleMarkAsResolved(row._id)
+                            }
+                            disabled={row.status === "resolved"}
+                            sx={{
+                              color:
+                                row.status === "resolved"
+                                  ? "#CCCCCC"
+                                  : "#28A745", // Grey color for disabled
+                              ":hover": {
+                                bgcolor: "transparent",
+                              },
+                              cursor:
+                                row.status === "resolved"
+                                  ? "not-allowed"
+                                  : "pointer", // Show not-allowed cursor when disabled
+                            }}
+                          >
+                            <CheckCircleIcon sx={{ fontSize: "20px" }} />
+                          </IconButton>
 
-                        {/* Delete Icon */}
-                        <IconButton
-                          onClick={() => handleDelete(row._id)}
-                          sx={{
-                            color: "#DB2226",
-                            ":hover": {
-                              bgcolor: "transparent",
-                            },
-                          }}
-                        >
-                          <DeleteIcon sx={{ fontSize: "20px" }} />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                          {/* Chat Icon */}
+                          <IconButton
+                            onClick={() => handleOpenChat(row)}
+                            sx={{
+                              color: "#8BD3E6",
+                              padding: "6px",
+                              borderRadius: "8px",
+                              ":hover": {
+                                bgcolor: "transparent",
+                              },
+                            }}
+                          >
+                            <ChatIcon sx={{ fontSize: "20px" }} />
+                          </IconButton>
+
+                          {/* Delete Icon */}
+                          <IconButton
+                            onClick={() => handleDelete(row._id)}
+                            sx={{
+                              color: "#DB2226",
+                              ":hover": {
+                                bgcolor: "transparent",
+                              },
+                            }}
+                          >
+                            <DeleteIcon sx={{ fontSize: "20px" }} />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
             </TableBody>
           </Table>
 
