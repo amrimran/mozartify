@@ -5,6 +5,9 @@ import { storage } from "./firebase";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import {
+  Alert,
+  Snackbar,
+  Pagination,
   List,
   ListItemIcon,
   ListItemText,
@@ -41,34 +44,48 @@ axios.defaults.withCredentials = true;
 
 export default function CustomerHomepage() {
   const [user, setUser] = useState(null);
-
   const [unfilteredSearchedScores, setUnfilteredSearchedScores] = useState([]);
   const [purchasedScores, setPurchasedScores] = useState([]);
   const [addedToCartScores, setAddedToCartScores] = useState([]);
   const [searchedScores, setSearchedScores] = useState([]);
   const [filteredScores, setFilteredScores] = useState([]);
   const [isFiltered, setIsFiltered] = useState(false);
-
   const [popularScores, setPopularScores] = useState([]);
   const [recommendedScores, setRecommendations] = useState([]);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState([]);
-
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [genre, setGenre] = useState("");
   const [composer, setComposer] = useState("");
   const [instrumentation, setInstrumentation] = useState("");
   const [emotion, setEmotion] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+  const [snackbar, setSnackbar] = useState({
+      open: false,
+      message: "",
+      type: "",
+    });
+  
 
   const navigate = useNavigate();
   const scrollContainerRef = useRef(null);
   const scrollContainerRef2 = useRef(null);
-
-  const [loading, setLoading] = useState(true);
   const popularScrollRef = useRef(null);
   const recommendedScrollRef = useRef(null);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
+
+  // Calculate pagination
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentScores = searchedScores.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(searchedScores.length / itemsPerPage);
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   useEffect(() => {
     let scrollInterval;
@@ -273,6 +290,11 @@ export default function CustomerHomepage() {
         musicScoreId: scoreId,
       });
       setAddedToCartScores([...addedToCartScores, scoreId]);
+      setSnackbar({
+        open: true,
+        message: "Added to cart successfully!",
+        type: "cart",
+      });
     } catch (error) {
       console.error("Error adding to cart:", error);
     }
@@ -388,14 +410,72 @@ export default function CustomerHomepage() {
       });
   }, []);
 
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return; // Prevent snackbar from closing on clickaway (optional)
+    }
+
+    setSnackbar({
+      open: false,
+      message: "",
+      type: "",
+    });
+  };
+
   const toggleFavorite = async (musicScoreId) => {
     try {
+      const isFavorite = user?.favorites?.includes(musicScoreId);
+
+      // Optimistically update the favorites locally for instant feedback
+      setFavorites((prevFavorites) => {
+        if (isFavorite) {
+          // Remove from favorites
+          return prevFavorites.filter((favId) => favId !== musicScoreId);
+        } else {
+          // Add to favorites
+          return [...prevFavorites, musicScoreId];
+        }
+      });
+
+      // Send the request to the server
       const response = await axios.post("http://localhost:3000/set-favorites", {
         musicScoreId,
+        action: isFavorite ? "remove" : "add", // Explicitly specify the action
       });
+
+      // Update the favorites with the server response (ensures consistency)
       setFavorites(response.data.favorites);
+
+      // Show appropriate snackbar message
+      setSnackbar({
+        open: true,
+        message: isFavorite
+          ? "Removed from favorites successfully!"
+          : "Added to favorites successfully!",
+        type: isFavorite ? "unfavorite" : "favorite",
+        reload: true, // Add a flag to determine whether to reload after snackbar
+      });
     } catch (error) {
       console.error("Error updating favorites:", error);
+
+      // Revert the optimistic update in case of an error
+      setFavorites((prevFavorites) => {
+        if (favorites) {
+          // Add back the removed favorite
+          return [...prevFavorites, musicScoreId];
+        } else {
+          // Remove the added favorite
+          return prevFavorites.filter((favId) => favId !== musicScoreId);
+        }
+      });
+
+      // Optionally show an error snackbar
+      setSnackbar({
+        open: true,
+        message: "Failed to update favorites. Please try again.",
+        type: "error",
+        reload: false, // No reload on error
+      });
     }
   };
 
@@ -492,7 +572,7 @@ export default function CustomerHomepage() {
             overflowY: "auto", // Add scroll if content overflows
           }}
         >
-          <CustomerSidebar active ='home'/>
+          <CustomerSidebar active="home" />
         </Box>
 
         <Box sx={{ flexGrow: 1, p: 3, pl: 5, mb: 4 }}>
@@ -802,91 +882,149 @@ export default function CustomerHomepage() {
           >
             {searchQuery || isFiltered ? "Search Result" : "Dashboard"}
           </Typography>
-          {(searchedScores.length > 0 ||
-            (searchedScores.length == 0 && searchQuery)) && (
-            <Box ml={2}>
+          {/* Only show results count when searching or filtering */}
+          {(searchQuery || isFiltered) && (
+            <Typography variant="body1" sx={{ fontFamily: "Montserrat" }}>
+              Found{" "}
               <Box
-                sx={{
-                  minWidth: 50,
-                  height: 50,
-                  backgroundColor: "#D3D3D3",
-                  borderRadius: "50%",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  padding: "0 10px",
-                }}
+                component="span"
+                sx={{ fontWeight: "bold", color: "#8BD3E6" }}
               >
-                <Typography variant="h5" sx={{ color: "#4B4B4B" }}>
-                  {searchedScores.length > 99 ? "99+" : searchedScores.length}
-                </Typography>
-              </Box>
-            </Box>
+                {searchedScores.length > 99 ? "99+" : searchedScores.length}
+              </Box>{" "}
+              results
+            </Typography>
           )}
 
           {searchQuery ? (
             <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
               {searchedScores.length > 0 ? (
-                <List>
-                  {searchedScores.map((score) => (
-                    <ListItemButton
-                      key={score._id}
-                      sx={{ display: "flex", alignItems: "center" }}
-                      onClick={() =>
-                        navigate(
-                          `/customer-library/customer-music-score-view/${score._id}`
-                        )
-                      }
-                    >
-                      <ListItemText
-                        primary={score.title}
-                        secondary={`Genre: ${score.genre} | Composer: ${score.composer} | Artist: ${score.artist} | Emotion: ${score.emotion}`}
-                      />
-
-                      <ListItemIcon>
-                        {!purchasedScores.includes(score._id) &&
-                          !addedToCartScores.includes(score._id) && (
-                            <IconButton
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                addToCart(score._id);
+                <>
+                  <List>
+                    {currentScores.map((score) => (
+                      <ListItemButton
+                        key={score._id}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          fontFamily: "Montserrat",
+                          "&:hover": {
+                            backgroundColor: "#f5f5f5",
+                          },
+                        }}
+                        onClick={() =>
+                          navigate(`/customer-music-score-view/${score._id}`)
+                        }
+                      >
+                        <ListItemText
+                          primary={
+                            <Typography
+                              variant="body1"
+                              sx={{
+                                fontFamily: "Montserrat",
+                                fontWeight: "bold",
                               }}
                             >
-                              <ShoppingCartIcon />
-                            </IconButton>
-                          )}
-                      </ListItemIcon>
-
-                      <ListItemIcon>
-                        <IconButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleFavorite(score._id);
-                          }}
-                        >
-                          <Favorite
-                            color={
-                              favorites.includes(score._id)
-                                ? "error"
-                                : "disabled"
-                            }
-                          />
-                        </IconButton>
-                      </ListItemIcon>
-                      <ListItemIcon>
-                        <IconButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                        >
-                          <PlayArrow />
-                        </IconButton>
-                      </ListItemIcon>
-                    </ListItemButton>
-                  ))}
-                </List>
+                              {score.title}
+                            </Typography>
+                          }
+                          secondary={
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "Montserrat",
+                                color: "black",
+                              }}
+                            >
+                              Genre: {score.genre} | Composer: {score.composer}{" "}
+                              | Artist: {score.artist} | Emotion:{" "}
+                              {score.emotion}
+                            </Typography>
+                          }
+                        />
+                        <ListItemIcon>
+                          {!purchasedScores.includes(score._id) &&
+                            !addedToCartScores.includes(score._id) && (
+                              <IconButton
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addToCart(score._id);
+                                }}
+                              >
+                                <ShoppingCartIcon />
+                              </IconButton>
+                            )}
+                        </ListItemIcon>
+                        <ListItemIcon>
+                          <IconButton
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(score._id);
+                            }}
+                          >
+                            <Favorite
+                              color={
+                                favorites.includes(score._id)
+                                  ? "error"
+                                  : "disabled"
+                              }
+                            />
+                          </IconButton>
+                        </ListItemIcon>
+                      </ListItemButton>
+                    ))}
+                  </List>
+                  {totalPages > 1 && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        padding: "20px",
+                        "& .MuiPagination-ul": {
+                          "& .MuiPaginationItem-root": {
+                            fontFamily: "Montserrat",
+                            "&.Mui-selected": {
+                              backgroundColor: "#8BD3E6",
+                              color: "white",
+                              "&:hover": {
+                                backgroundColor: "#6FBCCF",
+                              },
+                            },
+                          },
+                        },
+                      }}
+                    >
+                      <Pagination
+                        count={totalPages}
+                        page={page}
+                        onChange={handlePageChange}
+                        color="primary"
+                        sx={{
+                          "& .MuiPaginationItem-root": {
+                            borderRadius: 2,
+                            fontFamily: "Montserrat",
+                            backgroundColor: "primary",
+                            color: "#000",
+                            "&.Mui-selected": {
+                              backgroundColor: "#8BD3E6", // Blue for selected
+                              color: "#fff",
+                              "&:hover": {
+                                backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
+                              },
+                            },
+                            "&:hover": {
+                              backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
+                            },
+                          },
+                        }}
+                      />
+                    </Box>
+                  )}
+                </>
               ) : (
-                <Typography variant="body2">No results found</Typography>
+                <Typography variant="body2" sx={{ fontFamily: "Montserrat" }}>
+                  No results found
+                </Typography>
               )}
             </Box>
           ) : isFiltered ? (
@@ -952,7 +1090,6 @@ export default function CustomerHomepage() {
               <Grid container spacing={4}>
                 {/* Left Box - Popular Scores */}
                 <Grid item xs={5.5} sx={{ pr: 0 }}>
-
                   <Typography
                     variant="h5"
                     gutterBottom
@@ -966,8 +1103,7 @@ export default function CustomerHomepage() {
                       alignItems: "center",
                       fontFamily: "Montserrat",
                       mb: 2,
-                      mr:7
-                      
+                      mr: 7,
                     }}
                   >
                     Popular
@@ -1061,14 +1197,21 @@ export default function CustomerHomepage() {
                                 <Typography
                                   variant="h6"
                                   noWrap
-                                  sx={{ textAlign: "center", mb: 1, fontFamily: "Montserrat" }}
+                                  sx={{
+                                    textAlign: "center",
+                                    mb: 1,
+                                    fontFamily: "Montserrat",
+                                  }}
                                 >
                                   {score.title}
                                 </Typography>
                                 <Typography
                                   variant="body2"
                                   color="textSecondary"
-                                  sx={{ textAlign: "center",  fontFamily: "Montserrat", }}
+                                  sx={{
+                                    textAlign: "center",
+                                    fontFamily: "Montserrat",
+                                  }}
                                 >
                                   {score.artist}
                                 </Typography>
@@ -1103,7 +1246,6 @@ export default function CustomerHomepage() {
 
                 {/* Right Box - Recommended Scores */}
                 <Grid item xs={5.5} sx={{ pr: 0 }}>
-
                   <Typography
                     variant="h5"
                     gutterBottom
@@ -1117,7 +1259,7 @@ export default function CustomerHomepage() {
                       alignItems: "center",
                       fontFamily: "Montserrat",
                       mb: 2,
-                      mr:7
+                      mr: 7,
                     }}
                   >
                     For You
@@ -1212,14 +1354,21 @@ export default function CustomerHomepage() {
                                 <Typography
                                   variant="h6"
                                   noWrap
-                                  sx={{ textAlign: "center", mb: 1 ,  fontFamily: "Montserrat",}}
+                                  sx={{
+                                    textAlign: "center",
+                                    mb: 1,
+                                    fontFamily: "Montserrat",
+                                  }}
                                 >
                                   {score.title}
                                 </Typography>
                                 <Typography
                                   variant="body2"
                                   color="textSecondary"
-                                  sx={{ textAlign: "center" ,  fontFamily: "Montserrat",}}
+                                  sx={{
+                                    textAlign: "center",
+                                    fontFamily: "Montserrat",
+                                  }}
                                 >
                                   {score.artist}
                                 </Typography>
@@ -1235,6 +1384,35 @@ export default function CustomerHomepage() {
             </Box>
           )}
         </Box>
+        <Snackbar
+                open={snackbar.open}
+                autoHideDuration={2000} // Set the duration before the snackbar disappears
+                onClose={(event, reason) => {
+                  if (reason === "clickaway") {
+                    return; // Prevent snackbar from closing on clickaway if desired
+                  }
+                  handleSnackbarClose(); // Close the snackbar
+                  if (snackbar.reload) {
+                    window.location.reload(); // Reload the page after snackbar closes
+                  }
+                }}
+                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+              >
+                <Alert
+                  onClose={handleSnackbarClose}
+                  severity={snackbar.type === "error" ? "error" : "success"}
+                  sx={{
+                    width: "100%",
+                    bgcolor: snackbar.type === "unfavorite" ? "#F44336" : "#4CAF50",
+                    color: "white",
+                    "& .MuiAlert-icon": {
+                      color: "white",
+                    },
+                  }}
+                >
+                  {snackbar.message}
+                </Alert>
+              </Snackbar>
       </Box>
     </>
   );

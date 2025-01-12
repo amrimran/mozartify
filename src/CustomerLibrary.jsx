@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
+  Skeleton,
   Box,
   List,
   ListItemIcon,
@@ -19,28 +20,28 @@ import {
   Select,
   Snackbar,
   MenuItem,
-  Alert
+  Alert,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   FavoriteBorder,
   PlayArrow,
   Favorite,
   FilterAlt,
+  Menu as MenuIcon,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import CustomerSidebar from "./CustomerSidebar";
 
-
-
 axios.defaults.withCredentials = true;
 
-const options = {
-  keys: ["title", "genre", "composer", "artist", "instrumentation", "emotion"],
-  threshold: 0.3,
-};
-
 export default function CustomerLibrary() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
+  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
   const [user, setUser] = useState(null);
 
   const [currentScores, setCurrentScores] = useState([]);
@@ -65,6 +66,17 @@ export default function CustomerLibrary() {
     message: "",
     type: "",
   });
+
+  const handleToggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  useEffect(() => {
+    // Automatically close the sidebar when switching to mobile view
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -254,59 +266,160 @@ export default function CustomerLibrary() {
       margin: 0;
       padding: 0;
       font-family: 'Montserrat', sans-serif;
+      overflow-x: hidden;
+    }
+
+    @keyframes skeleton-wave {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
     }
   `;
+
+  const buttonStyles = {
+    px: 10,
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    backgroundColor: "#8BD3E6",
+    border: "1px solid #8BD3E6",
+    borderColor: "#8BD3E6",
+    boxShadow: "none", // Correct spelling
+    "&:hover": {
+      backgroundColor: "#6FBCCF", // Slightly darker blue for hover
+      color: "#FFFFFF", // Keeps the text color consistent
+      borderColor: "#6FBCCF",
+      boxShadow: "none", // Ensures no shadow on hover
+    },
+    "&:disabled": {
+      backgroundColor: "#E0E0E0",
+      borderColor: "#E0E0E0",
+      color: "#9E9E9E",
+    },
+  };
+
+  const buttonStyles2 = {
+    px: 10,
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#8BD3E6",
+    backgroundColor: "#FFFFFF",
+    boxShadow: "none", // Correct spelling
+    border: "1px solid #8BD3E6",
+    "&:hover": {
+      boxShadow: "none", // Correct spelling
+      backgroundColor: "#E6F8FB",
+      color: "#7AB9C4",
+      borderColor: "#7AB9C4",
+    },
+  };
+
+  const deleteButtonStyles = {
+    px: 10,
+
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    borderColor: "#DB2226",
+    backgroundColor: "#DB2226",
+
+    boxShadow: "none", // Ensures no shadow on hover
+    "&:hover": {
+      backgroundColor: "#B71C1C", // Slightly darker red
+      color: "#FFFFFF", // Keeps the text color consistent
+      borderColor: "#B71C1C", // Matches the background color for cohesion
+      boxShadow: "none", // Ensures no shadow on hover
+    },
+  };
 
   return (
     <>
       <GlobalStyle />
-      <Box sx={{ display: "flex", height: "100vh" }}>
-        <CustomerSidebar active="library" />
+      <Box sx={{ display: "flex", height: "100vh", position: "relative" }}>
+        {/* Mobile Menu Button */}
+        {isMobile && (
+          <IconButton
+            sx={{ position: "absolute", top: 10, left: 10, zIndex: 1100 }}
+            onClick={handleToggleSidebar}
+          >
+            <MenuIcon />
+          </IconButton>
+        )}
+
+        {/* Sidebar */}
+        <Box
+          sx={{
+            width: isSidebarOpen ? (isMobile ? "100%" : 225) : 0,
+            flexShrink: 0,
+            transition: "width 0.3s",
+            position: isMobile ? "fixed" : "relative",
+            zIndex: 1000,
+            height: "100%",
+            display: isSidebarOpen ? "block" : "none",
+          }}
+        >
+          <CustomerSidebar active="library" />
+        </Box>
+        {/* Main Content */}
         <Box
           sx={{
             flexGrow: 1,
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            padding: 5,
-            marginLeft: "229px",
+            p: { xs: 1, sm: 2, md: 3 },
+            pl: { xs: 1, sm: 2, md: 5 },
+            mb: 4,
+            width: "100%",
+            overflow: "auto",
           }}
         >
+          {/* Search and Filter Section */}
           <Box
             sx={{
               display: "flex",
-              justifyContent: "space-between",
               alignItems: "center",
+              width: "100%",
               mb: 3,
-              mt: 3,
+              mt: isMobile ? 5 : 0,
+              gap: 2, // Add consistent spacing between elements
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
+            {/* Left spacing */}
+            <Box sx={{ flex: "1 1 0" }} />
+
+            {/* Search Bar Container */}
+            <Box
+              sx={{
+                flex: "2 1 auto",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                maxWidth: { xs: "100%", sm: 600, md: 800 },
+              }}
+            >
               <Paper
                 component="form"
                 sx={{
                   p: "6px 10px",
                   display: "flex",
                   alignItems: "center",
-                  width: 600,
-                  border: "1px solid #c44131",
+                  width: { xs: 200, sm: 400, md: 600 }, // Adjust widths for different breakpoints
+                  border: "1px solid #8BD3E6",
                   borderRadius: "50px",
                 }}
               >
                 <InputBase
-                  sx={{ ml: 1, flex: 1 }}
-                  placeholder="Look for your music scores here..."
-                  inputProps={{ "aria-label": "search music scores" }}
+                  sx={{ ml: 1, flex: 1, fontFamily: "Montserrat" }}
+                  placeholder={
+                    isMobile ? "Search..." : "Look for all music scores here..."
+                  }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </Paper>
               <IconButton
                 sx={{ p: "10px", ml: 2 }}
-                aria-label="filter"
                 onClick={() => setIsDrawerOpen(true)}
               >
-                <FilterAlt sx={{ color: "#483C32" }} />
+                <FilterAlt />
               </IconButton>
 
               <Drawer
@@ -321,21 +434,40 @@ export default function CustomerLibrary() {
                     flexDirection: "column",
                     p: 2,
                     width: 300,
+                    fontFamily: "Montserrat",
                   }}
                 >
-                  <Typography variant="h6" sx={{ mb: 2 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      mb: 2,
+                      fontFamily: "Montserrat",
+                      fontWeight: "bold",
+                      textAlign: "center", // Centers the text horizontally
+                    }}
+                  >
                     Filter Options
                   </Typography>
 
                   <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Genre</InputLabel>
+                    <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                      Genre
+                    </InputLabel>
                     <Select
                       label="Genre"
                       value={genre}
                       onChange={(e) => setGenre(e.target.value)}
+                      sx={{
+                        fontFamily: "Montserrat",
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Green outline on hover
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Green outline when focused
+                        },
+                      }}
                     >
                       {[
-                        "All",
                         "Baroque",
                         "Children's",
                         "Children's Song",
@@ -346,7 +478,13 @@ export default function CustomerLibrary() {
                         "Rock",
                         "Renaissance Polyphony",
                       ].map((item) => (
-                        <MenuItem key={item} value={item}>
+                        <MenuItem
+                          key={item}
+                          value={item}
+                          sx={{
+                            fontFamily: "Montserrat",
+                          }}
+                        >
                           {item}
                         </MenuItem>
                       ))}
@@ -354,14 +492,24 @@ export default function CustomerLibrary() {
                   </FormControl>
 
                   <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Composer</InputLabel>
+                    <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                      Composer
+                    </InputLabel>
                     <Select
                       label="Composer"
                       value={composer}
                       onChange={(e) => setComposer(e.target.value)}
+                      sx={{
+                        fontFamily: "Montserrat",
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Green outline on hover
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Green outline when focused
+                        },
+                      }}
                     >
                       {[
-                        "All",
                         "Antonio Vivaldi",
                         "Claude Debussy",
                         "Emil Aarestrup",
@@ -374,7 +522,11 @@ export default function CustomerLibrary() {
                         "Larry Shay",
                         "Wolfgang Amadeus Mozart",
                       ].map((composerName) => (
-                        <MenuItem key={composerName} value={composerName}>
+                        <MenuItem
+                          key={composerName}
+                          value={composerName}
+                          sx={{ fontFamily: "Montserrat" }}
+                        >
                           {composerName}
                         </MenuItem>
                       ))}
@@ -382,17 +534,38 @@ export default function CustomerLibrary() {
                   </FormControl>
 
                   <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Emotion</InputLabel>
+                    <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                      Emotion
+                    </InputLabel>
                     <Select
                       label="Emotion"
                       value={emotion}
                       onChange={(e) => setEmotion(e.target.value)}
+                      sx={{
+                        fontFamily: "Montserrat",
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Green outline on hover
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Green outline when focused
+                        },
+                      }}
                     >
-                      <MenuItem value="All">All</MenuItem>
-                      <MenuItem value="Happy">Angry</MenuItem>
-                      <MenuItem value="Happy">Happy</MenuItem>
-                      <MenuItem value="Relaxed">Relaxed</MenuItem>
-                      <MenuItem value="Sad">Sad</MenuItem>
+                      <MenuItem value="Angry" sx={{ fontFamily: "Montserrat" }}>
+                        Angry
+                      </MenuItem>
+                      <MenuItem value="Happy" sx={{ fontFamily: "Montserrat" }}>
+                        Happy
+                      </MenuItem>
+                      <MenuItem
+                        value="Relaxed"
+                        sx={{ fontFamily: "Montserrat" }}
+                      >
+                        Relaxed
+                      </MenuItem>
+                      <MenuItem value="Sad" sx={{ fontFamily: "Montserrat" }}>
+                        Sad
+                      </MenuItem>
                     </Select>
                   </FormControl>
 
@@ -400,7 +573,20 @@ export default function CustomerLibrary() {
                     label="Instrumentation"
                     variant="outlined"
                     fullWidth
-                    sx={{ mb: 2 }}
+                    sx={{
+                      mb: 2,
+                      fontFamily: "Montserrat",
+                      "& .MuiOutlinedInput-root": {
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Green outline on hover
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#8BD3E6", // Green outline on focus
+                        },
+                      },
+                    }}
+                    InputLabelProps={{ style: { fontFamily: "Montserrat" } }}
+                    InputProps={{ style: { fontFamily: "Montserrat" } }}
                     value={instrumentation}
                     onChange={(e) => setInstrumentation(e.target.value)}
                   />
@@ -410,13 +596,7 @@ export default function CustomerLibrary() {
                     fullWidth
                     sx={{
                       mt: 2,
-                      borderColor: "#3B3183",
-                      color: "#3B3183",
-                      "&:hover": {
-                        borderColor: "#3B3183",
-                        color: "#FFFFFF",
-                        backgroundColor: "#3B3183",
-                      },
+                      ...buttonStyles,
                     }}
                     onClick={handleFilterRequest}
                   >
@@ -428,92 +608,108 @@ export default function CustomerLibrary() {
                     fullWidth
                     sx={{
                       mt: 2,
-                      borderColor: "#C44131",
-                      color: "#C44131",
-                      "&:hover": {
-                        borderColor: "#C44131",
-                        color: "#FFFFFF",
-                        backgroundColor: "#C44131",
-                      },
+                      ...deleteButtonStyles,
                     }}
                     onClick={clearFilters}
                   >
                     CLEAR FILTERS
                   </Button>
-                </Box>
 
-                <Box sx={{ mt: "auto", p: 2 }}>
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    sx={{
-                      mb: 2, // Margin at the bottom
-                      backgroundColor: "#483C32",
-                      color: "#fff",
-                      "&:hover": {
-                        backgroundColor: "#3c312a",
-                      },
-                    }}
-                    onClick={() => setIsDrawerOpen(false)}
-                  >
-                    CLOSE FILTERS
-                  </Button>
+                  <Box sx={{ mt: "auto" }}>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      sx={{
+                        mb: 2,
+                        ...buttonStyles2,
+                      }}
+                      onClick={() => setIsDrawerOpen(false)}
+                    >
+                      CLOSE FILTERS
+                    </Button>
+                  </Box>
                 </Box>
               </Drawer>
             </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center" }}>
+            {/* User Info */}
+            <Box
+              sx={{
+                flex: "1 1 0",
+                display: "flex",
+                justifyContent: "flex-end",
+                alignItems: "center",
+              }}
+            >
               {user ? (
                 <>
-                  <Typography variant="body1" sx={{ mr: 2 }}>
-                    {user.username}
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      mr: 2,
+                      fontFamily: "Montserrat",
+                      display: { xs: "none", sm: "block" },
+                    }}
+                  >
+                    {user?.username}
                   </Typography>
                   <Avatar
-                    alt={user.username}
-                    src={
-                      user && user.profile_picture ? user.profile_picture : null
-                    }
+                    alt={user?.username}
+                    src={user?.profile_picture || null}
                   >
-                    {(!user || !user.profile_picture) &&
-                      user.username.charAt(0).toUpperCase()}
+                    {!user?.profile_picture &&
+                      user?.username.charAt(0).toUpperCase()}
                   </Avatar>
                 </>
               ) : (
                 <>
-                  <Typography variant="body1" sx={{ mr: 2 }}>
-                    Loading...
-                  </Typography>
-                  <Avatar></Avatar>
+                  <Skeleton
+                    variant="text"
+                    width={100}
+                    height={24}
+                    sx={{ mr: 2 }}
+                  />
+                  <Skeleton variant="circular" width={40} height={40} />
                 </>
               )}
             </Box>
           </Box>
 
-          <Box display="flex" alignItems="center">
-            <Typography variant="h4">Library</Typography>
-            <Box ml={2}>
+          {/* Library Title and Count */}
+          <Box sx={{ px: { xs: 2, sm: 1 } }}>
+            <Typography
+              variant="h4"
+              gutterBottom
+              sx={{
+                fontFamily: "Montserrat",
+                fontWeight: "bold",
+                fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem" },
+              }}
+            >
+              Library
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                fontFamily: "Montserrat",
+                fontWeight: "medium",
+              }}
+            >
+              You have{" "}
               <Box
-                sx={{
-                  minWidth: 50,
-                  height: 50,
-                  backgroundColor: "#D3D3D3",
-                  borderRadius: "50%",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  padding: "0 10px",
-                }}
+                component="span"
+                sx={{ fontWeight: "bold", color: "#8BD3E6" }}
               >
-                <Typography variant="h5" sx={{ color: "#4B4B4B" }}>
-                  {currentScores.length > 99 ? "99+" : currentScores.length}
-                </Typography>
-              </Box>
-            </Box>
+                {currentScores.length > 99 ? "99+" : currentScores.length}
+              </Box>{" "}
+              scores
+            </Typography>
           </Box>
 
-          <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
+          {/* Scores List */}
+          <Box sx={{ flexGrow: 1, overflow: "auto", p: { xs: 1, sm: 2 } }}>
             <List>
-              {currentScores.map((item, index) => (
+              {currentScores.map((item) => (
                 <ListItemButton
                   key={item._id}
                   onClick={() =>
@@ -521,33 +717,59 @@ export default function CustomerLibrary() {
                       `/customer-library/customer-music-score-view/${item._id}`
                     )
                   }
+                  sx={{
+                    flexDirection: { xs: "column", sm: "row" },
+                    alignItems: { xs: "flex-start", sm: "center" },
+                    padding: { xs: 2, sm: 1 },
+                  }}
                 >
                   <ListItemText
-                    primary={item.title}
-                    secondary={`Genre: ${item.genre} | Composer: ${item.composer} | Artist: ${item.artist}`}
+                    primary={
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          fontFamily: "Montserrat",
+                          fontWeight: "bold",
+                          fontSize: { xs: "0.9rem", sm: "1rem" },
+                        }}
+                      >
+                        {item.title}
+                      </Typography>
+                    }
+                    secondary={
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "Montserrat",
+                          color: "black",
+                          fontSize: { xs: "0.8rem", sm: "0.9rem" },
+                          mt: { xs: 1, sm: 0 },
+                        }}
+                      >
+                        Genre: {item.genre} | Composer: {item.composer} |
+                        Artist: {item.artist}
+                      </Typography>
+                    }
                   />
-                  <ListItemIcon>
+
+                  <ListItemIcon
+                    sx={{
+                      minWidth: { xs: "100%", sm: 40 },
+                      mt: { xs: 1, sm: 0 },
+                    }}
+                  >
                     <IconButton
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevents the ListItemButton onClick from firing
+                        e.stopPropagation();
                         toggleFavorite(item._id);
                       }}
+                      sx={{ ml: { xs: -1, sm: 0 } }}
                     >
                       <Favorite
                         color={
                           favorites.includes(item._id) ? "error" : "disabled"
                         }
                       />
-                    </IconButton>
-                  </ListItemIcon>
-                  <ListItemIcon>
-                    <IconButton
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevents the ListItemButton onClick from firing
-                        // Handle play button action here
-                      }}
-                    >
-                      <PlayArrow />
                     </IconButton>
                   </ListItemIcon>
                 </ListItemButton>
