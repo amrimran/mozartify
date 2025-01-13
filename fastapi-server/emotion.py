@@ -35,7 +35,7 @@ try:
     model_mel = load_model(model_mel_path)
     print("Models loaded successfully.")
 except Exception as e:
-    print("Error loading models:", e)
+    print("Error loading models. Please check the paths and model files:", e)
     raise
 
 class FileUrlRequest(BaseModel):
@@ -84,19 +84,21 @@ def prediction2d(file_content):
     y_prob2 = model_mfcc.predict(f_mfcc_reshaped)
     y_prob3 = model_mel.predict(f_mel_reshaped)
 
-    print("Raw predictions from model_spec:", y_prob1)
-    print("Raw predictions from model_mfcc:", y_prob2)
-    print("Raw predictions from model_mel:", y_prob3)
+    print("Raw predictions from the Spectrogram model (model_spec):", y_prob1)
+    print("Raw predictions from the MFCC model (model_mfcc):", y_prob2)
+    print("Raw predictions from the Mel Spectrogram model (model_mel):", y_prob3)
 
     # Extract predicted classes
     y_pred1 = np.argmax(y_prob1, axis=-1)
     y_pred2 = np.argmax(y_prob2, axis=-1)
     y_pred3 = np.argmax(y_prob3, axis=-1)
 
-    print("Predicted classes:", y_pred1, y_pred2, y_pred3)
+    print("Predicted classes (emotion labels) from each model:", y_pred1, y_pred2, y_pred3)
 
-    # Use majority vote function
+    # Use majority vote function to get the final prediction
     final_prediction = majority_vote([y_pred1[0], y_pred2[0], y_pred3[0]])
+    print(f"Final prediction after majority vote: {final_prediction}")
+
     return moodString(final_prediction)
 
 @app.post("/predict-emotion")
@@ -109,8 +111,12 @@ async def predict_from_url(request: FileUrlRequest):
         response = requests.get(fileUrl)
         response.raise_for_status()  # Check if the download was successful
 
+        print("Successfully downloaded the audio file.")
+
         # Process and predict from the downloaded content
         pred = prediction2d(response.content)
+        print(f"Prediction result: {pred}")
+
         return JSONResponse(content={
             "predicted_mood": pred
         })

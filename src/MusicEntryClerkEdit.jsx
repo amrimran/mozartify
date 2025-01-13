@@ -14,13 +14,36 @@ import {
   Pagination,
   Paper,
   Alert,
+  useMediaQuery,
+  AppBar,
+  Toolbar,
+  Drawer,
 } from "@mui/material";
-import { HelpOutline } from "@mui/icons-material";
+import { Menu as MenuIcon, HelpOutline } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
 import ABCJS from "abcjs";
 import axios from "axios";
+
+const DRAWER_WIDTH = 225;
+
+// Theme setup
+const theme = createTheme({
+  typography: {
+    fontFamily: "Montserrat, Arial, sans-serif",
+  },
+  breakpoints: {
+    values: {
+      xs: 0, // mobile phones
+      sm: 600, // tablets
+      md: 960, // small laptops
+      lg: 1280, // desktops
+      xl: 1920, // large screens
+    },
+  },
+});
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -41,7 +64,7 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 const buttonStyles = {
-  px: 15,
+  px: { xs: 4, sm: 15 },
   fontFamily: "Montserrat",
   fontWeight: "bold",
   color: "#FFFFFF",
@@ -53,11 +76,18 @@ const buttonStyles = {
   },
 };
 
-
 const MusicEntryClerkEdit = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { fileName } = location.state || {};
+
+  // Media Query Hooks
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "lg"));
+
+  // State Hooks
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [abcContent, setAbcContent] = useState("");
   const [splitContent, setSplitContent] = useState([]);
   const [page, setPage] = useState(1);
@@ -66,9 +96,69 @@ const MusicEntryClerkEdit = () => {
   const [user, setUser] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
-  const textAreaRef = useRef(null);
   const [validationError, setValidationError] = useState(null);
   const [isValidating, setIsValidating] = useState(false);
+
+  // Refs
+  const textAreaRef = useRef(null);
+
+  // Responsive Styles
+  const styles = {
+    root: {
+      display: "flex",
+      minHeight: "100vh",
+      backgroundColor: "#FFFFFF",
+    },
+    appBar: {
+      display: isLargeScreen ? "none" : "block",
+      backgroundColor: "#FFFFFF",
+      boxShadow: "none",
+      borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+    },
+    drawer: {
+      width: DRAWER_WIDTH,
+      flexShrink: 0,
+      display: isLargeScreen ? "block" : "none",
+      "& .MuiDrawer-paper": {
+        width: DRAWER_WIDTH,
+        boxSizing: "border-box",
+      },
+    },
+    mobileDrawer: {
+      display: isLargeScreen ? "none" : "block",
+      "& .MuiDrawer-paper": {
+        width: DRAWER_WIDTH,
+        boxSizing: "border-box",
+      },
+    },
+    mainContent: {
+      flexGrow: 1,
+      p: { xs: 2, sm: 3 },
+      ml: isLargeScreen ? 1 : 0,
+      mt: isLargeScreen ? 0 : 8,
+      width: isLargeScreen ? `calc(100% - ${DRAWER_WIDTH}px)` : "100%",
+    },
+    textarea: {
+      height: { xs: "150px", sm: "200px" },
+      fontSize: { xs: "0.875rem", sm: "1rem" },
+    },
+    previewPaper: {
+      padding: { xs: 1, sm: 2 },
+      borderRadius: 4,
+      bgcolor: "#ffffff",
+      textAlign: "center",
+      maxWidth: { xs: "100%", sm: "800px" },
+      margin: "0 auto",
+      minHeight: { xs: "200px", sm: "300px" },
+      mb: 3,
+      mt: 3,
+    },
+  };
+
+  // Drawer Toggle Handler
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
 
   // Fetch current user data
   useEffect(() => {
@@ -85,6 +175,7 @@ const MusicEntryClerkEdit = () => {
     fetchUser();
   }, [navigate]);
 
+  // Fetch ABC file content
   useEffect(() => {
     if (fileName) {
       const fetchABCFileContent = async () => {
@@ -111,14 +202,14 @@ const MusicEntryClerkEdit = () => {
   useEffect(() => {
     if (abcContent) {
       const lines = abcContent.split("\n");
-      const maxLinesPerPage = 20; // Adjust lines per page as needed
+      const maxLinesPerPage = isMobile ? 15 : 20;
       const pages = [];
       for (let i = 0; i < lines.length; i += maxLinesPerPage) {
         pages.push(lines.slice(i, i + maxLinesPerPage).join("\n"));
       }
       setSplitContent(pages);
     }
-  }, [abcContent]);
+  }, [abcContent, isMobile]);
 
   // Render the ABC content for the current page
   useEffect(() => {
@@ -127,7 +218,7 @@ const MusicEntryClerkEdit = () => {
 
       // Calculate the correct offset by counting characters in previous pages
       const previousPagesContent = splitContent.slice(0, page - 1).join("\n");
-      const offset = previousPagesContent ? previousPagesContent.length + 1 : 0; // +1 for the newline after each page
+      const offset = previousPagesContent ? previousPagesContent.length + 1 : 0;
 
       ABCJS.renderAbc(
         "abc-render-edit",
@@ -168,11 +259,13 @@ const MusicEntryClerkEdit = () => {
     }
   }, [splitContent, page, abcContent]);
 
+  // Page change handler
   const handlePageChange = (event, value) => {
     setPage(value);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // ABC Notation Validation
   const validateABCNotation = (content) => {
     window.scrollTo({ top: 0, behavior: "smooth" });
 
@@ -219,6 +312,7 @@ const MusicEntryClerkEdit = () => {
     }
   };
 
+  // Input change handler
   const handleInputChange = (event) => {
     const newContent = event.target.value;
     setAbcContent(newContent);
@@ -228,6 +322,7 @@ const MusicEntryClerkEdit = () => {
     }
   };
 
+  // Save handler
   const handleSave = async () => {
     setIsSaving(true);
 
@@ -271,77 +366,139 @@ const MusicEntryClerkEdit = () => {
     }
   };
 
+  // Proceed handler
   const handleProceed = () => {
     navigate("/clerk-catalog", { state: { fileName } });
   };
 
+  // Dialog close handler
   const handleCloseDialog = () => {
     setOpenDialog(false);
   };
 
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <GlobalStyle />
-      <Box sx={{ display: "flex", minHeight: "100vh" }}>
-        <ClerkSidebar active="editScore" />
-        <Box
-          sx={{
-            flexGrow: 1,
-            p: 3,
-            display: "flex",
-            flexDirection: "column",
-            marginLeft: "225px",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", mt: 4, ml: 1 }}>
-              <Typography
-                variant="h4"
-                sx={{
-                  fontFamily: "Montserrat",
-                  fontWeight: "bold",
-                }}
-              >
-                Edit Music Scores
-              </Typography>
-              {/* Help Icon */}
-              <IconButton
-                onClick={() => {
-                  window.open(
-                    "https://web.archive.org/web/20190214175540/http://www.stephenmerrony.co.uk/uploads/ABCquickRefv0_6.pdf",
-                    "_blank"
-                  );
-                }}
-                sx={{
-                  ml: 1, // Margin to separate from the text
-                  color: "#6FBCCF", // Icon color
-                  "&:hover": {
-                    color: "#8BD3E6", // Slightly brighter on hover
-                  },
-                }}
-              >
-                <HelpOutline />
-              </IconButton>
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography
-                variant="body1"
-                sx={{ mr: 2, fontFamily: "Montserrat" }}
-              >
-                {user ? user.username : "User"}
-              </Typography>
-              <Avatar>{user ? user.username[0] : "U"}</Avatar>
-            </Box>
-          </Box>
+      <Box sx={styles.root}>
+        {/* Mobile AppBar */}
+        <AppBar position="fixed" sx={styles.appBar}>
+          <Toolbar>
+            <IconButton
+              color="inherit"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, color: "#3B3183" }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography
+              variant="h6"
+              sx={{ color: "#3B3183", fontWeight: "bold" }}
+            >
+              Edit Music Scores
+            </Typography>
 
-          <Divider />
+            {/* Mobile user info */}
+            {!isLargeScreen && (
+              <Box
+                sx={{
+                  ml: "auto",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                {!isMobile && (
+                  <Typography variant="body2" sx={{ color: "#3B3183" }}>
+                    {user?.username}
+                  </Typography>
+                )}
+                <Avatar
+                  alt={user?.username}
+                  src={user?.profile_picture}
+                  sx={{ width: 32, height: 32 }}
+                >
+                  {user?.username?.charAt(0).toUpperCase()}
+                </Avatar>
+              </Box>
+            )}
+          </Toolbar>
+        </AppBar>
+
+        {/* Permanent drawer for large screens */}
+        <Drawer variant="permanent" sx={styles.drawer}>
+          <ClerkSidebar active="editScore" />
+        </Drawer>
+
+        {/* Temporary drawer for smaller screens */}
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={styles.mobileDrawer}
+        >
+          <ClerkSidebar active="editScore" />
+        </Drawer>
+
+        {/* Main Content */}
+        <Box component="main" sx={styles.mainContent}>
+          {/* Header Section - Desktop */}
+          {isLargeScreen && (
+            <>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 3,
+                }}
+              >
+                <Box
+                  sx={{ display: "flex", alignItems: "center", mt: 4, ml: 1 }}
+                >
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontFamily: "Montserrat",
+                      fontWeight: "bold",
+                      fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
+                    }}
+                  >
+                    Edit Music Scores
+                  </Typography>
+                  <IconButton
+                    onClick={() => {
+                      window.open(
+                        "https://web.archive.org/web/20190214175540/http://www.stephenmerrony.co.uk/uploads/ABCquickRefv0_6.pdf",
+                        "_blank"
+                      );
+                    }}
+                    sx={{
+                      ml: 1,
+                      color: "#6FBCCF",
+                      "&:hover": {
+                        color: "#8BD3E6",
+                      },
+                    }}
+                  >
+                    <HelpOutline />
+                  </IconButton>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Typography variant="body1">
+                    {user ? user.username : "User"}
+                  </Typography>
+                  <Avatar sx={{ ml: 2, width: 40, height: 40 }}>
+                    {user ? user.username[0] : "U"}
+                  </Avatar>
+                </Box>
+              </Box>
+              <Divider />
+            </>
+          )}
+
+          {/* ABC Notation Editor */}
           <Grid
             container
             spacing={2}
@@ -351,7 +508,11 @@ const MusicEntryClerkEdit = () => {
               <Typography
                 variant="h6"
                 gutterBottom
-                sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
+                sx={{
+                  fontFamily: "Montserrat",
+                  fontWeight: "bold",
+                  fontSize: { xs: "1rem", sm: "1.25rem" },
+                }}
               >
                 ABC Notation Editor
               </Typography>
@@ -374,67 +535,80 @@ const MusicEntryClerkEdit = () => {
                 value={abcContent}
                 onChange={handleInputChange}
                 style={{
-                  height: "200px",
+                  height: isMobile ? "150px" : "200px",
                   overflowY: "auto",
+                  fontSize: isMobile ? "0.875rem" : "1rem",
                 }}
               />
             </Grid>
+
+            {/* Music Score Preview */}
             <Grid item sx={{ mt: 1 }}>
               <Typography
                 variant="h6"
                 gutterBottom
-                sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
+                sx={{
+                  fontFamily: "Montserrat",
+                  fontWeight: "bold",
+                  fontSize: { xs: "1rem", sm: "1.25rem" },
+                }}
               >
                 Music Score Preview
               </Typography>
-              <Paper
-                elevation={3}
-                sx={{
-                  padding: 2,
-                  borderRadius: 4,
-                  bgcolor: "#ffffff",
-                  textAlign: "center",
-                  maxWidth: "800px",
-                  margin: "0 auto",
-                  minHeight: "300px",
-                  mb: 3,
-                  mt: 3,
-                }}
-              >
+              <Paper elevation={3} sx={styles.previewPaper}>
                 <div id="abc-render-edit"></div>
               </Paper>
             </Grid>
           </Grid>
+
+          {/* Pagination */}
           <Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>
             <Pagination
               count={splitContent.length}
               page={page}
               onChange={handlePageChange}
               color="primary"
+              fullWidth={isMobile}
               sx={{
+                width: "100%",
+                display: "flex",
+                justifyContent: "center",
                 "& .MuiPaginationItem-root": {
                   borderRadius: 2,
                   fontFamily: "Montserrat",
+                  fontSize: { xs: "0.75rem", sm: "1rem" },
                   backgroundColor: "primary",
                   color: "#000",
                   "&.Mui-selected": {
-                    backgroundColor: "#8BD3E6", // Blue for selected
+                    backgroundColor: "#8BD3E6",
                     color: "#fff",
                     "&:hover": {
-                      backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
+                      backgroundColor: "#8BD3E6",
                     },
                   },
                   "&:hover": {
-                    backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
+                    backgroundColor: "#D3D3D3",
                   },
                 },
               }}
             />
           </Box>
-          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
+
+          {/* Action Buttons */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              justifyContent: { xs: "center", sm: "space-between" },
+              alignItems: { xs: "center", sm: "flex-start" }, // Centers buttons horizontally on mobile
+              mt: 2,
+              gap: { xs: 2, sm: 0 },
+            }}
+          >
             <Button
               variant="outlined"
               size="large"
+              fullWidth={isMobile}
               sx={{
                 ...buttonStyles,
                 "&:disabled": {
@@ -451,15 +625,73 @@ const MusicEntryClerkEdit = () => {
             <Button
               variant="outlined"
               size="large"
+              fullWidth={isMobile}
               sx={buttonStyles}
               onClick={handleProceed}
             >
               Proceed
             </Button>
           </Box>
+
+          {/* Dialog for Messages */}
+          <Dialog
+            open={openDialog}
+            onClose={handleCloseDialog}
+            PaperProps={{
+              sx: {
+                borderRadius: "16px",
+                padding: "16px",
+                width: { xs: "90%", sm: "auto" },
+                maxWidth: { xs: "90%", sm: 400 },
+              },
+            }}
+          >
+            <DialogTitle
+              sx={{
+                fontFamily: "Montserrat",
+                fontWeight: "bold",
+                fontSize: { xs: "18px", sm: "20px" },
+                textAlign: "center",
+              }}
+            >
+              Notification
+            </DialogTitle>
+            <DialogContent>
+              <Typography
+                variant="body1"
+                sx={{
+                  fontFamily: "Montserrat",
+                  fontSize: { xs: "14px", sm: "16px" },
+                  color: "#555",
+                  textAlign: "center",
+                }}
+              >
+                {dialogMessage}
+              </Typography>
+            </DialogContent>
+            <DialogActions
+              sx={{
+                justifyContent: "center",
+                gap: "12px",
+                mt: 1,
+                pb: 2,
+              }}
+            >
+              <Button
+                onClick={handleCloseDialog}
+                sx={{
+                  ...buttonStyles,
+                  borderRadius: "8px",
+                  px: { xs: 3, sm: 4 },
+                }}
+              >
+                OK
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Box>
       </Box>
-    </>
+    </ThemeProvider>
   );
 };
 

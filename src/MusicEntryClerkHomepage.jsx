@@ -19,26 +19,42 @@ import {
   MenuItem,
   Pagination,
   Skeleton,
+  AppBar,
+  Toolbar,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
-
-import { FilterAlt } from "@mui/icons-material";
+import { FilterAlt, Menu as MenuIcon } from "@mui/icons-material";
+import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
 import { useNavigate } from "react-router-dom";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { createGlobalStyle } from "styled-components";
-import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
 
-// Update animation keyframes to 2 seconds
+const DRAWER_WIDTH = 225;
+
+// Theme setup
+const theme = createTheme({
+  typography: {
+    fontFamily: "Montserrat, Arial, sans-serif",
+  },
+  breakpoints: {
+    values: {
+      xs: 0, // mobile phones
+      sm: 600, // tablets
+      md: 960, // small laptops
+      lg: 1280, // desktops
+      xl: 1920, // large screens
+    },
+  },
+});
+
+// Global styles
 const GlobalStyle = createGlobalStyle`
   @keyframes skeleton-wave {
-    0% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.4;
-    }
-    100% {
-      opacity: 1;
-    }
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 1; }
   }
   
   body {
@@ -52,38 +68,32 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
+// Button styles
 const buttonStyles = {
-  px: 10,
+  px: { xs: 4, sm: 10 },
   fontFamily: "Montserrat",
   fontWeight: "bold",
   color: "#FFFFFF",
   backgroundColor: "#8BD3E6",
   border: "1px solid #8BD3E6",
-  borderColor: "#8BD3E6",
-  boxShadow: "none", // Correct spelling
+  boxShadow: "none",
   "&:hover": {
-    backgroundColor: "#6FBCCF", // Slightly darker blue for hover
-    color: "#FFFFFF", // Keeps the text color consistent
+    backgroundColor: "#6FBCCF",
     borderColor: "#6FBCCF",
-    boxShadow: "none", // Ensures no shadow on hover
-  },
-  "&:disabled": {
-    backgroundColor: "#E0E0E0",
-    borderColor: "#E0E0E0",
-    color: "#9E9E9E",
+    boxShadow: "none",
   },
 };
 
 const buttonStyles2 = {
-  px: 10,
+  px: { xs: 4, sm: 10 },
   fontFamily: "Montserrat",
   fontWeight: "bold",
   color: "#8BD3E6",
   backgroundColor: "#FFFFFF",
-  boxShadow: "none", // Correct spelling
+  boxShadow: "none",
   border: "1px solid #8BD3E6",
   "&:hover": {
-    boxShadow: "none", // Correct spelling
+    boxShadow: "none",
     backgroundColor: "#E6F8FB",
     color: "#7AB9C4",
     borderColor: "#7AB9C4",
@@ -91,63 +101,165 @@ const buttonStyles2 = {
 };
 
 const deleteButtonStyles = {
-  px: 10,
-
+  px: { xs: 4, sm: 10 },
   fontFamily: "Montserrat",
   fontWeight: "bold",
   color: "#FFFFFF",
   borderColor: "#DB2226",
   backgroundColor: "#DB2226",
-
-  boxShadow: "none", // Ensures no shadow on hover
+  boxShadow: "none",
   "&:hover": {
-    backgroundColor: "#B71C1C", // Slightly darker red
-    color: "#FFFFFF", // Keeps the text color consistent
-    borderColor: "#B71C1C", // Matches the background color for cohesion
-    boxShadow: "none", // Ensures no shadow on hover
+    boxShadow: "none",
+    backgroundColor: "#B71C1C",
+    borderColor: "#B71C1C",
   },
 };
 
 export default function MusicEntryClerkHomepage() {
+  const navigate = useNavigate();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "lg"));
+
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState(null);
-
-  const [unfilteredSearchedScores, setUnfilteredSearchedScores] = useState([]);
-
-  const [searchedScores, setSearchedScores] = useState([]);
-  const [filteredScores, setFilteredScores] = useState([]);
-  const [isFiltered, setIsFiltered] = useState(false);
-
-  const [musicScores, setMusicScores] = useState([]);
-
   const [searchQuery, setSearchQuery] = useState("");
-
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [sortBy, setSortBy] = useState("_id");
+  const [loading, setLoading] = useState(true);
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [musicScores, setMusicScores] = useState([]);
+  const itemsPerPage = 12;
   const [genre, setGenre] = useState("");
   const [composer, setComposer] = useState("");
   const [instrumentation, setInstrumentation] = useState("");
   const [emotion, setEmotion] = useState("");
+  const [unfilteredSearchedScores, setUnfilteredSearchedScores] = useState([]);
+  const [searchedScores, setSearchedScores] = useState([]);
+  const [filteredScores, setFilteredScores] = useState([]);
 
-  const [page, setPage] = useState(1);
-  const [sortOrder, setSortOrder] = useState("desc");
-  const [sortBy, setSortBy] = useState("_id"); // Add this state
+  // Grid columns based on screen size
+  const gridColumns = {
+    xs: 1, // 1 column for mobile
+    sm: 2, // 2 columns for tablets
+    md: 3, // 3 columns for small laptops
+    lg: 4, // 4 columns for desktops
+  };
 
-  const navigate = useNavigate();
-  const itemsPerPage = 12;
-  const [loading, setLoading] = useState(true);
+  // Responsive styles
+  const styles = {
+    root: {
+      display: "flex",
+      minHeight: "100vh",
+      backgroundColor: "#FFFFFF",
+    },
+    appBar: {
+      display: isLargeScreen ? "none" : "block",
+      backgroundColor: "#FFFFFF",
+      boxShadow: "none",
+      borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+      width: "100%",
+    },
+    drawer: {
+      width: DRAWER_WIDTH,
+      flexShrink: 0,
+      display: isLargeScreen ? "block" : "none",
+      "& .MuiDrawer-paper": {
+        width: DRAWER_WIDTH,
+        boxSizing: "border-box",
+      },
+    },
+    mobileDrawer: {
+      display: isLargeScreen ? "none" : "block",
+      "& .MuiDrawer-paper": {
+        width: DRAWER_WIDTH,
+        boxSizing: "border-box",
+      },
+    },
+    mainContent: {
+      flexGrow: 1,
+      p: { xs: 2, sm: 3 },
+      mt: isLargeScreen ? 0 : 8,
+      ml: isLargeScreen ? 5 : 0, // Set margin-left to 0 for large screens
+      width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
+    },
+    searchContainer: {
+      display: "flex",
+      alignItems: "center",
+      gap: { xs: 1, sm: 2 },
+      flex: 1,
+      maxWidth: { xs: "100%", sm: 700 },
+      mx: { xs: 1, sm: 4 },
+    },
+    cardGrid: {
+      display: "grid",
+      gridTemplateColumns: {
+        xs: "repeat(1, 1fr)",
+        sm: "repeat(2, 1fr)",
+        md: "repeat(3, 1fr)",
+        lg: "repeat(4, 1fr)",
+      },
+      gap: { xs: 2, sm: 3 },
+    },
+    card: {
+      width: { xs: "100%", sm: 210 },
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      boxShadow: "none",
+      cursor: "pointer",
+    },
+    cardMedia: {
+      height: { xs: 200, sm: 280 },
+      width: "100%",
+      maxWidth: { xs: "100%", sm: 200 },
+      border: "2px solid #000",
+      borderRadius: 10,
+      padding: "10px",
+      boxSizing: "border-box",
+    },
+  };
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await axios.get("http://localhost:3000/current-user");
-        setUser(response.data);
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-        navigate("/login");
-      }
-    };
-
-    fetchUser();
-  }, [navigate]);
+  // Component for skeleton loading
+  const SkeletonCard = () => (
+    <Card sx={styles.card}>
+      <Box sx={{ padding: "10px", width: "100%" }}>
+        <Skeleton
+          variant="rectangular"
+          sx={{
+            width: "100%",
+            height: { xs: 200, sm: 280 },
+            borderRadius: 10,
+            animation: "skeleton-wave 1s ease-in-out infinite",
+          }}
+        />
+      </Box>
+      <CardContent
+        sx={{
+          padding: "16px 8px",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <Skeleton
+          variant="text"
+          width="70%"
+          height={24}
+          sx={{ mb: 1, animation: "skeleton-wave 1s ease-in-out infinite" }}
+        />
+        <Skeleton
+          variant="text"
+          width="50%"
+          height={20}
+          sx={{ animation: "skeleton-wave 1s ease-in-out infinite" }}
+        />
+      </CardContent>
+    </Card>
+  );
 
   const fetchMusicScores = async (order = "desc", field = "_id") => {
     setLoading(true);
@@ -253,61 +365,31 @@ export default function MusicEntryClerkHomepage() {
     }
   }, [searchQuery]);
 
-  const SkeletonCard = () => (
-    <Card
-      sx={{
-        width: 210,
-        boxShadow: "none",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-      }}
-    >
-      <Box sx={{ padding: "10px" }}>
-        <Skeleton
-          variant="rectangular"
-          width={200}
-          height={280}
-          sx={{
-            borderRadius: 10,
-            animation: "skeleton-wave 1s ease-in-out infinite",
-          }}
-        />
-      </Box>
-      <CardContent
-        sx={{
-          padding: "16px 8px",
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          "&:last-child": {
-            paddingBottom: "16px",
-          },
-        }}
-      >
-        <Skeleton
-          variant="text"
-          width="70%"
-          height={24}
-          sx={{
-            mb: 1,
-            animation: "skeleton-wave 1s ease-in-out infinite",
-            borderRadius: 0.5,
-          }}
-        />
-        <Skeleton
-          variant="text"
-          width="50%"
-          height={20}
-          sx={{
-            animation: "skeleton-wave 1s ease-in-out infinite",
-            borderRadius: 0.5,
-          }}
-        />
-      </CardContent>
-    </Card>
-  );
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/current-user");
+        setUser(response.data);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+        navigate("/login");
+      }
+    };
+
+    fetchUser();
+  }, [navigate]);
+
+  // Handle drawer toggle
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  // Pagination handler
+  const handlePageChange = (event, value) => {
+    setPage(value);
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const getDisplayedScores = () => {
     if (searchQuery && isFiltered) {
@@ -390,54 +472,98 @@ export default function MusicEntryClerkHomepage() {
     }
   };
 
-  const handlePageChange = (event, value) => {
-    setPage(value);
-  };
-
   const handleCardClick = (scoreId) => {
     navigate(`/clerk-music-score-view/${scoreId}`);
   };
 
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <GlobalStyle />
-      <Box sx={{ display: "flex", minHeight: "100vh" }}>
-        <Box
-          sx={{
-            width: 225,
-            flexShrink: 0, // Prevent shrinking
-            overflowY: "auto", // Add scroll if content overflows
-          }}
+      <Box sx={styles.root}>
+        {/* Mobile AppBar */}
+        <AppBar position="fixed" sx={styles.appBar}>
+          <Toolbar>
+            <IconButton
+              color="inherit"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, color: "#3B3183" }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography
+              variant="h6"
+              sx={{ color: "#3B3183", fontWeight: "bold" }}
+            >
+              Uploaded Music Scores
+            </Typography>
+
+            {/* Mobile user info */}
+            {!isLargeScreen && (
+              <Box
+                sx={{
+                  ml: "auto",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                {!isMobile && (
+                  <Typography variant="body2" sx={{ color: "#3B3183" }}>
+                    {user?.username}
+                  </Typography>
+                )}
+                <Avatar
+                  alt={user?.username}
+                  src={user?.profile_picture}
+                  sx={{ width: 32, height: 32 }}
+                >
+                  {user?.username?.charAt(0).toUpperCase()}
+                </Avatar>
+              </Box>
+            )}
+          </Toolbar>
+        </AppBar>
+
+        {/* Permanent drawer for large screens */}
+        <Drawer variant="permanent" sx={styles.drawer}>
+          <ClerkSidebar active="dashboard" />
+        </Drawer>
+
+        {/* Temporary drawer for smaller screens */}
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={styles.mobileDrawer}
         >
           <ClerkSidebar active="dashboard" />
-        </Box>
+        </Drawer>
 
-        <Box sx={{ flexGrow: 1, p: 3, pl: 5 }}>
+        {/* Main content */}
+        <Box component="main" sx={styles.mainContent}>
+          {/* Header section */}
+
           <Box
             sx={{
               display: "flex",
-              alignItems: "center", // Align all items vertically
-              justifyContent: "space-between",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: "center",
+              gap: { xs: 2, sm: 0 },
               mb: 3,
               mt: 2,
-              position: "relative",
-              height: 48, // Fixed height for consistency
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-              }}
-            >
-              {/* Sort field selector */}
+            {/* Sort controls */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Select
                 value={sortBy}
-                onChange={(e) => handleSortByChange(e.target.value)}
+                onChange={(e) => setSortBy(e.target.value)}
+                size={isMobile ? "small" : "medium"}
                 sx={{
-                  height: 40,
-                  minWidth: 120,
+                  minWidth: { xs: 100, sm: 120 },
+                  fontFamily: "Montserrat",
                   fontFamily: "Montserrat",
                   "& .MuiOutlinedInput-notchedOutline": {
                     borderColor: "#8BD3E6",
@@ -450,44 +576,22 @@ export default function MusicEntryClerkHomepage() {
                   },
                 }}
               >
-                <MenuItem value="_id" sx={{ fontFamily: "Montserrat" }}>
-                  Date Added
-                </MenuItem>
-                <MenuItem value="title" sx={{ fontFamily: "Montserrat" }}>
-                  Title
-                </MenuItem>
-                <MenuItem value="artist" sx={{ fontFamily: "Montserrat" }}>
-                  Artist
-                </MenuItem>
+                <MenuItem value="_id">Date Added</MenuItem>
+                <MenuItem value="title">Title</MenuItem>
+                <MenuItem value="artist">Artist</MenuItem>
               </Select>
 
-              {/* Sort order toggle */}
               <IconButton
-                onClick={handleSortToggle}
-                sx={{
-                  color: "#8BD3E6",
-                  height: 40,
-                  width: 40,
-                  "&:hover": {
-                    backgroundColor: "rgba(139, 211, 230, 0.1)",
-                  },
-                }}
+                onClick={() =>
+                  setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                }
               >
                 {sortOrder === "asc" ? <ArrowUpward /> : <ArrowDownward />}
               </IconButton>
             </Box>
 
-            {/* Search and filter container */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                flex: 1,
-                maxWidth: 700,
-                mx: 4,
-              }}
-            >
+            {/* Search and filter section */}
+            <Box sx={styles.searchContainer}>
               <Paper
                 component="form"
                 sx={{
@@ -495,363 +599,166 @@ export default function MusicEntryClerkHomepage() {
                   display: "flex",
                   alignItems: "center",
                   width: "100%",
-                  height: 40,
-                  border: "1px solid #8BD3E6",
                   borderRadius: "50px",
+                  border: "1px solid #8BD3E6",
                 }}
               >
                 <InputBase
-                  sx={{
-                    ml: 2,
-                    flex: 1,
-                    fontFamily: "Montserrat",
-                    height: "100%",
-                  }}
-                  placeholder="Look for music scores here..."
+                  sx={{ ml: 2, flex: 1 }}
+                  placeholder="Search music scores..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </Paper>
-              <IconButton
-                sx={{
-                  height: 40,
-                  width: 40,
-                }}
-                onClick={() => setIsDrawerOpen(true)}
-              >
+
+              <IconButton onClick={() => setIsDrawerOpen(true)}>
                 <FilterAlt />
               </IconButton>
+            </Box>
 
-              <Drawer
-                anchor="right"
-                open={isDrawerOpen}
-                onClose={() => setIsDrawerOpen(false)}
+            {/* Desktop user info */}
+            {isLargeScreen && (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  ml: "auto",
+                }}
               >
-                <Box
-                  sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    p: 2,
-                    width: 300,
-                    fontFamily: "Montserrat", // Apply Montserrat globally to the Box
-                  }}
+                <Typography>{user?.username}</Typography>
+                <Avatar
+                  alt={user?.username}
+                  src={user?.profile_picture}
+                  sx={{ width: 40, height: 40 }}
                 >
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      mb: 2,
-                      fontFamily: "Montserrat",
-                      fontWeight: "bold",
-                      textAlign: "center", // Centers the text horizontally
-                    }}
-                  >
-                    Filter Options
-                  </Typography>
-
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel sx={{ fontFamily: "Montserrat" }}>
-                      Genre
-                    </InputLabel>
-                    <Select
-                      label="Genre"
-                      value={genre}
-                      onChange={(e) => setGenre(e.target.value)}
-                      sx={{
-                        fontFamily: "Montserrat",
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#8BD3E6", // Green outline on hover
-                        },
-                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#8BD3E6", // Green outline when focused
-                        },
-                      }}
-                    >
-                      {[
-                        "Baroque",
-                        "Children's",
-                        "Children's Song",
-                        "Classical",
-                        "Disco",
-                        "Impressionist",
-                        "Pop",
-                        "Rock",
-                        "Renaissance Polyphony",
-                      ].map((item) => (
-                        <MenuItem
-                          key={item}
-                          value={item}
-                          sx={{
-                            fontFamily: "Montserrat",
-                          }}
-                        >
-                          {item}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel sx={{ fontFamily: "Montserrat" }}>
-                      Composer
-                    </InputLabel>
-                    <Select
-                      label="Composer"
-                      value={composer}
-                      onChange={(e) => setComposer(e.target.value)}
-                      sx={{
-                        fontFamily: "Montserrat",
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#8BD3E6", // Green outline on hover
-                        },
-                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#8BD3E6", // Green outline when focused
-                        },
-                      }}
-                    >
-                      {[
-                        "Antonio Vivaldi",
-                        "Claude Debussy",
-                        "Emil Aarestrup",
-                        "Heinrich Faber",
-                        "Johann Pachelbel",
-                        "John Lennon, Paul McCartney",
-                        "Ludwig van Beethoven",
-                        "Mark Fisher",
-                        "Joe Goodman",
-                        "Larry Shay",
-                        "Wolfgang Amadeus Mozart",
-                      ].map((composerName) => (
-                        <MenuItem
-                          key={composerName}
-                          value={composerName}
-                          sx={{ fontFamily: "Montserrat" }}
-                        >
-                          {composerName}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel sx={{ fontFamily: "Montserrat" }}>
-                      Emotion
-                    </InputLabel>
-                    <Select
-                      label="Emotion"
-                      value={emotion}
-                      onChange={(e) => setEmotion(e.target.value)}
-                      sx={{
-                        fontFamily: "Montserrat",
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#8BD3E6", // Green outline on hover
-                        },
-                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#8BD3E6", // Green outline when focused
-                        },
-                      }}
-                    >
-                      <MenuItem value="Angry" sx={{ fontFamily: "Montserrat" }}>
-                        Angry
-                      </MenuItem>
-                      <MenuItem value="Happy" sx={{ fontFamily: "Montserrat" }}>
-                        Happy
-                      </MenuItem>
-                      <MenuItem
-                        value="Relaxed"
-                        sx={{ fontFamily: "Montserrat" }}
-                      >
-                        Relaxed
-                      </MenuItem>
-                      <MenuItem value="Sad" sx={{ fontFamily: "Montserrat" }}>
-                        Sad
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
-
-                  <TextField
-                    label="Instrumentation"
-                    variant="outlined"
-                    fullWidth
-                    sx={{
-                      mb: 2,
-                      fontFamily: "Montserrat",
-                      "& .MuiOutlinedInput-root": {
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#8BD3E6", // Green outline on hover
-                        },
-                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#8BD3E6", // Green outline on focus
-                        },
-                      },
-                    }}
-                    InputLabelProps={{ style: { fontFamily: "Montserrat" } }}
-                    InputProps={{ style: { fontFamily: "Montserrat" } }}
-                    value={instrumentation}
-                    onChange={(e) => setInstrumentation(e.target.value)}
-                  />
-
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    sx={{
-                      mt: 2,
-                      ...buttonStyles,
-                    }}
-                    onClick={handleFilterRequest}
-                  >
-                    APPLY FILTERS
-                  </Button>
-
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    sx={{
-                      mt: 2,
-                      ...deleteButtonStyles,
-                    }}
-                    onClick={clearFilters}
-                  >
-                    CLEAR FILTERS
-                  </Button>
-                  <Box sx={{ mt: "auto" }}>
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      sx={{
-                        mb: 2,
-                        ...buttonStyles2,
-                      }}
-                      onClick={() => setIsDrawerOpen(false)}
-                    >
-                      CLOSE FILTERS
-                    </Button>
-                  </Box>
-                </Box>
-              </Drawer>
-            </Box>
-
-            {/* User info container */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-              }}
-            >
-              {user ? (
-                <>
-                  <Typography variant="body1" sx={{ fontFamily: "Montserrat" }}>
-                    {user?.username}
-                  </Typography>
-                  <Avatar
-                    alt={user?.username}
-                    src={user?.profile_picture || null}
-                    sx={{ height: 40, width: 40 }}
-                  >
-                    {!user?.profile_picture &&
-                      user?.username.charAt(0).toUpperCase()}
-                  </Avatar>
-                </>
-              ) : (
-                <>
-                  <Skeleton
-                    variant="text"
-                    width={100}
-                    height={24}
-                    sx={{
-                      mr: 2,
-                      fontFamily: "Montserrat",
-                      animation: "skeleton-wave 1s ease-in-out infinite",
-                    }}
-                  />
-                  <Skeleton variant="circular" width={40} height={40} />
-                </>
-              )}
-            </Box>
+                  {user?.username?.charAt(0).toUpperCase()}
+                </Avatar>
+              </Box>
+            )}
           </Box>
 
-          <Typography
-            variant="h5"
-            gutterBottom
-            sx={{ fontFamily: "Montserrat", fontWeight: "bold", mt: 4, mb: 3 }}
-          >
-            {searchQuery
-              ? "Search Results"
-              : isFiltered
-                ? "Filtered Results"
-                : "Uploaded Music Scores"}
-          </Typography>
-
-          {/* Only show results count when searching or filtering */}
-          {(searchQuery || isFiltered) && (
-            <Typography
-              variant="body1"
-              sx={{ mb: 2, fontFamily: "Montserrat" }}
-            >
-              Found{" "}
-              <Box
-                component="span"
-                sx={{ fontWeight: "bold", color: "#8BD3E6" }}
-              >
-                {displayedScores.length}
-              </Box>{" "}
-              results
-            </Typography>
-          )}
-
+          {/* Results Title and Count Section */}
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)", // Ensures 4 cards per row
-              gap: 3, // Controls spacing between the cards
+              mt: { xs: 2, sm: 3, md: 4 },
+              mb: { xs: 2, sm: 3 },
+              px: { xs: 1, sm: 0 },
             }}
           >
+            <Typography
+              variant="h5"
+              gutterBottom
+              sx={{
+                fontFamily: "Montserrat",
+                fontWeight: "bold",
+                fontSize: {
+                  xs: "1.25rem",
+                  sm: "1.5rem",
+                  md: "1.75rem",
+                },
+                textAlign: { xs: "left", sm: "left" },
+              }}
+            >
+              {searchQuery
+                ? "Search Results"
+                : isFiltered
+                  ? "Filtered Results"
+                  : "Uploaded Music Scores"}
+            </Typography>
+
+            {/* Results count - Simplified for mobile */}
+            {(searchQuery || isFiltered) && (
+              <Typography
+                variant="body1"
+                sx={{
+                  mb: { xs: 1, sm: 2 },
+                  fontFamily: "Montserrat",
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                  textAlign: { xs: "left", sm: "left" },
+                }}
+              >
+                {isMobile ? (
+                  // Mobile view - single line
+                  <span>
+                    Found{" "}
+                    <Box
+                      component="span"
+                      sx={{ fontWeight: "bold", color: "#8BD3E6" }}
+                    >
+                      {displayedScores.length}
+                    </Box>{" "}
+                    results
+                  </span>
+                ) : (
+                  // Desktop view - more spaced out
+                  <>
+                    Found{" "}
+                    <Box
+                      component="span"
+                      sx={{ fontWeight: "bold", color: "#8BD3E6" }}
+                    >
+                      {displayedScores.length}
+                    </Box>{" "}
+                    results
+                  </>
+                )}
+              </Typography>
+            )}
+          </Box>
+
+          {/* Music scores grid */}
+          <Box sx={styles.cardGrid}>
             {loading ? (
-              Array(12)
+              Array(gridColumns[isMobile ? "xs" : isTablet ? "sm" : "lg"])
                 .fill()
                 .map((_, index) => <SkeletonCard key={index} />)
             ) : paginatedScores.length > 0 ? (
               paginatedScores.map((score) => (
                 <Card
                   key={score._id}
+                  onClick={() => handleCardClick(score._id)}
                   sx={{
-                    width: 210,
+                    width: { xs: "100%", sm: 210 },
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     boxShadow: "none",
                     cursor: "pointer",
+                    transition: "transform 0.2s",
+                    "&:hover": {
+                      transform: "scale(1.02)",
+                    },
                   }}
-                  onClick={() => handleCardClick(score._id)}
                 >
-                  <CardMedia
-                    component="img"
-                    height={280}
-                    image={score.coverImageUrl || "placeholder-image-url"} // Fallback to placeholder if empty
-                    alt={score.title || "No Title Available"} // Fallback for alt text
-                    sx={{
-                      border: "2px solid #000",
-                      borderRadius: 10,
-                      width: 200,
-                      padding: "10px", // Add padding for consistent spacing
-                      boxSizing: "border-box", // Ensure padding doesn't affect size
-                      display: score.coverImageUrl ? "block" : "none", // Hide if no image
-                    }}
-                  />
-                  {!score.coverImageUrl && (
+                  {score.coverImageUrl ? (
+                    <CardMedia
+                      component="img"
+                      image={score.coverImageUrl}
+                      alt={score.title}
+                      sx={{
+                        height: { xs: 200, sm: 280 },
+                        width: { xs: "100%", sm: 200 },
+                        borderRadius: 10,
+                        border: "2px solid #000",
+                        padding: "10px",
+                        boxSizing: "border-box",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
                     <Box
                       sx={{
-                        height: 280,
-                        width: 200,
+                        height: { xs: 200, sm: 280 },
+                        width: { xs: "100%", sm: 200 },
                         border: "2px solid #000",
                         borderRadius: 10,
-                        padding: "10px", // Add padding for consistency with the image card
+                        padding: "10px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        boxSizing: "border-box", // Maintain padding consistency
-                        backgroundColor: "#f5f5f5", // Light background for empty UI
+                        backgroundColor: "#f5f5f5",
+                        boxSizing: "border-box",
                       }}
                     >
                       <Typography
@@ -859,6 +766,7 @@ export default function MusicEntryClerkHomepage() {
                           fontFamily: "Montserrat",
                           color: "#000",
                           textAlign: "center",
+                          px: 2,
                         }}
                       >
                         No Cover Image Available
@@ -868,86 +776,292 @@ export default function MusicEntryClerkHomepage() {
 
                   <CardContent
                     sx={{
-                      flexGrow: 1,
+                      width: "100%",
+                      padding: { xs: "16px 8px", sm: "16px" },
+                      "&:last-child": { pb: 2 },
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
-                      justifyContent: "center",
-                      fontFamily: "Montserrat",
-                      width: "100%",
-                      textAlign: "center",
                     }}
                   >
                     <Typography
                       variant="h6"
-                      noWrap
                       sx={{
-                        mb: 1,
                         fontFamily: "Montserrat",
-                        textOverflow: "ellipsis",
-                        overflow: "hidden",
-                        whiteSpace: "nowrap",
+                        fontSize: { xs: "1rem", sm: "1.25rem" },
+                        fontWeight: "bold",
+                        mb: 1,
+                        textAlign: "center",
                         width: "100%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      {score.title}
+                      {score.title || "Untitled"}
                     </Typography>
                     <Typography
                       variant="body2"
                       color="textSecondary"
-                      noWrap
                       sx={{
                         fontFamily: "Montserrat",
-                        textOverflow: "ellipsis",
-                        overflow: "hidden",
-                        whiteSpace: "nowrap",
+                        fontSize: { xs: "0.875rem", sm: "1rem" },
+                        textAlign: "center",
                         width: "100%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      {score.artist}
+                      {score.artist || "Unknown Artist"}
                     </Typography>
                   </CardContent>
                 </Card>
               ))
-            ) : searchQuery ? null : (
-              <Typography variant="body2" sx={{ fontFamily: "Montserrat" }}>
-                No scores found
+            ) : (
+              <Typography
+                variant="body1"
+                sx={{
+                  fontFamily: "Montserrat",
+                  gridColumn: "1 / -1",
+                  textAlign: "center",
+                  py: 4,
+                }}
+              >
+                No music scores found
               </Typography>
             )}
           </Box>
 
-          {paginatedScores.length > 0 && (
-            <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
-              <Pagination
-                count={pageCount}
-                page={page}
-                onChange={handlePageChange}
-                color="primary"
-                sx={{
-                  "& .MuiPaginationItem-root": {
-                    borderRadius: 2,
-                    fontFamily: "Montserrat",
-                    backgroundColor: "primary",
-                    color: "#000",
-                    "&.Mui-selected": {
-                      backgroundColor: "#8BD3E6", // Blue for selected
-                      color: "#fff",
-                      "&:hover": {
-                        backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
-                      },
-                    },
+          {/* Pagination */}
+          <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+            <Pagination
+              count={pageCount}
+              page={page}
+              onChange={handlePageChange}
+              size={isMobile ? "small" : "medium"}
+              sx={{
+                "& .MuiPaginationItem-root": {
+                  borderRadius: 2,
+                  fontFamily: "Montserrat",
+                  backgroundColor: "primary",
+                  color: "#000",
+                  "&.Mui-selected": {
+                    backgroundColor: "#8BD3E6", // Blue for selected
+                    color: "#fff",
                     "&:hover": {
-                      backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
+                      backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
                     },
                   },
-                }}
-              />
-            </Box>
-          )}
+                  "&:hover": {
+                    backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
+                  },
+                },
+              }}
+            />
+          </Box>
         </Box>
-
-        {/* Pagination component */}
       </Box>
-    </>
+
+      {/* Filter Drawer */}
+      <Drawer
+        anchor="right"
+        open={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        PaperProps={{
+          sx: {
+            width: { xs: "100%", sm: 400, md: 350 },
+            height: "100%",
+            overflow: "auto",
+          },
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            minHeight: "100%",
+            p: { xs: 2, sm: 3 },
+          }}
+        >
+          {/* Header */}
+          <Typography
+            variant="h6"
+            sx={{
+              textAlign: "center",
+              fontWeight: "bold",
+              mb: 3,
+              fontFamily: "Montserrat",
+            }}
+          >
+            Filter Options
+          </Typography>
+
+          {/* Filter Form Section */}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            <FormControl fullWidth>
+              <InputLabel>Genre</InputLabel>
+              <Select
+                value={genre}
+                onChange={(e) => setGenre(e.target.value)}
+                label="Genre"
+                sx={{
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#8BD3E6",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#6FBCCF",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#6FBCCF",
+                  },
+                }}
+              >
+                {genres.map((item) => (
+                  <MenuItem key={item} value={item}>
+                    {item}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>Composer</InputLabel>
+              <Select
+                value={composer}
+                onChange={(e) => setComposer(e.target.value)}
+                label="Composer"
+                sx={{
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#8BD3E6",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#6FBCCF",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#6FBCCF",
+                  },
+                }}
+              >
+                {composers.map((item) => (
+                  <MenuItem key={item} value={item}>
+                    {item}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>Emotion</InputLabel>
+              <Select
+                value={emotion}
+                onChange={(e) => setEmotion(e.target.value)}
+                label="Emotion"
+                sx={{
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#8BD3E6",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#6FBCCF",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#6FBCCF",
+                  },
+                }}
+              >
+                {emotions.map((item) => (
+                  <MenuItem key={item} value={item}>
+                    {item}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Instrumentation"
+              value={instrumentation}
+              onChange={(e) => setInstrumentation(e.target.value)}
+              fullWidth
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: "#8BD3E6",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#6FBCCF",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#6FBCCF",
+                  },
+                },
+              }}
+            />
+          </Box>
+
+          {/* Buttons Section - Using marginTop: auto to push it to bottom */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              mt: "2", // This pushes the button section to the bottom
+              pt: 4, // Adds padding top for spacing
+            }}
+          >
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={handleFilterRequest}
+              sx={buttonStyles}
+            >
+              APPLY FILTERS
+            </Button>
+
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={clearFilters}
+              sx={deleteButtonStyles}
+            >
+              CLEAR FILTERS
+            </Button>
+
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={() => setIsDrawerOpen(false)}
+              sx={buttonStyles2}
+            >
+              CLOSE FILTERS
+            </Button>
+          </Box>
+        </Box>
+      </Drawer>
+    </ThemeProvider>
   );
 }
+
+// Data arrays for select inputs
+const genres = [
+  "Baroque",
+  "Children's",
+  "Classical",
+  "Disco",
+  "Impressionist",
+  "Pop",
+  "Rock",
+  "Renaissance Polyphony",
+];
+
+const composers = [
+  "Antonio Vivaldi",
+  "Claude Debussy",
+  "Emil Aarestrup",
+  "Heinrich Faber",
+  "Johann Pachelbel",
+  "John Lennon, Paul McCartney",
+  "Ludwig van Beethoven",
+  "Wolfgang Amadeus Mozart",
+];
+
+const emotions = ["Angry", "Happy", "Relaxed", "Sad"];
