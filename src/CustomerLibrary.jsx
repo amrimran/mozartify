@@ -74,9 +74,10 @@ export default function CustomerLibrary() {
   };
 
   useEffect(() => {
-    // Automatically close the sidebar when switching to mobile view
     if (isMobile) {
       setIsSidebarOpen(false);
+    } else {
+      setIsSidebarOpen(true); // Always show sidebar on larger screens
     }
   }, [isMobile]);
 
@@ -365,9 +366,9 @@ export default function CustomerLibrary() {
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh", position: "relative" }}>
         {/* Mobile Menu Button */}
-        {isMobile && (
+        {(isMobile || isTablet) &&  (
           <IconButton
-            sx={{ position: "absolute", top: 10, left: 10, zIndex: 1100 }}
+            sx={{ position: "absolute", top: 10, left: 10, zIndex: 100 }}
             onClick={handleToggleSidebar}
           >
             <MenuIcon />
@@ -375,19 +376,35 @@ export default function CustomerLibrary() {
         )}
 
         {/* Sidebar */}
-        <Box
-          sx={{
-            width: isSidebarOpen ? (isMobile ? "100%" : 225) : 0,
-            flexShrink: 0,
-            transition: "width 0.3s",
-            position: isMobile ? "fixed" : "relative",
-            zIndex: 1000,
-            height: "100%",
-            display: isSidebarOpen ? "block" : "none",
-          }}
-        >
-          <CustomerSidebar active="library" />
-        </Box>
+        {(!(isMobile|| isTablet)) ? (
+          <Box
+            sx={{
+              width: 225,
+              flexShrink: 0,
+              overflowY: "auto",
+            }}
+          >
+            <CustomerSidebar active="home" />
+          </Box>
+        ) : (
+          // Drawer for smaller screens
+          <Drawer
+            // variant="temporary"
+            anchor="left"
+            open={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+            sx={{
+              "& .MuiDrawer-paper": {
+                width: 225,
+                boxSizing: "border-box",
+              },
+            }}
+          >
+            <CustomerSidebar active="home" />
+          </Drawer>
+        )}
+
+
         {/* Main Content */}
         <Box
           sx={{
@@ -718,7 +735,7 @@ export default function CustomerLibrary() {
                 fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem" },
               }}
             >
-              Library
+              Library 🗂️
             </Typography>
             {loading ? (
               <>
@@ -748,7 +765,7 @@ export default function CustomerLibrary() {
                 >
                   {currentScores.length > 99 ? "99+" : currentScores.length}
                 </Box>{" "}
-                scores
+                owned scores. Please do enjoy them 😁
               </Typography>
             )}
           </Box>
@@ -831,9 +848,7 @@ export default function CustomerLibrary() {
                       mt: { xs: 1, sm: 0 },
                     }}
                   >
-                    {loading ? (
-                      null
-                    ) : (
+                    {loading ? null : (
                       <IconButton
                         onClick={(e) => {
                           e.stopPropagation();
@@ -864,7 +879,7 @@ export default function CustomerLibrary() {
           }
           handleSnackbarClose(); // Close the snackbar
           if (snackbar.reload) {
-            window.location.reload(); // Reload the page after snackbar closes
+            // window.location.reload(); // Reload the page after snackbar closes
           }
         }}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}

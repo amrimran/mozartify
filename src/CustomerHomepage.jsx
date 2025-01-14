@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { ref, getDownloadURL } from "firebase/storage";
-import { storage } from "./firebase";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import {
@@ -32,6 +30,7 @@ import {
   Skeleton,
   Divider,
 } from "@mui/material";
+import Tooltip from "@mui/material/Tooltip";
 import { keyframes } from "@mui/system";
 import Favorite from "@mui/icons-material/Favorite";
 import { PlayArrow, FilterAlt } from "@mui/icons-material";
@@ -39,10 +38,17 @@ import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { Link, useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import CustomerSidebar from "./CustomerSidebar";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import MenuIcon from "@mui/icons-material/Menu";
 
 axios.defaults.withCredentials = true;
 
 export default function CustomerHomepage() {
+  const theme = useTheme();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg")); // PC & Large laptops
+  const isMediumScreen = useMediaQuery(theme.breakpoints.up("md")); // Small laptops & tablets
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm")); // Mobile phones
   const [user, setUser] = useState(null);
   const [unfilteredSearchedScores, setUnfilteredSearchedScores] = useState([]);
   const [purchasedScores, setPurchasedScores] = useState([]);
@@ -55,6 +61,7 @@ export default function CustomerHomepage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDrawerOpen2, setIsDrawerOpen2] = useState(false);
   const [genre, setGenre] = useState("");
   const [composer, setComposer] = useState("");
   const [instrumentation, setInstrumentation] = useState("");
@@ -141,91 +148,6 @@ export default function CustomerHomepage() {
       );
     };
   }, []);
-
-  const renderScores = (scores) => {
-    return scores.map((score, index) => (
-      <Box key={index}>
-        <Link
-          to={`/customer-music-score-view/${score._id}`}
-          style={{ textDecoration: "none" }}
-        >
-          <Card
-            sx={{
-              width: 200,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              boxShadow: "none",
-            }}
-          >
-            <CardMedia
-              component="img"
-              height={280}
-              image={score.coverImageUrl || "placeholder-image-url"} // Fallback to placeholder if empty
-              alt={score.title || "No Title Available"} // Fallback for alt text
-              sx={{
-                border: "2px solid #000",
-                borderRadius: 10,
-                width: 200,
-                padding: "10px",
-                boxSizing: "border-box",
-                display: score.coverImageUrl ? "block" : "none", // Hide if no image
-              }}
-            />
-            {!score.coverImageUrl && (
-              <Box
-                sx={{
-                  height: 280,
-                  width: 200,
-                  border: "2px solid #000",
-                  borderRadius: 10,
-                  padding: "10px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxSizing: "border-box",
-                  backgroundColor: "#f5f5f5",
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontFamily: "Montserrat",
-                    color: "#000",
-                    textAlign: "center",
-                  }}
-                >
-                  No Cover Image Available
-                </Typography>
-              </Box>
-            )}
-            <CardContent
-              sx={{
-                flexGrow: 1,
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-              }}
-            >
-              <Typography
-                variant="h6"
-                noWrap
-                sx={{ textAlign: "center", mb: 1 }}
-              >
-                {score.title}
-              </Typography>
-              <Typography
-                variant="body2"
-                color="textSecondary"
-                sx={{ textAlign: "center" }}
-              >
-                {score.artist}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Link>
-      </Box>
-    ));
-  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -498,7 +420,8 @@ export default function CustomerHomepage() {
     margin: 0;
     padding: 0;
     font-family: 'Montserrat', sans-serif;
-    overflow-y:hidden;
+    overflow-y: ${(props) => (props.isLargeScreen ? "hidden" : "auto")};
+    overflow-x: "hidden;
     
   }
 
@@ -574,19 +497,118 @@ export default function CustomerHomepage() {
 
   return (
     <>
-      <GlobalStyle />
-      <Box sx={{ display: "flex", height: "100vh" }}>
+      <GlobalStyle isLargeScreen={isLargeScreen} />
+      <Box
+        sx={{
+          display: "flex",
+          height: "100vh",
+          width: "100vw", // Ensure full viewport width
+          overflowX: "hidden", // Prevent horizontal scrolling at container level
+          overflowY: "hidden", // Prevent horizontal scrolling at container level
+        }}
+      >
+        {isLargeScreen ? (
+          <Box
+            sx={{
+              width: 225,
+              flexShrink: 0,
+              overflowY: "auto",
+            }}
+          >
+            <CustomerSidebar active="home" />
+          </Box>
+        ) : (
+          // Drawer for smaller screens
+          <Drawer
+            variant="temporary"
+            anchor="left"
+            open={isDrawerOpen2}
+            onClose={() => setIsDrawerOpen2(false)}
+            sx={{
+              "& .MuiDrawer-paper": {
+                width: 225,
+                boxSizing: "border-box",
+              },
+            }}
+          >
+            <CustomerSidebar active="home" />
+          </Drawer>
+        )}
+
         <Box
           sx={{
-            width: 225,
-            flexShrink: 0, // Prevent shrinking
-            overflowY: "auto", // Add scroll if content overflows
+            flexGrow: 1,
+            p: isSmallScreen ? 1 : 3,
+            pl: isSmallScreen ? 2 : 5,
+            overflowX: "hidden", // Prevent horizontal scrolling
+            width: "100%", // Take full width of parent
+            maxWidth: "100%", // Ensure content doesn't overflow
           }}
         >
-          <CustomerSidebar active="home" />
-        </Box>
+          {!isLargeScreen && (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                width: "100%",
+                mb: 2,
+              }}
+            >
+              <IconButton
+                edge="start"
+                color="inherit"
+                aria-label="menu"
+                onClick={() => setIsDrawerOpen2(true)}
+              >
+                <MenuIcon />
+              </IconButton>
 
-        <Box sx={{ flexGrow: 1, p: 3, pl: 5, mb: 4 }}>
+              {/* User info section */}
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                {loading ? (
+                  <>
+                    <Skeleton
+                      variant="text"
+                      width={100}
+                      height={24}
+                      sx={{
+                        mr: 2,
+                        fontFamily: "Montserrat",
+                        animation: "wave",
+                      }}
+                    />
+                    <Skeleton variant="circular" width={40} height={40} />
+                  </>
+                ) : (
+                  <>
+                    <Typography
+                      variant="body1"
+                      sx={{ mr: 2, fontFamily: "Montserrat" }}
+                    >
+                      {user?.username}
+                    </Typography>
+                    <Avatar
+                      alt={user?.username}
+                      src={
+                        user && user?.profile_picture
+                          ? user?.profile_picture
+                          : null
+                      }
+                      sx={{
+                        width: isLargeScreen ? 90 : isMediumScreen ? 40 : 30, // Adjust width
+                        height: isLargeScreen ? 90 : isMediumScreen ? 40 : 30, // Adjust height
+                      }}
+                    >
+                      {(!user || !user?.profile_picture) &&
+                        user?.username.charAt(0).toUpperCase()}
+                    </Avatar>
+                  </>
+                )}
+              </Box>
+            </Box>
+          )}
+
           <Box
             sx={{
               display: "flex",
@@ -594,16 +616,30 @@ export default function CustomerHomepage() {
               alignItems: "center",
               mb: 3,
               gap: 2,
+              flexDirection: isSmallScreen ? "column" : "row",
+              width: "100%", // Take full width
+              maxWidth: "100%", // Prevent overflow
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                width: isSmallScreen ? "100%" : "auto",
+                maxWidth: "100%", // Prevent overflow
+              }}
+            >
               <Paper
                 component="form"
                 sx={{
                   p: "6px 10px",
                   display: "flex",
                   alignItems: "center",
-                  width: 600,
+                  width: isSmallScreen
+                    ? "calc(100% - 60px)"
+                    : isMediumScreen
+                      ? 400
+                      : 600, // Account for filter icon
                   border: "1px solid #8BD3E6",
                   borderRadius: "50px",
                 }}
@@ -635,7 +671,7 @@ export default function CustomerHomepage() {
                     display: "flex",
                     flexDirection: "column",
                     p: 2,
-                    width: 300,
+                    width: isSmallScreen ? "50vw" : 300,
                     fontFamily: "Montserrat",
                   }}
                 >
@@ -834,51 +870,54 @@ export default function CustomerHomepage() {
               </Drawer>
             </Box>
 
-            <Box
-              sx={{
-                position: "absolute",
-                top: 28,
-                right: 40,
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              {loading ? (
-                <>
-                  <Skeleton
-                    variant="text"
-                    width={100}
-                    height={24}
-                    sx={{
-                      mr: 2,
-                      fontFamily: "Montserrat",
-                     animation:"wave",
-                    }}
-                  />
-                  <Skeleton variant="circular" width={40} height={40} />
-                </>
-              ) : (
-                <>
-                  <Typography
-                    variant="body1"
-                    sx={{ mr: 2, fontFamily: "Montserrat" }}
-                  >
-                    {user?.username}
-                  </Typography>
-                  <Avatar
-                    alt={user?.username}
-                    src={
-                      user && user?.profile_picture
-                        ? user?.profile_picture
-                        : null
-                    }
-                  >
-                    {(!user || !user?.profile_picture) &&
-                      user?.username.charAt(0).toUpperCase()}
-                  </Avatar>
-                </>
-              )}
-            </Box>
+            {/* Original user info box - only show on large screens */}
+            {isLargeScreen && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 28,
+                  right: 40,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                {loading ? (
+                  <>
+                    <Skeleton
+                      variant="text"
+                      width={100}
+                      height={24}
+                      sx={{
+                        mr: 2,
+                        fontFamily: "Montserrat",
+                        animation: "wave",
+                      }}
+                    />
+                    <Skeleton variant="circular" width={40} height={40} />
+                  </>
+                ) : (
+                  <>
+                    <Typography
+                      variant="body1"
+                      sx={{ mr: 2, fontFamily: "Montserrat" }}
+                    >
+                      {user?.username}
+                    </Typography>
+                    <Avatar
+                      alt={user?.username}
+                      src={
+                        user && user?.profile_picture
+                          ? user?.profile_picture
+                          : null
+                      }
+                    >
+                      {(!user || !user?.profile_picture) &&
+                        user?.username.charAt(0).toUpperCase()}
+                    </Avatar>
+                  </>
+                )}
+              </Box>
+            )}
           </Box>
 
           <Typography
@@ -889,9 +928,10 @@ export default function CustomerHomepage() {
               fontWeight: "bold",
               mt: 4,
               mb: 1,
+              textAlign: { xs: "center", lg: "left" }, // Will be center until lg breakpoint
             }}
           >
-            {searchQuery || isFiltered ? "Search Result" : "Dashboard"}
+            {searchQuery || isFiltered ? "Search Result 🔎" : "Dashboard"}
           </Typography>
           {/* Only show results count when searching or filtering */}
           {(searchQuery || isFiltered) && (
@@ -903,7 +943,7 @@ export default function CustomerHomepage() {
               >
                 {searchedScores.length > 99 ? "99+" : searchedScores.length}
               </Box>{" "}
-              results
+              results 
             </Typography>
           )}
 
@@ -1095,17 +1135,31 @@ export default function CustomerHomepage() {
                 height: "calc(70vh)",
                 display: "flex",
                 flexDirection: "column",
-                paddingLeft: "50px",
+
+                width: "100%", // Ensure full width
               }}
             >
-              <Grid container spacing={4}>
+              <Grid
+                container
+                spacing={isSmallScreen ? 2 : 4}
+                sx={{
+                  mx: 0, // Remove default margin
+                  width: "100%", // Take full width
+                }}
+              >
                 {/* Left Box - Popular Scores */}
-                <Grid item xs={5.5} sx={{ pr: 0 }}>
+                <Grid
+                  item
+                  xs={12}
+                  md={5.5}
+                  sx={{
+                    paddingLeft: "0 !important",
+                  }}
+                >
                   <Typography
                     variant="h5"
                     gutterBottom
                     sx={{
-                      position: "sticky",
                       top: 0,
                       backgroundColor: "#fff",
                       zIndex: 1,
@@ -1114,11 +1168,14 @@ export default function CustomerHomepage() {
                       alignItems: "center",
                       fontFamily: "Montserrat",
                       mb: 2,
-                      mr: 7,
+                      mr: { xs: 0, lg: 0 }, // Only add margin-right on large screens
+                      width: "100%", // Take full width to allow center alignment
+                      textAlign: "center", // Ensure text is centered
                     }}
                   >
                     Popular
                   </Typography>
+
                   <Box
                     sx={{
                       height: "calc(80vh - 60px)", // Restrict the height to ensure the vertical scrolling works only here
@@ -1129,8 +1186,12 @@ export default function CustomerHomepage() {
                       ref={scrollContainerRef}
                       sx={{
                         display: "grid",
-                        gridTemplateColumns: "repeat(2, 1fr)",
-                        gap: 5,
+                        gridTemplateColumns: isSmallScreen
+                          ? "repeat(1, 1fr)"
+                          : isMediumScreen
+                            ? "repeat(2, 1fr)"
+                            : "repeat(2, 1fr)",
+                        gap: isSmallScreen ? 2 : 5,
                         scrollbarWidth: "none", // Hide scrollbar for Firefox
                         "&::-webkit-scrollbar": {
                           display: "none", // Hide scrollbar for Chrome, Safari, and Edge
@@ -1139,18 +1200,42 @@ export default function CustomerHomepage() {
                       }}
                     >
                       {popularScores.map((score, index) => (
-                        <Box key={index}>
+                        <Box
+                          key={index}
+                          sx={{
+                            display: "flex", // Enables flexbox,
+                            justifyContent: "center",
+                            alignItems: "center",
+                          }}
+                        >
                           {loading ? (
-                            <Card sx={{ width: 200, boxShadow: "none" }}>
-                              <Skeleton
-                                variant="rectangular"
-                                height={280}
+                            <Card
+                              sx={{
+                                width: isSmallScreen ? "100%" : 200,
+                                maxWidth: isSmallScreen ? 280 : 200, // Control maximum width on mobile
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "space-between",
+                                boxShadow: "none",
+                                mx: isSmallScreen ? "auto" : 0, // Center the card on mobile
+                              }}
+                            >
+                              <Box
                                 sx={{
-                                  borderRadius: 10,
-                                  width: 200,
-                                  animation:"wave"
+                                  display: "flex",
+                                  justifyContent: "center", // Centers the skeleton horizontally
                                 }}
-                              />
+                              >
+                                <Skeleton
+                                  variant="rectangular"
+                                  height={280}
+                                  sx={{
+                                    borderRadius: 10,
+                                    width: isSmallScreen ? 280 : 200,
+                                    animation: "wave",
+                                  }}
+                                />
+                              </Box>
                               <CardContent
                                 sx={{
                                   flexGrow: 1,
@@ -1165,7 +1250,7 @@ export default function CustomerHomepage() {
                                   height={32}
                                   sx={{
                                     mx: "auto",
-                                    animation:"wave",
+                                    animation: "wave",
                                   }}
                                 />
                                 <Skeleton
@@ -1174,8 +1259,7 @@ export default function CustomerHomepage() {
                                   height={24}
                                   sx={{
                                     mx: "auto",
-                                    animation:
-                                      "wave",
+                                    animation: "wave",
                                   }}
                                 />
                               </CardContent>
@@ -1187,16 +1271,18 @@ export default function CustomerHomepage() {
                             >
                               <Card
                                 sx={{
-                                  width: 200,
+                                  width: isSmallScreen ? "100%" : 200,
+                                  maxWidth: isSmallScreen ? 280 : 200, // Control maximum width on mobile
                                   display: "flex",
                                   flexDirection: "column",
                                   justifyContent: "space-between",
                                   boxShadow: "none",
+                                  mx: isSmallScreen ? "auto" : 0, // Center the card on mobile
                                 }}
                               >
                                 <CardMedia
                                   component="img"
-                                  height={280}
+                                  height={isSmallScreen ? 280 : 280}
                                   image={
                                     score.coverImageUrl ||
                                     "placeholder-image-url"
@@ -1205,19 +1291,22 @@ export default function CustomerHomepage() {
                                   sx={{
                                     border: "2px solid #000",
                                     borderRadius: 10,
-                                    width: 200,
+                                    width: isSmallScreen ? "280px" : 200, // Fixed width for mobile
                                     padding: "10px",
                                     boxSizing: "border-box",
                                     display: score.coverImageUrl
                                       ? "block"
                                       : "none",
+                                    margin: isSmallScreen
+                                      ? "0 auto"
+                                      : "initial", // Center on mobile
                                   }}
                                 />
                                 {!score.coverImageUrl && (
                                   <Box
                                     sx={{
                                       height: 280,
-                                      width: 200,
+                                      width: isSmallScreen ? "280px" : 200,
                                       border: "2px solid #000",
                                       borderRadius: 10,
                                       padding: "10px",
@@ -1226,6 +1315,9 @@ export default function CustomerHomepage() {
                                       justifyContent: "center",
                                       boxSizing: "border-box",
                                       backgroundColor: "#f5f5f5",
+                                      margin: isSmallScreen
+                                        ? "0 auto"
+                                        : "initial", // Center on mobile
                                     }}
                                   >
                                     <Typography
@@ -1245,19 +1337,27 @@ export default function CustomerHomepage() {
                                     display: "flex",
                                     flexDirection: "column",
                                     justifyContent: "center",
+                                    width: isSmallScreen ? "280px" : "100%", // Match the width of CardMedia
+                                    padding: "10px",
+                                    boxSizing: "border-box",
+                                    margin: isSmallScreen
+                                      ? "0 auto"
+                                      : "initial", // Center on mobile
                                   }}
                                 >
-                                  <Typography
-                                    variant="h6"
-                                    noWrap
-                                    sx={{
-                                      textAlign: "center",
-                                      mb: 1,
-                                      fontFamily: "Montserrat",
-                                    }}
-                                  >
-                                    {score.title}
-                                  </Typography>
+                                  <Tooltip title={score.title} arrow>
+                                    <Typography
+                                      variant="h6"
+                                      noWrap
+                                      sx={{
+                                        textAlign: "center",
+                                        mb: 1,
+                                        fontFamily: "Montserrat",
+                                      }}
+                                    >
+                                      {score.title}
+                                    </Typography>
+                                  </Tooltip>
                                   <Typography
                                     variant="body2"
                                     color="textSecondary"
@@ -1279,27 +1379,40 @@ export default function CustomerHomepage() {
                 </Grid>
 
                 {/* Vertical Divider */}
-                <Grid
-                  item
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    mt: 10,
-                  }}
-                >
-                  <Divider
-                    orientation="vertical"
-                    flexItem
+                {!isSmallScreen ? (
+                  <Grid item sx={{ display: "flex", alignItems: "center" }}>
+                    <Divider orientation="vertical" flexItem />
+                  </Grid>
+                ) : (
+                  <Grid
+                    item
                     sx={{
-                      borderWidth: 1,
-                      borderColor: "gray",
-                      height: "90%", // Adjust height of the Divider as needed
+                      display: "flex",
+                      alignItems: "center",
+                      mt: 10,
                     }}
-                  />
-                </Grid>
+                  >
+                    <Divider
+                      orientation="vertical"
+                      flexItem
+                      sx={{
+                        borderWidth: 1,
+                        borderColor: "gray",
+                        height: "90%", // Adjust height of the Divider as needed
+                      }}
+                    />
+                  </Grid>
+                )}
 
                 {/* Right Box - Recommended Scores */}
-                <Grid item xs={5.5} sx={{ pr: 0 }}>
+                <Grid
+                  item
+                  xs={12}
+                  md={5.5}
+                  sx={{
+                    paddingLeft: "5 !important",
+                  }}
+                >
                   <Typography
                     variant="h5"
                     gutterBottom
@@ -1313,7 +1426,9 @@ export default function CustomerHomepage() {
                       alignItems: "center",
                       fontFamily: "Montserrat",
                       mb: 2,
-                      mr: 7,
+                      mr: { xs: 0, lg: 0 }, // Only add margin-right on large screens
+                      width: "100%", // Take full width to allow center alignment
+                      textAlign: "center", // Ensure text is centered
                     }}
                   >
                     For You
@@ -1329,8 +1444,12 @@ export default function CustomerHomepage() {
                       ref={scrollContainerRef2}
                       sx={{
                         display: "grid",
-                        gridTemplateColumns: "repeat(2, 1fr)",
-                        gap: 5,
+                        gridTemplateColumns: isSmallScreen
+                          ? "repeat(1, 1fr)"
+                          : isMediumScreen
+                            ? "repeat(2, 1fr)"
+                            : "repeat(2, 1fr)",
+                        gap: isSmallScreen ? 2 : 5,
                         scrollBehavior: "smooth",
                         scrollbarWidth: "none", // Hide scrollbar for Firefox
                         "&::-webkit-scrollbar": {
@@ -1339,7 +1458,14 @@ export default function CustomerHomepage() {
                       }}
                     >
                       {recommendedScores.map((score, index) => (
-                        <Box key={index}>
+                        <Box
+                          key={index}
+                          sx={{
+                            display: "flex", // Enables flexbox,
+                            justifyContent: "center",
+                            alignItems: "center",
+                          }}
+                        >
                           {loading ? (
                             <Card sx={{ width: 200, boxShadow: "none" }}>
                               <Skeleton
@@ -1348,8 +1474,7 @@ export default function CustomerHomepage() {
                                 sx={{
                                   borderRadius: 10,
                                   width: 200,
-                                  animation:
-                                    "wave",
+                                  animation: "wave",
                                 }}
                               />
                               <CardContent
@@ -1366,8 +1491,7 @@ export default function CustomerHomepage() {
                                   height={32}
                                   sx={{
                                     mx: "auto",
-                                    animation:
-                                      "wave",
+                                    animation: "wave",
                                   }}
                                 />
                                 <Skeleton
@@ -1376,8 +1500,7 @@ export default function CustomerHomepage() {
                                   height={24}
                                   sx={{
                                     mx: "auto",
-                                    animation:
-                                      "wave",
+                                    animation: "wave",
                                   }}
                                 />
                               </CardContent>
@@ -1492,7 +1615,7 @@ export default function CustomerHomepage() {
             }
             handleSnackbarClose(); // Close the snackbar
             if (snackbar.reload) {
-              window.location.reload(); // Reload the page after snackbar closes
+              // window.location.reload(); // Reload the page after snackbar closes
             }
           }}
           anchorOrigin={{ vertical: "top", horizontal: "center" }}

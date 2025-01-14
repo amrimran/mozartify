@@ -521,7 +521,7 @@ const CustomerInbox = () => {
             variant="h4"
             sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
           >
-            Inbox
+            Inbox 📥
           </Typography>
 
           <Box sx={{ display: "flex", alignItems: "center" }}>

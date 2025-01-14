@@ -745,7 +745,7 @@ export default function CustomerFavorites() {
                 fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem" },
               }}
             >
-              Favorites
+              Favorites ❤️
             </Typography>
             {loading ? (
               <>
@@ -775,7 +775,7 @@ export default function CustomerFavorites() {
                 >
                   {currentScores.length > 99 ? "99+" : currentScores.length}
                 </Box>{" "}
-                scores
+                favorite score(s) in total. Explore more 😎
               </Typography>
             )}
           </Box>
@@ -902,7 +902,7 @@ export default function CustomerFavorites() {
             }
             handleSnackbarClose(); // Close the snackbar
             if (snackbar.reload) {
-              window.location.reload(); // Reload the page after snackbar closes
+              // window.location.reload(); // Reload the page after snackbar closes
             }
           }}
           anchorOrigin={{ vertical: "top", horizontal: "center" }}

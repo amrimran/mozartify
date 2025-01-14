@@ -315,7 +315,7 @@ export default function CustomerMyCart() {
           >
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                My Cart
+                My Cart 🛒
               </Typography>
             </Box>
 

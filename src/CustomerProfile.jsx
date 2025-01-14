@@ -18,7 +18,6 @@ import {
   AccordionDetails,
   Skeleton,
   InputAdornment,
-  useTheme,
   useMediaQuery,
   Drawer,
   AppBar,

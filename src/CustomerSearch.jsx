@@ -444,7 +444,7 @@ export default function CustomerSearch() {
                   ml: 1,
                 }}
               >
-                Music Score Repository Search
+                Music Score Repository Search 🔍
               </Typography>{" "}
             </Box>
 
@@ -1191,7 +1191,7 @@ export default function CustomerSearch() {
               }
               handleSnackbarClose(); // Close the snackbar
               if (snackbar.reload) {
-                window.location.reload(); // Reload the page after snackbar closes
+                // window.location.reload(); // Reload the page after snackbar closes
               }
             }}
             anchorOrigin={{ vertical: "top", horizontal: "center" }}
