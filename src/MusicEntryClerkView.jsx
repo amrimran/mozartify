@@ -33,6 +33,7 @@ import {
   Toolbar,
   IconButton,
   Drawer,
+  Skeleton,
 } from "@mui/material";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
 import abcjs from "abcjs";
@@ -47,7 +48,6 @@ import { createGlobalStyle } from "styled-components";
 
 const DRAWER_WIDTH = 225;
 
-// Theme setup
 const theme = createTheme({
   typography: {
     fontFamily: "Montserrat, Arial, sans-serif",
@@ -61,6 +61,34 @@ const theme = createTheme({
       xl: 1920,
     },
   },
+  components: {
+    MuiSkeleton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8, // Rounded corners
+          backgroundColor: "#f0f0f0",
+          position: "relative",
+          overflow: "hidden",
+          "&::after": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: `linear-gradient(
+              90deg,
+              rgba(255, 255, 255, 0) 25%,
+              rgba(255, 255, 255, 0.5) 50%,
+              rgba(255, 255, 255, 0) 75%
+            )`,
+            animation: "shimmer 1.5s infinite",
+            zIndex: 1,
+          },
+        },
+      },
+    },
+  },
 });
 
 const GlobalStyle = createGlobalStyle`
@@ -69,6 +97,15 @@ const GlobalStyle = createGlobalStyle`
     padding: 0;
     font-family: 'Montserrat', sans-serif;
   }
+    @keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 `;
 
 export default function ClerkMusicScoreView() {
@@ -95,6 +132,7 @@ export default function ClerkMusicScoreView() {
   const abcContainerRef = useRef(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
 
@@ -316,18 +354,37 @@ export default function ClerkMusicScoreView() {
         const tempoMatch = abcContent.match(/Q:\s*1\/4\s*=\s*(\d+)/); // Match 'Q: 1/4=120' or similar
         const extractedTempo = tempoMatch ? parseInt(tempoMatch[1], 10) : 100; // Default to 100 if not found
 
-        setAbcContent(response.data.content);
+        setAbcContent(abcContent);
         setMetadata(response.data);
         setTempo(extractedTempo); // Dynamically set the tempo
 
-        renderAbc(response.data.content);
+        renderAbc(abcContent);
       } catch (error) {
         console.error("Error fetching the ABC file and metadata:", error);
       }
     };
 
-    fetchUserSession();
-    fetchAbcFileAndMetadata();
+    const loadData = async () => {
+      setLoading(true); // Start loading
+    
+      const startTime = Date.now(); // Record the start time
+    
+      // Fetch data
+      await Promise.all([fetchUserSession(), fetchAbcFileAndMetadata()]);
+    
+      // Calculate the time taken for fetching data
+      const elapsedTime = Date.now() - startTime;
+    
+      // Ensure a minimum loading time of 5 seconds
+      const remainingTime = Math.max(1000 - elapsedTime, 0); // Calculate remaining time to delay
+      setTimeout(() => {
+        setLoading(false); // End loading
+      }, remainingTime);
+    };
+    
+
+    loadData();
+
     // Cleanup
     return () => {
       stopAndReset();
@@ -587,18 +644,37 @@ export default function ClerkMusicScoreView() {
                   gap: 1,
                 }}
               >
-                {!isMobile && (
-                  <Typography variant="body2" sx={{ color: "#3B3183" }}>
-                    {user?.username}
-                  </Typography>
+                {!isMobile &&
+                  (loading ? (
+                    <Skeleton
+                      variant="text"
+                      width={100}
+                      height={20}
+                      animation="wave"
+                      sx={{ borderRadius: 1 }}
+                    />
+                  ) : (
+                    <Typography variant="body2" sx={{ color: "#3B3183" }}>
+                      {user?.username}
+                    </Typography>
+                  ))}
+                {loading ? (
+                  <Skeleton
+                    variant="circular"
+                    width={40}
+                    height={40}
+                    animation="wave"
+                    sx={{ boxShadow: 1 }}
+                  />
+                ) : (
+                  <Avatar
+                    alt={user?.username}
+                    src={user?.profile_picture}
+                    sx={{ width: 40, height: 40 }}
+                  >
+                    {user?.username?.charAt(0).toUpperCase()}
+                  </Avatar>
                 )}
-                <Avatar
-                  alt={user?.username}
-                  src={user?.profile_picture}
-                  sx={{ width: 32, height: 32 }}
-                >
-                  {user?.username?.charAt(0).toUpperCase()}
-                </Avatar>
               </Box>
             )}
           </Toolbar>
@@ -981,12 +1057,12 @@ export default function ClerkMusicScoreView() {
                       {/* ABC notation will be rendered here */}
                     </div>
                   ) : (
-                    <Typography
-                      variant="body2"
-                      sx={{ fontFamily: "Montserrat" }}
-                    >
-                      Loading music score...
-                    </Typography>
+                    <Skeleton
+                      variant="rectangular"
+                      height="100%"
+                      animation="wave"
+                      sx={{ borderRadius: 2, boxShadow: 1 }}
+                    />
                   )}
                 </Box>
               </Box>
@@ -1154,9 +1230,12 @@ export default function ClerkMusicScoreView() {
                 </CardContent>
               </Card>
             ) : (
-              <Typography variant="body2" sx={{ fontFamily: "Montserrat" }}>
-                Loading metadata...
-              </Typography>
+              <Skeleton
+                variant="rectangular"
+                height={300}
+                animation="wave"
+                sx={{ borderRadius: 2, boxShadow: 2 }}
+              />
             )}
           </Box>
 
