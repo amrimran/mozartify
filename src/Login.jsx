@@ -78,18 +78,35 @@ const BackgroundContainer = styled(Box)(({ theme }) => ({
 }));
 
 const Logo = styled("img")(({ theme }) => ({
-  position: "fixed", // Changed back to fixed for consistent top-left positioning
-  top: "20px", // Explicit positioning
-  left: "20px", // Explicit positioning
-  width: "auto", // Let width adjust based on height
-  height: { xs: "60px", sm: "70px", md: "80px" }, // Increased sizes
-  maxWidth: "80px", // Increased maximum width
-  zIndex: 10,
+  position: "fixed", // Keeps the logo fixed at the top-left corner
+  top: "10px", // Consistent positioning for all screen sizes
+  left: "10px",
+  width: "auto", // Maintains aspect ratio based on height
+  height: "50px", // Default height for the logo
+  maxWidth: "70px", // Limits maximum width for consistency
+  zIndex: 10, // Ensures it stays on top of other elements
   cursor: "pointer",
-  "@media (max-width: 600px)": {
-    height: "50px",
-    top: "15px",
-    left: "15px",
+
+  [theme.breakpoints.down("sm")]: {
+    top: "10px", // Slightly adjusted for smaller screens
+    left: "10px",
+    height: "40px", // Slightly smaller logo for smaller screens
+    maxWidth: "60px",
+  },
+
+  [theme.breakpoints.up("md")]: {
+    height: "60px", // Larger size for medium and above screens
+    maxWidth: "80px",
+  },
+
+  [theme.breakpoints.up("lg")]: {
+    height: "70px", // Slightly larger size for large screens
+    maxWidth: "90px",
+  },
+
+  [theme.breakpoints.up("xl")]: {
+    height: "80px", // Largest size for extra-large screens
+    maxWidth: "100px",
   },
 }));
 

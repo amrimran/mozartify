@@ -31,13 +31,13 @@ const theme = createTheme({
   },
   breakpoints: {
     values: {
-      xs: 0,    // mobile phones
-      sm: 600,  // tablets
-      md: 960,  // small laptops
+      xs: 0, // mobile phones
+      sm: 600, // tablets
+      md: 960, // small laptops
       lg: 1280, // desktops
       xl: 1920, // large screens
-    }
-  }
+    },
+  },
 });
 
 const GlobalStyle = createGlobalStyle`
@@ -136,7 +136,7 @@ export default function MusicEntryClerkPreview() {
       justifyContent: "space-between",
       gap: { xs: 2, sm: 3 },
       mt: 3,
-      px: { xs: 1, sm: 0 }
+      px: { xs: 1, sm: 0 },
     },
     warningBox: {
       mb: 3,
@@ -147,8 +147,8 @@ export default function MusicEntryClerkPreview() {
       justifyContent: "center",
       bgcolor: "#f8f8f8",
       borderRadius: 8,
-      mx: { xs: 1, sm: 0 }
-    }
+      mx: { xs: 1, sm: 0 },
+    },
   };
 
   const handleDrawerToggle = () => {
@@ -214,7 +214,7 @@ export default function MusicEntryClerkPreview() {
         const options = {
           responsive: "resize",
           fontSize: isMobile ? 12 : 16,
-          scale: isMobile ? 0.8 : 1
+          scale: isMobile ? 0.8 : 1,
         };
         ABCJS.renderAbc("abc-render", currentPageContent, options);
       }
@@ -249,13 +249,23 @@ export default function MusicEntryClerkPreview() {
             >
               <MenuIcon />
             </IconButton>
-            <Typography variant="h6" sx={{ color: "#3B3183", fontWeight: "bold" }}>
+            <Typography
+              variant="h6"
+              sx={{ color: "#3B3183", fontWeight: "bold" }}
+            >
               Preview Music Scores
             </Typography>
-            
+
             {/* Mobile user info */}
             {!isLargeScreen && (
-              <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1 }}>
+              <Box
+                sx={{
+                  ml: "auto",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
                 {!isMobile && (
                   <Typography variant="body2" sx={{ color: "#3B3183" }}>
                     {user?.username}
@@ -307,7 +317,7 @@ export default function MusicEntryClerkPreview() {
                   sx={{
                     fontFamily: "Montserrat",
                     fontWeight: "bold",
-                    fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" }
+                    fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
                   }}
                 >
                   Preview Music Scores
@@ -339,17 +349,17 @@ export default function MusicEntryClerkPreview() {
                 fontFamily: "Montserrat",
                 color: "red",
                 fontWeight: "bold",
-                fontSize: { xs: "1rem", sm: "1.25rem" }
+                fontSize: { xs: "1rem", sm: "1.25rem" },
               }}
             >
               ATTENTION!
             </Typography>
             <Typography
               variant="body1"
-              sx={{ 
-                fontFamily: "Montserrat", 
+              sx={{
+                fontFamily: "Montserrat",
                 mb: 3,
-                fontSize: { xs: "0.875rem", sm: "1rem" }
+                fontSize: { xs: "0.875rem", sm: "1rem" },
               }}
             >
               Please <strong>double-check</strong> the music notation on the
@@ -366,11 +376,11 @@ export default function MusicEntryClerkPreview() {
           ) : (
             <Typography
               variant="body1"
-              sx={{ 
-                textAlign: "center", 
-                mt: 3, 
+              sx={{
+                textAlign: "center",
+                mt: 3,
                 fontFamily: "Montserrat",
-                fontSize: { xs: "0.875rem", sm: "1rem" }
+                fontSize: { xs: "0.875rem", sm: "1rem" },
               }}
             >
               {abcContent ? "No content on this page." : "Loading content..."}
@@ -412,10 +422,10 @@ export default function MusicEntryClerkPreview() {
               variant="outlined"
               size="large"
               fullWidth={isMobile}
-              sx={{ 
-                ...buttonStyles, 
+              sx={{
+                ...buttonStyles,
                 mx: { xs: 1, sm: 1 },
-                mb: { xs: 2, sm: 0 }
+                mb: { xs: -1, sm: 0 },
               }}
               onClick={handleEdit}
             >
@@ -425,9 +435,9 @@ export default function MusicEntryClerkPreview() {
               variant="outlined"
               size="large"
               fullWidth={isMobile}
-              sx={{ 
-                ...buttonStyles, 
-                mx: { xs: 1, sm: 1 }
+              sx={{
+                ...buttonStyles,
+                mx: { xs: 1, sm: 1 },
               }}
               onClick={handleProceed}
             >
@@ -439,4 +449,3 @@ export default function MusicEntryClerkPreview() {
     </ThemeProvider>
   );
 }
-  

@@ -27,14 +27,56 @@ import {
   DialogActions,
   Snackbar,
   Alert,
+  useTheme,
+  useMediaQuery,
+  AppBar,
+  Toolbar,
+  IconButton,
+  Drawer,
 } from "@mui/material";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
 import abcjs from "abcjs";
 import { format } from "date-fns";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import StopIcon from "@mui/icons-material/Stop";
+import {
+  Menu as MenuIcon,
+  PlayArrow as PlayArrowIcon,
+  Stop as StopIcon,
+} from "@mui/icons-material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { createGlobalStyle } from "styled-components";
+
+const DRAWER_WIDTH = 225;
+
+// Theme setup
+const theme = createTheme({
+  typography: {
+    fontFamily: "Montserrat, Arial, sans-serif",
+  },
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 960,
+      lg: 1280,
+      xl: 1920,
+    },
+  },
+});
+
+const GlobalStyle = createGlobalStyle`
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+  }
+`;
 
 export default function ClerkMusicScoreView() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
+
   const { scoreId } = useParams();
   const [abcContent, setAbcContent] = useState("");
   const [metadata, setMetadata] = useState(null);
@@ -56,8 +98,83 @@ export default function ClerkMusicScoreView() {
 
   const navigate = useNavigate();
 
+  // Styles object with responsive values
+  const styles = {
+    root: {
+      display: "flex",
+      minHeight: "100vh",
+      backgroundColor: "#FFFFFF",
+    },
+    appBar: {
+      display: isLargeScreen ? "none" : "block",
+      backgroundColor: "#FFFFFF",
+      boxShadow: "none",
+      borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+    },
+    drawer: {
+      width: DRAWER_WIDTH,
+      flexShrink: 0,
+      display: isLargeScreen ? "block" : "none",
+      "& .MuiDrawer-paper": {
+        width: DRAWER_WIDTH,
+        boxSizing: "border-box",
+      },
+    },
+    mobileDrawer: {
+      display: isLargeScreen ? "none" : "block",
+      "& .MuiDrawer-paper": {
+        width: DRAWER_WIDTH,
+        boxSizing: "border-box",
+      },
+    },
+    mainContent: {
+      flexGrow: 1,
+      p: { xs: 0, sm: 3 },
+      ml: isLargeScreen ? 1 : 0,
+      mt: isLargeScreen ? 2 : 8,
+      width: isLargeScreen ? `calc(100% - ${DRAWER_WIDTH}px)` : "100%",
+    },
+    contentWrapper: {
+      display: "flex",
+      flexDirection: { xs: "column", md: "row" },
+      gap: { xs: 2, md: 4 },
+    },
+    scoreCard: {
+      flex: { xs: "1 1 100%", md: "1 1 70%" },
+      p: { xs: 2, sm: 3 },
+      backgroundColor: "#F8F8F8",
+      borderRadius: 2,
+    },
+    detailsCard: {
+      flex: { xs: "1 1 100%", md: "1 1 30%" },
+      height: "auto",
+      maxHeight: { xs: "none", md: "850px" },
+      p: 2,
+      backgroundColor: "#F8F8F8",
+      borderRadius: 2,
+    },
+    controlsContainer: {
+      display: "flex",
+      flexDirection: { xs: "column", sm: "row" },
+      flexWrap: "wrap",
+      gap: 2,
+      p: 2,
+      backgroundColor: "#F8F8F8",
+      borderRadius: 1,
+      mb: 2,
+    },
+    buttonGroup: {
+      display: "flex",
+      justifyContent: "center",
+      gap: 2,
+      mt: 4,
+      mb: 3,
+      flexWrap: "wrap",
+    },
+  };
+
   const buttonStyles = {
-    px: 15,
+    px: { xs: 4, sm: 15 },
     fontFamily: "Montserrat",
     fontWeight: "bold",
     color: "#FFFFFF",
@@ -70,7 +187,7 @@ export default function ClerkMusicScoreView() {
   };
 
   const buttonStyles2 = {
-    px: 15,
+    px: { xs: 4, sm: 15 },
     fontFamily: "Montserrat",
     fontWeight: "bold",
     color: "#8BD3E6",
@@ -84,8 +201,7 @@ export default function ClerkMusicScoreView() {
   };
 
   const deleteButtonStyles = {
-    px: 15,
-    py: 1,
+    px: { xs: 4, sm: 15 },
     fontFamily: "Montserrat",
     fontWeight: "bold",
     color: "#FFFFFF",
@@ -95,6 +211,11 @@ export default function ClerkMusicScoreView() {
       backgroundColor: "#B71C1C",
       borderColor: "#B71C1C",
     },
+  };
+
+  // Handle drawer toggle
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
   };
 
   const dialogStyles = {
@@ -437,643 +558,711 @@ export default function ClerkMusicScoreView() {
   };
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
-      <Box
-        sx={{
-          width: 225,
-          flexShrink: 0,
-          overflowY: "auto",
-          position: "fixed",
-          left: 0,
-          top: 0,
-          bottom: 0,
-        }}
-      >
-        <ClerkSidebar active="manageScore" disableActiveTab />
-      </Box>
-      <Box sx={{ flexGrow: 1, p: 3, pl: 31 }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{ fontFamily: "Montserrat", fontWeight: "bold", mt: 2, ml: 1 }}
-          >
-            Manage Music Scores
-          </Typography>
-          <Box sx={{ display: "flex", alignItems: "center" }}>
+    <ThemeProvider theme={theme}>
+      <GlobalStyle />
+      <Box sx={styles.root}>
+        {/* Mobile AppBar */}
+        <AppBar position="fixed" sx={styles.appBar}>
+          <Toolbar>
+            <IconButton
+              color="inherit"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, color: "#3B3183" }}
+            >
+              <MenuIcon />
+            </IconButton>
             <Typography
-              variant="body1"
-              sx={{ mr: 2, fontFamily: "Montserrat" }}
+              variant="h6"
+              sx={{ color: "#3B3183", fontWeight: "bold" }}
             >
-              {user ? user.username : "Guest"}
+              Manage Music Scores
             </Typography>
-            <Avatar
-              alt={user?.username}
-              src={user && user.profile_picture ? user.profile_picture : null}
-            >
-              {(!user || !user.profile_picture) &&
-                user?.username.charAt(0).toUpperCase()}
-            </Avatar>
-          </Box>
-        </Box>
-        <Divider sx={{ my: 2 }} />
+            {!isLargeScreen && (
+              <Box
+                sx={{
+                  ml: "auto",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                {!isMobile && (
+                  <Typography variant="body2" sx={{ color: "#3B3183" }}>
+                    {user?.username}
+                  </Typography>
+                )}
+                <Avatar
+                  alt={user?.username}
+                  src={user?.profile_picture}
+                  sx={{ width: 32, height: 32 }}
+                >
+                  {user?.username?.charAt(0).toUpperCase()}
+                </Avatar>
+              </Box>
+            )}
+          </Toolbar>
+        </AppBar>
 
-        <Box sx={{ display: "flex", gap: 4 }}>
-          {/* Music Score Preview */}
-          <Card
-            sx={{
-              flexGrow: 1,
-              p: 3,
-              backgroundColor: "#F8F8F8",
-              borderRadius: 2,
-              maxWidth: "800px",
-            }}
-          >
-            <Box sx={{ bgcolor: "#FFFFFF", borderRadius: 2, p: 2 }}>
-              {/* Controls Container */}
+        {/* Permanent drawer for large screens */}
+        <Drawer variant="permanent" sx={styles.drawer}>
+          <ClerkSidebar active="manageScore" disableActiveTab />
+        </Drawer>
+        {/* Temporary drawer for smaller screens */}
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={styles.mobileDrawer}
+        >
+          <ClerkSidebar active="manageScore" disableActiveTab />
+        </Drawer>
+
+        {/* Main Content */}
+        <Box sx={styles.mainContent}>
+          {/* Header Section */}
+          {isLargeScreen && (
+            <>
               <Box
                 sx={{
                   display: "flex",
-                  alignItems: "center",
                   justifyContent: "space-between",
-                  gap: 2,
-                  flexWrap: "wrap",
-                  padding: 2,
-                  backgroundColor: "#F8F8F8",
-                  borderRadius: 1,
-                  mb: 2,
+                  alignItems: "center",
+                  mb: 3,
                 }}
               >
-                <Box display="flex" gap={1}>
-                  {/* Play Button */}
-                  <Button
-                    onClick={handlePlayback}
-                    variant="contained"
-                    sx={{
-                      bgcolor: "#8BD3E6",
-                      "&:hover": { bgcolor: "#6FBCCF" },
-                      minWidth: "auto", // Button size fits icon
-                      padding: "8px", // Adjust padding for smaller button
-                    }}
-                  >
-                    <PlayArrowIcon />
-                  </Button>
-
-                  {/* Stop Button */}
-                  <Button
-                    onClick={() => {
-                      setIsStop(true);
-                      stopAndReset();
-                    }}
-                    variant="contained"
-                    sx={{
-                      bgcolor: "#8BD3E6",
-                      "&:hover": { bgcolor: "#6FBCCF" },
-                      minWidth: "auto", // Button size fits icon
-                      padding: "8px", // Adjust padding for smaller button
-                    }}
-                  >
-                    <StopIcon />
-                  </Button>
-                </Box>
-
-                {/* Loop Switch */}
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={isLooping}
-                      onChange={(e) => setIsLooping(e.target.checked)}
-                      sx={{
-                        "& .MuiSwitch-switchBase.Mui-checked": {
-                          color: "#8BD3E6", // Set the switch thumb color when checked
-                        },
-                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                          {
-                            backgroundColor: "#8BD3E6", // Set the switch track color when checked
-                          },
-                      }}
-                    />
-                  }
-                  label="Loop"
+                <Typography
+                  variant="h4"
                   sx={{
-                    "& .MuiFormControlLabel-label": {
-                      fontFamily: "Montserrat",
-                      fontWeight: "bold", // Make the label typography bold
-                    },
-                  }}
-                />
-
-                {/* Tempo Controls */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1, // Space between label, controls, and unit
+                    fontFamily: "Montserrat",
+                    fontWeight: "bold",
+                    fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
                   }}
                 >
-                  <Typography
-                    sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
-                  >
-                    Tempo:
+                  Manage Music Scores
+                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Typography variant="body1" sx={{ fontFamily: "Montserrat" }}>
+                    {user?.username}
                   </Typography>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 0, // No gap between controls
-                      border: "1px solid rgba(0, 0, 0, 0.23)", // Optional: border for group
-                      borderRadius: 1, // Rounded corners for group
-                      overflow: "hidden", // Ensures clean edges
-                    }}
+                  <Avatar
+                    alt={user?.username}
+                    src={user?.profile_picture}
+                    sx={{ width: 40, height: 40 }}
                   >
-                    <Button
-                      onClick={() => setTempo((prev) => Math.max(40, prev - 1))}
-                      variant="outlined"
-                      size="small"
-                      sx={{
-                        minWidth: 40,
-                        borderRadius: 0, // Removes individual button corners
-                        border: "none", // Removes individual button border
-                        "&:hover": {
-                          border: "none", // Prevents border from appearing on hover
-                          backgroundColor: "#F8F8F8", // Forces white background on hover
-                        },
-                      }}
-                    >
-                      -
-                    </Button>
-                    <TextField
-                      value={tempo}
-                      onChange={(e) => {
-                        const newValue = e.target.value;
-                        if (/^\d*$/.test(newValue)) {
-                          // Allow only numeric input
-                          setTempo(newValue);
-                        }
-                      }}
-                      onBlur={() => {
-                        // Validate and clamp the value on blur
-                        const numericValue = parseInt(tempo, 10);
-                        if (!isNaN(numericValue)) {
-                          setTempo(Math.min(Math.max(numericValue, 40), 200));
-                        } else {
-                          setTempo(40); // Default to 40 if input is invalid or empty
-                        }
-                      }}
-                      size="small"
-                      variant="outlined"
-                      sx={{
-                        maxWidth: 55,
-                        textAlign: "center",
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          border: "none", // Removes TextField border for group cohesion
-                        },
-                      }}
-                      inputProps={{
-                        style: { textAlign: "center" }, // Centers the input text
-                      }}
-                    />
-                    <Button
-                      onClick={() =>
-                        setTempo((prev) => Math.min(200, prev + 1))
-                      }
-                      variant="outlined"
-                      size="small"
-                      sx={{
-                        minWidth: 40,
-                        borderRadius: 0, // Removes individual button corners
-                        border: "none", // Removes individual button border
-                        "&:hover": {
-                          border: "none", // Prevents border from appearing on hover
-                          backgroundColor: "#F8F8F8", // Forces white background on hover
-                        },
-                      }}
-                    >
-                      +
-                    </Button>
-                  </Box>
-                  <Typography sx={{ fontFamily: "Montserrat" }}>BPM</Typography>
-                </Box>
-
-                {/* Transpose Controls */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1, // Space between label, controls, and unit
-                  }}
-                >
-                  <Typography
-                    sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
-                  >
-                    Transpose:
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 0, // No gap between controls
-                      border: "1px solid rgba(0, 0, 0, 0.23)", // Optional: border for group
-                      borderRadius: 1, // Rounded corners for group
-                      overflow: "hidden", // Ensures clean edges
-                    }}
-                  >
-                    <Button
-                      onClick={() =>
-                        setTransposition((prev) => Math.max(-12, prev - 1))
-                      }
-                      variant="outlined"
-                      size="small"
-                      sx={{
-                        minWidth: 40,
-                        borderRadius: 0, // Removes individual button corners
-                        border: "none", // Removes individual button border
-                        "&:hover": {
-                          border: "none", // Prevents border from appearing on hover
-                          backgroundColor: "#F8F8F8", // Forces white background on hover
-                        },
-                      }}
-                    >
-                      -
-                    </Button>
-                    <TextField
-                      disabled
-                      value={transposition}
-                      size="small"
-                      variant="outlined"
-                      sx={{
-                        maxWidth: 55,
-                        textAlign: "center",
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          border: "none", // Removes TextField border for group cohesion
-                        },
-                        "& .MuiInputBase-input.Mui-disabled": {
-                          WebkitTextFillColor: "#000", // Overrides text color when disabled
-                        },
-                      }}
-                      inputProps={{
-                        style: { textAlign: "center" }, // Centers the input text
-                      }}
-                    />
-                    <Button
-                      onClick={() =>
-                        setTransposition((prev) => Math.min(12, prev + 1))
-                      }
-                      variant="outlined"
-                      size="small"
-                      sx={{
-                        minWidth: 40,
-                        borderRadius: 0, // Removes individual button corners
-                        border: "none", // Removes individual button border
-                        "&:hover": {
-                          border: "none", // Prevents border from appearing on hover
-                          backgroundColor: "#F8F8F8", // Forces white background on hover
-                        },
-                      }}
-                    >
-                      +
-                    </Button>
-                  </Box>
-                  <Typography sx={{ fontFamily: "Montserrat" }}>
-                    semitones
-                  </Typography>
-                </Box>
-
-                {/* Instrument Selection */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                  }}
-                >
-                  <Typography
-                    sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
-                  >
-                    Instrument:
-                  </Typography>
-                  <FormControl size="small" sx={{ minWidth: 150 }}>
-                    <Select
-                      value={instrument}
-                      onChange={(e) => setInstrument(parseInt(e.target.value))}
-                      sx={{
-                        fontFamily: "Montserrat", // Apply Montserrat font to the dropdown
-                      }}
-                    >
-                      {instruments.map((inst) => (
-                        <MenuItem
-                          key={inst.id}
-                          value={inst.id}
-                          sx={{
-                            fontFamily: "Montserrat", // Apply Montserrat font to menu items
-                          }}
-                        >
-                          {inst.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                    {user?.username?.charAt(0).toUpperCase()}
+                  </Avatar>
                 </Box>
               </Box>
-
-              {/* ABC notation container with fixed height */}
-              <Box
-                ref={abcContainerRef}
-                sx={{
-                  height: "600px",
-                  overflowY: "auto",
-                  border: "1px solid #eee",
-                  borderRadius: "4px",
-                  p: 2,
-                  scrollBehavior: "smooth", // Add smooth scrolling
-                }}
-              >
-                {abcContent ? (
-                  <div id="abc-container" style={{ width: "100%" }}>
-                    {/* ABC notation will be rendered here */}
-                  </div>
-                ) : (
-                  <Typography variant="body2" sx={{ fontFamily: "Montserrat" }}>
-                    Loading music score...
-                  </Typography>
-                )}
-              </Box>
-            </Box>
-          </Card>
-
-          {/* Music Score Details */}
-          {metadata ? (
-            <Card
-              sx={{
-                width: 200,
-                p: 2,
-                backgroundColor: "#F8F8F8",
-                borderRadius: 2,
-                height: "auto",
-                maxHeight: "850px",
-                overflowY: "auto",
-                flexGrow: 1,
-              }}
-            >
-              <CardContent
-                sx={{ bgcolor: "#FFFFFF", borderRadius: 2, p: 0, pl: -1 }}
-              >
-                <List>
-                  {/* Reordered Fields */}
-                  <ListItem>
-                    <ListItemText
-                      primary="Title"
-                      secondary={metadata.title || "N/A"}
-                      primaryTypographyProps={{
-                        sx: { fontFamily: "Montserrat", fontWeight: "bold" },
-                      }}
-                      secondaryTypographyProps={{
-                        sx: { fontFamily: "Montserrat" },
-                      }}
-                      sx={{ p: 1 }}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText
-                      primary="Artist"
-                      secondary={metadata.artist || "N/A"}
-                      primaryTypographyProps={{
-                        sx: { fontFamily: "Montserrat", fontWeight: "bold" },
-                      }}
-                      secondaryTypographyProps={{
-                        sx: { fontFamily: "Montserrat" },
-                      }}
-                      sx={{ p: 1 }}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText
-                      primary="Composer"
-                      secondary={metadata.composer || "N/A"}
-                      primaryTypographyProps={{
-                        sx: { fontFamily: "Montserrat", fontWeight: "bold" },
-                      }}
-                      secondaryTypographyProps={{
-                        sx: { fontFamily: "Montserrat" },
-                      }}
-                      sx={{ p: 1 }}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText
-                      primary="Genre"
-                      secondary={metadata.genre || "N/A"}
-                      primaryTypographyProps={{
-                        sx: { fontFamily: "Montserrat", fontWeight: "bold" },
-                      }}
-                      secondaryTypographyProps={{
-                        sx: { fontFamily: "Montserrat" },
-                      }}
-                      sx={{ p: 1 }}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText
-                      primary="Instrumentation"
-                      secondary={metadata.instrumentation || "N/A"}
-                      primaryTypographyProps={{
-                        sx: { fontFamily: "Montserrat", fontWeight: "bold" },
-                      }}
-                      secondaryTypographyProps={{
-                        sx: { fontFamily: "Montserrat" },
-                      }}
-                      sx={{ p: 1 }}
-                    />
-                  </ListItem>
-
-                  {/* Remaining Fields */}
-
-                  {Object.keys(metadata)
-                    .filter(
-                      (key) =>
-                        ![
-                          "title",
-                          "artist",
-                          "composer",
-                          "genre",
-                          "instrumentation",
-                          "content",
-                          "__v",
-                          "_id",
-                          "filename",
-                          "coverImageUrl",
-                          "deleted",
-                          "mp3FileName",
-                          "mp3FileUrl",
-                          "downloadEvents",
-                        ].includes(key)
-                    )
-                    .sort((a, b) => a.localeCompare(b)) // Sort keys alphabetically
-                    .map((key) => {
-                      // Format date fields
-                      let value = metadata[key];
-                      if (
-                        [
-                          "dateAccessioned",
-                          "dateAvailable",
-                          "dateIssued",
-                          "dateOfBirth",
-                          "dateOfComposition",
-                          "dateOfCreation",
-                          "dateOfRecording",
-                          "lastModified",
-                          "dateUploaded",
-                        ].includes(key) &&
-                        value
-                      ) {
-                        value = new Date(value).toLocaleDateString("en-GB"); // Format to dd/MM/yyyy
-                      }
-
-                      // Prepend "RM" for price-related fields
-                      if (["price"].includes(key.toLowerCase()) && value) {
-                        value = `RM ${value}`;
-                      }
-
-                      return (
-                        <ListItem key={key}>
-                          <ListItemText
-                            primary={key
-                              .replace(/([A-Z])/g, " $1")
-                              .replace(/^./, (str) => str.toUpperCase())}
-                            secondary={value || "N/A"}
-                            primaryTypographyProps={{
-                              sx: {
-                                fontFamily: "Montserrat",
-                                fontWeight: "bold",
-                              },
-                            }}
-                            secondaryTypographyProps={{
-                              sx: { fontFamily: "Montserrat" },
-                            }}
-                            sx={{ p: 1 }}
-                          />
-                        </ListItem>
-                      );
-                    })}
-                </List>
-              </CardContent>
-            </Card>
-          ) : (
-            <Typography variant="body2" sx={{ fontFamily: "Montserrat" }}>
-              Loading metadata...
-            </Typography>
+              <Divider sx={{ my: 2 }} />
+            </>
           )}
-        </Box>
 
-        {/* Pagination with better spacing */}
-        <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
-          <Pagination
-            count={splitContent.length}
-            page={page}
-            onChange={handlePageChange}
-            color="primary"
-            sx={{
-              "& .MuiPaginationItem-root": {
-                borderRadius: 2,
-                fontFamily: "Montserrat",
-                backgroundColor: "primary",
-                color: "#000",
-                "&.Mui-selected": {
-                  backgroundColor: "#8BD3E6", // Blue for selected
-                  color: "#fff",
+          <Box sx={styles.contentWrapper}>
+            {/* Music Score Preview */}
+            <Card sx={styles.scoreCard}>
+              <Box sx={{ bgcolor: "#FFFFFF", borderRadius: 2, p: 2 }}>
+                {/* Controls Container */}
+                <Box sx={styles.controlsContainer}>
+                  <Box display="flex" gap={1}>
+                    {/* Play Button */}
+                    <Button
+                      onClick={handlePlayback}
+                      variant="contained"
+                      sx={{
+                        bgcolor: "#8BD3E6",
+                        boxShadow: "none",
+                        "&:hover": { bgcolor: "#6FBCCF", boxShadow: "none" },
+                        minWidth: "auto", // Button size fits icon
+                        padding: "8px", // Adjust padding for smaller button
+                      }}
+                    >
+                      <PlayArrowIcon />
+                    </Button>
+
+                    {/* Stop Button */}
+                    <Button
+                      onClick={() => {
+                        setIsStop(true);
+                        stopAndReset();
+                      }}
+                      variant="contained"
+                      sx={{
+                        bgcolor: "#8BD3E6",
+                        boxShadow: "none",
+                        "&:hover": { bgcolor: "#6FBCCF", boxShadow: "none" },
+                        minWidth: "auto", // Button size fits icon
+                        padding: "8px", // Adjust padding for smaller button
+                      }}
+                    >
+                      <StopIcon />
+                    </Button>
+                  </Box>
+
+                  {/* Loop Switch */}
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={isLooping}
+                        onChange={(e) => setIsLooping(e.target.checked)}
+                        sx={{
+                          "& .MuiSwitch-switchBase.Mui-checked": {
+                            color: "#8BD3E6", // Set the switch thumb color when checked
+                          },
+                          "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                            {
+                              backgroundColor: "#8BD3E6", // Set the switch track color when checked
+                            },
+                        }}
+                      />
+                    }
+                    label="Loop"
+                    sx={{
+                      "& .MuiFormControlLabel-label": {
+                        fontFamily: "Montserrat",
+                        fontWeight: "bold", // Make the label typography bold
+                      },
+                    }}
+                  />
+
+                  {/* Tempo Controls */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1, // Space between label, controls, and unit
+                    }}
+                  >
+                    <Typography
+                      sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
+                    >
+                      Tempo:
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0, // No gap between controls
+                        border: "1px solid #8BD3E6", // Optional: border for group
+                        borderRadius: 1, // Rounded corners for group
+                        overflow: "hidden", // Ensures clean edges
+                      }}
+                    >
+                      <Button
+                        onClick={() =>
+                          setTempo((prev) => Math.max(40, prev - 1))
+                        }
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          minWidth: 40,
+                          borderRadius: 0, // Removes individual button corners
+                          border: "none", // Removes individual button border
+                          "&:hover": {
+                            border: "none", // Prevents border from appearing on hover
+                            backgroundColor: "#F8F8F8", // Forces white background on hover
+                          },
+                        }}
+                      >
+                        -
+                      </Button>
+                      <TextField
+                        value={tempo}
+                        onChange={(e) => {
+                          const newValue = e.target.value;
+                          if (/^\d*$/.test(newValue)) {
+                            // Allow only numeric input
+                            setTempo(newValue);
+                          }
+                        }}
+                        onBlur={() => {
+                          // Validate and clamp the value on blur
+                          const numericValue = parseInt(tempo, 10);
+                          if (!isNaN(numericValue)) {
+                            setTempo(Math.min(Math.max(numericValue, 40), 200));
+                          } else {
+                            setTempo(40); // Default to 40 if input is invalid or empty
+                          }
+                        }}
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                          maxWidth: 55,
+                          textAlign: "center",
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            border: "none", // Removes TextField border for group cohesion
+                          },
+                        }}
+                        inputProps={{
+                          style: { textAlign: "center" }, // Centers the input text
+                        }}
+                      />
+                      <Button
+                        onClick={() =>
+                          setTempo((prev) => Math.min(200, prev + 1))
+                        }
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          minWidth: 40,
+                          borderRadius: 0, // Removes individual button corners
+                          border: "none", // Removes individual button border
+                          "&:hover": {
+                            border: "none", // Prevents border from appearing on hover
+                            backgroundColor: "#F8F8F8", // Forces white background on hover
+                          },
+                        }}
+                      >
+                        +
+                      </Button>
+                    </Box>
+                    <Typography sx={{ fontFamily: "Montserrat" }}>
+                      BPM
+                    </Typography>
+                  </Box>
+
+                  {/* Transpose Controls */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1, // Space between label, controls, and unit
+                    }}
+                  >
+                    <Typography
+                      sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
+                    >
+                      Transpose:
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0, // No gap between controls
+                        border: "1px solid #8BD3E6", // Optional: border for group
+                        borderRadius: 1, // Rounded corners for group
+                        overflow: "hidden", // Ensures clean edges
+                      }}
+                    >
+                      <Button
+                        onClick={() =>
+                          setTransposition((prev) => Math.max(-12, prev - 1))
+                        }
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          minWidth: 40,
+                          borderRadius: 0, // Removes individual button corners
+                          border: "none", // Removes individual button border
+                          "&:hover": {
+                            border: "none", // Prevents border from appearing on hover
+                            backgroundColor: "#F8F8F8", // Forces white background on hover
+                          },
+                        }}
+                      >
+                        -
+                      </Button>
+                      <TextField
+                        disabled
+                        value={transposition}
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                          maxWidth: 55,
+                          textAlign: "center",
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            border: "none", // Removes TextField border for group cohesion
+                          },
+                          "& .MuiInputBase-input.Mui-disabled": {
+                            WebkitTextFillColor: "#000", // Overrides text color when disabled
+                          },
+                        }}
+                        inputProps={{
+                          style: { textAlign: "center" }, // Centers the input text
+                        }}
+                      />
+                      <Button
+                        onClick={() =>
+                          setTransposition((prev) => Math.min(12, prev + 1))
+                        }
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          minWidth: 40,
+                          borderRadius: 0, // Removes individual button corners
+                          border: "none", // Removes individual button border
+                          "&:hover": {
+                            border: "none", // Prevents border from appearing on hover
+                            backgroundColor: "#F8F8F8", // Forces white background on hover
+                          },
+                        }}
+                      >
+                        +
+                      </Button>
+                    </Box>
+                    <Typography sx={{ fontFamily: "Montserrat" }}>
+                      {isMobile ? "semi" : "semitones"}
+                    </Typography>
+                  </Box>
+
+                  {/* Instrument Selection */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                    }}
+                  >
+                    <Typography
+                      sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
+                    >
+                      Instrument:
+                    </Typography>
+                    <FormControl
+                      size="small"
+                      sx={{
+                        minWidth: 150,
+                        "& .MuiOutlinedInput-root": {
+                          borderColor: "#8BD3E6", // Default border color
+                          "& fieldset": {
+                            borderColor: "#8BD3E6", // Border color for the fieldset
+                          },
+                          "&:hover fieldset": {
+                            borderColor: "#8BD3E6", // Hover border color
+                          },
+                          "&.Mui-focused fieldset": {
+                            borderColor: "#8BD3E6", // Focus border color
+                          },
+                        },
+                      }}
+                    >
+                      <Select
+                        value={instrument}
+                        onChange={(e) =>
+                          setInstrument(parseInt(e.target.value))
+                        }
+                        sx={{
+                          fontFamily: "Montserrat", // Apply Montserrat font
+                          "& .MuiSelect-icon": {
+                            color: "#8BD3E6", // Blue icon color
+                          },
+                        }}
+                      >
+                        {instruments.map((inst) => (
+                          <MenuItem
+                            key={inst.id}
+                            value={inst.id}
+                            sx={{
+                              fontFamily: "Montserrat", // Apply Montserrat font to menu items
+                            }}
+                          >
+                            {inst.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </Box>
+
+                {/* ABC notation container with fixed height */}
+                <Box
+                  ref={abcContainerRef}
+                  sx={{
+                    height: { xs: "400px", sm: "600px" },
+                    overflowY: "auto",
+                    border: "1px solid #eee",
+                    borderRadius: "4px",
+                    p: 2,
+                  }}
+                >
+                  {abcContent ? (
+                    <div id="abc-container" style={{ width: "100%" }}>
+                      {/* ABC notation will be rendered here */}
+                    </div>
+                  ) : (
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: "Montserrat" }}
+                    >
+                      Loading music score...
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            </Card>
+
+            {/* Music Score Details */}
+            {metadata ? (
+              <Card sx={styles.detailsCard}>
+                <CardContent
+                  sx={{ bgcolor: "#FFFFFF", borderRadius: 2, p: 0, pl: -1 }}
+                >
+                  <List>
+                    {/* Reordered Fields */}
+                    <ListItem>
+                      <ListItemText
+                        primary="Title"
+                        secondary={metadata.title || "N/A"}
+                        primaryTypographyProps={{
+                          sx: {
+                            fontFamily: "Montserrat",
+                            fontWeight: "bold",
+                          },
+                        }}
+                        secondaryTypographyProps={{
+                          sx: { fontFamily: "Montserrat" },
+                        }}
+                        sx={{ p: 1 }}
+                      />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText
+                        primary="Artist"
+                        secondary={metadata.artist || "N/A"}
+                        primaryTypographyProps={{
+                          sx: {
+                            fontFamily: "Montserrat",
+                            fontWeight: "bold",
+                          },
+                        }}
+                        secondaryTypographyProps={{
+                          sx: { fontFamily: "Montserrat" },
+                        }}
+                        sx={{ p: 1 }}
+                      />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText
+                        primary="Composer"
+                        secondary={metadata.composer || "N/A"}
+                        primaryTypographyProps={{
+                          sx: {
+                            fontFamily: "Montserrat",
+                            fontWeight: "bold",
+                          },
+                        }}
+                        secondaryTypographyProps={{
+                          sx: { fontFamily: "Montserrat" },
+                        }}
+                        sx={{ p: 1 }}
+                      />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText
+                        primary="Genre"
+                        secondary={metadata.genre || "N/A"}
+                        primaryTypographyProps={{
+                          sx: {
+                            fontFamily: "Montserrat",
+                            fontWeight: "bold",
+                          },
+                        }}
+                        secondaryTypographyProps={{
+                          sx: { fontFamily: "Montserrat" },
+                        }}
+                        sx={{ p: 1 }}
+                      />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText
+                        primary="Instrumentation"
+                        secondary={metadata.instrumentation || "N/A"}
+                        primaryTypographyProps={{
+                          sx: {
+                            fontFamily: "Montserrat",
+                            fontWeight: "bold",
+                          },
+                        }}
+                        secondaryTypographyProps={{
+                          sx: { fontFamily: "Montserrat" },
+                        }}
+                        sx={{ p: 1 }}
+                      />
+                    </ListItem>
+
+                    {/* Remaining Fields */}
+
+                    {Object.keys(metadata)
+                      .filter(
+                        (key) =>
+                          ![
+                            "title",
+                            "artist",
+                            "composer",
+                            "genre",
+                            "instrumentation",
+                            "content",
+                            "__v",
+                            "_id",
+                            "filename",
+                            "coverImageUrl",
+                            "deleted",
+                            "mp3FileName",
+                            "mp3FileUrl",
+                            "downloadEvents",
+                          ].includes(key)
+                      )
+                      .sort((a, b) => a.localeCompare(b)) // Sort keys alphabetically
+                      .map((key) => {
+                        // Format date fields
+                        let value = metadata[key];
+                        if (
+                          [
+                            "dateAccessioned",
+                            "dateAvailable",
+                            "dateIssued",
+                            "dateOfBirth",
+                            "dateOfComposition",
+                            "dateOfCreation",
+                            "dateOfRecording",
+                            "lastModified",
+                            "dateUploaded",
+                          ].includes(key) &&
+                          value
+                        ) {
+                          value = new Date(value).toLocaleDateString("en-GB"); // Format to dd/MM/yyyy
+                        }
+
+                        // Prepend "RM" for price-related fields
+                        if (["price"].includes(key.toLowerCase()) && value) {
+                          value = `RM ${value}`;
+                        }
+
+                        return (
+                          <ListItem key={key}>
+                            <ListItemText
+                              primary={key
+                                .replace(/([A-Z])/g, " $1")
+                                .replace(/^./, (str) => str.toUpperCase())}
+                              secondary={value || "N/A"}
+                              primaryTypographyProps={{
+                                sx: {
+                                  fontFamily: "Montserrat",
+                                  fontWeight: "bold",
+                                },
+                              }}
+                              secondaryTypographyProps={{
+                                sx: { fontFamily: "Montserrat" },
+                              }}
+                              sx={{ p: 1 }}
+                            />
+                          </ListItem>
+                        );
+                      })}
+                  </List>
+                </CardContent>
+              </Card>
+            ) : (
+              <Typography variant="body2" sx={{ fontFamily: "Montserrat" }}>
+                Loading metadata...
+              </Typography>
+            )}
+          </Box>
+
+          {/* Pagination with better spacing */}
+          <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+            <Pagination
+              count={splitContent.length}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+              sx={{
+                "& .MuiPaginationItem-root": {
+                  borderRadius: 2,
+                  fontFamily: "Montserrat",
+                  backgroundColor: "primary",
+                  color: "#000",
+                  "&.Mui-selected": {
+                    backgroundColor: "#8BD3E6", // Blue for selected
+                    color: "#fff",
+                    "&:hover": {
+                      backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
+                    },
+                  },
                   "&:hover": {
-                    backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
+                    backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
                   },
                 },
-                "&:hover": {
-                  backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
-                },
-              },
-            }}
-          />
-        </Box>
+              }}
+            />
+          </Box>
 
-        <Box sx={{ mt: 4, display: "flex", justifyContent: "center", gap: 2 }}>
-          <Button
-            variant="outlined"
-            onClick={handleBackClick}
-            sx={buttonStyles2}
-          >
-            Back
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={handleEditMusicScoreClick}
-            sx={buttonStyles}
-          >
-            Edit
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={handleDeleteClick} // Directly call the delete handler
-            sx={deleteButtonStyles}
-          >
-            Delete
-          </Button>
+          <Box sx={styles.buttonGroup}>
+            <Button
+              variant="outlined"
+              onClick={handleBackClick}
+              sx={buttonStyles2}
+            >
+              Back
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={handleEditMusicScoreClick}
+              sx={buttonStyles}
+            >
+              Edit
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={handleDeleteClick} // Directly call the delete handler
+              sx={deleteButtonStyles}
+            >
+              Delete
+            </Button>
 
-          <Dialog
-            open={openDeleteDialog}
-            onClose={handleCloseDialog}
-            PaperProps={{
-              sx: dialogStyles.dialogPaper,
-            }}
-            aria-labelledby="delete-dialog-title"
-          >
-            <DialogTitle id="delete-dialog-title" sx={dialogStyles.title}>
-              Confirm Deletion
-            </DialogTitle>
-            <DialogContent sx={dialogStyles.content}>
-              <Typography sx={dialogStyles.contentText}>
-                Are you sure you want to delete this music score?
-              </Typography>
-            </DialogContent>
-            <DialogActions sx={dialogStyles.actions}>
-              <Button onClick={handleCloseDialog} sx={dialogStyles.button}>
-                CANCEL
-              </Button>
-              <Button
-                onClick={handleConfirmDelete}
-                sx={dialogStyles.deletebutton}
-              >
-                DELETE
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </Box>
-        <Snackbar
-          open={openSnackbar}
-          autoHideDuration={1000}
-          onClose={() => setOpenSnackbar(false)}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        >
-          <Alert
-            severity="error"
-            sx={{
-              width: "100%",
-              backgroundColor: "red",
-              color: "white",
-              "& .MuiAlert-icon": {
-                color: "white",
-              },
-            }}
+            <Dialog
+              open={openDeleteDialog}
+              onClose={handleCloseDialog}
+              PaperProps={{
+                sx: dialogStyles.dialogPaper,
+              }}
+              aria-labelledby="delete-dialog-title"
+            >
+              <DialogTitle id="delete-dialog-title" sx={dialogStyles.title}>
+                Confirm Deletion
+              </DialogTitle>
+              <DialogContent sx={dialogStyles.content}>
+                <Typography sx={dialogStyles.contentText}>
+                  Are you sure you want to delete this music score?
+                </Typography>
+              </DialogContent>
+              <DialogActions sx={dialogStyles.actions}>
+                <Button onClick={handleCloseDialog} sx={dialogStyles.button}>
+                  CANCEL
+                </Button>
+                <Button
+                  onClick={handleConfirmDelete}
+                  sx={dialogStyles.deletebutton}
+                >
+                  DELETE
+                </Button>
+              </DialogActions>
+            </Dialog>
+          </Box>
+          <Snackbar
+            open={openSnackbar}
+            autoHideDuration={1000}
             onClose={() => setOpenSnackbar(false)}
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
           >
-            Music score successfully deleted
-          </Alert>
-        </Snackbar>
+            <Alert
+              severity="error"
+              sx={{
+                width: "100%",
+                backgroundColor: "red",
+                color: "white",
+                "& .MuiAlert-icon": {
+                  color: "white",
+                },
+              }}
+              onClose={() => setOpenSnackbar(false)}
+            >
+              Music score successfully deleted
+            </Alert>
+          </Snackbar>
+        </Box>
       </Box>
-    </Box>
+    </ThemeProvider>
   );
 }

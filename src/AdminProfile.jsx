@@ -167,7 +167,9 @@ export default function AdminProfile() {
       fontWeight: "bold",
       color: "#FFFFFF",
       backgroundColor: "#8BD3E6",
+      boxShadow: "none",
       "&:hover": {
+        boxShadow: "none",
         backgroundColor: "#6FBCCF",
       },
       width: isMobile ? "100%" : "auto",
@@ -179,10 +181,12 @@ export default function AdminProfile() {
       fontWeight: "bold",
       color: "#FFFFFF",
       backgroundColor: "#DB2226",
+      boxShadow: "none",
       "&:hover": {
+        boxShadow: "none",
         backgroundColor: "#B71C1C",
       },
-      width: isMobile ? "100%" : "310px",
+      width: isMobile ? "95%" : "250px",
     },
   };
 
@@ -452,27 +456,21 @@ export default function AdminProfile() {
             )}
             {isLargeScreen && (
               <Box sx={{ display: "flex", alignItems: "center", ml: "auto" }}>
-              <Typography variant="body1" sx={{ mr: 2 }}>
-                {username}
-              </Typography>
-              <Avatar
-                alt={username}
-                src={currentUser?.profile_picture}
-                sx={{ width: 40, height: 40 }}
-              >
-                {username.charAt(0).toUpperCase()}
-              </Avatar>
-            </Box>
+                <Typography variant="body1" sx={{ mr: 2 }}>
+                  {username}
+                </Typography>
+                <Avatar
+                  alt={username}
+                  src={currentUser?.profile_picture}
+                  sx={{ width: 40, height: 40 }}
+                >
+                  {username.charAt(0).toUpperCase()}
+                </Avatar>
+              </Box>
             )}
-
-           
-            
           </Box>
 
-          {isLargeScreen && (
-              <Divider sx={{ mb: 4 }} />
-            )}
-          
+          {isLargeScreen && <Divider sx={{ mb: 4 }} />}
 
           <Container sx={styles.contentContainer}>
             {/* Profile Picture Section */}
@@ -546,12 +544,18 @@ export default function AdminProfile() {
                   fullWidth
                   margin="normal"
                   sx={{
+                    "& .MuiInputLabel-root.Mui-focused": {
+                      color: "#6FBCCF", // Label color on focus
+                    },
                     "& .MuiOutlinedInput-root": {
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#8BD3E6", // Default border color
+                      },
                       "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#8BD3E6",
+                        borderColor: "#6FBCCF", // Darker border on hover
                       },
                       "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#8BD3E6",
+                        borderColor: "#6FBCCF", // Darker border on focus
                       },
                     },
                   }}
@@ -593,12 +597,18 @@ export default function AdminProfile() {
                     ),
                   }}
                   sx={{
+                    "& .MuiInputLabel-root.Mui-focused": {
+                      color: "#6FBCCF", // Label color on focus
+                    },
                     "& .MuiOutlinedInput-root": {
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#8BD3E6", // Default border color
+                      },
                       "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#8BD3E6",
+                        borderColor: "#6FBCCF", // Darker border on hover
                       },
                       "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#8BD3E6",
+                        borderColor: "#6FBCCF", // Darker border on focus
                       },
                     },
                   }}
@@ -622,12 +632,18 @@ export default function AdminProfile() {
                     ),
                   }}
                   sx={{
+                    "& .MuiInputLabel-root.Mui-focused": {
+                      color: "#6FBCCF", // Label color on focus
+                    },
                     "& .MuiOutlinedInput-root": {
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#8BD3E6", // Default border color
+                      },
                       "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#8BD3E6",
+                        borderColor: "#6FBCCF", // Darker border on hover
                       },
                       "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#8BD3E6",
+                        borderColor: "#6FBCCF", // Darker border on focus
                       },
                     },
                   }}
@@ -651,12 +667,18 @@ export default function AdminProfile() {
                     ),
                   }}
                   sx={{
+                    "& .MuiInputLabel-root.Mui-focused": {
+                      color: "#6FBCCF", // Label color on focus
+                    },
                     "& .MuiOutlinedInput-root": {
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#8BD3E6", // Default border color
+                      },
                       "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#8BD3E6",
+                        borderColor: "#6FBCCF", // Darker border on hover
                       },
                       "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#8BD3E6",
+                        borderColor: "#6FBCCF", // Darker border on focus
                       },
                     },
                   }}

@@ -57,7 +57,6 @@ const CustomerInbox = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5); // Number of rows per page
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
-
   const drawerRef = useRef(null);
 
   const chatContainerRef = useRef(null);
@@ -102,24 +101,26 @@ const CustomerInbox = () => {
       direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
     }));
   };
-  
+
   const sortedFeedbackData = [...feedbackData].sort((a, b) => {
     if (sortConfig.key) {
-      const valueA = sortConfig.key === "date"
-        ? new Date(
-            a.replies?.length > 0
-              ? a.replies[a.replies.length - 1].date
-              : a.feedbackDate
-          )
-        : a[sortConfig.key];
-      const valueB = sortConfig.key === "date"
-        ? new Date(
-            b.replies?.length > 0
-              ? b.replies[b.replies.length - 1].date
-              : b.feedbackDate
-          )
-        : b[sortConfig.key];
-  
+      const valueA =
+        sortConfig.key === "date"
+          ? new Date(
+              a.replies?.length > 0
+                ? a.replies[a.replies.length - 1].date
+                : a.feedbackDate
+            )
+          : a[sortConfig.key];
+      const valueB =
+        sortConfig.key === "date"
+          ? new Date(
+              b.replies?.length > 0
+                ? b.replies[b.replies.length - 1].date
+                : b.feedbackDate
+            )
+          : b[sortConfig.key];
+
       if (valueA < valueB) {
         return sortConfig.direction === "asc" ? -1 : 1;
       }
@@ -129,7 +130,6 @@ const CustomerInbox = () => {
     }
     return 0;
   });
-  
 
   const TableRowSkeleton = () => (
     <TableRow
@@ -600,169 +600,182 @@ const CustomerInbox = () => {
               <TableHeadSkeleton />
             ) : (
               <TableHead sx={{ bgcolor: "#8BD3E6" }}>
-  <TableRow>
-    {[
-      { label: "Title", key: "title" },
-      { label: "Last Updated", key: "date" },
-      { label: "Status", key: "status" },
-      { label: "Actions", key: null },
-    ].map((header, index) => (
-      <TableCell
-        key={index}
-        onClick={() => header.key && handleSort(header.key)}
-        sx={{
-          color: "white",
-          fontFamily: "'Montserrat', sans-serif",
-          textTransform: "uppercase",
-          fontWeight: "bold",
-          fontSize: "14px",
-          padding: "16px",
-          borderBottom: "1px solid #8BD3E6",
-          cursor: header.key ? "pointer" : "default",
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {header.label}
-          {header.key && (
-            <Typography
-              component="span"
-              sx={{
-                fontSize: "12px",
-                color: sortConfig.key === header.key ? "white" : "rgba(255, 255, 255, 0.7)",
-                fontWeight: sortConfig.key === header.key ? "bold" : "normal",
-              }}
-            >
-              {sortConfig.key === header.key
-                ? sortConfig.direction === "asc"
-                  ? "▲"
-                  : "▼"
-                : "▲ ▼"}
-            </Typography>
-          )}
-        </Box>
-      </TableCell>
-    ))}
-  </TableRow>
-</TableHead>
-
+                <TableRow>
+                  {[
+                    { label: "Title", key: "title" },
+                    { label: "Last Updated", key: "date" },
+                    { label: "Status", key: "status" },
+                    { label: "Actions", key: null },
+                  ].map((header, index) => (
+                    <TableCell
+                      key={index}
+                      onClick={() => header.key && handleSort(header.key)}
+                      sx={{
+                        color: "white",
+                        fontFamily: "'Montserrat', sans-serif",
+                        textTransform: "uppercase",
+                        fontWeight: "bold",
+                        fontSize: "14px",
+                        padding: "16px",
+                        borderBottom: "1px solid #8BD3E6",
+                        cursor: header.key ? "pointer" : "default",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        {header.label}
+                        {header.key && (
+                          <Typography
+                            component="span"
+                            sx={{
+                              fontSize: "12px",
+                              color:
+                                sortConfig.key === header.key
+                                  ? "white"
+                                  : "rgba(255, 255, 255, 0.7)",
+                              fontWeight:
+                                sortConfig.key === header.key
+                                  ? "bold"
+                                  : "normal",
+                            }}
+                          >
+                            {sortConfig.key === header.key
+                              ? sortConfig.direction === "asc"
+                                ? "▲"
+                                : "▼"
+                              : "▲ ▼"}
+                          </Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
             )}
 
             {/* Table Body */}
             <TableBody>
-  {isLoading
-    ? [...Array(rowsPerPage)].map((_, index) => <TableRowSkeleton key={index} />)
-    : sortedFeedbackData
-        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-        .map((row) => (
-                    <TableRow
-                      key={row._id}
-                      sx={{
-                        opacity: 0,
-                        animation: "fadeIn 0.3s ease-in-out forwards",
-                        "@keyframes fadeIn": {
-                          "0%": {
-                            opacity: 0,
-                            transform: "translateY(10px)",
-                          },
-                          "100%": {
-                            opacity: 1,
-                            transform: "translateY(0)",
-                          },
-                        },
-                      }}
-                    >
-                       <TableCell
-                                                sx={{
-                                                  fontFamily: "'Montserrat', sans-serif",
-                                                  fontSize: "14px",
-                                                  padding: "16px",
-                                                  color: "#333",
-                                                  maxWidth: "100px", // Limit width to trigger ellipsis
-                                                  whiteSpace: "nowrap", // Prevent wrapping
-                                                  overflow: "hidden", // Hide overflowing text
-                                                  textOverflow: "ellipsis", // Add ellipsis for overflowing text
-                                                }}
-                                              >
-                                                <Tooltip
-                                                  title={row.title || ""}
-                                                  arrow
-                                                  componentsProps={{
-                                                    tooltip: {
-                                                      sx: {
-                                                        fontFamily: "'Montserrat', sans-serif", // Set Montserrat font
-                                                        fontSize: "14px", // Ensure consistent font size
-                                                        padding: "8px 12px", // Add padding for better appearance
-                                                        borderRadius: "4px", // Optional: Rounded edges for better look
-                                                        bgcolor: "rgba(128, 128, 128, 1)", // Grey background
-                                                        color: "#fff", // White text color
-                                                      },
-                                                    },
-                                                  }}
-                                                >
-                                                  <span>{row.title}</span>
-                                                </Tooltip>
-                                              </TableCell>
-                      <TableCell
+              {isLoading
+                ? [...Array(rowsPerPage)].map((_, index) => (
+                    <TableRowSkeleton key={index} />
+                  ))
+                : sortedFeedbackData
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((row) => (
+                      <TableRow
+                        key={row._id}
                         sx={{
-                          fontFamily: "'Montserrat', sans-serif",
-                          fontSize: "14px",
-                          padding: "16px",
-                          color: "#666",
-                        }}
-                      >
-                        {new Date(
-                          row.replies?.length > 0
-                            ? row.replies[row.replies.length - 1].date
-                            : row.feedbackDate
-                        ).toLocaleDateString("en-GB")}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          fontFamily: "'Montserrat', sans-serif",
-                          fontSize: "14px",
-                          textTransform: "capitalize",
-                          padding: "16px",
-                          color:
-                            row.status === "resolved" ? "#28A745" : "#FFB400",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {getStatusDisplay(row)}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          padding: "16px",
-                          display: "flex",
-                          gap: "8px",
-                        }}
-                      >
-                        <IconButton
-                          onClick={() => handleOpenChat(row)}
-                          sx={{
-                            color: "#8BD3E6",
-                            padding: "6px",
-                            borderRadius: "8px",
-                            ":hover": {
-                              bgcolor: "transparent", // Prevents the background from appearing on hover
+                          opacity: 0,
+                          animation: "fadeIn 0.3s ease-in-out forwards",
+                          "@keyframes fadeIn": {
+                            "0%": {
+                              opacity: 0,
+                              transform: "translateY(10px)",
                             },
+                            "100%": {
+                              opacity: 1,
+                              transform: "translateY(0)",
+                            },
+                          },
+                        }}
+                      >
+                        <TableCell
+                          sx={{
+                            fontFamily: "'Montserrat', sans-serif",
+                            fontSize: "14px",
+                            padding: "16px",
+                            color: "#333",
+                            maxWidth: "100px", // Limit width to trigger ellipsis
+                            whiteSpace: "nowrap", // Prevent wrapping
+                            overflow: "hidden", // Hide overflowing text
+                            textOverflow: "ellipsis", // Add ellipsis for overflowing text
                           }}
                         >
-                          <ChatIcon sx={{ fontSize: "20px" }} />
-                        </IconButton>
-                        <IconButton
-                          onClick={() => handleDelete(row._id)}
+                          <Tooltip
+                            title={row.title || ""}
+                            arrow
+                            componentsProps={{
+                              tooltip: {
+                                sx: {
+                                  fontFamily: "'Montserrat', sans-serif", // Set Montserrat font
+                                  fontSize: "14px", // Ensure consistent font size
+                                  padding: "8px 12px", // Add padding for better appearance
+                                  borderRadius: "4px", // Optional: Rounded edges for better look
+                                  bgcolor: "rgba(128, 128, 128, 1)", // Grey background
+                                  color: "#fff", // White text color
+                                },
+                              },
+                            }}
+                          >
+                            <span>{row.title}</span>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell
                           sx={{
-                            color: "#DB2226",
-                            ":hover": {
-                              bgcolor: "transparent", // Prevents the background from appearing on hover
-                            },
+                            fontFamily: "'Montserrat', sans-serif",
+                            fontSize: "14px",
+                            padding: "16px",
+                            color: "#666",
                           }}
                         >
-                          <DeleteIcon sx={{ fontSize: "20px" }} />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                          {new Date(
+                            row.replies?.length > 0
+                              ? row.replies[row.replies.length - 1].date
+                              : row.feedbackDate
+                          ).toLocaleDateString("en-GB")}
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            fontFamily: "'Montserrat', sans-serif",
+                            fontSize: "14px",
+                            textTransform: "uppercase",
+                            padding: "16px",
+                            color:
+                              row.status === "resolved" ? "#28A745" : "#FFB400",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          {getStatusDisplay(row)}
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            padding: "16px",
+                            display: "flex",
+                            gap: "8px",
+                          }}
+                        >
+                          <IconButton
+                            onClick={() => handleOpenChat(row)}
+                            sx={{
+                              color: "#8BD3E6",
+                              padding: "6px",
+                              borderRadius: "8px",
+                              ":hover": {
+                                bgcolor: "transparent", // Prevents the background from appearing on hover
+                              },
+                            }}
+                          >
+                            <ChatIcon sx={{ fontSize: "20px" }} />
+                          </IconButton>
+                          <IconButton
+                            onClick={() => handleDelete(row._id)}
+                            sx={{
+                              color: "#DB2226",
+                              ":hover": {
+                                bgcolor: "transparent", // Prevents the background from appearing on hover
+                              },
+                            }}
+                          >
+                            <DeleteIcon sx={{ fontSize: "20px" }} />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
             </TableBody>
           </Table>
 
@@ -944,46 +957,46 @@ const CustomerInbox = () => {
             <TextField
               fullWidth
               variant="outlined"
-              placeholder="Type your reply..."
+              placeholder={
+                selectedFeedback?.status === "resolved"
+                  ? "Reply disabled for resolved items"
+                  : "Type your reply..."
+              }
               value={newReply}
               onChange={(e) => setNewReply(e.target.value)}
               size="small"
-              multiline // Allows the text field to grow vertically for long content
-              maxRows={4} // Limit the number of rows it can grow to
-              onKeyPress={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendReply();
-                }
-              }}
+              multiline
+              maxRows={4}
+              disabled={selectedFeedback?.status === "resolved"}
               sx={{
-                bgcolor: "#F8FAFC",
+                bgcolor:
+                  selectedFeedback?.status === "resolved"
+                    ? "#E0E0E0"
+                    : "#F8FAFC",
                 fontFamily: "'Montserrat', sans-serif",
                 fontSize: "14px",
                 "& .MuiOutlinedInput-root": {
-                  fontFamily: "'Montserrat', sans-serif",
-                  fontSize: "14px",
+                  "& fieldset": {
+                    border:
+                      selectedFeedback?.status === "resolved"
+                        ? "none" // Remove border when disabled
+                        : "1px solid #8BD3E6", // Default border when enabled
+                  },
+                  "&:hover fieldset": {
+                    borderColor:
+                      selectedFeedback?.status === "resolved"
+                        ? "none" // Ensure no border on hover when disabled
+                        : "#6FBCCF", // Darker blue on hover when enabled
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor:
+                      selectedFeedback?.status === "resolved"
+                        ? "none" // Ensure no border on focus when disabled
+                        : "#8BD3E6", // Keep blue on focus when enabled
+                  },
                 },
                 "& .MuiOutlinedInput-input": {
                   fontFamily: "'Montserrat', sans-serif",
-                  fontSize: "14px",
-                  lineHeight: "1.5",
-                },
-                "& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#8BD3E6", // Change border on hover
-                  },
-                "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#8BD3E6", // Keep border consistent on focus
-                  },
-              }}
-              InputProps={{
-                sx: {
-                  "&::placeholder": {
-                    fontFamily: "'Montserrat', sans-serif",
-                    fontSize: "14px",
-                  },
                 },
               }}
             />
@@ -991,12 +1004,19 @@ const CustomerInbox = () => {
             <IconButton
               onClick={handleSendReply}
               sx={{
-                color: "#8BD3E6",
+                color:
+                  selectedFeedback?.status === "resolved"
+                    ? "#BDBDBD"
+                    : "#8BD3E6",
                 "&:hover": {
                   bgcolor: "transparent", // Prevents the background from appearing on hover
-                  color: "#6FBCCF",
+                  color:
+                    selectedFeedback?.status === "resolved"
+                      ? "#BDBDBD"
+                      : "#6FBCCF",
                 },
               }}
+              disabled={selectedFeedback?.status === "resolved"}
             >
               <SendIcon />
             </IconButton>
@@ -1057,37 +1077,36 @@ const CustomerInbox = () => {
               </Typography>
             )}
             <TextField
-  label="Title"
-  value={title}
-  onChange={(e) => setTitle(e.target.value)}
-  fullWidth
-  required
-  variant="outlined"
-  inputProps={{
-    maxLength: 50, // Limit input to 50 characters
-  }}
-  sx={{
-    fontFamily: "Montserrat",
-    "& .MuiOutlinedInput-root": {
-      "& fieldset": {
-        borderColor: "#8BD3E6", // Default border color
-      },
-      "&:hover fieldset": {
-        borderColor: "#6FBCCF", // Darker blue on hover
-      },
-      "&.Mui-focused fieldset": {
-        borderColor: "#8BD3E6", // Keep blue on focus
-      },
-    },
-    "& .MuiInputLabel-root": {
-      fontFamily: "Montserrat",
-    },
-    "& .MuiOutlinedInput-input": {
-      fontFamily: "Montserrat",
-    },
-  }}
-/>
-
+              label="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              fullWidth
+              required
+              variant="outlined"
+              inputProps={{
+                maxLength: 50, // Limit input to 50 characters
+              }}
+              sx={{
+                fontFamily: "Montserrat",
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: "#8BD3E6", // Default border color
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#6FBCCF", // Darker blue on hover
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#8BD3E6", // Keep blue on focus
+                  },
+                },
+                "& .MuiInputLabel-root": {
+                  fontFamily: "Montserrat",
+                },
+                "& .MuiOutlinedInput-input": {
+                  fontFamily: "Montserrat",
+                },
+              }}
+            />
 
             <TextField
               label="Detail"

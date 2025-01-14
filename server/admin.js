@@ -87,16 +87,21 @@ app.post("/users", async (req, res) => {
       });
     }
 
+    // Determine the default approval status based on the role
+    const defaultApproval =
+      role === "customer" ? "approved" : "pending";
+
     // Hash the password before saving the user
     const salt = await bcrypt.genSalt(10); // Generate salt
     const hashedPassword = await bcrypt.hash(password, salt); // Hash the password
 
-    // Create the user object with hashed password
+    // Create the user object with hashed password and approval status
     const newUser = new User({
       username,
       email,
       password: hashedPassword, // Store hashed password
       role, // Store user role
+      approval: defaultApproval, // Set the default approval status
     });
 
     // Save the new user
@@ -117,6 +122,7 @@ app.post("/users", async (req, res) => {
     }
   }
 });
+
 
 app.put("/users/:id", async (req, res) => {
   try {

@@ -896,46 +896,46 @@ const AdminInbox = () => {
             <TextField
               fullWidth
               variant="outlined"
-              placeholder="Type your reply..."
+              placeholder={
+                selectedFeedback?.status === "resolved"
+                  ? "Reply disabled for resolved items"
+                  : "Type your reply..."
+              }
               value={newReply}
               onChange={(e) => setNewReply(e.target.value)}
               size="small"
-              multiline // Allows the text field to grow vertically for long content
-              maxRows={4} // Limit the number of rows it can grow to
-              onKeyPress={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendReply();
-                }
-              }}
+              multiline
+              maxRows={4}
+              disabled={selectedFeedback?.status === "resolved"}
               sx={{
-                bgcolor: "#F8FAFC",
+                bgcolor:
+                  selectedFeedback?.status === "resolved"
+                    ? "#E0E0E0"
+                    : "#F8FAFC",
                 fontFamily: "'Montserrat', sans-serif",
                 fontSize: "14px",
                 "& .MuiOutlinedInput-root": {
-                  fontFamily: "'Montserrat', sans-serif",
-                  fontSize: "14px",
+                  "& fieldset": {
+                    border:
+                      selectedFeedback?.status === "resolved"
+                        ? "none" // Remove border when disabled
+                        : "1px solid #8BD3E6", // Default border when enabled
+                  },
+                  "&:hover fieldset": {
+                    borderColor:
+                      selectedFeedback?.status === "resolved"
+                        ? "none" // Ensure no border on hover when disabled
+                        : "#6FBCCF", // Darker blue on hover when enabled
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor:
+                      selectedFeedback?.status === "resolved"
+                        ? "none" // Ensure no border on focus when disabled
+                        : "#8BD3E6", // Keep blue on focus when enabled
+                  },
                 },
                 "& .MuiOutlinedInput-input": {
                   fontFamily: "'Montserrat', sans-serif",
-                  fontSize: "14px",
-                  lineHeight: "1.5",
-                },
-                "& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#8BD3E6", // Change border on hover
-                  },
-                "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#8BD3E6", // Keep border consistent on focus
-                  },
-              }}
-              InputProps={{
-                sx: {
-                  "&::placeholder": {
-                    fontFamily: "'Montserrat', sans-serif",
-                    fontSize: "14px",
-                  },
                 },
               }}
             />

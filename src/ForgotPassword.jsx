@@ -20,8 +20,8 @@ const FormContainer = styled(Box)(({ theme }) => ({
   borderRadius: "20px",
   boxShadow: "0px 3px 6px rgba(0,0,0,1)",
   padding: theme.spacing(4),
-  width: "60%",
-  maxWidth: "400px",
+  width: "90%", // Start with a percentage for mobile
+  maxWidth: "360px", // Reduced from 400px
   minWidth: "280px",
   display: "flex",
   flexDirection: "column",
@@ -33,31 +33,37 @@ const FormContainer = styled(Box)(({ theme }) => ({
   left: "50%",
   transform: "translate(-50%, -50%)",
   margin: "0 auto",
-  
-  [theme.breakpoints.down('sm')]: {
-    padding: theme.spacing(3),
-    width: "80%",
+
+  [theme.breakpoints.down("sm")]: {
+    padding: theme.spacing(2.5),
+    width: "85%",
     minWidth: "240px",
-    maxWidth: "320px"
+    maxWidth: "300px",
   },
-  
-  [theme.breakpoints.between('sm', 'md')]: {
+
+  [theme.breakpoints.between("sm", "md")]: {
+    padding: theme.spacing(3),
+    width: "70%",
+    maxWidth: "320px",
+  },
+
+  [theme.breakpoints.between("md", "lg")]: {
     padding: theme.spacing(3.5),
-    width: "65%",
-    maxWidth: "360px"
+    width: "45%", // Reduced from 55%
+    maxWidth: "360px", // Reduced from 400px
   },
-  
-  [theme.breakpoints.between('md', 'lg')]: {
+
+  [theme.breakpoints.up("lg")]: {
     padding: theme.spacing(4),
-    width: "55%",
-    maxWidth: "400px"
+    width: "35%", // Added specific width for large screens
+    maxWidth: "380px",
   },
-  
-  [theme.breakpoints.up('xl')]: {
-    padding: theme.spacing(5),
-    maxWidth: "450px",
-    width: "50%"
-  }
+
+  [theme.breakpoints.up("xl")]: {
+    padding: theme.spacing(4.5),
+    maxWidth: "400px",
+    width: "30%", // Reduced from 50%
+  },
 }));
 
 const BackgroundContainer = styled(Box)(({ theme }) => ({
@@ -73,65 +79,71 @@ const BackgroundContainer = styled(Box)(({ theme }) => ({
   margin: 0,
   overflow: "hidden",
   fontFamily: "Montserrat",
-  
-  [theme.breakpoints.down('sm')]: {
+
+  [theme.breakpoints.down("sm")]: {
     backgroundPosition: "center",
-    minHeight: "100dvh" // Use dynamic viewport height for mobile
+    minHeight: "100dvh", // Use dynamic viewport height for mobile
   },
-  
-  [theme.breakpoints.up('xl')]: {
-    backgroundPosition: "center"
-  }
+
+  [theme.breakpoints.up("xl")]: {
+    backgroundPosition: "center",
+  },
 }));
 
 const LoginButton = styled(Button)(({ theme }) => ({
-  width: "180px",
-  marginTop: "16px",
-  padding: "10px 32px",
+  width: "140px", // Default size for large screens
+  marginTop: "12px",
+  padding: "8px 24px",
   fontFamily: "Montserrat",
   fontWeight: "bold",
   color: "#8BD3E6",
   backgroundColor: "#FFFFFF",
   border: "1px solid #8BD3E6",
-  borderRadius: "8px",
+  borderRadius: "6px",
   "&:hover": {
     backgroundColor: "#E6F8FB",
     color: "#7AB9C4",
     borderColor: "#7AB9C4",
   },
-  
-  [theme.breakpoints.down('sm')]: {
-    width: "140px",
-    padding: "8px 24px",
-    fontSize: "0.875rem",
-    marginTop: "8px"
-  },
-  
-  [theme.breakpoints.between('sm', 'md')]: {
-    width: "160px",
-    padding: "9px 28px",
-    fontSize: "0.9rem"
-  },
-  
-  [theme.breakpoints.up('xl')]: {
-    width: "200px",
-    padding: "12px 36px",
-    fontSize: "1rem"
-  }
 
-  
+  [theme.breakpoints.down("sm")]: {
+    width: "120px",
+    padding: "6px 18px",
+    fontSize: "0.75rem",
+    marginTop: "8px",
+  },
+
+  [theme.breakpoints.between("sm", "md")]: {
+    width: "130px",
+    padding: "7px 20px",
+    fontSize: "0.8rem",
+    marginTop: "10px",
+  },
+
+  [theme.breakpoints.between("md", "lg")]: {
+    width: "140px",
+    padding: "8px 22px",
+    fontSize: "0.85rem",
+    marginTop: "12px",
+  },
+
+  [theme.breakpoints.up("xl")]: {
+    width: "160px",
+    padding: "10px 28px",
+    fontSize: "0.9rem",
+  },
 }));
 
 const SubmitButton = styled(Button)(({ theme }) => ({
-  width: "180px",
-  marginTop: "16px",
-  padding: "10px 32px",
+  width: "140px", // Default size for large screens
+  marginTop: "12px",
+  padding: "8px 20px",
   fontFamily: "Montserrat",
   fontWeight: "bold",
   color: "#FFFFFF",
   backgroundColor: "#8BD3E6",
   border: "1px solid #8BD3E6",
-  borderRadius: "8px",
+  borderRadius: "6px",
   "&:hover": {
     backgroundColor: "#6FBCCF",
     borderColor: "#6FBCCF",
@@ -141,30 +153,36 @@ const SubmitButton = styled(Button)(({ theme }) => ({
     borderColor: "#ccc",
     color: "#FFFFFF",
   },
-  
-  [theme.breakpoints.down('sm')]: {
-    width: "140px",
-    padding: "8px 24px",
-    fontSize: "0.875rem",
-    marginTop: "8px"
+
+  [theme.breakpoints.down("sm")]: {
+    width: "110px",
+    padding: "6px 16px",
+    fontSize: "0.75rem",
+    marginTop: "8px",
   },
-  
-  [theme.breakpoints.between('sm', 'md')]: {
+
+  [theme.breakpoints.between("sm", "md")]: {
+    width: "120px",
+    padding: "7px 18px",
+    fontSize: "0.8rem",
+    marginTop: "10px",
+  },
+
+  [theme.breakpoints.between("md", "lg")]: {
+    width: "130px",
+    padding: "7px 20px",
+    fontSize: "0.85rem",
+    marginTop: "12px",
+  },
+
+  [theme.breakpoints.up("xl")]: {
     width: "160px",
-    padding: "9px 28px",
-    fontSize: "0.9rem"
+    padding: "10px 28px",
+    fontSize: "0.9rem",
   },
-  
-  [theme.breakpoints.up('xl')]: {
-    width: "200px",
-    padding: "12px 36px",
-    fontSize: "1rem"
-  }
-
-  
-
 }));
 
+// Adjust TextField styles
 const getTextFieldStyles = (theme) => ({
   "& label.Mui-focused": {
     color: "#8BD3E6",
@@ -176,23 +194,32 @@ const getTextFieldStyles = (theme) => ({
     borderRadius: "12px",
     boxShadow: "0px 4px 6px rgba(139, 211, 230, 0.2)",
     backgroundColor: "rgba(255, 255, 255, 0.9)",
-    [theme.breakpoints.down('sm')]: {
+    [theme.breakpoints.down("sm")]: {
       fontSize: "0.875rem",
     },
-    [theme.breakpoints.up('xl')]: {
-      fontSize: "1.1rem",
-    }
+    [theme.breakpoints.between("sm", "md")]: {
+      fontSize: "0.9rem",
+    },
+    [theme.breakpoints.between("md", "lg")]: {
+      fontSize: "0.95rem", // Normal screen size
+    },
+    [theme.breakpoints.up("xl")]: {
+      fontSize: "1rem", // Reduced from 1.1rem
+    },
   },
   "& .MuiFormLabel-root": {
     fontFamily: "Montserrat",
-    fontSize: "15px",
+    fontSize: "0.9rem", // Reduced from 15px
     color: "#467B89",
-    [theme.breakpoints.down('sm')]: {
-      fontSize: "0.875rem",
+    [theme.breakpoints.down("sm")]: {
+      fontSize: "0.8rem",
     },
-    [theme.breakpoints.up('xl')]: {
-      fontSize: "1.1rem",
-    }
+    [theme.breakpoints.between("sm", "md")]: {
+      fontSize: "0.85rem",
+    },
+    [theme.breakpoints.up("xl")]: {
+      fontSize: "1rem", // Reduced from 1.1rem
+    },
   },
   "& .MuiOutlinedInput-root": {
     "& fieldset": {
@@ -205,8 +232,8 @@ const getTextFieldStyles = (theme) => ({
     "&.Mui-focused fieldset": {
       borderColor: "#8BD3E6",
       boxShadow: "0px 8px 20px rgba(139, 211, 230, 0.6)",
-    }
-  }
+    },
+  },
 });
 
 const GlobalStyle = createGlobalStyle`
@@ -219,10 +246,10 @@ const GlobalStyle = createGlobalStyle`
 
 export default function ForgotPassword() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
-  const isXLScreen = useMediaQuery(theme.breakpoints.up('xl'));
-  
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
+  const isXLScreen = useMediaQuery(theme.breakpoints.up("xl"));
+
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -274,7 +301,7 @@ export default function ForgotPassword() {
   const getLogoSize = () => {
     if (isMobile) return "60px";
     if (isTablet) return "75px";
-    if (isXLScreen) return "120px";
+    if (isXLScreen) return "100px";
     return "90px";
   };
 
@@ -300,31 +327,46 @@ export default function ForgotPassword() {
             maxHeight: getLogoSize(),
             zIndex: 10,
             animation: "rotateLogo 5s linear infinite",
-            cursor: "pointer"
+            cursor: "pointer",
           }}
           onClick={() => window.location.replace("http://localhost:5173")}
         />
         <FormContainer component="form" onSubmit={handleSubmit}>
           <Typography
-            variant={isMobile ? "h6" : isXLScreen ? "h4" : "h5"}
+            variant={isMobile ? "h6" : isXLScreen ? "h5" : "subtitle1"} // Reduced from h4/h5
             align="center"
             fontWeight="bold"
             gutterBottom
-            sx={{ 
-              fontFamily: "Montserrat", 
-              marginBottom: isMobile ? 0.5 : 1 
+            sx={{
+              fontFamily: "Montserrat",
+              marginBottom: isMobile ? 0.5 : 1,
+              fontSize: {
+                xs: "1.1rem", // Mobile
+                sm: "1.2rem", // Tablet
+                md: "1.3rem", // Normal
+                lg: "1.4rem", // Large
+                xl: "1.5rem", // Extra Large
+              },
             }}
           >
             Forgot Password
           </Typography>
+
           <Typography
-            variant={isMobile ? "body2" : isXLScreen ? "h6" : "body1"}
+            variant={isMobile ? "body2" : isXLScreen ? "body1" : "body2"} // Reduced from h6
             align="center"
             color="textSecondary"
-            sx={{ 
-              fontFamily: "Montserrat", 
+            sx={{
+              fontFamily: "Montserrat",
               marginBottom: isMobile ? 2 : 3,
-              padding: isMobile ? "0 10px" : 0
+              padding: isMobile ? "0 10px" : 0,
+              fontSize: {
+                xs: "0.8rem", // Mobile
+                sm: "0.85rem", // Tablet
+                md: "0.9rem", // Normal
+                lg: "0.95rem", // Large
+                xl: "1rem", // Extra Large
+              },
             }}
           >
             Enter your email to request a password reset link
@@ -341,13 +383,19 @@ export default function ForgotPassword() {
           />
           <Typography
             color={message.type === "error" ? "error" : "black"}
-            variant={isMobile ? "body2" : "body1"}
+            variant="body2"
             sx={{
-              mt: 2,
+              mt: 1,
               fontFamily: "Montserrat",
               textAlign: "center",
               minHeight: "24px",
-              fontSize: isMobile ? "0.75rem" : isXLScreen ? "1.1rem" : "0.875rem"
+              fontSize: {
+                xs: "0.75rem", // Mobile
+                sm: "0.8rem", // Tablet
+                md: "0.85rem", // Normal
+                lg: "0.9rem", // Large
+                xl: "0.95rem", // Extra Large
+              },
             }}
           >
             {message.text || " "}
@@ -360,7 +408,8 @@ export default function ForgotPassword() {
               alignItems: "center",
               gap: isMobile ? 1 : 2,
               mt: 0,
-              flexDirection: "row"
+              mb:1,
+              flexDirection: "row",
             }}
           >
             <LoginButton to="/login" component={Link}>
@@ -368,9 +417,9 @@ export default function ForgotPassword() {
             </LoginButton>
             <SubmitButton type="submit" disabled={loading || disabled}>
               {loading ? (
-                <CircularProgress 
-                  size={isMobile ? 20 : 24} 
-                  sx={{ color: "#FFFFFF" }} 
+                <CircularProgress
+                  size={isMobile ? 20 : 24}
+                  sx={{ color: "#FFFFFF" }}
                 />
               ) : (
                 "Submit"

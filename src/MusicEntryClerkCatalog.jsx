@@ -23,6 +23,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  useMediaQuery,
+  AppBar,
+  Toolbar,
+  IconButton,
+  Drawer,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
@@ -34,19 +39,66 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
+import { Menu as MenuIcon } from "@mui/icons-material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+
+const DRAWER_WIDTH = 225;
+
+const theme = createTheme({
+  typography: {
+    fontFamily: "Montserrat, Arial, sans-serif",
+  },
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 960,
+      lg: 1280,
+      xl: 1920,
+    },
+  },
+});
 
 const GlobalStyle = createGlobalStyle`
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Montserrat', sans-serif;
-    overflow-x: hidden; // Prevent horizontal scrolling
-    
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Montserrat', sans-serif;
+          overflow-x: hidden; // Prevent horizontal scrolling
 
-  }
-`;
+    }
 
-const formStyles = {
+  `;
+
+const styles = {
+  root: {
+    display: "flex",
+    minHeight: "100vh",
+    backgroundColor: "#FFFFFF",
+  },
+  appBar: {
+    display: "block",
+    backgroundColor: "#FFFFFF",
+    boxShadow: "none",
+    borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+  },
+  drawer: {
+    width: DRAWER_WIDTH,
+    flexShrink: 0,
+    "& .MuiDrawer-paper": {
+      width: DRAWER_WIDTH,
+      boxSizing: "border-box",
+    },
+  },
+  mainContent: {
+    flexGrow: 1,
+    p: { xs: 2, sm: 3 },
+    mt: 8,
+    width: "100%",
+  },
+};
+
+const formStyles = (theme) => ({
   mb: 2,
   fontFamily: "Montserrat",
   "& .MuiInputBase-root": {
@@ -54,24 +106,30 @@ const formStyles = {
   },
   "& .MuiFormLabel-root": {
     fontFamily: "Montserrat",
+    "&.Mui-focused": {
+      color: "#6FBCCF", // Label color on focus
+    },
   },
   "& .MuiOutlinedInput-root": {
     borderRadius: 2,
     "& fieldset": {
-      borderColor: "rgba(0,0,0,0.23)",
+      borderColor: "#8BD3E6", // Default border color
     },
     "&:hover fieldset": {
-      borderColor: "#8BD3E6",
+      borderColor: "#6FBCCF", // Border color on hover
     },
     "&.Mui-focused fieldset": {
-      borderColor: "#8BD3E6",
+      borderColor: "#6FBCCF", // Border color on focus
     },
   },
   width: "90%",
-};
+  [theme.breakpoints.down("sm")]: {
+    width: "90%", // Shorter width for mobile devices
+  },
+});
 
 const buttonStyles = {
-  px: 10,
+  px: 5,
   fontFamily: "Montserrat",
   fontWeight: "bold",
   color: "#FFFFFF",
@@ -81,6 +139,7 @@ const buttonStyles = {
   "&:hover": {
     backgroundColor: "#6FBCCF",
     borderColor: "#6FBCCF",
+    boxShadow: "none",
   },
   "&:disabled": {
     backgroundColor: "#E0E0E0",
@@ -90,62 +149,77 @@ const buttonStyles = {
 };
 
 const dialogStyles = {
-  dialogPaper: {
-    borderRadius: "16px",
-    padding: "20px",
-    fontFamily: "Montserrat",
-  },
-  title: {
-    fontFamily: "Montserrat",
-    fontWeight: "bold",
-    fontSize: "20px",
-    textAlign: "center",
-  },
-  content: {
-    fontFamily: "Montserrat",
-    textAlign: "center",
-  },
-  contentText: {
-    fontFamily: "Montserrat",
-    fontSize: "16px",
-    color: "#555",
-  },
-  actions: {
-    justifyContent: "center",
-    gap: "12px",
-    marginTop: "8px",
-  },
-  button: {
-    textTransform: "none",
-    fontFamily: "Montserrat",
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    backgroundColor: "#8BD3E6",
-    border: "1px solid #8BD3E6",
-    borderRadius: "8px",
-    padding: "8px 24px",
-    "&:hover": {
-      backgroundColor: "#6FBCCF",
-      borderColor: "#6FBCCF",
+  dialog: {
+    PaperProps: {
+      sx: {
+        borderRadius: "16px",
+        padding: "16px",
+        width: { xs: "90%", sm: "auto" },
+        maxWidth: { xs: "90%", sm: 500 },
+      },
+    },
+    aria: {
+      labelledby: "alert-dialog-title",
+      describedby: "alert-dialog-description",
     },
   },
-  deletebutton: {
-    textTransform: "none",
-    fontFamily: "Montserrat",
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    backgroundColor: "#DB2226",
-    border: "1px solid #DB2226",
-    borderRadius: "8px",
-    padding: "8px 24px",
-    "&:hover": {
-      backgroundColor: "#B71C1C",
-      borderColor: "#B71C1C",
+  title: {
+    sx: {
+      fontFamily: "Montserrat",
+      fontWeight: "bold",
+      fontSize: { xs: "1.125rem", sm: "1.25rem" },
+      textAlign: "center",
+      color: "black",
+      paddingBottom: 1,
+    },
+  },
+  content: {
+    sx: {
+      textAlign: "center",
+      paddingX: { xs: 2, sm: 3 },
+      paddingTop: "0 !important", // Override default padding
+    },
+  },
+  contentText: {
+    sx: {
+      fontFamily: "Montserrat",
+      fontSize: { xs: "0.875rem", sm: "1rem" },
+      color: "#555",
+      lineHeight: 1.6,
+    },
+  },
+  actions: {
+    sx: {
+      justifyContent: "center",
+      padding: { xs: "8px 16px", sm: "16px 24px" },
+      gap: { xs: 1, sm: 2 },
+    },
+  },
+  button: {
+    common: {
+      fontFamily: "Montserrat",
+      fontWeight: "bold",
+      textTransform: "uppercase",
+      borderRadius: "8px",
+      paddingX: { xs: 3, sm: 4 },
+      boxShadow: "none",
+    },
+    close: {
+      backgroundColor: "#8BD3E6",
+      color: "white",
+      "&:hover": {
+        backgroundColor: "#6FBCCF",
+        boxShadow: "none",
+      },
     },
   },
 };
 
 export default function MusicEntryClerkCatalog() {
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
   const { fileName } = location.state || {};
@@ -288,6 +362,16 @@ export default function MusicEntryClerkCatalog() {
 
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
+  
+    // Scroll to top if in mobile view
+    if (isMobile) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+  
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
   };
 
   // Add function to check for changes
@@ -545,63 +629,195 @@ export default function MusicEntryClerkCatalog() {
     }
   };
 
+  // Define shorter labels for mobile view
+  const getTabLabel = (fullLabel) => {
+    if (isMobile) {
+      switch (fullLabel) {
+        case "Identification":
+          return "ID";
+        case "Performance":
+          return "Perf.";
+        case "Geography":
+          return "Geo";
+        case "Related Work":
+          return "Related";
+        default:
+          return fullLabel;
+      }
+    }
+    return fullLabel;
+  };
+
+  // Tab labels array for easier management
+  const tabLabels = [
+    "Identification",
+    "Creators",
+    "Dates",
+    "Content",
+    "Format",
+    "Rights",
+    "Geography",
+    "Performance",
+    "Related Work",
+    "Cover Image",
+    "MP3 File",
+  ];
+
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <GlobalStyle />
-      <Box sx={{ display: "flex" }}>
-        <Box
+      <Box
+        sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#FFFFFF" }}
+      >
+        {/* Mobile AppBar */}
+        <AppBar
+          position="fixed"
           sx={{
-            width: "225px",
-            height: "100vh",
-            position: "fixed",
-            top: 0,
-            left: 0,
-            backgroundColor: "#8BD3E6",
-            overflowY: "auto",
+            display: { lg: "none" },
+            backgroundColor: "#FFFFFF",
+            boxShadow: "none",
+            borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
           }}
         >
-          <ClerkSidebar active="catalogMetadata" />
-        </Box>
-        <Box sx={{ flexGrow: 1, ml: "225px", p: 3 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-            }}
-          >
+          <Toolbar>
+            {/* Menu Button */}
+            <IconButton
+              color="inherit"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, color: "#3B3183" }}
+            >
+              <MenuIcon />
+            </IconButton>
+
+            {/* Title */}
             <Typography
-              variant="h4"
-              gutterBottom
+              variant="h6"
               sx={{
-                fontFamily: "Montserrat",
+                color: "#3B3183",
                 fontWeight: "bold",
-                mt: 4,
-                ml: 1,
+                flexGrow: 1,
               }}
             >
               Catalog Metadata
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography
-                variant="body1"
-                sx={{ mr: 2, fontFamily: "Montserrat" }}
-              >
-                {user ? user?.username : "User"}
-              </Typography>
+
+            {/* Avatar in App Bar */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {!isMobile && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "#3B3183",
+                    display: { xs: "none", sm: "block" },
+                  }}
+                >
+                  {user?.username}
+                </Typography>
+              )}
               <Avatar
                 alt={user?.username}
-                src={
-                  user && user?.profile_picture ? user?.profile_picture : null
-                }
+                src={user?.profile_picture || null}
+                sx={{
+                  width: { xs: 32, sm: 40 },
+                  height: { xs: 32, sm: 40 },
+                }}
               >
-                {(!user || !user?.profile_picture) &&
-                  user?.username.charAt(0).toUpperCase()}
+                {user?.username?.charAt(0).toUpperCase()}
               </Avatar>
             </Box>
-          </Box>
-          <Divider sx={{ mb: 3 }} />
+          </Toolbar>
+        </AppBar>
+
+        {/* Permanent Drawer for Large Screens */}
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: "none", lg: "block" },
+            "& .MuiDrawer-paper": {
+              width: DRAWER_WIDTH,
+              boxSizing: "border-box",
+            },
+          }}
+        >
+          <ClerkSidebar active="catalogMetadata" />
+        </Drawer>
+
+        {/* Temporary Drawer for Mobile */}
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            display: { xs: "block", lg: "none" },
+            "& .MuiDrawer-paper": {
+              width: DRAWER_WIDTH,
+              boxSizing: "border-box",
+            },
+          }}
+        >
+          <ClerkSidebar active="catalogMetadata" />
+        </Drawer>
+
+        {/* Main Content */}
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: { xs: 2, sm: 3 },
+            mt: { xs: 8, lg: 2 },
+            ml: { lg: `${DRAWER_WIDTH}px` },
+          }}
+        >
+          {/* Desktop Header */}
+          {isLargeScreen && (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 3,
+              }}
+            >
+              <Typography
+                variant="h4"
+                sx={{
+                  fontFamily: "Montserrat",
+                  fontWeight: "bold",
+                  fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
+                }}
+              >
+                Catalog Metadata
+              </Typography>
+
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    display: { xs: "none", lg: "block" },
+                    fontFamily: "Montserrat",
+                    color: "black",
+                  }}
+                >
+                  {user?.username || "User"}
+                </Typography>
+                <Avatar
+                  alt={user?.username}
+                  src={user?.profile_picture || null}
+                  sx={{
+                    width: { xs: 32, lg: 40 },
+                    height: { xs: 32, lg: 40 },
+                  }}
+                >
+                  {user?.username?.charAt(0).toUpperCase()}
+                </Avatar>
+              </Box>
+            </Box>
+          )}
+
+          {/* Divider */}
+          {isLargeScreen && <Divider sx={{ mb: 3 }} />}
 
           <Tabs
             value={tabIndex}
@@ -611,40 +827,64 @@ export default function MusicEntryClerkCatalog() {
               mb: 3,
               fontFamily: "Montserrat",
               overflowX: "auto",
+              width: "100%",
+              maxWidth: "100vw",
+              minHeight: { xs: "36px", sm: "48px" },
               "& .MuiTab-root": {
-                fontFamily: "Montserrat",
-                textTransform: "none", // Prevents all caps
-                color: "#666", // Default color for tabs
+                textTransform: "none",
+                color: "#666",
+                padding: { xs: "6px 12px", sm: "12px 16px" },
+                minHeight: { xs: "36px", sm: "48px" },
+                minWidth: { xs: "50px", sm: "auto" },
+                fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                textOverflow: "ellipsis",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
                 "&:hover": {
-                  color: "#8BD3E6", // Hover color
+                  color: "#8BD3E6",
                 },
               },
               "& .Mui-selected": {
-                color: "#8BD3E6 !important", // Force the active color to override defaults
-                fontWeight: "normal", // Ensures the active tab is not bold
+                color: "#8BD3E6 !important",
+                fontWeight: "normal",
               },
               "& .MuiTabs-indicator": {
-                backgroundColor: "#8BD3E6", // Active tab indicator color
+                backgroundColor: "#8BD3E6",
+              },
+              "& .MuiTabs-scrollableX": {
+                "&::-webkit-scrollbar": {
+                  display: "none",
+                },
+                scrollbarWidth: "none",
+              },
+              "& .MuiTabs-flexContainer": {
+                justifyContent: { xs: "center", sm: "flex-start" },
+                padding: { xs: "0 12px", sm: "0" },
               },
             }}
-            variant="scrollable" // Enables scrolling for tabs
-            scrollButtons="auto" // Shows scroll buttons when needed
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
           >
-            <Tab label="Identification" />
-            <Tab label="Creators" />
-            <Tab label="Dates" />
-            <Tab label="Content" />
-            <Tab label="Format" />
-            <Tab label="Rights" />
-            <Tab label="Geography" />
-            <Tab label="Performance" />
-            <Tab label="Related Work" />
-            <Tab label="Cover Image" />
-            <Tab label="MP3 File" />
+            {tabLabels.map((label, index) => (
+              <Tab
+                key={index}
+                label={getTabLabel(label)}
+                sx={{
+                  display: isMobile && tabIndex !== index ? "none" : "block",
+                  whiteSpace: "nowrap",
+                }}
+              />
+            ))}
           </Tabs>
 
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, pl: 4 }}>
-            <Grid container spacing={1}>
+            <Grid
+              container
+              spacing={2}
+              direction={isMobile ? "column" : "row"} // Stacked for mobile
+            >
+              {" "}
               {tabIndex === 0 && (
                 <>
                   <Grid item xs={12} sm={6}>
@@ -693,7 +933,6 @@ export default function MusicEntryClerkCatalog() {
                       sx={formStyles}
                       value={catalogData.price}
                       onChange={handleInputChange}
-                
                       InputProps={{
                         startAdornment: (
                           <InputAdornment
@@ -734,8 +973,19 @@ export default function MusicEntryClerkCatalog() {
                       fullWidth
                       sx={{
                         ...formStyles,
+                        mb: 2,
+                        width: isMobile ? "90%" : "90%", // Adjust width based on isMobile
                         "& .MuiInputBase-root": {
                           fontFamily: "Montserrat", // Apply Montserrat font
+                          "& fieldset": {
+                            borderColor: "#8BD3E6", // Default border color
+                          },
+                          "&:hover fieldset": {
+                            borderColor: "#6FBCCF", // Border color on hover
+                          },
+                          "&.Mui-focused fieldset": {
+                            borderColor: "#6FBCCF", // Border color on focus
+                          },
                         },
                         "& .MuiInputLabel-root": {
                           fontFamily: "Montserrat", // Apply Montserrat font to the label
@@ -751,6 +1001,24 @@ export default function MusicEntryClerkCatalog() {
                         onChange={handleInputChange}
                         label="Collection"
                         required
+                        sx={{
+                          fontFamily: "Montserrat", // Apply font family to select
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#8BD3E6", // Default border color
+                          },
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#6FBCCF", // Border color on hover
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#6FBCCF", // Border color on focus
+                          },
+                          "& .MuiSvgIcon-root": {
+                            color: "#8BD3E6", // Dropdown arrow color
+                          },
+                          "&.Mui-focused .MuiSvgIcon-root": {
+                            color: "#6FBCCF", // Arrow color on focus
+                          },
+                        }}
                       >
                         <MenuItem
                           value="Student"
@@ -773,6 +1041,7 @@ export default function MusicEntryClerkCatalog() {
                       </Select>
                     </FormControl>
                   </Grid>
+
                   <Grid item xs={12} sm={6}>
                     <LocalizationProvider dateAdapter={AdapterDateFns}>
                       <DatePicker
@@ -1790,6 +2059,7 @@ export default function MusicEntryClerkCatalog() {
                       alignItems: "center",
                       justifyContent: "center",
                       p: 3,
+                      mt: 3,
                       borderRadius: 2,
                       borderColor: "#8BD3E6",
                       boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)", // Subtle shadow for depth
@@ -1850,7 +2120,6 @@ export default function MusicEntryClerkCatalog() {
                       component="label"
                       sx={{
                         ...buttonStyles,
-                        boxShadow: "none",
                       }}
                     >
                       {coverImageUrl ? "Change Image" : "Upload Image"}
@@ -1876,6 +2145,7 @@ export default function MusicEntryClerkCatalog() {
                       flexDirection: "column",
                       alignItems: "center",
                       p: 3,
+                      mt: 3,
                       borderRadius: 3,
                       borderColor: "#8BD3E6",
                       boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.1)",
@@ -1913,6 +2183,7 @@ export default function MusicEntryClerkCatalog() {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
+                          mt: 3,
                           mb: 2,
                           boxShadow: "inset 0px 4px 10px rgba(0, 0, 0, 0.1)",
                           fontFamily: "Montserrat",
@@ -1986,7 +2257,7 @@ export default function MusicEntryClerkCatalog() {
                   </Card>
                 </Grid>
 
-                <Grid item xs={12} sm={7} md={4}>
+                <Grid item xs={12} sm={7} md={4} sx={{ mt: 4 }}>
                   <Grid container direction="column" spacing={2}>
                     <Grid item xs={12}>
                       <TextField
@@ -2032,30 +2303,50 @@ export default function MusicEntryClerkCatalog() {
             <Dialog
               open={openDialog}
               onClose={handleCloseDialog}
-              PaperProps={{ sx: dialogStyles.dialogPaper }}
+              PaperProps={dialogStyles.dialog.PaperProps}
+              aria-labelledby={dialogStyles.dialog.aria.labelledby}
+              aria-describedby={dialogStyles.dialog.aria.describedby}
             >
-              <DialogTitle sx={dialogStyles.title}>{dialogTitle}</DialogTitle>
-              <DialogContent sx={dialogStyles.content}>
-                <DialogContentText sx={dialogStyles.contentText}>
+              <DialogTitle id="alert-dialog-title" sx={dialogStyles.title.sx}>
+                {dialogTitle}
+              </DialogTitle>
+
+              <DialogContent sx={dialogStyles.content.sx}>
+                <DialogContentText
+                  id="alert-dialog-description"
+                  sx={dialogStyles.contentText.sx}
+                >
                   {dialogMessage}
                 </DialogContentText>
               </DialogContent>
-              <DialogActions sx={dialogStyles.actions}>
-                {dialogTitle === "Prediction Complete" ||
-                dialogTitle === "Missing Required Fields" ||
-                dialogTitle === "Error" ||
-                dialogTitle === "Uploaded" ? (
-                  // For prediction success - only show Close button
-                  <Button onClick={handleCloseDialog} sx={dialogStyles.button}>
-                    CLOSE
+
+              <DialogActions sx={dialogStyles.actions.sx}>
+                {[
+                  "Prediction Complete",
+                  "Missing Required Fields",
+                  "Error",
+                  "Uploaded",
+                ].includes(dialogTitle) ? (
+                  <Button
+                    onClick={handleCloseDialog}
+                    variant="contained"
+                    sx={{
+                      ...dialogStyles.button.common,
+                      ...dialogStyles.button.close,
+                    }}
+                  >
+                    Close
                   </Button>
                 ) : (
-                  // For save success - only show Proceed to Homepage button
                   <Button
                     onClick={() => navigate("/clerk-homepage")}
-                    sx={dialogStyles.button}
+                    variant="contained"
+                    sx={{
+                      ...dialogStyles.button.common,
+                      ...dialogStyles.button.close,
+                    }}
                   >
-                    GO TO HOMEPAGE
+                    Go to Homepage
                   </Button>
                 )}
               </DialogActions>
@@ -2065,6 +2356,8 @@ export default function MusicEntryClerkCatalog() {
               sx={{
                 display: "flex",
                 justifyContent: "center",
+                flexDirection: { xs: "column", sm: "row" }, // Stack vertically on mobile, horizontally on larger screens
+                alignItems: "flex-start", // Center buttons vertically when stacked
                 mt: 3,
               }}
             >
@@ -2074,6 +2367,8 @@ export default function MusicEntryClerkCatalog() {
                 type="submit"
                 sx={{
                   ...buttonStyles,
+                  mb: { xs: 2, sm: 0 }, // Add margin-bottom on mobile for spacing
+                  width: { xs: "95%", sm: "auto" }, // Ensure consistent width on mobile
                 }}
               >
                 Save Metadata
@@ -2083,7 +2378,11 @@ export default function MusicEntryClerkCatalog() {
                   variant="outlined"
                   size="large"
                   onClick={handleNext}
-                  sx={{ ...buttonStyles, ml: 2 }}
+                  sx={{
+                    ...buttonStyles,
+                    ml: { xs: 0, sm: 2 }, // Remove margin-left on mobile
+                    width: { xs: "95%", sm: "auto" }, // Ensure consistent width on mobile
+                  }}
                 >
                   Next Tab
                 </Button>
@@ -2092,6 +2391,6 @@ export default function MusicEntryClerkCatalog() {
           </Box>
         </Box>
       </Box>
-    </>
+    </ThemeProvider>
   );
 }

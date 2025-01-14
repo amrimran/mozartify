@@ -418,7 +418,7 @@ export default function Landing() {
             variant="outlined"
             size="large"
             sx={{
-              px: { xs: 4, sm: 5 },
+              px: { xs: 3, sm: 4 },
               py: { xs: 1, sm: 1 },
               fontFamily: "Montserrat",
               fontWeight: "bold",
@@ -453,9 +453,10 @@ export default function Landing() {
             component="p"
             sx={{
               fontSize: { xs: "0.75rem", sm: "0.875rem" },
+              fontFamily:"Montserrat",
             }}
           >
-            &copy; 2024 Universiti Malaya. All Rights Reserved.
+            &copy; 2025 Universiti Malaya. All Rights Reserved.
           </Typography>
         </Container>
       </Box>

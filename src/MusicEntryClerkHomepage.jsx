@@ -595,17 +595,28 @@ export default function MusicEntryClerkHomepage() {
               <Paper
                 component="form"
                 sx={{
-                  p: "2px 4px",
+                  p: "4px 8px",
                   display: "flex",
                   alignItems: "center",
                   width: "100%",
                   borderRadius: "50px",
                   border: "1px solid #8BD3E6",
+                  boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)", // Subtle shadow for elevation
+                  transition:
+                    "border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
+                  "&:hover": {
+                    borderColor: "#6FBCCF", // Darker border on hover
+                    boxShadow: "0px 4px 10px #8BD3E6", // Slightly stronger shadow
+                  },
                 }}
               >
                 <InputBase
                   sx={{ ml: 2, flex: 1 }}
-                  placeholder="Search music scores..."
+                  placeholder={
+                    isMobile
+                      ? "Search music scores..."
+                      : "Look for all music scores here..."
+                  }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />

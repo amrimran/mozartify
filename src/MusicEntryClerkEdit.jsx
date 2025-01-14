@@ -51,17 +51,29 @@ const GlobalStyle = createGlobalStyle`
     padding: 0;
     font-family: 'Montserrat', sans-serif;
   }
+
   textarea {
     font-family: 'Courier New', Courier, monospace;
-    border: 1px solid #ccc;
+    border: 2px solid #8BD3E6; /* Default border color */
     padding: 10px;
     border-radius: 5px;
     resize: none;
     width: 100%;
     box-sizing: border-box;
-    overflow: hidden; 
+    overflow: hidden;
+    outline: none; /* Removes default focus outline */
+    transition: border-color 0.3s ease-in-out; /* Smooth transition for border */
+
+    &:hover {
+      border-color: #6FBCCF; /* Darker border color on hover */
+    }
+
+    &:focus {
+      border-color: #6FBCCF; /* Darker border color on focus */
+    }
   }
 `;
+
 
 const buttonStyles = {
   px: { xs: 4, sm: 15 },
@@ -137,10 +149,22 @@ const MusicEntryClerkEdit = () => {
       ml: isLargeScreen ? 1 : 0,
       mt: isLargeScreen ? 0 : 8,
       width: isLargeScreen ? `calc(100% - ${DRAWER_WIDTH}px)` : "100%",
+      display: "flex",
+      flexDirection: "column",
+      minHeight: "100vh",
     },
-    textarea: {
-      height: { xs: "150px", sm: "200px" },
-      fontSize: { xs: "0.875rem", sm: "1rem" },
+    contentWrapper: {
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden",
+    },
+    previewContainer: {
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      minHeight: 0,
+      mb: 4,
     },
     previewPaper: {
       padding: { xs: 1, sm: 2 },
@@ -152,6 +176,21 @@ const MusicEntryClerkEdit = () => {
       minHeight: { xs: "200px", sm: "300px" },
       mb: 3,
       mt: 3,
+      overflow: "auto",
+    },
+    textarea: {
+      height: { xs: "150px", sm: "200px" },
+      fontSize: { xs: "0.875rem", sm: "1rem" },
+    },
+    controlsContainer: {
+      mt: "auto",
+      pt: 2,
+      pb: 2,
+      borderTop: "1px solid rgba(0, 0, 0, 0.12)",
+      backgroundColor: "#ffffff",
+      position: "sticky",
+      bottom: 0,
+      zIndex: 1,
     },
   };
 
@@ -220,42 +259,44 @@ const MusicEntryClerkEdit = () => {
       const previousPagesContent = splitContent.slice(0, page - 1).join("\n");
       const offset = previousPagesContent ? previousPagesContent.length + 1 : 0;
 
-      ABCJS.renderAbc(
-        "abc-render-edit",
-        currentPageContent,
-        {},
-        {
-          clickListener: (abcElem) => {
-            if (abcElem && textAreaRef.current) {
-              const { startChar, endChar } = abcElem;
-              const textarea = textAreaRef.current;
+      // Determine responsive options based on viewport size
+      const isMobile = window.innerWidth <= 768; // Example breakpoint for mobile
+      const options = {
+        responsive: "resize",
+        fontSize: isMobile ? 12 : 16,
+        scale: isMobile ? 0.8 : 1,
+      };
 
-              // Calculate absolute positions in the full content
-              const absoluteStartChar = startChar + offset;
-              const absoluteEndChar = endChar + offset;
+      ABCJS.renderAbc("abc-render-edit", currentPageContent, options, {
+        clickListener: (abcElem) => {
+          if (abcElem && textAreaRef.current) {
+            const { startChar, endChar } = abcElem;
+            const textarea = textAreaRef.current;
 
-              // Set selection in textarea
-              textarea.focus();
-              textarea.setSelectionRange(absoluteStartChar, absoluteEndChar);
+            // Calculate absolute positions in the full content
+            const absoluteStartChar = startChar + offset;
+            const absoluteEndChar = endChar + offset;
 
-              // Calculate the line number for scrolling
-              const contentUpToSelection = abcContent.substring(
-                0,
-                absoluteStartChar
-              );
-              const lineNumber = contentUpToSelection.split("\n").length;
+            // Set selection in textarea
+            textarea.focus();
+            textarea.setSelectionRange(absoluteStartChar, absoluteEndChar);
 
-              // Scroll to the selected line
-              const lineHeight =
-                parseInt(window.getComputedStyle(textarea).lineHeight, 10) ||
-                20;
-              const scrollPosition = (lineNumber - 1) * lineHeight;
+            // Calculate the line number for scrolling
+            const contentUpToSelection = abcContent.substring(
+              0,
+              absoluteStartChar
+            );
+            const lineNumber = contentUpToSelection.split("\n").length;
 
-              textarea.scrollTop = scrollPosition - textarea.clientHeight / 2;
-            }
-          },
-        }
-      );
+            // Scroll to the selected line
+            const lineHeight =
+              parseInt(window.getComputedStyle(textarea).lineHeight, 10) || 20;
+            const scrollPosition = (lineNumber - 1) * lineHeight;
+
+            textarea.scrollTop = scrollPosition - textarea.clientHeight / 2;
+          }
+        },
+      });
     }
   }, [splitContent, page, abcContent]);
 
@@ -498,139 +539,181 @@ const MusicEntryClerkEdit = () => {
             </>
           )}
 
-          {/* ABC Notation Editor */}
-          <Grid
-            container
-            spacing={2}
-            sx={{ flexGrow: 1, mt: 2, flexDirection: "column" }}
-          >
-            <Grid item>
-              <Typography
-                variant="h6"
-                gutterBottom
-                sx={{
-                  fontFamily: "Montserrat",
-                  fontWeight: "bold",
-                  fontSize: { xs: "1rem", sm: "1.25rem" },
-                }}
-              >
-                ABC Notation Editor
-              </Typography>
-              {validationError && (
-                <Alert
-                  severity="error"
-                  sx={{
-                    mb: 2,
-                    fontFamily: "Montserrat",
-                    "& .MuiAlert-message": {
-                      fontFamily: "Montserrat",
-                    },
-                  }}
-                >
-                  {validationError}
-                </Alert>
-              )}
-              <textarea
-                ref={textAreaRef}
-                value={abcContent}
-                onChange={handleInputChange}
-                style={{
-                  height: isMobile ? "150px" : "200px",
-                  overflowY: "auto",
-                  fontSize: isMobile ? "0.875rem" : "1rem",
-                }}
-              />
-            </Grid>
-
-            {/* Music Score Preview */}
-            <Grid item sx={{ mt: 1 }}>
-              <Typography
-                variant="h6"
-                gutterBottom
-                sx={{
-                  fontFamily: "Montserrat",
-                  fontWeight: "bold",
-                  fontSize: { xs: "1rem", sm: "1.25rem" },
-                }}
-              >
-                Music Score Preview
-              </Typography>
-              <Paper elevation={3} sx={styles.previewPaper}>
-                <div id="abc-render-edit"></div>
-              </Paper>
-            </Grid>
-          </Grid>
-
-          {/* Pagination */}
-          <Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>
-            <Pagination
-              count={splitContent.length}
-              page={page}
-              onChange={handlePageChange}
-              color="primary"
-              fullWidth={isMobile}
-              sx={{
-                width: "100%",
-                display: "flex",
-                justifyContent: "center",
-                "& .MuiPaginationItem-root": {
-                  borderRadius: 2,
-                  fontFamily: "Montserrat",
-                  fontSize: { xs: "0.75rem", sm: "1rem" },
-                  backgroundColor: "primary",
-                  color: "#000",
-                  "&.Mui-selected": {
-                    backgroundColor: "#8BD3E6",
-                    color: "#fff",
-                    "&:hover": {
-                      backgroundColor: "#8BD3E6",
-                    },
-                  },
-                  "&:hover": {
-                    backgroundColor: "#D3D3D3",
-                  },
-                },
-              }}
-            />
-          </Box>
-
-          {/* Action Buttons */}
+          {/* Wrapper for scrollable content */}
           <Box
             sx={{
               display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              justifyContent: { xs: "center", sm: "space-between" },
-              alignItems: { xs: "center", sm: "flex-start" }, // Centers buttons horizontally on mobile
-              mt: 2,
-              gap: { xs: 2, sm: 0 },
+              flexDirection: "column",
+              minHeight: "100%",
+              pb: "150px", // Add padding at bottom to account for controls height
             }}
           >
-            <Button
-              variant="outlined"
-              size="large"
-              fullWidth={isMobile}
+            {/* ABC Notation Editor */}
+            <Grid
+              container
+              spacing={2}
               sx={{
-                ...buttonStyles,
-                "&:disabled": {
-                  backgroundColor: "#E0E0E0",
-                  borderColor: "#E0E0E0",
-                  color: "#9E9E9E",
-                },
+                flexGrow: 1,
+                mt: 2,
+                flexDirection: "column",
               }}
-              onClick={handleSave}
-              disabled={isSaving || abcContent === originalContent}
             >
-              {isSaving ? "Saving..." : "Save"}
-            </Button>
-            <Button
-              variant="outlined"
-              size="large"
-              fullWidth={isMobile}
-              sx={buttonStyles}
-              onClick={handleProceed}
+              <Grid item>
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{
+                    fontFamily: "Montserrat",
+                    fontWeight: "bold",
+                    fontSize: { xs: "1rem", sm: "1.25rem" },
+                  }}
+                >
+                  ABC Notation Editor
+                </Typography>
+                {validationError && (
+                  <Alert
+                    severity="error"
+                    sx={{
+                      mb: 2,
+                      fontFamily: "Montserrat",
+                      "& .MuiAlert-message": {
+                        fontFamily: "Montserrat",
+                      },
+                    }}
+                  >
+                    {validationError}
+                  </Alert>
+                )}
+                <textarea
+                  ref={textAreaRef}
+                  value={abcContent}
+                  onChange={handleInputChange}
+                  style={{
+                    height: isMobile ? "150px" : "200px",
+                    overflowY: "auto",
+                    fontSize: isMobile ? "0.875rem" : "1rem",
+                  }}
+                />
+              </Grid>
+
+              {/* Music Score Preview */}
+              <Grid item sx={{ mt: 1, width: "100%" }}>
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{
+                    fontFamily: "Montserrat",
+                    fontWeight: "bold",
+                    fontSize: { xs: "1rem", sm: "1.25rem" },
+                  }}
+                >
+                  Music Score Preview
+                </Typography>
+                <Paper
+                  elevation={3}
+                  sx={{
+                    padding: { xs: 1, sm: 2 },
+                    borderRadius: 4,
+                    bgcolor: "#ffffff",
+                    textAlign: "center",
+                    maxWidth: { xs: "100%", sm: "800px" },
+                    margin: "0 auto",
+                    minHeight: { xs: "200px", sm: "300px" },
+                    mb: 3,
+                    mt: 3,
+                    width: "100%",
+                  }}
+                >
+                  <div id="abc-render-edit"></div>
+                </Paper>
+              </Grid>
+            </Grid>
+          </Box>
+
+          {/* Fixed bottom controls container */}
+          <Box
+            sx={{
+              position: "fixed",
+              bottom: 0,
+              left: { xs: 0, lg: DRAWER_WIDTH },
+              right: 0,
+              backgroundColor: "#ffffff",
+              borderTop: "1px solid rgba(0, 0, 0, 0.12)",
+              zIndex: 1000,
+              boxShadow: "0px -2px 4px rgba(0, 0, 0, 0.05)",
+              pt: 2,
+            }}
+          >
+            {/* Pagination */}
+            <Box sx={{ mb: 2 }}>
+              <Pagination
+                count={splitContent.length}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  "& .MuiPaginationItem-root": {
+                    borderRadius: 2,
+                    fontFamily: "Montserrat",
+                    fontSize: { xs: "0.75rem", sm: "1rem" },
+                    backgroundColor: "primary",
+                    color: "#000",
+                    "&.Mui-selected": {
+                      backgroundColor: "#8BD3E6",
+                      color: "#fff",
+                      "&:hover": {
+                        backgroundColor: "#8BD3E6",
+                      },
+                    },
+                    "&:hover": {
+                      backgroundColor: "#D3D3D3",
+                    },
+                  },
+                }}
+              />
+            </Box>
+
+            {/* Action Buttons */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                justifyContent: { xs: "center", sm: "space-between" },
+                alignItems: { xs: "center", sm: "flex-start" },
+                gap: { xs: 2, sm: 0 },
+                px: { xs: 2, sm: 3 },
+                pb: 2,
+              }}
             >
-              Proceed
-            </Button>
+              <Button
+                variant="outlined"
+                size="large"
+                fullWidth={isMobile}
+                sx={{
+                  ...buttonStyles,
+                  "&:disabled": {
+                    backgroundColor: "#E0E0E0",
+                    borderColor: "#E0E0E0",
+                    color: "#9E9E9E",
+                  },
+                }}
+                onClick={handleSave}
+                disabled={isSaving || abcContent === originalContent}
+              >
+                {isSaving ? "Saving..." : "Save"}
+              </Button>
+              <Button
+                variant="outlined"
+                size="large"
+                fullWidth={isMobile}
+                sx={buttonStyles}
+                onClick={handleProceed}
+              >
+                Proceed
+              </Button>
+            </Box>
           </Box>
 
           {/* Dialog for Messages */}
