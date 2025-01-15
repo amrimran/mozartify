@@ -22,19 +22,132 @@ import {
   InputLabel,
   FormControl,
   Pagination,
+  AppBar,
+  Toolbar,
+  Drawer,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
-import { Favorite, PlayArrow } from "@mui/icons-material";
+import { Favorite, PlayArrow, Menu as MenuIcon } from "@mui/icons-material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useNavigate } from "react-router-dom";
-import { createGlobalStyle } from "styled-components";
-import CustomerSidebar from "./CustomerSidebar";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import { useNavigate } from "react-router-dom";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { createGlobalStyle } from "styled-components";
+import CustomerSidebar from "./CustomerSidebar";
+
+const DRAWER_WIDTH = 225;
+
+
+// Theme setup matching MusicEntryClerkUpload
+const theme = createTheme({
+  typography: {
+    fontFamily: "Montserrat, Arial, sans-serif",
+  },
+  breakpoints: {
+    values: {
+      xs: 0,    // mobile phones
+      sm: 600,  // tablets
+      md: 960,  // small laptops
+      lg: 1280, // desktops
+      xl: 1920, // large screens
+    }
+  }
+});
+
+const GlobalStyle = createGlobalStyle`
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+  }
+`;
+
+// Button styles matching MusicEntryClerkUpload
+const buttonStyles = {
+  px: { xs: 4, sm: 10 },
+  fontFamily: "Montserrat",
+  fontWeight: "bold",
+  color: "#FFFFFF",
+  backgroundColor: "#8BD3E6",
+  border: "1px solid #8BD3E6",
+  boxShadow: "none",
+  "&:hover": {
+    backgroundColor: "#6FBCCF",
+    borderColor: "#6FBCCF",
+    boxShadow: "none",
+  },
+};
+
+const buttonStyles2 = {
+  px: { xs: 4, sm: 10 },
+  fontFamily: "Montserrat",
+  fontWeight: "bold",
+  color: "#8BD3E6",
+  backgroundColor: "#FFFFFF",
+  border: "1px solid #8BD3E6",
+  boxShadow: "none",
+  "&:hover": {
+    backgroundColor: "#E6F8FB",
+    color: "#7AB9C4",
+    borderColor: "#7AB9C4",
+    boxShadow: "none",
+  },
+};
+
 
 export default function CustomerAdvancedSearch() {
   const [user, setUser] = useState(null); //store user's information
+  const theme = useTheme();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+   // Responsive styles
+   const styles = {
+    root: {
+      display: "flex",
+      minHeight: "100vh",
+      backgroundColor: "#FFFFFF",
+    },
+    appBar: {
+      display: isLargeScreen ? "none" : "block",
+      backgroundColor: "#FFFFFF",
+      boxShadow: "none",
+      borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+    },
+    drawer: {
+      width: DRAWER_WIDTH,
+      flexShrink: 0,
+      display: isLargeScreen ? "block" : "none",
+      "& .MuiDrawer-paper": {
+        width: DRAWER_WIDTH,
+        boxSizing: "border-box",
+      },
+    },
+    mobileDrawer: {
+      display: isLargeScreen ? "none" : "block",
+      "& .MuiDrawer-paper": {
+        width: DRAWER_WIDTH,
+        boxSizing: "border-box",
+      },
+    },
+    mainContent: {
+      flexGrow: 1,
+      p: { xs: 2, sm: 3 },
+      ml: isLargeScreen ? `${DRAWER_WIDTH}px` : 0,
+      mt: isLargeScreen ? 2 : 8,
+      width: "100%",
+    },
+    container: {
+      maxWidth: { sm: "100%", md: "90%", lg: "80%" },
+      mx: "auto",
+      p: { xs: 1, sm: 2, md: 3 },
+    },
+  };
 
   //store ui component state
   const [selectedTab, setSelectedTab] = useState(0);
@@ -99,40 +212,6 @@ export default function CustomerAdvancedSearch() {
 
     fetchRefineLists();
   }, []);
-
-  const buttonStyles2 = {
-    px: 5,
-    fontFamily: "Montserrat",
-    fontWeight: "bold",
-    color: "#8BD3E6",
-    backgroundColor: "#FFFFFF",
-    border: "1px solid #8BD3E6",
-    borderColor: "#8BD3E6",
-    boxShadow: "none",
-    "&:hover": {
-      boxShadow: "none",
-      backgroundColor: "#E6F8FB", // Subtle light blue hover effect
-      color: "#7AB9C4", // Slightly darker shade of the text
-      borderColor: "#7AB9C4", // Matches the text color for consistency
-    },
-  };
-
-  const buttonStyles = {
-    px: 10,
-    fontFamily: "Montserrat",
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    backgroundColor: "#8BD3E6",
-    border: "1px solid #8BD3E6",
-    borderColor: "#8BD3E6",
-    boxShadow: "none",
-    "&:hover": {
-      boxShadow: "none",
-      backgroundColor: "#6FBCCF", // Slightly darker blue for hover
-      color: "#FFFFFF", // Keeps the text color consistent
-      borderColor: "#6FBCCF", // Matches the background color for cohesion
-    },
-  };
 
   //search results refine functions
   const handlePageChange = (event, value) => {
