@@ -18,14 +18,45 @@ import {
   Select,
   MenuItem,
   Pagination,
+  Skeleton,
+  AppBar,
+  Toolbar,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
-
-import { FilterAlt } from "@mui/icons-material";
+import { FilterAlt, Menu as MenuIcon } from "@mui/icons-material";
+import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
 import AdminSidebar from "./AdminSidebar";
 import { useNavigate } from "react-router-dom";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { createGlobalStyle } from "styled-components";
 
+const DRAWER_WIDTH = 225;
+
+// Theme setup
+const theme = createTheme({
+  typography: {
+    fontFamily: "Montserrat, Arial, sans-serif",
+  },
+  breakpoints: {
+    values: {
+      xs: 0, // mobile phones
+      sm: 600, // tablets
+      md: 960, // small laptops
+      lg: 1280, // desktops
+      xl: 1920, // large screens
+    },
+  },
+});
+
+// Global styles
 const GlobalStyle = createGlobalStyle`
+  @keyframes skeleton-wave {
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 1; }
+  }
+  
   body {
     margin: 0;
     padding: 0;
@@ -37,62 +68,277 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-export default function AdminManageScore() {
+// Button styles
+const buttonStyles = {
+  px: { xs: 4, sm: 10 },
+  fontFamily: "Montserrat",
+  fontWeight: "bold",
+  color: "#FFFFFF",
+  backgroundColor: "#8BD3E6",
+  border: "1px solid #8BD3E6",
+  boxShadow: "none",
+  "&:hover": {
+    backgroundColor: "#6FBCCF",
+    borderColor: "#6FBCCF",
+    boxShadow: "none",
+  },
+};
+
+const buttonStyles2 = {
+  px: { xs: 4, sm: 10 },
+  fontFamily: "Montserrat",
+  fontWeight: "bold",
+  color: "#8BD3E6",
+  backgroundColor: "#FFFFFF",
+  boxShadow: "none",
+  border: "1px solid #8BD3E6",
+  "&:hover": {
+    boxShadow: "none",
+    backgroundColor: "#E6F8FB",
+    color: "#7AB9C4",
+    borderColor: "#7AB9C4",
+  },
+};
+
+const deleteButtonStyles = {
+  px: { xs: 4, sm: 10 },
+  fontFamily: "Montserrat",
+  fontWeight: "bold",
+  color: "#FFFFFF",
+  borderColor: "#DB2226",
+  backgroundColor: "#DB2226",
+  boxShadow: "none",
+  "&:hover": {
+    boxShadow: "none",
+    backgroundColor: "#B71C1C",
+    borderColor: "#B71C1C",
+  },
+};
+
+export default function AdminManageScores() {
+  const navigate = useNavigate();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "lg"));
+
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState(null);
-
-  const [unfilteredSearchedScores, setUnfilteredSearchedScores] = useState([]);
-
-  const [searchedScores, setSearchedScores] = useState([]);
-  const [filteredScores, setFilteredScores] = useState([]);
-  const [isFiltered, setIsFiltered] = useState(false);
-
-  const [musicScores, setMusicScores] = useState([]);
-
   const [searchQuery, setSearchQuery] = useState("");
-
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [sortBy, setSortBy] = useState("_id");
+  const [loading, setLoading] = useState(true);
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [musicScores, setMusicScores] = useState([]);
+  const itemsPerPage = 12;
   const [genre, setGenre] = useState("");
   const [composer, setComposer] = useState("");
   const [instrumentation, setInstrumentation] = useState("");
   const [emotion, setEmotion] = useState("");
+  const [unfilteredSearchedScores, setUnfilteredSearchedScores] = useState([]);
+  const [searchedScores, setSearchedScores] = useState([]);
+  const [filteredScores, setFilteredScores] = useState([]);
 
-  const [page, setPage] = useState(1);
+  // Grid columns based on screen size
+  const gridColumns = {
+    xs: 1, // 1 column for mobile
+    sm: 2, // 2 columns for tablets
+    md: 3, // 3 columns for small laptops
+    lg: 4, // 4 columns for desktops
+  };
 
-  const navigate = useNavigate();
-  const itemsPerPage = 12;
+  // Responsive styles
+  const styles = {
+    root: {
+      display: "flex",
+      minHeight: "100vh",
+      backgroundColor: "#FFFFFF",
+    },
+    appBar: {
+      display: isLargeScreen ? "none" : "block",
+      backgroundColor: "#FFFFFF",
+      boxShadow: "none",
+      borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+      width: "100%",
+    },
+    drawer: {
+      width: DRAWER_WIDTH,
+      flexShrink: 0,
+      display: isLargeScreen ? "block" : "none",
+      "& .MuiDrawer-paper": {
+        width: DRAWER_WIDTH,
+        boxSizing: "border-box",
+      },
+    },
+    mobileDrawer: {
+      display: isLargeScreen ? "none" : "block",
+      "& .MuiDrawer-paper": {
+        width: DRAWER_WIDTH,
+        boxSizing: "border-box",
+      },
+    },
+    mainContent: {
+      flexGrow: 1,
+      p: { xs: 2, sm: 3 },
+      mt: isLargeScreen ? 0 : 8,
+      ml: isLargeScreen ? 5 : 0, // Set margin-left to 0 for large screens
+      width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
+    },
+    searchContainer: {
+      display: "flex",
+      alignItems: "center",
+      gap: { xs: 1, sm: 2 },
+      flex: 1,
+      maxWidth: { xs: "100%", sm: 700 },
+      mx: { xs: 1, sm: 4 },
+    },
+    cardGrid: {
+      display: "grid",
+      gridTemplateColumns: {
+        xs: "repeat(1, 1fr)",
+        sm: "repeat(2, 1fr)",
+        md: "repeat(3, 1fr)",
+        lg: "repeat(4, 1fr)",
+      },
+      gap: { xs: 2, sm: 3 },
+    },
+    card: {
+      width: { xs: "100%", sm: 210 },
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      boxShadow: "none",
+      cursor: "pointer",
+    },
+    cardMedia: {
+      height: { xs: 200, sm: 280 },
+      width: "100%",
+      maxWidth: { xs: "100%", sm: 200 },
+      border: "2px solid #000",
+      borderRadius: 10,
+      padding: "10px",
+      boxSizing: "border-box",
+    },
+  };
 
+  // Component for skeleton loading
+  const SkeletonCard = () => (
+    <Card sx={styles.card}>
+      <Box sx={{ padding: "10px", width: "100%" }}>
+        <Skeleton
+          variant="rectangular"
+          sx={{
+            width: "100%",
+            height: { xs: 200, sm: 280 },
+            borderRadius: 10,
+            animation: "skeleton-wave 1s ease-in-out infinite",
+          }}
+        />
+      </Box>
+      <CardContent
+        sx={{
+          padding: "16px 8px",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <Skeleton
+          variant="text"
+          width="70%"
+          height={24}
+          sx={{ mb: 1, animation: "skeleton-wave 1s ease-in-out infinite" }}
+        />
+        <Skeleton
+          variant="text"
+          width="50%"
+          height={20}
+          sx={{ animation: "skeleton-wave 1s ease-in-out infinite" }}
+        />
+      </CardContent>
+    </Card>
+  );
+
+  const fetchMusicScores = async (order = "desc", field = "_id") => {
+    setLoading(true);
+    try {
+      // Add setTimeout to create a 2-second delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const response = await axios.get("http://localhost:3001/abc-file");
+      const transformedScores = response.data.map((score) => ({
+        ...score,
+        _id: score._id.$oid || score._id.toString() || score._id,
+        title: String(score.title || "Untitled"),
+        artist: String(score.artist || "Unknown Artist"),
+      }));
+
+      // Custom sorting logic
+      const sortedScores = transformedScores.sort((a, b) => {
+        const valueA = a[field] ? a[field].toString().toLowerCase() : "";
+        const valueB = b[field] ? b[field].toString().toLowerCase() : "";
+
+        if (field === "title") {
+          const isUnknownA = a.title === "Untitled";
+          const isUnknownB = b.title === "Untitled";
+
+          if (isUnknownA && !isUnknownB) return 1; // Untitled items go to the back
+          if (!isUnknownA && isUnknownB) return -1;
+
+          // If titles are known, sort by title; otherwise, sort by artist
+          return order === "asc"
+            ? valueA.localeCompare(valueB) ||
+                a.artist.toLowerCase().localeCompare(b.artist.toLowerCase())
+            : valueB.localeCompare(valueA) ||
+                b.artist.toLowerCase().localeCompare(a.artist.toLowerCase());
+        }
+
+        if (field === "artist") {
+          const isUnknownA = a.artist === "Unknown Artist";
+          const isUnknownB = b.artist === "Unknown Artist";
+
+          if (isUnknownA && !isUnknownB) return 1; // Unknown Artist items go to the back
+          if (!isUnknownA && isUnknownB) return -1;
+
+          // If artists are known, sort by artist; otherwise, sort by title
+          return order === "asc"
+            ? valueA.localeCompare(valueB) ||
+                a.title.toLowerCase().localeCompare(b.title.toLowerCase())
+            : valueB.localeCompare(valueA) ||
+                b.title.toLowerCase().localeCompare(a.title.toLowerCase());
+        }
+
+        // Default sorting for other fields
+        return order === "asc"
+          ? valueA.localeCompare(valueB)
+          : valueB.localeCompare(valueA);
+      });
+
+      setMusicScores(transformedScores);
+    } catch (error) {
+      console.error("Error fetching music scores:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update useEffect to include sortBy
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await axios.get("http://localhost:3000/current-user");
-        setUser(response.data);
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-        navigate("/login");
-      }
-    };
+    fetchMusicScores(sortOrder, sortBy);
+  }, [sortOrder, sortBy]);
 
-    fetchUser();
-  }, [navigate]);
+  // Modify the sort toggle handler
+  const handleSortToggle = () => {
+    const newOrder = sortOrder === "asc" ? "desc" : "asc";
+    setSortOrder(newOrder);
+  };
 
-  useEffect(() => {
-    const fetchMusicScores = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/abc-file");
-        // Transform the data to ensure string IDs
-        const transformedScores = response.data.map((score) => ({
-          ...score,
-          _id: score._id.$oid || score._id.toString() || score._id,
-          title: String(score.title || "Untitled"),
-          artist: String(score.artist || "Unknown Artist"),
-        }));
-        setMusicScores(transformedScores);
-      } catch (error) {
-        console.error("Error fetching music scores:", error);
-      }
-    };
-    fetchMusicScores();
-  }, []);
+  // Add handler for changing sort field
+  const handleSortByChange = (field) => {
+    setSortBy(field);
+  };
 
   useEffect(() => {
     // When search query changes, reset filters
@@ -118,6 +364,32 @@ export default function AdminManageScore() {
       setSearchedScores([]);
     }
   }, [searchQuery]);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/current-user");
+        setUser(response.data);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+        navigate("/login");
+      }
+    };
+
+    fetchUser();
+  }, [navigate]);
+
+  // Handle drawer toggle
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  // Pagination handler
+  const handlePageChange = (event, value) => {
+    setPage(value);
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const getDisplayedScores = () => {
     if (searchQuery && isFiltered) {
@@ -200,427 +472,607 @@ export default function AdminManageScore() {
     }
   };
 
-  const handlePageChange = (event, value) => {
-    setPage(value);
-  };
-
   const handleCardClick = (scoreId) => {
     navigate(`/admin-music-score-view/${scoreId}`);
   };
 
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <GlobalStyle />
-      <Box sx={{ display: "flex", minHeight: "100vh" }}>
-        <Box
-          sx={{
-            width: 225,
-            bgcolor: "#3B3183",
-            flexShrink: 0, // Prevent shrinking
-            overflowY: "auto", // Add scroll if content overflows
-          }}
+      <Box sx={styles.root}>
+        {/* Mobile AppBar */}
+        <AppBar position="fixed" sx={styles.appBar}>
+          <Toolbar>
+            <IconButton
+              color="inherit"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, color: "#3B3183" }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography
+              variant="h6"
+              sx={{ color: "#3B3183", fontWeight: "bold" }}
+            >
+              Uploaded Music Scores
+            </Typography>
+
+            {/* Mobile user info */}
+            {!isLargeScreen && (
+              <Box
+                sx={{
+                  ml: "auto",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                {!isMobile && (
+                  <Typography variant="body2" sx={{ color: "#3B3183" }}>
+                    {user?.username}
+                  </Typography>
+                )}
+                <Avatar
+                  alt={user?.username}
+                  src={user?.profile_picture}
+                  sx={{ width: 32, height: 32 }}
+                >
+                  {user?.username?.charAt(0).toUpperCase()}
+                </Avatar>
+              </Box>
+            )}
+          </Toolbar>
+        </AppBar>
+
+        {/* Permanent drawer for large screens */}
+        <Drawer variant="permanent" sx={styles.drawer}>
+          <AdminSidebar active="manage-scores" />
+        </Drawer>
+
+        {/* Temporary drawer for smaller screens */}
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={styles.mobileDrawer}
         >
-          <AdminSidebar />
-        </Box>
-        <Box sx={{ flexGrow: 1, p: 3, pl: 5 }}>
+          <AdminSidebar active="manage-scores" />
+        </Drawer>
+
+        {/* Main content */}
+        <Box component="main" sx={styles.mainContent}>
+          {/* Header section */}
+
           <Box
             sx={{
               display: "flex",
-              justifyContent: "space-between",
+              flexDirection: { xs: "column", sm: "row" },
               alignItems: "center",
+              gap: { xs: 2, sm: 0 },
               mb: 3,
+              mt: 2,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
+            {/* Sort controls */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                size={isMobile ? "small" : "medium"}
+                sx={{
+                  minWidth: { xs: 100, sm: 120 },
+                  fontFamily: "Montserrat",
+                  fontFamily: "Montserrat",
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#8BD3E6",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#8BD3E6",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#8BD3E6",
+                  },
+                }}
+              >
+                <MenuItem value="_id">Date Added</MenuItem>
+                <MenuItem value="title">Title</MenuItem>
+                <MenuItem value="artist">Artist</MenuItem>
+              </Select>
+
+              <IconButton
+                onClick={() =>
+                  setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                }
+              >
+                {sortOrder === "asc" ? <ArrowUpward /> : <ArrowDownward />}
+              </IconButton>
+            </Box>
+
+            {/* Search and filter section */}
+            <Box sx={styles.searchContainer}>
               <Paper
                 component="form"
                 sx={{
-                  p: "6px 10px",
+                  p: "4px 8px",
                   display: "flex",
                   alignItems: "center",
-                  width: 600,
-                  border: "1px solid #8BD3E6",
+                  width: "100%",
                   borderRadius: "50px",
+                  border: "1px solid #8BD3E6",
+                  boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)", // Subtle shadow for elevation
+                  transition:
+                    "border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
+                  "&:hover": {
+                    borderColor: "#6FBCCF", // Darker border on hover
+                    boxShadow: "0px 4px 10px #8BD3E6", // Slightly stronger shadow
+                  },
                 }}
               >
                 <InputBase
-                  sx={{ ml: 1, flex: 1, fontFamily: "Montserrat" }}
-                  placeholder="Look for music scores here..."
-                  inputProps={{ "aria-label": "search music scores" }}
+                  sx={{ ml: 2, flex: 1 }}
+                  placeholder={
+                    isMobile
+                      ? "Search music scores..."
+                      : "Look for all music scores here..."
+                  }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </Paper>
-              <IconButton
-                sx={{ p: "10px", ml: 2 }}
-                aria-label="filter"
-                onClick={() => setIsDrawerOpen(true)}
-              >
-                <FilterAlt sx={{ color: "#483C32" }} />
+
+              <IconButton onClick={() => setIsDrawerOpen(true)}>
+                <FilterAlt />
               </IconButton>
+            </Box>
 
-              <Drawer
-                anchor="right"
-                open={isDrawerOpen}
-                onClose={() => setIsDrawerOpen(false)}
+            {/* Desktop user info */}
+            {isLargeScreen && (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  ml: "auto",
+                }}
               >
-                <Box
-                  sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    p: 2,
-                    width: 300,
-                  }}
+                <Typography>{user?.username}</Typography>
+                <Avatar
+                  alt={user?.username}
+                  src={user?.profile_picture}
+                  sx={{ width: 40, height: 40 }}
                 >
-                  <Typography variant="h6" sx={{ mb: 2 }}>
-                    Filter Options
-                  </Typography>
-
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Genre</InputLabel>
-                    <Select
-                      label="Genre"
-                      value={genre}
-                      onChange={(e) => setGenre(e.target.value)}
-                    >
-                      {[
-                        "Baroque",
-                        "Children's",
-                        "Children's Song",
-                        "Classical",
-                        "Disco",
-                        "Impressionist",
-                        "Pop",
-                        "Rock",
-                        "Renaissance Polyphony",
-                      ].map((item) => (
-                        <MenuItem key={item} value={item}>
-                          {item}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Composer</InputLabel>
-                    <Select
-                      label="Composer"
-                      value={composer}
-                      onChange={(e) => setComposer(e.target.value)}
-                    >
-                      {[
-                        "Antonio Vivaldi",
-                        "Claude Debussy",
-                        "Emil Aarestrup",
-                        "Heinrich Faber",
-                        "Johann Pachelbel",
-                        "John Lennon, Paul McCartney",
-                        "Ludwig van Beethoven",
-                        "Mark Fisher",
-                        "Joe Goodman",
-                        "Larry Shay",
-                        "Wolfgang Amadeus Mozart",
-                      ].map((composerName) => (
-                        <MenuItem key={composerName} value={composerName}>
-                          {composerName}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Emotion</InputLabel>
-                    <Select
-                      label="Emotion"
-                      value={emotion}
-                      onChange={(e) => setEmotion(e.target.value)}
-                    >
-                      <MenuItem value="Happy">Angry</MenuItem>
-                      <MenuItem value="Happy">Happy</MenuItem>
-                      <MenuItem value="Relaxed">Relaxed</MenuItem>
-                      <MenuItem value="Sad">Sad</MenuItem>
-                    </Select>
-                  </FormControl>
-
-                  <TextField
-                    label="Instrumentation"
-                    variant="outlined"
-                    fullWidth
-                    sx={{ mb: 2 }}
-                    value={instrumentation}
-                    onChange={(e) => setInstrumentation(e.target.value)}
-                  />
-
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    sx={{
-                      mt: 2,
-                      borderColor: "#3B3183",
-                      color: "#3B3183",
-                      "&:hover": {
-                        borderColor: "#3B3183",
-                        color: "#FFFFFF",
-                        backgroundColor: "#3B3183",
-                      },
-                    }}
-                    onClick={handleFilterRequest}
-                  >
-                    APPLY FILTERS
-                  </Button>
-
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    sx={{
-                      mt: 2,
-                      borderColor: "#C44131",
-                      color: "#C44131",
-                      "&:hover": {
-                        borderColor: "#C44131",
-                        color: "#FFFFFF",
-                        backgroundColor: "#C44131",
-                      },
-                    }}
-                    onClick={clearFilters}
-                  >
-                    CLEAR FILTERS
-                  </Button>
-                  <Box sx={{ mt: "auto" }}>
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      sx={{
-                        mb: 2, // Margin at the bottom
-                        backgroundColor: "#483C32",
-                        color: "#fff",
-                        "&:hover": {
-                          backgroundColor: "#3c312a",
-                        },
-                      }}
-                      onClick={() => setIsDrawerOpen(false)}
-                    >
-                      CLOSE FILTERS
-                    </Button>
-                  </Box>
-                </Box>
-              </Drawer>
-            </Box>
-
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              {user ? (
-                <>
-                  <Typography
-                    variant="body1"
-                    sx={{ mr: 2, fontFamily: "Montserrat" }}
-                  >
-                    {user?.username}
-                  </Typography>
-                  <Avatar
-                    alt={user?.username}
-                    src={
-                      user && user?.profile_picture
-                        ? user?.profile_picture
-                        : null
-                    }
-                  >
-                    {(!user || !user?.profile_picture) &&
-                      user?.username.charAt(0).toUpperCase()}
-                  </Avatar>
-                </>
-              ) : (
-                <Typography
-                  variant="body1"
-                  sx={{ mr: 2, fontFamily: "Montserrat" }}
-                >
-                  Loading...
-                </Typography>
-              )}
-            </Box>
+                  {user?.username?.charAt(0).toUpperCase()}
+                </Avatar>
+              </Box>
+            )}
           </Box>
 
-          <Typography
-            variant="h5"
-            gutterBottom
-            sx={{ fontFamily: "Montserrat", fontWeight: "bold", mt: 4, mb: 3 }}
-          >
-            {searchQuery
-              ? "Search Results"
-              : isFiltered
-              ? "Filtered Results"
-              : "Uploaded Music Scores"}
-          </Typography>
-
-          {/* Display search result count if searching */}
-          {/* {searchQuery && (
-            <Typography
-              variant="body1"
-              sx={{ mb: 2, fontFamily: "Montserrat" }}
-            >
-              Found{" "}
-              <Box
-                component="span"
-                sx={{ fontWeight: "bold", color: "#3B3183" }}
-              >
-                {searchedScores.length}
-              </Box>{" "}
-              results
-            </Typography>
-          )} */}
-          <Typography variant="body1" sx={{ mb: 2, fontFamily: "Montserrat" }}>
-            Found{" "}
-            <Box component="span" sx={{ fontWeight: "bold", color: "#3B3183" }}>
-              {displayedScores.length}
-            </Box>{" "}
-            results
-          </Typography>
-
-          {/* {isFiltered && (
-            <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
-              {filteredScores.length > 0 ? (
-                <List>
-                  {filteredScores.map((score) => (
-                    <ListItemButton
-                      key={score._id}
-                      sx={{ display: "flex", alignItems: "center" }}
-                      onClick={() =>
-                        navigate(`/clerk-music-score-view/${score._id}`)
-                      }
-                    >
-                      <ListItemText
-                        primary={score.title}
-                        secondary={`Genre: ${score.genre} | Composer: ${score.composer} | Artist: ${score.artist} | Emotion: ${score.emotion}`}
-                      />
-
-                      <ListItemIcon>
-                        <IconButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                        >
-                          <PlayArrow />
-                        </IconButton>
-                      </ListItemIcon>
-                    </ListItemButton>
-                  ))}
-                </List>
-              ) : (
-                <Typography variant="body2">No results found</Typography>
-              )}
-            </Box>
-          )} */}
-
+          {/* Results Title and Count Section */}
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 3,
+              mt: { xs: 2, sm: 3, md: 4 },
+              mb: { xs: 2, sm: 3 },
+              px: { xs: 1, sm: 0 },
             }}
           >
-            {paginatedScores.length > 0 ? (
+            <Typography
+              variant="h5"
+              gutterBottom
+              sx={{
+                fontFamily: "Montserrat",
+                fontWeight: "bold",
+                fontSize: {
+                  xs: "1.25rem",
+                  sm: "1.5rem",
+                  md: "1.75rem",
+                },
+                textAlign: { xs: "left", sm: "left" },
+              }}
+            >
+              {searchQuery
+                ? "Search Results"
+                : isFiltered
+                  ? "Filtered Results"
+                  : "Uploaded Music Scores"}
+            </Typography>
+
+            {/* Results count - Simplified for mobile */}
+            {(searchQuery || isFiltered) && (
+              <Typography
+                variant="body1"
+                sx={{
+                  mb: { xs: 1, sm: 2 },
+                  fontFamily: "Montserrat",
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                  textAlign: { xs: "left", sm: "left" },
+                }}
+              >
+                {isMobile ? (
+                  // Mobile view - single line
+                  <span>
+                    Found{" "}
+                    <Box
+                      component="span"
+                      sx={{ fontWeight: "bold", color: "#8BD3E6" }}
+                    >
+                      {displayedScores.length}
+                    </Box>{" "}
+                    results
+                  </span>
+                ) : (
+                  // Desktop view - more spaced out
+                  <>
+                    Found{" "}
+                    <Box
+                      component="span"
+                      sx={{ fontWeight: "bold", color: "#8BD3E6" }}
+                    >
+                      {displayedScores.length}
+                    </Box>{" "}
+                    results
+                  </>
+                )}
+              </Typography>
+            )}
+          </Box>
+
+          {/* Music scores grid */}
+          <Box sx={styles.cardGrid}>
+            {loading ? (
+              Array(gridColumns[isMobile ? "xs" : isTablet ? "sm" : "lg"])
+                .fill()
+                .map((_, index) => <SkeletonCard key={index} />)
+            ) : paginatedScores.length > 0 ? (
               paginatedScores.map((score) => (
                 <Card
                   key={score._id}
+                  onClick={() => handleCardClick(score._id)}
                   sx={{
-                    width: 210,
+                    width: { xs: "100%", sm: 210 },
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     boxShadow: "none",
                     cursor: "pointer",
+                    transition: "transform 0.2s",
+                    "&:hover": {
+                      transform: "scale(1.02)",
+                    },
                   }}
-                  onClick={() => handleCardClick(score._id)}
                 >
-                  <CardMedia
-                    component="img"
-                    height={280}
-                    image={score.coverImageUrl}
-                    alt={score.title}
-                    sx={{
-                      border: "2px solid #000",
-                      borderRadius: 10,
-                      width: 200,
-                    }}
-                  />
+                  {score.coverImageUrl ? (
+                    <CardMedia
+                      component="img"
+                      image={score.coverImageUrl}
+                      alt={score.title}
+                      sx={{
+                        height: { xs: 200, sm: 280 },
+                        width: { xs: "100%", sm: 200 },
+                        borderRadius: 10,
+                        border: "2px solid #000",
+                        padding: "10px",
+                        boxSizing: "border-box",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        height: { xs: 200, sm: 280 },
+                        width: { xs: "100%", sm: 200 },
+                        border: "2px solid #000",
+                        borderRadius: 10,
+                        padding: "10px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: "#f5f5f5",
+                        boxSizing: "border-box",
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontFamily: "Montserrat",
+                          color: "#000",
+                          textAlign: "center",
+                          px: 2,
+                        }}
+                      >
+                        No Cover Image Available
+                      </Typography>
+                    </Box>
+                  )}
+
                   <CardContent
                     sx={{
-                      flexGrow: 1,
+                      width: "100%",
+                      padding: { xs: "16px 8px", sm: "16px" },
+                      "&:last-child": { pb: 2 },
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
-                      justifyContent: "center",
-                      fontFamily: "Montserrat",
-                      width: "100%",
-                      textAlign: "center",
                     }}
                   >
                     <Typography
                       variant="h6"
-                      noWrap
                       sx={{
-                        mb: 1,
                         fontFamily: "Montserrat",
-                        textOverflow: "ellipsis",
-                        overflow: "hidden",
-                        whiteSpace: "nowrap",
+                        fontSize: { xs: "1rem", sm: "1.25rem" },
+                        fontWeight: "bold",
+                        mb: 1,
+                        textAlign: "center",
                         width: "100%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      {score.title}
+                      {score.title || "Untitled"}
                     </Typography>
                     <Typography
                       variant="body2"
                       color="textSecondary"
-                      noWrap
                       sx={{
                         fontFamily: "Montserrat",
-                        textOverflow: "ellipsis",
-                        overflow: "hidden",
-                        whiteSpace: "nowrap",
+                        fontSize: { xs: "0.875rem", sm: "1rem" },
+                        textAlign: "center",
                         width: "100%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      {score.artist}
+                      {score.artist || "Unknown Artist"}
                     </Typography>
                   </CardContent>
                 </Card>
               ))
             ) : (
-              <Typography variant="body2" sx={{ fontFamily: "Montserrat" }}>
-                No scores found
+              <Typography
+                variant="body1"
+                sx={{
+                  fontFamily: "Montserrat",
+                  gridColumn: "1 / -1",
+                  textAlign: "center",
+                  py: 4,
+                }}
+              >
+                No music scores found
               </Typography>
             )}
           </Box>
 
-          {/* Pagination component */}
-          {paginatedScores.length > 0 && (
-            <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
-              <Pagination
-                count={pageCount}
-                page={page}
-                onChange={handlePageChange}
-                color="primary"
-                sx={{
-                  "& .MuiPaginationItem-root": {
-                    borderRadius: 2,
-                    fontFamily: "Montserrat",
-                    backgroundColor: "primary",
-                    color: "#000",
-                    "&.Mui-selected": {
-                      backgroundColor: "#8BD3E6",
-                      color: "#fff",
-                    },
+          {/* Pagination */}
+          <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+            <Pagination
+              count={pageCount}
+              page={page}
+              onChange={handlePageChange}
+              size={isMobile ? "small" : "medium"}
+              sx={{
+                "& .MuiPaginationItem-root": {
+                  borderRadius: 2,
+                  fontFamily: "Montserrat",
+                  backgroundColor: "primary",
+                  color: "#000",
+                  "&.Mui-selected": {
+                    backgroundColor: "#8BD3E6", // Blue for selected
+                    color: "#fff",
                     "&:hover": {
-                      backgroundColor: "#FFEE8C",
+                      backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
                     },
                   },
-                }}
-              />
-            </Box>
-          )}
+                  "&:hover": {
+                    backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
+                  },
+                },
+              }}
+            />
+          </Box>
         </Box>
       </Box>
-    </>
+
+      {/* Filter Drawer */}
+      <Drawer
+        anchor="right"
+        open={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        PaperProps={{
+          sx: {
+            width: { xs: "100%", sm: 400, md: 350 },
+            height: "100%",
+            overflow: "auto",
+          },
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            minHeight: "100%",
+            p: { xs: 2, sm: 3 },
+          }}
+        >
+          {/* Header */}
+          <Typography
+            variant="h6"
+            sx={{
+              textAlign: "center",
+              fontWeight: "bold",
+              mb: 3,
+              fontFamily: "Montserrat",
+            }}
+          >
+            Filter Options
+          </Typography>
+
+          {/* Filter Form Section */}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            <FormControl fullWidth>
+              <InputLabel>Genre</InputLabel>
+              <Select
+                value={genre}
+                onChange={(e) => setGenre(e.target.value)}
+                label="Genre"
+                sx={{
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#8BD3E6",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#6FBCCF",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#6FBCCF",
+                  },
+                }}
+              >
+                {genres.map((item) => (
+                  <MenuItem key={item} value={item}>
+                    {item}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>Composer</InputLabel>
+              <Select
+                value={composer}
+                onChange={(e) => setComposer(e.target.value)}
+                label="Composer"
+                sx={{
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#8BD3E6",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#6FBCCF",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#6FBCCF",
+                  },
+                }}
+              >
+                {composers.map((item) => (
+                  <MenuItem key={item} value={item}>
+                    {item}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>Emotion</InputLabel>
+              <Select
+                value={emotion}
+                onChange={(e) => setEmotion(e.target.value)}
+                label="Emotion"
+                sx={{
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#8BD3E6",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#6FBCCF",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#6FBCCF",
+                  },
+                }}
+              >
+                {emotions.map((item) => (
+                  <MenuItem key={item} value={item}>
+                    {item}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Instrumentation"
+              value={instrumentation}
+              onChange={(e) => setInstrumentation(e.target.value)}
+              fullWidth
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: "#8BD3E6",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#6FBCCF",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#6FBCCF",
+                  },
+                },
+              }}
+            />
+          </Box>
+
+          {/* Buttons Section - Using marginTop: auto to push it to bottom */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              mt: "2", // This pushes the button section to the bottom
+              pt: 4, // Adds padding top for spacing
+            }}
+          >
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={handleFilterRequest}
+              sx={buttonStyles}
+            >
+              APPLY FILTERS
+            </Button>
+
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={clearFilters}
+              sx={deleteButtonStyles}
+            >
+              CLEAR FILTERS
+            </Button>
+
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={() => setIsDrawerOpen(false)}
+              sx={buttonStyles2}
+            >
+              CLOSE FILTERS
+            </Button>
+          </Box>
+        </Box>
+      </Drawer>
+    </ThemeProvider>
   );
 }
+
+// Data arrays for select inputs
+const genres = [
+  "Baroque",
+  "Children's",
+  "Classical",
+  "Disco",
+  "Impressionist",
+  "Pop",
+  "Rock",
+  "Renaissance Polyphony",
+];
+
+const composers = [
+  "Antonio Vivaldi",
+  "Claude Debussy",
+  "Emil Aarestrup",
+  "Heinrich Faber",
+  "Johann Pachelbel",
+  "John Lennon, Paul McCartney",
+  "Ludwig van Beethoven",
+  "Wolfgang Amadeus Mozart",
+];
+
+const emotions = ["Angry", "Happy", "Relaxed", "Sad"];

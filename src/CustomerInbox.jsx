@@ -507,7 +507,7 @@ const CustomerInbox = () => {
         type: "reply",
         content: reply.message,
         date: reply.date,
-        sender: reply.sender || "admin",
+        sender: reply.sender || "customer",
       })),
     ];
 
@@ -640,7 +640,7 @@ const CustomerInbox = () => {
                 noWrap
                 sx={{ color: "#3B3183", fontWeight: "bold" }}
               >
-                My Cart
+                Inbox
               </Typography>
             </Box>
 
@@ -1019,22 +1019,30 @@ const CustomerInbox = () => {
           ref={drawerRef}
           sx={{
             position: "fixed",
-            right: drawerOpen ? 0 : "-100%",
-            top: 0,
-            width: {
-              xs: "50%", // Full width on extra small screens
-              sm: "60%", // 60% width on small screens
-              md: "50%", // 50% width on medium screens
-              lg: "400px", // Fixed width on large screens
+            right: drawerOpen ? 0 : "-1000px",
+            top: {
+              xs: "56px", // Mobile app bar height
+              sm: "64px", // Slightly taller on small screens
+              lg: 0, // No offset on large screens
             },
-            height: "100vh",
+            width: {
+              xs: "80%",
+              sm: "60%",
+              md: "50%",
+              lg: "400px",
+            },
+            height: {
+              xs: "calc(100vh - 56px)",
+              sm: "calc(100vh - 64px)",
+              lg: "100vh",
+            },
             bgcolor: "white",
             boxShadow: "-4px 0 12px rgba(0, 0, 0, 0.15)",
             transition: "right 0.3s ease",
             display: "flex",
             flexDirection: "column",
             fontFamily: "'Montserrat', sans-serif",
-            zIndex: 1300, // Higher than AppBar (which is usually 1100)
+            zIndex: 1200, // Ensure it's above other elements
           }}
         >
           {/* Drawer Header */}
@@ -1181,30 +1189,39 @@ const CustomerInbox = () => {
                       ? "#E0E0E0"
                       : "#F8FAFC",
                   fontFamily: "'Montserrat', sans-serif",
-                  fontSize: { xs: "13px", sm: "14px" }, // Responsive font size
                   "& .MuiOutlinedInput-root": {
+                    height: { xs: "40px", sm: "auto" }, // Constrain height on mobile
+                    minHeight: { xs: "40px", sm: "auto" },
                     "& fieldset": {
                       border:
                         selectedFeedback?.status === "resolved"
-                          ? "none"
-                          : "1px solid #8BD3E6",
+                          ? "none" // Remove border when disabled
+                          : "1px solid #8BD3E6", // Default border when enabled
                     },
                     "&:hover fieldset": {
                       borderColor:
                         selectedFeedback?.status === "resolved"
-                          ? "none"
-                          : "#6FBCCF",
+                          ? "none" // Ensure no border on hover when disabled
+                          : "#6FBCCF", // Darker blue on hover when enabled
                     },
                     "&.Mui-focused fieldset": {
                       borderColor:
                         selectedFeedback?.status === "resolved"
-                          ? "none"
-                          : "#8BD3E6",
+                          ? "none" // Ensure no border on focus when disabled
+                          : "#8BD3E6", // Keep blue on focus when enabled
                     },
                   },
                   "& .MuiOutlinedInput-input": {
                     fontFamily: "'Montserrat', sans-serif",
-                    padding: { xs: "8px 12px", sm: "12px 14px" }, // Responsive input padding
+                    fontSize: { xs: "12px", sm: "14px" }, // Responsive input font size
+                    padding: { xs: "8px 10px", sm: "10px 14px" }, // Tighter mobile padding
+                    height: { xs: "24px", sm: "auto" }, // Constrain input height on mobile
+                  },
+                  "& .MuiInputBase-root": {
+                    fontSize: { xs: "12px", sm: "14px" }, // Consistent base font size
+                  },
+                  "& .MuiInputLabel-root": {
+                    fontSize: { xs: "12px", sm: "14px" }, // Responsive label font size
                   },
                 }}
               />

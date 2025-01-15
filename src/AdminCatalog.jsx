@@ -14,6 +14,20 @@ import {
   Backdrop,
   Skeleton,
   InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  useMediaQuery,
+  AppBar,
+  Toolbar,
+  IconButton,
+  Drawer,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
@@ -24,19 +38,67 @@ import axios from "axios";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { format } from "date-fns";
+import { Menu as MenuIcon } from "@mui/icons-material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+
+const DRAWER_WIDTH = 225;
+
+const theme = createTheme({
+  typography: {
+    fontFamily: "Montserrat, Arial, sans-serif",
+  },
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 960,
+      lg: 1280,
+      xl: 1920,
+    },
+  },
+});
 
 const GlobalStyle = createGlobalStyle`
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Montserrat', sans-serif;
-    overflow-x: hidden; // Prevent horizontal scrolling
-    
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Montserrat', sans-serif;
+          overflow-x: hidden; // Prevent horizontal scrolling
 
-  }
-`;
+    }
 
-const formStyles = {
+  `;
+
+const styles = {
+  root: {
+    display: "flex",
+    minHeight: "100vh",
+    backgroundColor: "#FFFFFF",
+  },
+  appBar: {
+    display: "block",
+    backgroundColor: "#FFFFFF",
+    boxShadow: "none",
+    borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+  },
+  drawer: {
+    width: DRAWER_WIDTH,
+    flexShrink: 0,
+    "& .MuiDrawer-paper": {
+      width: DRAWER_WIDTH,
+      boxSizing: "border-box",
+    },
+  },
+  mainContent: {
+    flexGrow: 1,
+    p: { xs: 2, sm: 3 },
+    mt: 8,
+    width: "100%",
+  },
+};
+
+const formStyles = (theme) => ({
   mb: 2,
   fontFamily: "Montserrat",
   "& .MuiInputBase-root": {
@@ -44,40 +106,128 @@ const formStyles = {
   },
   "& .MuiFormLabel-root": {
     fontFamily: "Montserrat",
+    "&.Mui-focused": {
+      color: "#6FBCCF", // Label color on focus
+    },
   },
   "& .MuiOutlinedInput-root": {
-    borderRadius: 2, // Slightly rounded corners
+    borderRadius: 2,
     "& fieldset": {
-      borderColor: "rgba(0,0,0,0.23)", // Soft border color
+      borderColor: "#8BD3E6", // Default border color
     },
     "&:hover fieldset": {
-      borderColor: "#3B3183", // Match sidebar color on hover
+      borderColor: "#6FBCCF", // Border color on hover
     },
     "&.Mui-focused fieldset": {
-      borderColor: "#3B3183", // Focused state matches sidebar color
+      borderColor: "#6FBCCF", // Border color on focus
     },
   },
-  width: "90%", // Full width within grid item
-};
+  width: "90%",
+  [theme.breakpoints.down("sm")]: {
+    width: "90%", // Shorter width for mobile devices
+  },
+});
 
 const buttonStyles = {
-  px: 10,
+  px: 5,
   fontFamily: "Montserrat",
   fontWeight: "bold",
-  color: "#3B3183",
-  borderColor: "#3B3183",
+  color: "#FFFFFF",
+  backgroundColor: "#8BD3E6",
+  border: "1px solid #8BD3E6",
+  boxShadow: "none",
   "&:hover": {
-    backgroundColor: "#3B3183",
-    color: "#FFFFFF",
-    borderColor: "#3B3183",
+    backgroundColor: "#6FBCCF",
+    borderColor: "#6FBCCF",
+    boxShadow: "none",
+  },
+  "&:disabled": {
+    backgroundColor: "#E0E0E0",
+    borderColor: "#E0E0E0",
+    color: "#9E9E9E",
+  },
+};
+
+const dialogStyles = {
+  dialog: {
+    PaperProps: {
+      sx: {
+        borderRadius: "16px",
+        padding: "16px",
+        width: { xs: "90%", sm: "auto" },
+        maxWidth: { xs: "90%", sm: 500 },
+      },
+    },
+    aria: {
+      labelledby: "alert-dialog-title",
+      describedby: "alert-dialog-description",
+    },
+  },
+  title: {
+    sx: {
+      fontFamily: "Montserrat",
+      fontWeight: "bold",
+      fontSize: { xs: "1.125rem", sm: "1.25rem" },
+      textAlign: "center",
+      color: "black",
+      paddingBottom: 1,
+    },
+  },
+  content: {
+    sx: {
+      textAlign: "center",
+      paddingX: { xs: 2, sm: 3 },
+      paddingTop: "0 !important", // Override default padding
+    },
+  },
+  contentText: {
+    sx: {
+      fontFamily: "Montserrat",
+      fontSize: { xs: "0.875rem", sm: "1rem" },
+      color: "#555",
+      lineHeight: 1.6,
+    },
+  },
+  actions: {
+    sx: {
+      justifyContent: "center",
+      padding: { xs: "8px 16px", sm: "16px 24px" },
+      gap: { xs: 1, sm: 2 },
+    },
+  },
+  button: {
+    common: {
+      fontFamily: "Montserrat",
+      fontWeight: "bold",
+      textTransform: "uppercase",
+      borderRadius: "8px",
+      paddingX: { xs: 3, sm: 4 },
+      boxShadow: "none",
+    },
+    close: {
+      backgroundColor: "#8BD3E6",
+      color: "white",
+      "&:hover": {
+        backgroundColor: "#6FBCCF",
+        boxShadow: "none",
+      },
+    },
   },
 };
 
 export default function AdminCatalog() {
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
   const { fileName } = location.state || {};
-
+  const [originalData, setOriginalData] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [dialogTitle, setDialogTitle] = useState("");
+  const [isSuccess, setIsSuccess] = useState(true);
   const [tabIndex, setTabIndex] = useState(0);
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [catalogData, setCatalogData] = useState({
@@ -103,6 +253,7 @@ export default function AdminCatalog() {
     dateOfComposition: "",
     dateOfCreation: "",
     dateOfRecording: "",
+    dateUploaded: "",
     description: "",
     digitalCollection: "",
     edition: "",
@@ -197,6 +348,7 @@ export default function AdminCatalog() {
           if (response.data) {
             console.log("Fetched data:", response.data); // Log the fetched data
             setCatalogData(response.data); // Populate the form with existing data
+            setOriginalData(response.data); // Store original data
             setCoverImageUrl(response.data.coverImageUrl); // Set cover image URL from database
           }
         } catch (error) {
@@ -210,6 +362,22 @@ export default function AdminCatalog() {
 
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
+  
+    // Scroll to top if in mobile view
+    if (isMobile) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+  
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  // Add function to check for changes
+  const hasChanges = () => {
+    if (!originalData) return false;
+    return JSON.stringify(catalogData) !== JSON.stringify(originalData);
   };
 
   const handleInputChange = (e) => {
@@ -218,6 +386,18 @@ export default function AdminCatalog() {
       ...prevData,
       [name]: value, // Ensure empty fields are sent as empty strings
     }));
+  };
+
+  // Helper function to show dialog
+  const showDialog = (title, message, success = true) => {
+    setDialogTitle(title);
+    setDialogMessage(message);
+    setIsSuccess(success);
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
   };
 
   const handleDateChange = (name, newValue) => {
@@ -233,6 +413,9 @@ export default function AdminCatalog() {
     }
   };
 
+  useEffect(() => {}, [openDialog, dialogTitle, dialogMessage]);
+
+  // Modify handleCoverImageChange
   const handleCoverImageChange = (e) => {
     if (e.target.files[0]) {
       const file = e.target.files[0];
@@ -247,21 +430,22 @@ export default function AdminCatalog() {
             ...prevData,
             coverImageUrl: url,
           }));
-          alert("Cover image uploaded successfully!");
+          showDialog("Uploaded", "Cover image uploaded successfully!");
         })
         .catch((error) => {
           console.error("Error uploading cover image:", error);
-          alert("Error uploading cover image");
+          showDialog("Error", "Failed to upload cover image", false);
         });
-    } else {
-      alert("Please select a cover image to upload.");
     }
   };
 
   const handleMp3FileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) {
-      alert("Please select an MP3 file.");
+      setDialogTitle("Error");
+      setDialogMessage("Please select an MP3 file.");
+      setIsSuccess(false);
+      setOpenDialog(true);
       return;
     }
 
@@ -274,7 +458,7 @@ export default function AdminCatalog() {
         ...prevData,
         emotion: "", // Clear previous emotion
         genre: "", // Clear previous genre
-        instrumentation: "", // Clear previous instrument predictions
+        //instrumentation: "", // Clear previous instrument predictions
         gender: "",
       }));
 
@@ -326,48 +510,97 @@ export default function AdminCatalog() {
         genre: genreResponse.data.genre, // Update genre field
       }));
 
-      // Call instrument prediction API
-      const instrumentResponse = await axios.post(
-        "http://127.0.0.1:8000/predict-instrument",
-        {
-          fileUrl: fileUrl, // The URL of the MP3 file from Firebase
-        }
-      );
+      // // Call instrument prediction API
+      // const instrumentResponse = await axios.post(
+      //   "http://127.0.0.1:8000/predict-instrument",
+      //   {
+      //     fileUrl: fileUrl, // The URL of the MP3 file from Firebase
+      //   }
+      // );
 
-      // Update catalogData with the predicted instrumentation
-      setCatalogData((prevData) => ({
-        ...prevData,
-        instrumentation: instrumentResponse.data.top_instruments, // Update instrumentation field
-      }));
+      // // Update catalogData with the predicted instrumentation
+      // setCatalogData((prevData) => ({
+      //   ...prevData,
+      //   instrumentation: instrumentResponse.data.top_instruments, // Update instrumentation field
+      // }));
+
+      setDialogTitle("Prediction Complete");
+      setDialogMessage("File uploaded and predictions completed successfully!");
+      setIsSuccess(true);
+      setOpenDialog(true);
     } catch (error) {
       console.error(
         "Error uploading MP3 or predicting emotion/gender/genre/instrument:",
         error
       );
 
-      // Handle different types of errors gracefully
+      // Handle different types of errors with dialog
+      let errorMessage = "An unexpected error occurred.";
+
       if (error.response) {
-        // If the error has a response from the backend (e.g., 500, 422)
-        alert(
-          `Backend error: ${
-            error.response.data.detail || error.response.statusText
-          }`
-        );
+        errorMessage = `Backend error: ${error.response.data.detail || error.response.statusText}`;
       } else if (error.request) {
-        // If the request was made but no response was received
-        alert("Error communicating with the backend. Please try again later.");
+        errorMessage =
+          "Error communicating with the backend. Please try again later.";
       } else {
-        // Other errors
-        alert(`An error occurred: ${error.message}`);
+        errorMessage = `An error occurred: ${error.message}`;
       }
+
+      setDialogTitle("Error");
+      setDialogMessage(errorMessage);
+      setIsSuccess(false);
+      setOpenDialog(true);
     } finally {
-      // Set loading state to false (hide loading spinner)
       setLoading(false);
     }
   };
 
+  // Add this validation function before the handleSubmit function
+  const validateRequiredFields = (data) => {
+    const requiredFields = {
+      title: "Title",
+      artist: "Artist",
+      composer: "Composer",
+      price: "Price",
+      collection: "Collection",
+      dateUploaded: "Date Uploaded",
+      emotion: "Emotion",
+      genre: "Genre",
+    };
+
+    const missingFields = [];
+
+    // Check each required field
+    Object.entries(requiredFields).forEach(([field, label]) => {
+      if (!data[field] || data[field].trim() === "") {
+        missingFields.push(label);
+      }
+    });
+
+    // Price validation
+    if (data.price && (isNaN(data.price) || parseFloat(data.price) <= 0)) {
+      missingFields.push("Valid Price (must be greater than 0)");
+    }
+
+    return missingFields;
+  };
+
+  // Update the handleSubmit function
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate all required fields
+    const missingFields = validateRequiredFields(catalogData);
+
+    if (missingFields.length > 0) {
+      setDialogTitle("Missing Required Fields");
+      setDialogMessage(
+        `Please fill in the following required fields:\n${missingFields.join(", ")}`
+      );
+      setIsSuccess(false);
+      setOpenDialog(true);
+      return;
+    }
 
     try {
       const response = await fetch("http://localhost:3001/catalog", {
@@ -382,69 +615,209 @@ export default function AdminCatalog() {
         throw new Error("Failed to save data");
       }
 
-      alert("Data saved successfully");
-      navigate("/admin-manage-scores");
+      setOriginalData(catalogData);
+      setDialogTitle("Success");
+      setDialogMessage("Data saved successfully.");
+      setIsSuccess(true);
+      setOpenDialog(true);
     } catch (error) {
       console.error("Error saving data:", error);
-      alert("Error saving data");
+      setDialogTitle("Error");
+      setDialogMessage("Failed to save data.");
+      setIsSuccess(false);
+      setOpenDialog(true);
     }
   };
 
+  // Define shorter labels for mobile view
+  const getTabLabel = (fullLabel) => {
+    if (isMobile) {
+      switch (fullLabel) {
+        case "Identification":
+          return "ID";
+        case "Performance":
+          return "Perf.";
+        case "Geography":
+          return "Geo";
+        case "Related Work":
+          return "Related";
+        default:
+          return fullLabel;
+      }
+    }
+    return fullLabel;
+  };
+
+  // Tab labels array for easier management
+  const tabLabels = [
+    "Identification",
+    "Creators",
+    "Dates",
+    "Content",
+    "Format",
+    "Rights",
+    "Geography",
+    "Performance",
+    "Related Work",
+    "Cover Image",
+    "MP3 File",
+  ];
+
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <GlobalStyle />
-      <Box sx={{ display: "flex" }}>
-        <Box
+      <Box
+        sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#FFFFFF" }}
+      >
+        {/* Mobile AppBar */}
+        <AppBar
+          position="fixed"
           sx={{
-            width: "225px",
-            height: "100vh",
-            position: "fixed",
-            top: 0,
-            left: 0,
-            backgroundColor: "#3B3183",
-            overflowY: "auto",
+            display: { lg: "none" },
+            backgroundColor: "#FFFFFF",
+            boxShadow: "none",
+            borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
           }}
         >
-          <AdminSidebar active="upload" />
-        </Box>
-        <Box sx={{ flexGrow: 1, ml: "225px", p: 3 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-            }}
-          >
+          <Toolbar>
+            {/* Menu Button */}
+            <IconButton
+              color="inherit"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, color: "#3B3183" }}
+            >
+              <MenuIcon />
+            </IconButton>
+
+            {/* Title */}
             <Typography
-              variant="h4"
-              gutterBottom
+              variant="h6"
               sx={{
-                fontFamily: "Montserrat",
+                color: "#3B3183",
                 fontWeight: "bold",
-                mt: 4,
-                ml: 1,
+                flexGrow: 1,
               }}
             >
               Catalog Metadata
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography
-                variant="body1"
-                sx={{ mr: 2, fontFamily: "Montserrat" }}
-              >
-                {user ? user.username : "User"}
-              </Typography>
+
+            {/* Avatar in App Bar */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {!isMobile && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "#3B3183",
+                    display: { xs: "none", sm: "block" },
+                  }}
+                >
+                  {user?.username}
+                </Typography>
+              )}
               <Avatar
-                alt={user.username}
-                src={user && user.profile_picture ? user.profile_picture : null}
+                alt={user?.username}
+                src={user?.profile_picture || null}
+                sx={{
+                  width: { xs: 32, sm: 40 },
+                  height: { xs: 32, sm: 40 },
+                }}
               >
-                {(!user || !user.profile_picture) &&
-                  user.username.charAt(0).toUpperCase()}
+                {user?.username?.charAt(0).toUpperCase()}
               </Avatar>
             </Box>
-          </Box>
-          <Divider sx={{ mb: 3 }} />
+          </Toolbar>
+        </AppBar>
+
+        {/* Permanent Drawer for Large Screens */}
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: "none", lg: "block" },
+            "& .MuiDrawer-paper": {
+              width: DRAWER_WIDTH,
+              boxSizing: "border-box",
+            },
+          }}
+        >
+          <AdminSidebar active="manage-scores" />
+        </Drawer>
+
+        {/* Temporary Drawer for Mobile */}
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            display: { xs: "block", lg: "none" },
+            "& .MuiDrawer-paper": {
+              width: DRAWER_WIDTH,
+              boxSizing: "border-box",
+            },
+          }}
+        >
+          <AdminSidebar active="manage-scores" />
+          </Drawer>
+
+        {/* Main Content */}
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: { xs: 2, sm: 3 },
+            mt: { xs: 8, lg: 2 },
+            ml: { lg: `${DRAWER_WIDTH}px` },
+          }}
+        >
+          {/* Desktop Header */}
+          {isLargeScreen && (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 3,
+              }}
+            >
+              <Typography
+                variant="h4"
+                sx={{
+                  fontFamily: "Montserrat",
+                  fontWeight: "bold",
+                  fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
+                }}
+              >
+                Catalog Metadata
+              </Typography>
+
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    display: { xs: "none", lg: "block" },
+                    fontFamily: "Montserrat",
+                    color: "black",
+                  }}
+                >
+                  {user?.username || "User"}
+                </Typography>
+                <Avatar
+                  alt={user?.username}
+                  src={user?.profile_picture || null}
+                  sx={{
+                    width: { xs: 32, lg: 40 },
+                    height: { xs: 32, lg: 40 },
+                  }}
+                >
+                  {user?.username?.charAt(0).toUpperCase()}
+                </Avatar>
+              </Box>
+            </Box>
+          )}
+
+          {/* Divider */}
+          {isLargeScreen && <Divider sx={{ mb: 3 }} />}
 
           <Tabs
             value={tabIndex}
@@ -454,53 +827,66 @@ export default function AdminCatalog() {
               mb: 3,
               fontFamily: "Montserrat",
               overflowX: "auto",
+              width: "100%",
+              maxWidth: "100vw",
+              minHeight: { xs: "36px", sm: "48px" },
               "& .MuiTab-root": {
-                fontFamily: "Montserrat",
-                textTransform: "none", // Prevents all caps
-                color: "#666", // Default color for tabs
+                textTransform: "none",
+                color: "#666",
+                padding: { xs: "6px 12px", sm: "12px 16px" },
+                minHeight: { xs: "36px", sm: "48px" },
+                minWidth: { xs: "50px", sm: "auto" },
+                fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                textOverflow: "ellipsis",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
                 "&:hover": {
-                  color: "#8BD3E6", // Hover color
+                  color: "#8BD3E6",
                 },
               },
               "& .Mui-selected": {
-                color: "#8BD3E6 !important", // Force the active color to override defaults
-                fontWeight: "normal", // Ensures the active tab is not bold
+                color: "#8BD3E6 !important",
+                fontWeight: "normal",
               },
               "& .MuiTabs-indicator": {
-                backgroundColor: "#8BD3E6", // Active tab indicator color
+                backgroundColor: "#8BD3E6",
+              },
+              "& .MuiTabs-scrollableX": {
+                "&::-webkit-scrollbar": {
+                  display: "none",
+                },
+                scrollbarWidth: "none",
+              },
+              "& .MuiTabs-flexContainer": {
+                justifyContent: { xs: "center", sm: "flex-start" },
+                padding: { xs: "0 12px", sm: "0" },
               },
             }}
-            variant="scrollable" // Enables scrolling for tabs
-            scrollButtons="auto" // Shows scroll buttons when needed
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
           >
-            <Tab label="Identification" />
-            <Tab label="Creators" />
-            <Tab label="Dates" />
-            <Tab label="Content" />
-            <Tab label="Format" />
-            <Tab label="Rights" />
-            <Tab label="Geography" />
-            <Tab label="Performance" />
-            <Tab label="Related Work" />
-            <Tab label="Cover Image" />
-            <Tab label="MP3 File" />
+            {tabLabels.map((label, index) => (
+              <Tab
+                key={index}
+                label={getTabLabel(label)}
+                sx={{
+                  display: isMobile && tabIndex !== index ? "none" : "block",
+                  whiteSpace: "nowrap",
+                }}
+              />
+            ))}
           </Tabs>
+
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, pl: 4 }}>
-            <Grid container spacing={1}>
+            <Grid
+              container
+              spacing={2}
+              direction={isMobile ? "column" : "row"} // Stacked for mobile
+            >
+              {" "}
               {tabIndex === 0 && (
                 <>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="filename"
-                      label="Filename"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.filename}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </Grid>
                   <Grid item xs={12} sm={6}>
                     <TextField
                       name="title"
@@ -510,69 +896,12 @@ export default function AdminCatalog() {
                       sx={formStyles}
                       value={catalogData.title}
                       onChange={handleInputChange}
+                      required
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <TextField
-                      name="alternativeTitle"
-                      label="Alternative Title"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.alternativeTitle}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="identifier"
-                      label="Identifier"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.identifier}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="uri"
-                      label="URI"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.uri}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="permalink"
-                      label="Permalink"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.permalink}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="element"
-                      label="Element"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.element}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                </>
-              )}
-              {tabIndex === 1 && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
+                      required
                       name="artist"
                       label="Artist"
                       variant="outlined"
@@ -580,6 +909,40 @@ export default function AdminCatalog() {
                       sx={formStyles}
                       value={catalogData.artist}
                       onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      required
+                      name="composer"
+                      label="Composer"
+                      variant="outlined"
+                      fullWidth
+                      sx={formStyles}
+                      value={catalogData.composer}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      required
+                      name="price"
+                      label="Price"
+                      variant="outlined"
+                      fullWidth
+                      sx={formStyles}
+                      value={catalogData.price}
+                      onChange={handleInputChange}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment
+                            position="start"
+                            sx={{ fontFamily: "Montserrat" }}
+                          >
+                            RM
+                          </InputAdornment>
+                        ),
+                      }}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -595,15 +958,136 @@ export default function AdminCatalog() {
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <TextField
-                      name="composer"
-                      label="Composer"
+                      name="instrumentation"
+                      label="Instrumentation"
                       variant="outlined"
                       fullWidth
                       sx={formStyles}
-                      value={catalogData.composer}
+                      value={catalogData.instrumentation || ""}
                       onChange={handleInputChange}
                     />
                   </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        ...formStyles,
+                        mb: 2,
+                        width: isMobile ? "90%" : "90%", // Adjust width based on isMobile
+                        "& .MuiInputBase-root": {
+                          fontFamily: "Montserrat", // Apply Montserrat font
+                          "& fieldset": {
+                            borderColor: "#8BD3E6", // Default border color
+                          },
+                          "&:hover fieldset": {
+                            borderColor: "#6FBCCF", // Border color on hover
+                          },
+                          "&.Mui-focused fieldset": {
+                            borderColor: "#6FBCCF", // Border color on focus
+                          },
+                        },
+                        "& .MuiInputLabel-root": {
+                          fontFamily: "Montserrat", // Apply Montserrat font to the label
+                        },
+                      }}
+                      required
+                    >
+                      <InputLabel id="collection-label">Collection</InputLabel>
+                      <Select
+                        labelId="collection-label"
+                        name="collection"
+                        value={catalogData.collection}
+                        onChange={handleInputChange}
+                        label="Collection"
+                        required
+                        sx={{
+                          fontFamily: "Montserrat", // Apply font family to select
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#8BD3E6", // Default border color
+                          },
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#6FBCCF", // Border color on hover
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#6FBCCF", // Border color on focus
+                          },
+                          "& .MuiSvgIcon-root": {
+                            color: "#8BD3E6", // Dropdown arrow color
+                          },
+                          "&.Mui-focused .MuiSvgIcon-root": {
+                            color: "#6FBCCF", // Arrow color on focus
+                          },
+                        }}
+                      >
+                        <MenuItem
+                          value="Student"
+                          sx={{ fontFamily: "Montserrat" }}
+                        >
+                          Student
+                        </MenuItem>
+                        <MenuItem
+                          value="Lecturers"
+                          sx={{ fontFamily: "Montserrat" }}
+                        >
+                          Lecturers
+                        </MenuItem>
+                        <MenuItem
+                          value="Freelancers"
+                          sx={{ fontFamily: "Montserrat" }}
+                        >
+                          Freelancers
+                        </MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                      <DatePicker
+                        label="Date Uploaded"
+                        value={
+                          catalogData.dateUploaded
+                            ? new Date(catalogData.dateUploaded)
+                            : null
+                        }
+                        onChange={(newValue) => {
+                          handleInputChange({
+                            target: {
+                              name: "dateUploaded",
+                              value: newValue ? newValue.toISOString() : "",
+                            },
+                          });
+                        }}
+                        format="dd/MM/yyyy" // Ensures the date is displayed in dd/MM/yyyy format
+                        slots={{ textField: TextField }}
+                        slotProps={{
+                          textField: {
+                            variant: "outlined",
+                            fullWidth: true,
+                            required: true, // Makes the field required
+                            sx: formStyles,
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </Grid>
+                </>
+              )}
+              {tabIndex === 1 && (
+                <>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      name="identifier"
+                      label="Identifier"
+                      variant="outlined"
+                      fullWidth
+                      sx={formStyles}
+                      value={catalogData.identifier}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+
                   <Grid item xs={12} sm={6}>
                     <TextField
                       name="composerTimePeriod"
@@ -670,14 +1154,15 @@ export default function AdminCatalog() {
                       onChange={handleInputChange}
                     />
                   </Grid>
+
                   <Grid item xs={12} sm={6}>
                     <TextField
-                      name="collection"
-                      label="Collection"
+                      name="element"
+                      label="Element"
                       variant="outlined"
                       fullWidth
                       sx={formStyles}
-                      value={catalogData.collection}
+                      value={catalogData.element}
                       onChange={handleInputChange}
                     />
                   </Grid>
@@ -1121,6 +1606,17 @@ export default function AdminCatalog() {
                 <>
                   <Grid item xs={12} sm={6}>
                     <TextField
+                      name="alternativeTitle"
+                      label="Alternative Title"
+                      variant="outlined"
+                      fullWidth
+                      sx={formStyles}
+                      value={catalogData.alternativeTitle}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
                       name="copyright"
                       label="Copyright"
                       variant="outlined"
@@ -1194,22 +1690,6 @@ export default function AdminCatalog() {
                       sx={formStyles}
                       value={catalogData.numberInPublication}
                       onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="price"
-                      label="Price"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.price}
-                      onChange={handleInputChange}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">RM</InputAdornment>
-                        ),
-                      }}
                     />
                   </Grid>
                 </>
@@ -1429,6 +1909,17 @@ export default function AdminCatalog() {
                       onChange={handleInputChange}
                     />
                   </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      name="uri"
+                      label="URI"
+                      variant="outlined"
+                      fullWidth
+                      sx={formStyles}
+                      value={catalogData.uri}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
                 </>
               )}
               {tabIndex === 8 && (
@@ -1543,6 +2034,17 @@ export default function AdminCatalog() {
                       onChange={handleInputChange}
                     />
                   </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      name="permalink"
+                      label="Permalink"
+                      variant="outlined"
+                      fullWidth
+                      sx={formStyles}
+                      value={catalogData.permalink}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
                 </>
               )}
             </Grid>
@@ -1557,8 +2059,9 @@ export default function AdminCatalog() {
                       alignItems: "center",
                       justifyContent: "center",
                       p: 3,
+                      mt: 3,
                       borderRadius: 2,
-                      borderColor: "#3B3183",
+                      borderColor: "#8BD3E6",
                       boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)", // Subtle shadow for depth
                     }}
                   >
@@ -1616,21 +2119,13 @@ export default function AdminCatalog() {
                       variant="contained"
                       component="label"
                       sx={{
-                        fontFamily: "Montserrat",
-                        fontWeight: "bold",
-                        color: "#FFFFFF",
-                        backgroundColor: "#3B3183",
-                        borderRadius: 2,
-                        width: "180px",
-                        "&:hover": {
-                          backgroundColor: "#2C2657",
-                        },
-                        transition: "background-color 0.3s ease", // Smooth transition for hover
+                        ...buttonStyles,
                       }}
                     >
                       {coverImageUrl ? "Change Image" : "Upload Image"}
                       <input
                         type="file"
+                        accept=".jpg, .jpeg, .png" // Only allow JPG, JPEG, and PNG file types
                         hidden
                         onChange={handleCoverImageChange}
                       />
@@ -1650,8 +2145,9 @@ export default function AdminCatalog() {
                       flexDirection: "column",
                       alignItems: "center",
                       p: 3,
+                      mt: 3,
                       borderRadius: 3,
-                      borderColor: "#3B3183",
+                      borderColor: "#8BD3E6",
                       boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.1)",
                       textAlign: "center",
                       position: "relative", // Important for overlay positioning
@@ -1687,6 +2183,7 @@ export default function AdminCatalog() {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
+                          mt: 3,
                           mb: 2,
                           boxShadow: "inset 0px 4px 10px rgba(0, 0, 0, 0.1)",
                           fontFamily: "Montserrat",
@@ -1710,15 +2207,8 @@ export default function AdminCatalog() {
                       variant="contained"
                       component="label"
                       sx={{
-                        fontFamily: "Montserrat",
-                        fontWeight: "bold",
-                        color: "#FFFFFF",
-                        backgroundColor: "#3B3183",
-                        borderRadius: 2,
-                        width: "200px",
-                        my: 2,
-                        "&:hover": { backgroundColor: "#2C2657" },
-                        transition: "background-color 0.3s ease",
+                        ...buttonStyles,
+                        boxShadow: "none",
                       }}
                     >
                       {catalogData.mp3FileUrl ? "Change MP3" : "Upload MP3"}
@@ -1767,11 +2257,11 @@ export default function AdminCatalog() {
                   </Card>
                 </Grid>
 
-                {/* Form Fields on the Right (Stacked Vertically) */}
-                <Grid item xs={12} sm={7} md={4}>
+                <Grid item xs={12} sm={7} md={4} sx={{ mt: 4 }}>
                   <Grid container direction="column" spacing={2}>
                     <Grid item xs={12}>
                       <TextField
+                        required
                         name="emotion"
                         label="Emotion"
                         variant="outlined"
@@ -1796,6 +2286,7 @@ export default function AdminCatalog() {
 
                     <Grid item xs={12}>
                       <TextField
+                        required
                         name="genre"
                         label="Genre"
                         variant="outlined"
@@ -1805,29 +2296,80 @@ export default function AdminCatalog() {
                         onChange={handleInputChange}
                       />
                     </Grid>
-
-                    <Grid item xs={12}>
-                      <TextField
-                        name="instrumentation"
-                        label="Instrumentation"
-                        variant="outlined"
-                        fullWidth
-                        sx={formStyles}
-                        value={catalogData.instrumentation || ""}
-                        onChange={handleInputChange}
-                      />
-                    </Grid>
                   </Grid>
                 </Grid>
               </Grid>
             )}
+            <Dialog
+              open={openDialog}
+              onClose={handleCloseDialog}
+              PaperProps={dialogStyles.dialog.PaperProps}
+              aria-labelledby={dialogStyles.dialog.aria.labelledby}
+              aria-describedby={dialogStyles.dialog.aria.describedby}
+            >
+              <DialogTitle id="alert-dialog-title" sx={dialogStyles.title.sx}>
+                {dialogTitle}
+              </DialogTitle>
 
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
+              <DialogContent sx={dialogStyles.content.sx}>
+                <DialogContentText
+                  id="alert-dialog-description"
+                  sx={dialogStyles.contentText.sx}
+                >
+                  {dialogMessage}
+                </DialogContentText>
+              </DialogContent>
+
+              <DialogActions sx={dialogStyles.actions.sx}>
+                {[
+                  "Prediction Complete",
+                  "Missing Required Fields",
+                  "Error",
+                  "Uploaded",
+                ].includes(dialogTitle) ? (
+                  <Button
+                    onClick={handleCloseDialog}
+                    variant="contained"
+                    sx={{
+                      ...dialogStyles.button.common,
+                      ...dialogStyles.button.close,
+                    }}
+                  >
+                    Close
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => navigate("/admin-manage-scores")}
+                    variant="contained"
+                    sx={{
+                      ...dialogStyles.button.common,
+                      ...dialogStyles.button.close,
+                    }}
+                  >
+                    Go to Homepage
+                  </Button>
+                )}
+              </DialogActions>
+            </Dialog>
+
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                flexDirection: { xs: "column", sm: "row" }, // Stack vertically on mobile, horizontally on larger screens
+                alignItems: "flex-start", // Center buttons vertically when stacked
+                mt: 3,
+              }}
+            >
               <Button
                 variant="outlined"
                 size="large"
                 type="submit"
-                sx={buttonStyles}
+                sx={{
+                  ...buttonStyles,
+                  mb: { xs: 2, sm: 0 }, // Add margin-bottom on mobile for spacing
+                  width: { xs: "95%", sm: "auto" }, // Ensure consistent width on mobile
+                }}
               >
                 Save Metadata
               </Button>
@@ -1836,15 +2378,19 @@ export default function AdminCatalog() {
                   variant="outlined"
                   size="large"
                   onClick={handleNext}
-                  sx={{ ...buttonStyles, ml: 2 }}
+                  sx={{
+                    ...buttonStyles,
+                    ml: { xs: 0, sm: 2 }, // Remove margin-left on mobile
+                    width: { xs: "95%", sm: "auto" }, // Ensure consistent width on mobile
+                  }}
                 >
-                  Next
+                  Next Tab
                 </Button>
               )}
             </Box>
           </Box>
         </Box>
       </Box>
-    </>
+    </ThemeProvider>
   );
 }
