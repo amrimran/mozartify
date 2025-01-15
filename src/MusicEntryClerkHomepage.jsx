@@ -564,7 +564,7 @@ export default function MusicEntryClerkHomepage() {
                 sx={{
                   minWidth: { xs: 100, sm: 120 },
                   fontFamily: "Montserrat",
-                  fontFamily: "Montserrat",
+                 
                   "& .MuiOutlinedInput-notchedOutline": {
                     borderColor: "#8BD3E6",
                   },

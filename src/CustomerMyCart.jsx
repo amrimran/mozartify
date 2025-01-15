@@ -19,62 +19,175 @@ import {
   ThemeProvider,
   createTheme,
   Skeleton,
+  useMediaQuery,
+  AppBar,
+  Toolbar,
+  Drawer,
+  Container,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import MenuIcon from "@mui/icons-material/Menu";
+import PaymentIcon from "@mui/icons-material/Payment";
 import CustomerSidebar from "./CustomerSidebar";
 import { createGlobalStyle } from "styled-components";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
-import PaymentIcon from "@mui/icons-material/Payment";
 
 axios.defaults.withCredentials = true;
 
+const DRAWER_WIDTH = 230;
+
 export default function CustomerMyCart() {
   const [user, setUser] = useState(null);
+
+  //cart variables
   const [cartItemIDs, setCartItemIDs] = useState([]);
   const [cartItems, setCartItems] = useState([]);
+
+  //page variables
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [rowsPerPage] = useState(3);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [fadeIn, setFadeIn] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const theme = createTheme({
     typography: {
-      fontFamily: "Montserrat, sans-serif",
-      h4: {
-        fontWeight: 700,
-      },
-      h5: {
-        fontWeight: 500,
-      },
-      h6: {
-        fontWeight: 500,
-      },
-      body1: {
-        fontWeight: 400,
-      },
+      fontFamily: "Montserrat, Arial, sans-serif",
     },
     components: {
-      MuiTableCell: {
+      MuiTextField: {
         styleOverrides: {
           root: {
-            fontFamily: "Montserrat, sans-serif",
+            "& label": { fontFamily: "Montserrat" },
+            "& input": { fontFamily: "Montserrat" },
           },
         },
       },
       MuiButton: {
         styleOverrides: {
           root: {
-            fontFamily: "Montserrat, sans-serif",
-            fontWeight: 500,
+            fontFamily: "Montserrat",
+            textTransform: "none",
           },
         },
       },
     },
+    breakpoints: {
+      values: {
+        xs: 0, // mobile phones
+        sm: 600, // tablets
+        md: 960, // small laptops
+        lg: 1280, // desktops
+        xl: 1920, // large screens
+      },
+    },
   });
+
+  // Media query hooks
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const styles = {
+    root: {
+      display: "flex",
+      backgroundColor: "#FFFFFF",
+      minHeight: "100vh",
+      margin: 0, // Added this to remove margin
+      padding: 0, // Added this to remove padding
+      width: "100vw", // Ensures full width
+      overflowX: "auto", // Prevent horizontal scrollbars
+    },
+    appBar: {
+      display: isLargeScreen ? "none" : "block",
+      backgroundColor: "#FFFFFF",
+      boxShadow: "none",
+      borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+      // width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
+      // ml: { sm: `${DRAWER_WIDTH}px` },
+    },
+    drawer: {
+      width: DRAWER_WIDTH,
+      flexShrink: 0,
+      display: isLargeScreen ? "block" : "none",
+      "& .MuiDrawer-paper": {
+        // width: DRAWER_WIDTH,
+        boxSizing: "border-box",
+        minHeight: "100vh",
+      },
+      minHeight: "100vh",
+    },
+    mobileDrawer: {
+      display: isLargeScreen ? "none" : "block",
+      "& .MuiDrawer-paper": {
+        // width: DRAWER_WIDTH,
+        boxSizing: "border-box",
+        minHeight: "100vh",
+      },
+      minHeight: "100vh",
+    },
+    mainContent: {
+      flexGrow: 1,
+      p: 3,
+      // width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
+      // ml: { sm: `${DRAWER_WIDTH}px` },
+      mt: isLargeScreen ? 0 : 8,
+    },
+    menuButton: {
+      color: "#3B3183",
+      mr: 2,
+      display: isLargeScreen ? "none" : "block",
+    },
+    avatar: {
+      width: isMobile ? 120 : 150,
+      height: isMobile ? 120 : 150,
+      border: "4px solid #3B3183",
+      backgroundColor: "#F2F2F5",
+      color: "#3B3183",
+      fontSize: isMobile ? 48 : 60,
+    },
+    contentContainer: {
+      maxWidth: {
+        xs: "100%",
+        sm: "540px",
+        md: "720px",
+        lg: "960px",
+      },
+      // px: isMobile ? 2 : 3,
+    },
+    button: {
+      px: 4,
+      py: 1.5,
+      fontWeight: "bold",
+      color: "#FFFFFF",
+      backgroundColor: "#8BD3E6",
+      boxShadow: "none",
+      "&:hover": {
+        boxShadow: "none",
+        backgroundColor: "#6FBCCF",
+      },
+      width: isMobile ? "100%" : "auto",
+      minWidth: !isMobile ? "250px" : undefined,
+    },
+    deleteButton: {
+      px: 4,
+      py: 1.5,
+      fontWeight: "bold",
+      color: "#FFFFFF",
+      backgroundColor: "#DB2226",
+      boxShadow: "none",
+      "&:hover": {
+        boxShadow: "none",
+        backgroundColor: "#B71C1C",
+      },
+      width: isMobile ? "95%" : "250px",
+    },
+  };
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
 
   const requestSort = (key) => {
     let direction = "asc";
@@ -99,6 +212,29 @@ export default function CustomerMyCart() {
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      setLoading(true);
+      setFadeIn(false);
+      try {
+        const response = await axios.get("http://localhost:3000/current-user");
+        setTimeout(() => {
+          setUser(response.data);
+          setLoading(false);
+          // Add a small delay before triggering fade in
+          setTimeout(() => {
+            setFadeIn(true);
+          }, 100);
+        }, 1000);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+        setLoading(false);
+        navigate("/login");
+      }
+    };
+    fetchUser();
+  }, [navigate]);
 
   const fetchCartItemIDs = async () => {
     try {
@@ -154,29 +290,6 @@ export default function CustomerMyCart() {
       console.error("Error removing item from cart:", error);
     }
   };
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      setLoading(true);
-      setFadeIn(false);
-      try {
-        const response = await axios.get("http://localhost:3000/current-user");
-        setTimeout(() => {
-          setUser(response.data);
-          setLoading(false);
-          // Add a small delay before triggering fade in
-          setTimeout(() => {
-            setFadeIn(true);
-          }, 100);
-        }, 1000);
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-        setLoading(false);
-        navigate("/login");
-      }
-    };
-    fetchUser();
-  }, [navigate]);
 
   const buttonStyles = {
     px: 6,
@@ -291,320 +404,285 @@ export default function CustomerMyCart() {
 
   return (
     <ThemeProvider theme={theme}>
-      <GlobalStyle />
-      <Box display="flex">
-        <CustomerSidebar active="cart" />
-        <Box
-          sx={{
-            flexGrow: 1,
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            padding: 5,
-            marginLeft: "229px",
-          }}
+      <Box sx={styles.root}>
+        <AppBar position="fixed" sx={styles.appBar}>
+          <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <IconButton
+                edge="start"
+                onClick={handleDrawerToggle}
+                sx={styles.menuButton}
+              >
+                <MenuIcon />
+              </IconButton>
+              <Typography
+                variant="h6"
+                noWrap
+                sx={{ color: "#3B3183", fontWeight: "bold" }}
+              >
+                My Cart
+              </Typography>
+            </Box>
+
+            {/* User info section */}
+            {!isLargeScreen && (
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    mr: 2,
+                    color: "#3B3183",
+                    display: { xs: "none", sm: "block" }, // Hide username on very small screens
+                  }}
+                >
+                  {user?.username}
+                </Typography>
+                <Avatar
+                  alt={user?.username}
+                  src={user?.profile_picture}
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    border: "2px solid #3B3183",
+                  }}
+                >
+                  {user?.username.charAt(0).toUpperCase()}
+                </Avatar>
+              </Box>
+            )}
+          </Toolbar>
+        </AppBar>
+
+        {/* Permanent drawer for large screens */}
+        <Drawer variant="permanent" sx={styles.drawer} open>
+          <CustomerSidebar active="cart" />
+        </Drawer>
+
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={styles.mobileDrawer}
         >
+          <CustomerSidebar active="cart" />
+        </Drawer>
+
+        {/* Main content */}
+        <Box component="main" sx={styles.mainContent}>
           <Box
             sx={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
               mb: 3,
-              mt: 3,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="h4" sx={{ fontWeight: 700 }}>
+            {isLargeScreen && (
+              <Typography variant="h4" sx={{ fontWeight: "bold" }}>
                 My Cart 🛒
               </Typography>
-            </Box>
+            )}
 
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              {loading ? (
-                <>
-                  <Skeleton variant="text" width={100} sx={{ mr: 2 }} />
-                  <Skeleton variant="circular" width={40} height={40} />
-                </>
-              ) : user ? (
-                <>
-                  <Typography variant="body1" sx={{ mr: 2 }}>
-                    {user.username}
-                  </Typography>
-                  <Avatar
-                    alt={user.username}
-                    src={
-                      user && user.profile_picture ? user.profile_picture : null
-                    }
-                  >
-                    {(!user || !user.profile_picture) &&
-                      user.username.charAt(0).toUpperCase()}
-                  </Avatar>
-                </>
-              ) : (
-                <>
-                  <Typography variant="body1" sx={{ mr: 2 }}>
-                    Loading...
-                  </Typography>
-                  <Avatar></Avatar>
-                </>
-              )}
-            </Box>
+            {isLargeScreen && (
+              <Box sx={{ display: "flex", alignItems: "center", ml: "auto" }}>
+                <Typography variant="body1" sx={{ mr: 2 }}>
+                  {user?.username}
+                </Typography>
+                <Avatar
+                  alt={user?.username}
+                  src={user?.profile_picture}
+                  sx={{ width: 40, height: 40 }}
+                >
+                  {user?.username.charAt(0).toUpperCase()}
+                </Avatar>
+              </Box>
+            )}
           </Box>
-          <Divider />
-          {cartItems.length === 0 ? (
-            <Box
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              height="300px"
-            >
-              <Typography variant="h6" color="textSecondary">
-                No music scores are added in the cart for now.
-              </Typography>
-            </Box>
-          ) : (
-            <>
-              <TableContainer
-                component={Paper}
-                sx={{
-                  mt: 2,
-                  "& .MuiTable-root": {
-                    borderCollapse: "collapse",
-                  },
-                  "& .MuiTableCell-root": {
-                    borderBottom: "1px solid rgba(224, 224, 224, 1)",
-                    padding: "16px",
-                  },
-                  "& .MuiTableRow-root": {
-                    "&:last-child .MuiTableCell-root": {
-                      borderBottom: "none",
-                    },
-                  },
-                }}
+
+          {isLargeScreen && <Divider sx={{ mb: 4 }} />}
+
+          <Container sx={styles.contentContainer}>
+            {/* Cart Content */}
+
+            {cartItems.length === 0 ? (
+              <Box display="flex" justifyContent="center" alignItems="center">
+                <Typography variant="h6" color="textSecondary">
+                  No music scores are added in the cart for now.
+                </Typography>
+              </Box>
+            ) : (
+              <Box
+                display="flex"
+                flexDirection="column"
+                justifyContent="center"
+                alignItems="center"
               >
-                <Table>
-                  <TableHead
-                    sx={{
-                      backgroundColor: "#8BD3E6",
-                      "& .MuiTableCell-root": {
-                        borderBottom: "none",
-                      },
-                    }}
-                  >
-                    <TableRow>
-                      <TableCell sx={{ width: "60px", color: "#ffffff", p: 2 }}>
-                        <Typography sx={{ fontWeight: 700, color: "#ffffff" }}>
+                <TableContainer
+                  component={Paper}
+                  sx={{
+                    mt: 2,
+                    overflowX: "auto",
+                    "& .MuiTable-root": {
+                      minWidth: isMobile ? 300 : 900,
+                    },
+                  }}
+                >
+                  <Table>
+                    <TableHead sx={{ backgroundColor: "#8BD3E6" }}>
+                      <TableRow>
+                        <TableCell
+                          sx={{ color: "#ffffff", p: isMobile ? 1 : 2 }}
+                        >
                           #
-                        </Typography>
-                      </TableCell>
-                      <TableCell sx={{ width: "400px", p: 2 }}>
-                        <SortableTableHeader label="Title" field="title" />
-                      </TableCell>
-                      <TableCell sx={{ width: "200px", p: 2 }}>
-                        <SortableTableHeader
-                          label="Composer"
-                          field="composer"
-                        />
-                      </TableCell>
-                      <TableCell sx={{ width: "150px", p: 2 }}>
-                        <SortableTableHeader label="Genre" field="genre" />
-                      </TableCell>
-                      <TableCell sx={{ width: "120px", p: 2 }}>
-                        <SortableTableHeader label="Price" field="price" />
-                      </TableCell>
-                      <TableCell sx={{ width: "100px", p: 2 }}>
-                        <Typography sx={{ fontWeight: 700, color: "#ffffff" }}>
+                        </TableCell>
+                        <TableCell
+                          sx={{ color: "#ffffff", p: isMobile ? 1 : 2 }}
+                        >
+                          Title
+                        </TableCell>
+                        {!isMobile && (
+                          <>
+                            <TableCell sx={{ color: "#ffffff", p: 2 }}>
+                              Composer
+                            </TableCell>
+                            <TableCell sx={{ color: "#ffffff", p: 2 }}>
+                              Genre
+                            </TableCell>
+                          </>
+                        )}
+                        <TableCell
+                          sx={{ color: "#ffffff", p: isMobile ? 1 : 2 }}
+                        >
+                          Price
+                        </TableCell>
+                        <TableCell
+                          sx={{ color: "#ffffff", p: isMobile ? 1 : 2 }}
+                        >
                           Action
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {loading
-                      ? // Skeleton loading rows
-                        [...Array(3)].map((_, index) => (
-                          <TableRow key={index}>
-                            <TableCell>
-                              <Skeleton />
-                            </TableCell>
-                            <TableCell>
-                              <Box
-                                sx={{ display: "flex", alignItems: "center" }}
-                              >
-                                <Skeleton
-                                  variant="rectangular"
-                                  width={100}
-                                  height={60}
-                                />
-                                <Skeleton width={150} sx={{ ml: 2 }} />
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton width={40} />
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      : currentItems.map((item, index) => (
-                          <TableRow
-                            key={item._id}
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {currentItems.map((item, index) => (
+                        <TableRow
+                          key={item._id}
+                          sx={{
+                            opacity: fadeIn ? 1 : 0,
+                            transition: "opacity 0.5s ease-in-out",
+                          }}
+                        >
+                          <TableCell sx={{ p: isMobile ? 1 : 2 }}>
+                            {page * rowsPerPage + index + 1}
+                          </TableCell>
+                          <TableCell
                             sx={{
-                              opacity: 0,
-                              animation:
-                                "fadeInFromLeft 1.0s ease-in-out forwards",
-                              "@keyframes fadeInFromLeft": {
-                                "0%": {
-                                  opacity: 0,
-                                  transform: "translateX(-10px)", // Start from the left
-                                },
-                                "100%": {
-                                  opacity: 1,
-                                  transform: "translateX(0)", // End at its original position
-                                },
-                              },
+                              p: isMobile ? 1 : 2,
+                              maxWidth: isMobile ? "120px" : "250px",
                             }}
                           >
-                            <TableCell sx={{ width: "60px", p: 2 }}>
-                              {page * rowsPerPage + index + 1}
-                            </TableCell>
-                            <TableCell
-                              sx={{
-                                width: "400px",
-                                display: "flex",
-                                alignItems: "center",
-                                p: 2,
-                              }}
-                            >
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
                               <img
-                                src={item.coverImageUrl}
-                                alt={item.title}
+                                src={item?.coverImageUrl}
+                                alt={item?.title}
                                 style={{
-                                  width: "90px",
+                                  width: isMobile ? "50px" : "90px",
                                   height: "auto",
-                                  maxHeight: "70px",
+                                  maxHeight: isMobile ? "40px" : "70px",
                                   objectFit: "contain",
                                 }}
                               />
-                              <Box
-                                ml={2}
+                              <Typography
                                 sx={{
+                                  ml: 1,
                                   fontWeight: 700,
-                                  color: "black",
-                                  maxWidth: "250px",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
+                                  fontSize: isMobile ? "0.8rem" : "1rem",
                                 }}
                               >
-                                {item.title}
-                              </Box>
-                            </TableCell>
-                            <TableCell
-                              sx={{
-                                width: "200px",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                                p: 2,
-                              }}
+                                {item?.title}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          {!isMobile && (
+                            <>
+                              <TableCell sx={{ p: 2 }}>
+                                {item.composer}
+                              </TableCell>
+                              <TableCell sx={{ p: 2 }}>{item.genre}</TableCell>
+                            </>
+                          )}
+                          <TableCell
+                            sx={{
+                              p: isMobile ? 1 : 2,
+                              fontWeight: 700,
+                              color: "green",
+                            }}
+                          >
+                            RM {parseFloat(item.price).toFixed(2)}
+                          </TableCell>
+                          <TableCell sx={{ p: isMobile ? 1 : 2 }}>
+                            <IconButton
+                              onClick={() => handleRemoveItem(item._id)}
+                              sx={{ color: "red" }}
                             >
-                              {item.composer}
-                            </TableCell>
-                            <TableCell
-                              sx={{
-                                width: "150px",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                                p: 2,
-                              }}
-                            >
-                              {item.genre}
-                            </TableCell>
-                            <TableCell
-                              sx={{
-                                width: "120px",
-                                fontWeight: 700,
-                                color: "green",
-                                p: 2,
-                              }}
-                            >
-                              RM {parseFloat(item.price).toFixed(2)}
-                            </TableCell>
-                            <TableCell
-                              sx={{
-                                width: "100px",
-                                p: 2,
-                              }}
-                            >
-                              <IconButton
-                                onClick={() => handleRemoveItem(item._id)}
-                                sx={{
-                                  color: "red",
-                                  "&:hover": { color: "#d32f2f" },
-                                }}
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                  </TableBody>
-                </Table>
-                <TablePagination
-                  rowsPerPageOptions={[3]}
-                  component="div"
-                  count={cartItems.length}
-                  rowsPerPage={rowsPerPage}
-                  page={page}
-                  onPageChange={handleChangePage}
+                              <DeleteIcon />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  <TablePagination
+                    rowsPerPageOptions={[3]}
+                    component="div"
+                    count={cartItems.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                  />
+                </TableContainer>
+
+                {/* Subtotal and Payment Section */}
+                <Box
                   sx={{
-                    ".MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows":
-                      {
-                        margin: 0,
-                      },
-                  }}
-                />
-              </TableContainer>
-              <Box
-                display="flex"
-                justifyContent="flex-end"
-                alignItems="center"
-                gap={2}
-                mt={2}
-              >
-                <Typography variant="h6">Subtotal: </Typography>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 700,
-                    color: "green",
-                    textDecoration: "underline",
+                    display: "flex",
+                    flexDirection: isMobile ? "column" : "row",
+                    justifyContent: "flex-end",
+                    alignItems: isMobile ? "stretch" : "center",
+                    gap: 2,
+                    mt: 2,
                   }}
                 >
-                  RM {subtotal.toFixed(2)}
-                </Typography>
-                <Button
-                  variant="contained"
-                  onClick={handleStripeCheckout}
-                  startIcon={<PaymentIcon />}
-                  sx={{
-                    ...buttonStyles,
-                  }}
-                >
-                  Pay
-                </Button>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      width: isMobile ? "100%" : "auto",
+                      textAlign: isMobile ? "center" : "left",
+                    }}
+                  >
+                    Subtotal:{" "}
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        color: "green",
+                        textDecoration: "underline",
+                      }}
+                    >
+                      RM {subtotal.toFixed(2)}
+                    </span>
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    onClick={handleStripeCheckout}
+                    startIcon={<PaymentIcon />}
+                    sx={styles.button}
+                  >
+                    Pay
+                  </Button>
+                </Box>
               </Box>
-            </>
-          )}
+            )}
+          </Container>
         </Box>
       </Box>
     </ThemeProvider>

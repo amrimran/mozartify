@@ -639,7 +639,7 @@ export default function CustomerHomepage() {
                     ? "calc(100% - 60px)"
                     : isMediumScreen
                       ? 400
-                      : 600, // Account for filter icon
+                      : 1000, // Account for filter icon
                   border: "1px solid #8BD3E6",
                   borderRadius: "50px",
                 }}

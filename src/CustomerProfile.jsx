@@ -1,4 +1,11 @@
 import React, { useEffect, useState } from "react";
+
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+import { storage } from "./firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
 import {
   Box,
   Avatar,
@@ -23,24 +30,22 @@ import {
   AppBar,
   Toolbar,
 } from "@mui/material";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
+
 import EditIcon from "@mui/icons-material/Edit";
 import MenuIcon from "@mui/icons-material/Menu";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Visibility from "@mui/icons-material/Visibility";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import { storage } from "./firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { createGlobalStyle } from "styled-components";
+
 import CustomerSidebar from "./CustomerSidebar";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 axios.defaults.withCredentials = true;
 
 const DRAWER_WIDTH = 230;
 
 export default function CustomerProfile() {
+
   const [mobileOpen, setMobileOpen] = useState(false);
   const [username, setUsername] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
@@ -372,7 +377,7 @@ export default function CustomerProfile() {
   return (
     <ThemeProvider theme={theme}>
       <Box sx={styles.root}>
-        {/* App Bar for mobile/tablet */}
+        
         {/* App Bar for mobile/tablet */}
         <AppBar position="fixed" sx={styles.appBar}>
           <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>

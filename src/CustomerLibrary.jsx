@@ -24,13 +24,7 @@ import {
   useTheme,
   Skeleton,
 } from "@mui/material";
-import {
-  FavoriteBorder,
-  PlayArrow,
-  Favorite,
-  FilterAlt,
-  Menu as MenuIcon,
-} from "@mui/icons-material";
+import { Favorite, FilterAlt, Menu as MenuIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import CustomerSidebar from "./CustomerSidebar";
@@ -47,8 +41,6 @@ export default function CustomerLibrary() {
   const [currentScores, setCurrentScores] = useState([]);
   const [unfilteredScores, setUnfilteredScores] = useState([]);
   const [searchedScores, setSearchedScores] = useState([]);
-  const [filteredScores, setFilteredScores] = useState([]);
-  const [isFiltered, setIsFiltered] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState([]);
@@ -74,12 +66,12 @@ export default function CustomerLibrary() {
   };
 
   useEffect(() => {
-    if (isMobile) {
+    if (isMobile || isTablet) {
       setIsSidebarOpen(false);
     } else {
-      setIsSidebarOpen(true); // Always show sidebar on larger screens
+      setIsSidebarOpen(true);
     }
-  }, [isMobile]);
+  }, [isMobile || isTablet]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -93,7 +85,7 @@ export default function CustomerLibrary() {
       }
     };
     fetchUser();
-  }, []);
+  }, [favorites]);
 
   useEffect(() => {
     const fetchOwnedScores = async () => {
@@ -178,7 +170,6 @@ export default function CustomerLibrary() {
     setComposer("");
     setEmotion("");
     setInstrumentation("");
-    setIsFiltered(false);
     setCurrentScores(unfilteredScores);
   };
 
@@ -198,8 +189,6 @@ export default function CustomerLibrary() {
     const hasFilter = genre || composer || instrumentation || emotion;
 
     if (hasFilter) {
-      setIsFiltered(true);
-
       try {
         if (!searchQuery) {
           const filteredOnlySearchResults = applyFilters(unfilteredScores);
@@ -211,8 +200,6 @@ export default function CustomerLibrary() {
       } catch (error) {
         console.error("Error fetching filtered scores:", error);
       }
-    } else {
-      setIsFiltered(false);
     }
   };
 
@@ -365,18 +352,8 @@ export default function CustomerLibrary() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh", position: "relative" }}>
-        {/* Mobile Menu Button */}
-        {(isMobile || isTablet) &&  (
-          <IconButton
-            sx={{ position: "absolute", top: 10, left: 10, zIndex: 100 }}
-            onClick={handleToggleSidebar}
-          >
-            <MenuIcon />
-          </IconButton>
-        )}
-
         {/* Sidebar */}
-        {(!(isMobile|| isTablet)) ? (
+        {!(isMobile || isTablet) ? (
           <Box
             sx={{
               width: 225,
@@ -384,12 +361,12 @@ export default function CustomerLibrary() {
               overflowY: "auto",
             }}
           >
-            <CustomerSidebar active="home" />
+            <CustomerSidebar active="library" />
           </Box>
         ) : (
           // Drawer for smaller screens
           <Drawer
-            // variant="temporary"
+            variant="temporary"
             anchor="left"
             open={isSidebarOpen}
             onClose={() => setIsSidebarOpen(false)}
@@ -400,10 +377,9 @@ export default function CustomerLibrary() {
               },
             }}
           >
-            <CustomerSidebar active="home" />
+            <CustomerSidebar active="library" />
           </Drawer>
         )}
-
 
         {/* Main Content */}
         <Box
@@ -416,28 +392,99 @@ export default function CustomerLibrary() {
             overflow: "auto",
           }}
         >
+          {(isMobile || isTablet) && (
+            <Box
+              sx={{
+                position: "relative",
+                top: 10,
+                left: 0,
+                right: 0,
+                zIndex: 100,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                px: 2,
+              }}
+            >
+              <IconButton onClick={handleToggleSidebar}>
+                <MenuIcon />
+              </IconButton>
+
+              {(isMobile || isTablet) && (
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  {loading ? (
+                    <>
+                      <Skeleton
+                        variant="text"
+                        width={100}
+                        height={24}
+                        sx={{
+                          mr: 2,
+                          fontFamily: "Montserrat",
+                          animation: "wave",
+                        }}
+                      />
+                      <Skeleton variant="circular" width={40} height={40} />
+                    </>
+                  ) : (
+                    <>
+                      <Typography
+                        variant="body1"
+                        sx={{ mr: 2, fontFamily: "Montserrat" }}
+                      >
+                        {user?.username}
+                      </Typography>
+                      <Avatar
+                        alt={user?.username}
+                        src={
+                          user && user?.profile_picture
+                            ? user?.profile_picture
+                            : null
+                        }
+                      >
+                        {(!user || !user?.profile_picture) &&
+                          user?.username.charAt(0).toUpperCase()}
+                      </Avatar>
+                    </>
+                  )}
+                </Box>
+              )}
+            </Box>
+          )}
+
           {/* Search and Filter Section */}
           <Box
             sx={{
               display: "flex",
+              justifyContent: isMobile
+                ? "center"
+                : isTablet
+                  ? "center"
+                  : "none",
               alignItems: "center",
               width: "100%",
               mb: 3,
-              mt: isMobile ? 5 : 0,
+              mt: isMobile ? 2 : isTablet ? 2 : 0,
               gap: 2, // Add consistent spacing between elements
             }}
           >
             {/* Left spacing */}
-            <Box sx={{ flex: "1 1 0" }} />
+            {/* <Box sx={{ flex: "1 1 0" }} /> */}
 
             {/* Search Bar Container */}
             <Box
               sx={{
                 flex: "2 1 auto",
                 display: "flex",
-                justifyContent: "center",
+                justifyContent: isMobile
+                  ? "center"
+                  : isTablet
+                    ? "center"
+                    : "none",
                 alignItems: "center",
-                maxWidth: { xs: "100%", sm: 600, md: 800 },
+                maxWidth: { xs: "100%", sm: "100%", md: "100%" },
+                width: { xs: "100%", sm: "100%", md: "100%" },
+                mt: isMobile ? 2 : isTablet ? 2 : 0,
               }}
             >
               <Paper
@@ -446,13 +493,19 @@ export default function CustomerLibrary() {
                   p: "6px 10px",
                   display: "flex",
                   alignItems: "center",
-                  width: { xs: 200, sm: 400, md: 600 }, // Adjust widths for different breakpoints
+                  justifyContent: "space-between", // Align content inside Paper horizontally
+                  width: { xs: 350, sm: 600, md: 600 },
                   border: "1px solid #8BD3E6",
                   borderRadius: "50px",
                 }}
               >
                 <InputBase
-                  sx={{ ml: 1, flex: 1, fontFamily: "Montserrat" }}
+                  sx={{
+                    ml: 1,
+                    flex: 1,
+                    fontFamily: "Montserrat",
+                    textAlign: "center", // Ensure input text is centered
+                  }}
                   placeholder={
                     isMobile ? "Search..." : "Look for all music scores here..."
                   }
@@ -461,7 +514,10 @@ export default function CustomerLibrary() {
                 />
               </Paper>
               <IconButton
-                sx={{ p: "10px", ml: 2 }}
+                sx={{
+                  p: "10px",
+                  ml: 1,
+                }}
                 onClick={() => setIsDrawerOpen(true)}
               >
                 <FilterAlt />
@@ -678,50 +734,52 @@ export default function CustomerLibrary() {
             </Box>
 
             {/* User Info */}
-            <Box
-              sx={{
-                flex: "1 1 0",
-                display: "flex",
-                justifyContent: "flex-end",
-                alignItems: "center",
-              }}
-            >
-              {loading ? (
-                <>
-                  <Skeleton
-                    variant="text"
-                    width={100}
-                    height={24}
-                    sx={{
-                      mr: 2,
-                      fontFamily: "Montserrat",
-                      animation: "wave",
-                    }}
-                  />
-                  <Skeleton variant="circular" width={40} height={40} />
-                </>
-              ) : (
-                <>
-                  <Typography
-                    variant="body1"
-                    sx={{ mr: 2, fontFamily: "Montserrat" }}
-                  >
-                    {user?.username}
-                  </Typography>
-                  <Avatar
-                    alt={user?.username}
-                    src={
-                      user && user?.profile_picture
-                        ? user?.profile_picture
-                        : null
-                    }
-                  >
-                    {(!user || !user?.profile_picture) &&
-                      user?.username.charAt(0).toUpperCase()}
-                  </Avatar>
-                </>
-              )}
-            </Box>
+            {!isMobile && !isTablet && (
+              <Box
+                sx={{
+                  flex: "1 1 0",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                }}
+              >
+                {loading ? (
+                  <>
+                    <Skeleton
+                      variant="text"
+                      width={100}
+                      height={24}
+                      sx={{
+                        mr: 2,
+                        fontFamily: "Montserrat",
+                        animation: "wave",
+                      }}
+                    />
+                    <Skeleton variant="circular" width={40} height={40} />
+                  </>
+                ) : (
+                  <>
+                    <Typography
+                      variant="body1"
+                      sx={{ mr: 2, fontFamily: "Montserrat" }}
+                    >
+                      {user?.username}
+                    </Typography>
+                    <Avatar
+                      alt={user?.username}
+                      src={
+                        user && user?.profile_picture
+                          ? user?.profile_picture
+                          : null
+                      }
+                    >
+                      {(!user || !user?.profile_picture) &&
+                        user?.username.charAt(0).toUpperCase()}
+                    </Avatar>
+                  </>
+                )}
+              </Box>
+            )}
           </Box>
 
           {/* Library Title and Count */}
@@ -733,10 +791,13 @@ export default function CustomerLibrary() {
                 fontFamily: "Montserrat",
                 fontWeight: "bold",
                 fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem" },
+                textAlign: isMobile || isTablet ? "center" : "left", // Center text for mobile or tablet
+                width: "100%", // Ensure it spans full width for proper centering
               }}
             >
               Library 🗂️
             </Typography>
+
             {loading ? (
               <>
                 <Skeleton
@@ -756,6 +817,7 @@ export default function CustomerLibrary() {
                 sx={{
                   fontFamily: "Montserrat",
                   fontWeight: "medium",
+                  textAlign: isTablet || isMobile ? "center" : "left", // Center-align when on tablet or mobile
                 }}
               >
                 You have{" "}
@@ -765,7 +827,8 @@ export default function CustomerLibrary() {
                 >
                   {currentScores.length > 99 ? "99+" : currentScores.length}
                 </Box>{" "}
-                owned scores. Please do enjoy them 😁
+                owned scores.
+                {currentScores.length > 0 && " Please do enjoy them 😁"}
               </Typography>
             )}
           </Box>

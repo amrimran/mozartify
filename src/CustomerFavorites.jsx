@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
-  Skeleton,
   Box,
   List,
   ListItemIcon,
@@ -18,30 +17,20 @@ import {
   InputLabel,
   TextField,
   Select,
-  MenuItem,
   Snackbar,
+  MenuItem,
   Alert,
   useMediaQuery,
   useTheme,
+  Skeleton,
 } from "@mui/material";
-import {
-  FavoriteBorder,
-  PlayArrow,
-  Favorite,
-  FilterAlt,
-  Menu as MenuIcon,
-} from "@mui/icons-material";
+import { Favorite, FilterAlt, Menu as MenuIcon } from "@mui/icons-material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import CustomerSidebar from "./CustomerSidebar";
 
 axios.defaults.withCredentials = true;
-
-const options = {
-  keys: ["title", "genre", "composer", "artist", "instrumentation", "emotion"],
-  threshold: 0.3,
-};
 
 export default function CustomerFavorites() {
   const theme = useTheme();
@@ -53,11 +42,10 @@ export default function CustomerFavorites() {
   const [currentScores, setCurrentScores] = useState([]);
   const [unfilteredScores, setUnfilteredScores] = useState([]);
   const [purchasedScores, setPurchasedScores] = useState([]);
-  const [addedToCartScores, setAddedToCartScores] = useState([]);
   const [searchedScores, setSearchedScores] = useState([]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState([]);
-  const [isFiltered, setIsFiltered] = useState(false);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [genre, setGenre] = useState("");
@@ -75,16 +63,19 @@ export default function CustomerFavorites() {
     type: "",
   });
 
+  const [addedToCartScores, setAddedToCartScores] = useState([]);
+
   const handleToggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
   useEffect(() => {
-    // Automatically close the sidebar when switching to mobile view
-    if (isMobile) {
+    if (isMobile || isTablet) {
       setIsSidebarOpen(false);
+    } else {
+      setIsSidebarOpen(true);
     }
-  }, [isMobile]);
+  }, [isMobile || isTablet]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -98,7 +89,7 @@ export default function CustomerFavorites() {
       }
     };
     fetchUser();
-  }, []);
+  }, [favorites]);
 
   useEffect(() => {
     const fetchFavoriteScores = async () => {
@@ -119,7 +110,7 @@ export default function CustomerFavorites() {
     };
 
     fetchFavoriteScores();
-  }, []);
+  }, [favorites]);
 
   useEffect(() => {
     const fetchPurchasedScores = async () => {
@@ -219,30 +210,7 @@ export default function CustomerFavorites() {
     setComposer("");
     setEmotion("");
     setInstrumentation("");
-    setIsFiltered(false);
     setCurrentScores(unfilteredScores);
-  };
-
-  const handleFilterRequest = async () => {
-    const hasFilter = genre || composer || instrumentation || emotion;
-
-    if (hasFilter) {
-      setIsFiltered(true);
-
-      try {
-        if (!searchQuery) {
-          const filteredOnlySearchResults = applyFilters(unfilteredScores);
-          setCurrentScores(filteredOnlySearchResults);
-        } else {
-          const filteredSearchedSearchResults = applyFilters(searchedScores);
-          setCurrentScores(filteredSearchedSearchResults);
-        }
-      } catch (error) {
-        console.error("Error fetching filtered scores:", error);
-      }
-    } else {
-      setIsFiltered(false);
-    }
   };
 
   const handleSnackbarClose = (event, reason) => {
@@ -256,6 +224,25 @@ export default function CustomerFavorites() {
       type: "",
     });
   };
+
+  const handleFilterRequest = async () => {
+    const hasFilter = genre || composer || instrumentation || emotion;
+
+    if (hasFilter) {
+      try {
+        if (!searchQuery) {
+          const filteredOnlySearchResults = applyFilters(unfilteredScores);
+          setCurrentScores(filteredOnlySearchResults);
+        } else {
+          const filteredSearchedSearchResults = applyFilters(searchedScores);
+          setCurrentScores(filteredSearchedSearchResults);
+        }
+      } catch (error) {
+        console.error("Error fetching filtered scores:", error);
+      }
+    }
+  };
+
   const toggleFavorite = async (musicScoreId) => {
     try {
       const isFavorite = user?.favorites?.includes(musicScoreId);
@@ -314,19 +301,36 @@ export default function CustomerFavorites() {
   };
 
   const GlobalStyle = createGlobalStyle`
-      body {
-        margin: 0;
-        padding: 0;
-        font-family: 'Montserrat', sans-serif;
-        overflow-x: hidden;
-      }
-  
-      @keyframes skeleton-wave {
-        0% { opacity: 1; }
-        50% { opacity: 0.4; }
-        100% { opacity: 1; }
-      }
-    `;
+    @keyframes skeleton-wave {
+     0% {
+       opacity: 1;
+     }
+     25% {
+       opacity: 0.25;
+     }
+     50% {
+       opacity: 0.5;
+     }
+     75% {
+       opacity: 0.75;
+     }
+     100% {
+       opacity: 1;
+     }
+   }
+     body {
+       margin: 0;
+       padding: 0;
+       font-family: 'Montserrat', sans-serif;
+       overflow-x: hidden;
+     }
+ 
+     @keyframes skeleton-wave {
+       0% { opacity: 1; }
+       50% { opacity: 0.4; }
+       100% { opacity: 1; }
+     }
+   `;
 
   const buttonStyles = {
     px: 10,
@@ -388,30 +392,34 @@ export default function CustomerFavorites() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", height: "100vh", position: "relative" }}>
-        {/* Mobile Menu Button */}
-        {isMobile && (
-          <IconButton
-            sx={{ position: "absolute", top: 10, left: 10, zIndex: 1100 }}
-            onClick={handleToggleSidebar}
-          >
-            <MenuIcon />
-          </IconButton>
-        )}
-
         {/* Sidebar */}
-        <Box
-          sx={{
-            width: isSidebarOpen ? (isMobile ? "100%" : 225) : 0,
-            flexShrink: 0,
-            transition: "width 0.3s",
-            position: isMobile ? "fixed" : "relative",
-            zIndex: 1000,
-            height: "100%",
-            display: isSidebarOpen ? "block" : "none",
-          }}
-        >
-          <CustomerSidebar active="favorites" />
-        </Box>
+        {!(isMobile || isTablet) ? (
+          <Box
+            sx={{
+              width: 225,
+              flexShrink: 0,
+              overflowY: "auto",
+            }}
+          >
+            <CustomerSidebar active="library" />
+          </Box>
+        ) : (
+          // Drawer for smaller screens
+          <Drawer
+            variant="temporary"
+            anchor="left"
+            open={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+            sx={{
+              "& .MuiDrawer-paper": {
+                width: 225,
+                boxSizing: "border-box",
+              },
+            }}
+          >
+            <CustomerSidebar active="library" />
+          </Drawer>
+        )}
 
         {/* Main Content */}
         <Box
@@ -424,28 +432,99 @@ export default function CustomerFavorites() {
             overflow: "auto",
           }}
         >
+          {(isMobile || isTablet) && (
+            <Box
+              sx={{
+                position: "relative",
+                top: 10,
+                left: 0,
+                right: 0,
+                zIndex: 100,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                px: 2,
+              }}
+            >
+              <IconButton onClick={handleToggleSidebar}>
+                <MenuIcon />
+              </IconButton>
+
+              {(isMobile || isTablet) && (
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  {loading ? (
+                    <>
+                      <Skeleton
+                        variant="text"
+                        width={100}
+                        height={24}
+                        sx={{
+                          mr: 2,
+                          fontFamily: "Montserrat",
+                          animation: "wave",
+                        }}
+                      />
+                      <Skeleton variant="circular" width={40} height={40} />
+                    </>
+                  ) : (
+                    <>
+                      <Typography
+                        variant="body1"
+                        sx={{ mr: 2, fontFamily: "Montserrat" }}
+                      >
+                        {user?.username}
+                      </Typography>
+                      <Avatar
+                        alt={user?.username}
+                        src={
+                          user && user?.profile_picture
+                            ? user?.profile_picture
+                            : null
+                        }
+                      >
+                        {(!user || !user?.profile_picture) &&
+                          user?.username.charAt(0).toUpperCase()}
+                      </Avatar>
+                    </>
+                  )}
+                </Box>
+              )}
+            </Box>
+          )}
+
           {/* Search and Filter Section */}
           <Box
             sx={{
               display: "flex",
+              justifyContent: isMobile
+                ? "center"
+                : isTablet
+                  ? "center"
+                  : "none",
               alignItems: "center",
               width: "100%",
               mb: 3,
-              mt: isMobile ? 5 : 0,
+              mt: isMobile ? 2 : isTablet ? 2 : 0,
               gap: 2, // Add consistent spacing between elements
             }}
           >
-            {/* Left spacing */}
-            <Box sx={{ flex: "1 1 0" }} />
+            {/* Left spacing
+            <Box sx={{ flex: "1 1 0" }} /> */}
 
             {/* Search Bar Container */}
             <Box
               sx={{
                 flex: "2 1 auto",
                 display: "flex",
-                justifyContent: "center",
+                justifyContent: isMobile
+                  ? "center"
+                  : isTablet
+                    ? "center"
+                    : "none",
                 alignItems: "center",
-                maxWidth: { xs: "100%", sm: 600, md: 800 },
+                maxWidth: { xs: "100%", sm: "100%", md: "100%" },
+                width: { xs: "100%", sm: "100%", md: "100%" },
+                mt: isMobile ? 2 : isTablet ? 2 : 0,
               }}
             >
               <Paper
@@ -454,7 +533,8 @@ export default function CustomerFavorites() {
                   p: "6px 10px",
                   display: "flex",
                   alignItems: "center",
-                  width: { xs: 200, sm: 400, md: 600 }, // Adjust widths for different breakpoints
+                  justifyContent: "space-between", // Align content inside Paper horizontally
+                  width: { xs: 350, sm: 600, md: 600 },
                   border: "1px solid #8BD3E6",
                   borderRadius: "50px",
                 }}
@@ -471,7 +551,7 @@ export default function CustomerFavorites() {
                 />
               </Paper>
               <IconButton
-                sx={{ p: "10px", ml: 2 }}
+                sx={{ p: "10px", ml: 1 }}
                 onClick={() => setIsDrawerOpen(true)}
               >
                 <FilterAlt />
@@ -688,50 +768,52 @@ export default function CustomerFavorites() {
             </Box>
 
             {/* User Info */}
-            <Box
-              sx={{
-                flex: "1 1 0",
-                display: "flex",
-                justifyContent: "flex-end",
-                alignItems: "center",
-              }}
-            >
-              {loading ? (
-                <>
-                  <Skeleton
-                    variant="text"
-                    width={100}
-                    height={24}
-                    sx={{
-                      mr: 2,
-                      fontFamily: "Montserrat",
-                      animation: "wave",
-                    }}
-                  />
-                  <Skeleton variant="circular" width={40} height={40} />
-                </>
-              ) : (
-                <>
-                  <Typography
-                    variant="body1"
-                    sx={{ mr: 2, fontFamily: "Montserrat" }}
-                  >
-                    {user?.username}
-                  </Typography>
-                  <Avatar
-                    alt={user?.username}
-                    src={
-                      user && user?.profile_picture
-                        ? user?.profile_picture
-                        : null
-                    }
-                  >
-                    {(!user || !user?.profile_picture) &&
-                      user?.username.charAt(0).toUpperCase()}
-                  </Avatar>
-                </>
-              )}
-            </Box>
+            {!isMobile && !isTablet && (
+              <Box
+                sx={{
+                  flex: "1 1 0",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                }}
+              >
+                {loading ? (
+                  <>
+                    <Skeleton
+                      variant="text"
+                      width={100}
+                      height={24}
+                      sx={{
+                        mr: 2,
+                        fontFamily: "Montserrat",
+                        animation: "wave",
+                      }}
+                    />
+                    <Skeleton variant="circular" width={40} height={40} />
+                  </>
+                ) : (
+                  <>
+                    <Typography
+                      variant="body1"
+                      sx={{ mr: 2, fontFamily: "Montserrat" }}
+                    >
+                      {user?.username}
+                    </Typography>
+                    <Avatar
+                      alt={user?.username}
+                      src={
+                        user && user?.profile_picture
+                          ? user?.profile_picture
+                          : null
+                      }
+                    >
+                      {(!user || !user?.profile_picture) &&
+                        user?.username.charAt(0).toUpperCase()}
+                    </Avatar>
+                  </>
+                )}
+              </Box>
+            )}
           </Box>
 
           {/* Library Title and Count */}
