@@ -847,13 +847,12 @@ app.post("/advanced-search", async (req, res) => {
 app.post("/search", async (req, res) => {
   const { combinedQueries, selectedCollection } = req.body;
 
-  let query = {};
-
-  if (selectedCollection !== "All") {
-    query.collection = selectedCollection;
-  }
-
   let searchConditions = [];
+
+  // Add collection filter if applicable
+  if (selectedCollection !== "All") {
+    searchConditions.push({ collection: selectedCollection });
+  }
 
   combinedQueries.forEach((row, index) => {
     let condition = {};
@@ -898,16 +897,18 @@ app.post("/search", async (req, res) => {
     }
   });
 
+  // Combine all conditions into the query
+  let query = {};
   if (searchConditions.length > 0) {
     if (searchConditions.length === 1) {
       query = searchConditions[0];
-    } else if (searchConditions.length > 1) {
+    } else {
       query.$and = searchConditions;
     }
   }
 
   try {
-    console.log(query);
+    console.log(query); // For debugging
     const results = await ABCFileModel.find(query);
     res.json(results);
   } catch (error) {
@@ -1316,7 +1317,7 @@ app.get("/recommendations", async (req, res) => {
     const recommendations = await calculateRecommendations(req.session.userId);
     res.json(recommendations);
   } catch (error) {
-    console.error('Error in recommendations endpoint:', error);
+    console.error("Error in recommendations endpoint:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });

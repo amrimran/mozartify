@@ -495,7 +495,7 @@ export default function MusicEntryClerkHomepage() {
               variant="h6"
               sx={{ color: "#3B3183", fontWeight: "bold" }}
             >
-              Uploaded Music Scores
+              Uploaded Music Scores 
             </Typography>
 
             {/* Mobile user info */}

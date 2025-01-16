@@ -180,7 +180,15 @@ export default function Landing() {
       >
         <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
           <Box display="flex" alignItems="center">
-            <IconButton>
+            <IconButton
+              sx={{
+                "&:hover": {
+                  backgroundColor: "transparent", // Prevents hover background effect
+                  boxShadow: "none", // Disables hover shadow
+                  transition: "none", // Disables any hover animation
+                },
+              }}
+            >
               <img
                 src={UMLogo}
                 alt="UM logo"
@@ -453,7 +461,7 @@ export default function Landing() {
             component="p"
             sx={{
               fontSize: { xs: "0.75rem", sm: "0.875rem" },
-              fontFamily:"Montserrat",
+              fontFamily: "Montserrat",
             }}
           >
             &copy; 2025 Universiti Malaya. All Rights Reserved.

@@ -14,6 +14,7 @@ import CustomerMyCart from "./CustomerMyCart";
 import CustomerAddNewFeedback from "./CustomerAddNewFeedback";
 import CustomerProfile from "./CustomerProfile";
 import CustomerMusicScoreView from "./CustomerMusicScoreView";
+import CustomerCollections from "./CustomerCollections";
 import MusicEntryClerkHomepage from "./MusicEntryClerkHomepage";
 import MusicEntryClerkUpload from "./MusicEntryClerkUpload";
 import MusicEntryClerkPreview from "./MusicEntryClerkPreview";
@@ -71,6 +72,8 @@ function App() {
         <Route path="/customer-music-score-view/:id" element={<CustomerMusicScoreView />} />
         <Route path="/customer-inbox/customer-add-new-feedback" element={<CustomerAddNewFeedback />} />
         <Route path="/customer-profile" element={<CustomerProfile />} />
+        <Route path="/customer-collections" element={<CustomerCollections />} />
+
         <Route path="/clerk-homepage" element={<MusicEntryClerkHomepage />} />
         <Route path="/clerk-upload" element={<MusicEntryClerkUpload />} />
         <Route path="/clerk-preview" element={<MusicEntryClerkPreview />} />

@@ -19,6 +19,7 @@ import {
   ExitToApp,
   Search,
 } from "@mui/icons-material";
+import Folder from '@mui/icons-material/FolderCopy';
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 
 axios.defaults.withCredentials = true;
@@ -66,6 +67,13 @@ const CustomerSidebar = ({ active }) => {
       icon: <Search />,
       key: "search",
     },
+    {
+      path: "/customer-collections",
+      label: "Collections",
+      icon: <Folder />,
+      key: "collections",
+    },
+
     {
       path: "/customer-favorites",
       label: "Favorites",

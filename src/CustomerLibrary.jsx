@@ -361,7 +361,7 @@ export default function CustomerLibrary() {
               overflowY: "auto",
             }}
           >
-            <CustomerSidebar active="home" />
+            <CustomerSidebar active="library" />
           </Box>
         ) : (
           // Drawer for smaller screens

@@ -100,7 +100,7 @@ export default function CustomerSearch() {
     { logic: "AND", category: "All", text: "" },
   ]);
 
-  const [selectedCollection, setSelectedCollection] = useState("All"); //collection that user chose for a search
+  const [selectedCollection, setSelectedCollection] = useState("All");
 
   const [selectedComposers, setSelectedComposers] = useState([]);
   const [selectedGenres, setSelectedGenres] = useState([]);

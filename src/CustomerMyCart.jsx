@@ -584,7 +584,7 @@ export default function CustomerMyCart() {
                             <Box sx={{ display: "flex", alignItems: "center" }}>
                               <img
                                 src={item?.coverImageUrl}
-                                alt={item?.title}
+                                alt={" N/A"}
                                 style={{
                                   width: isMobile ? "50px" : "90px",
                                   height: "auto",
