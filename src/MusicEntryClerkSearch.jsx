@@ -486,7 +486,7 @@ export default function MusicEntryClerkSearch() {
 
         {/* Permanent drawer for large screens */}
         <Drawer variant="permanent" sx={styles.drawer}>
-          <ClerkSidebar active="searchScores" />
+          <ClerkSidebar active="searchScore" />
         </Drawer>
 
         {/* Temporary drawer for smaller screens */}
@@ -497,7 +497,7 @@ export default function MusicEntryClerkSearch() {
           ModalProps={{ keepMounted: true }}
           sx={styles.mobileDrawer}
         >
-          <ClerkSidebar active="searchScores" />
+          <ClerkSidebar active="searchScore" />
         </Drawer>
 
         {/* Main Content */}

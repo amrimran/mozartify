@@ -623,7 +623,7 @@ export default function CustomerMyCart() {
                           <TableCell sx={{ p: isMobile ? 1 : 2 }}>
                             <IconButton
                               onClick={() => handleRemoveItem(item._id)}
-                              sx={{ color: "red" }}
+                              sx={{ color: "#DB2226" }}
                             >
                               <DeleteIcon />
                             </IconButton>

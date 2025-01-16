@@ -401,7 +401,7 @@ export default function CustomerFavorites() {
               overflowY: "auto",
             }}
           >
-            <CustomerSidebar active="library" />
+            <CustomerSidebar active="favorites" />
           </Box>
         ) : (
           // Drawer for smaller screens
@@ -417,7 +417,7 @@ export default function CustomerFavorites() {
               },
             }}
           >
-            <CustomerSidebar active="library" />
+            <CustomerSidebar active="favorites" />
           </Drawer>
         )}
 
@@ -824,6 +824,7 @@ export default function CustomerFavorites() {
               sx={{
                 fontFamily: "Montserrat",
                 fontWeight: "bold",
+                textAlign:"center",
                 fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem" },
               }}
             >

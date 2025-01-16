@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { Drawer, useMediaQuery } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import axios from "axios";
 import {
   Avatar,
@@ -24,130 +26,27 @@ import {
   Pagination,
   AppBar,
   Toolbar,
-  Drawer,
-  useTheme,
-  useMediaQuery,
 } from "@mui/material";
-import { Favorite, PlayArrow, Menu as MenuIcon } from "@mui/icons-material";
+import { Favorite, PlayArrow } from "@mui/icons-material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { useNavigate } from "react-router-dom";
+import { createGlobalStyle } from "styled-components";
+import CustomerSidebar from "./CustomerSidebar";
+import MenuIcon from "@mui/icons-material/Menu";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import { useNavigate } from "react-router-dom";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { createGlobalStyle } from "styled-components";
-import CustomerSidebar from "./CustomerSidebar";
-
-const DRAWER_WIDTH = 225;
-
-
-// Theme setup matching MusicEntryClerkUpload
-const theme = createTheme({
-  typography: {
-    fontFamily: "Montserrat, Arial, sans-serif",
-  },
-  breakpoints: {
-    values: {
-      xs: 0,    // mobile phones
-      sm: 600,  // tablets
-      md: 960,  // small laptops
-      lg: 1280, // desktops
-      xl: 1920, // large screens
-    }
-  }
-});
-
-const GlobalStyle = createGlobalStyle`
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Montserrat', sans-serif;
-  }
-`;
-
-// Button styles matching MusicEntryClerkUpload
-const buttonStyles = {
-  px: { xs: 4, sm: 10 },
-  fontFamily: "Montserrat",
-  fontWeight: "bold",
-  color: "#FFFFFF",
-  backgroundColor: "#8BD3E6",
-  border: "1px solid #8BD3E6",
-  boxShadow: "none",
-  "&:hover": {
-    backgroundColor: "#6FBCCF",
-    borderColor: "#6FBCCF",
-    boxShadow: "none",
-  },
-};
-
-const buttonStyles2 = {
-  px: { xs: 4, sm: 10 },
-  fontFamily: "Montserrat",
-  fontWeight: "bold",
-  color: "#8BD3E6",
-  backgroundColor: "#FFFFFF",
-  border: "1px solid #8BD3E6",
-  boxShadow: "none",
-  "&:hover": {
-    backgroundColor: "#E6F8FB",
-    color: "#7AB9C4",
-    borderColor: "#7AB9C4",
-    boxShadow: "none",
-  },
-};
-
 
 export default function CustomerAdvancedSearch() {
   const [user, setUser] = useState(null); //store user's information
-  const theme = useTheme();
-  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-   // Responsive styles
-   const styles = {
-    root: {
-      display: "flex",
-      minHeight: "100vh",
-      backgroundColor: "#FFFFFF",
-    },
-    appBar: {
-      display: isLargeScreen ? "none" : "block",
-      backgroundColor: "#FFFFFF",
-      boxShadow: "none",
-      borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
-    },
-    drawer: {
-      width: DRAWER_WIDTH,
-      flexShrink: 0,
-      display: isLargeScreen ? "block" : "none",
-      "& .MuiDrawer-paper": {
-        width: DRAWER_WIDTH,
-        boxSizing: "border-box",
-      },
-    },
-    mobileDrawer: {
-      display: isLargeScreen ? "none" : "block",
-      "& .MuiDrawer-paper": {
-        width: DRAWER_WIDTH,
-        boxSizing: "border-box",
-      },
-    },
-    mainContent: {
-      flexGrow: 1,
-      p: { xs: 2, sm: 3 },
-      ml: isLargeScreen ? `${DRAWER_WIDTH}px` : 0,
-      mt: isLargeScreen ? 2 : 8,
-      width: "100%",
-    },
-    container: {
-      maxWidth: { sm: "100%", md: "90%", lg: "80%" },
-      mx: "auto",
-      p: { xs: 1, sm: 2, md: 3 },
-    },
+  const [open, setOpen] = useState(false);
+  const toggleDrawer = (openState) => () => {
+    setOpen(openState);
   };
+
+  const theme = useTheme();
+  const isTabletOrMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   //store ui component state
   const [selectedTab, setSelectedTab] = useState(0);
@@ -212,6 +111,40 @@ export default function CustomerAdvancedSearch() {
 
     fetchRefineLists();
   }, []);
+
+  const buttonStyles2 = {
+    px: 5,
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#8BD3E6",
+    backgroundColor: "#FFFFFF",
+    border: "1px solid #8BD3E6",
+    borderColor: "#8BD3E6",
+    boxShadow: "none",
+    "&:hover": {
+      boxShadow: "none",
+      backgroundColor: "#E6F8FB", // Subtle light blue hover effect
+      color: "#7AB9C4", // Slightly darker shade of the text
+      borderColor: "#7AB9C4", // Matches the text color for consistency
+    },
+  };
+
+  const buttonStyles = {
+    px: 10,
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    backgroundColor: "#8BD3E6",
+    border: "1px solid #8BD3E6",
+    borderColor: "#8BD3E6",
+    boxShadow: "none",
+    "&:hover": {
+      boxShadow: "none",
+      backgroundColor: "#6FBCCF", // Slightly darker blue for hover
+      color: "#FFFFFF", // Keeps the text color consistent
+      borderColor: "#6FBCCF", // Matches the background color for cohesion
+    },
+  };
 
   //search results refine functions
   const handlePageChange = (event, value) => {
@@ -633,45 +566,48 @@ export default function CustomerAdvancedSearch() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex", minHeight: "100vh", maxHeight: "100vh" }}>
-        <CustomerSidebar active="search" />
-
-        {/* Parent for header and main content */}
-        <Box
-          sx={{
-            flexGrow: 1,
-            p: 3,
-            display: "flex",
-            flexDirection: "column",
-            marginLeft: "229px",
-          }}
-        >
-          {/* Header */}
-          <Box
+        {/* AppBar for the menu icon button */}
+        {isTabletOrMobile && (
+          <AppBar
+            position="fixed"
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
+              // zIndex: theme.zIndex.drawer + 2, // Lower zIndex to allow Drawer to appear on top
+              backgroundColor: "#FFFFFF", // Background color
+              color: "#3B3183", // Text color
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography
-                variant="h4"
-                sx={{
-                  fontFamily: "Montserrat",
-                  fontWeight: "bold",
-                  mt: 4,
-                  ml: 1,
-                }}
-              >
-                Advanced Music Score Search Query Builder
-              </Typography>{" "}
-            </Box>
+            <Toolbar
+              sx={{
+                display: "flex",
+                justifyContent: "space-between", // Space out left and right content
+                alignItems: "center",
+              }}
+            >
+              {/* Left Side: Menu Icon and Title */}
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <IconButton
+                  color="inherit"
+                  edge="start"
+                  onClick={toggleDrawer(true)}
+                  sx={{ mr: 2 }}
+                >
+                  <MenuIcon />
+                </IconButton>
+                <Typography
+                  variant="h6"
+                  sx={{ fontFamily: "Montserrat", fontWeight: "bold" }}
+                >
+                  Advanced Search
+                </Typography>
+              </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center" }}>
+              {/* Right Side: User Info */}
               {user ? (
-                <>
-                  <Typography variant="body1" sx={{ mr: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography
+                    variant="body1"
+                    sx={{ mr: 2, fontFamily: "Montserrat" }}
+                  >
                     {user.username}
                   </Typography>
                   <Avatar
@@ -683,305 +619,317 @@ export default function CustomerAdvancedSearch() {
                     {(!user || !user.profile_picture) &&
                       user.username.charAt(0).toUpperCase()}
                   </Avatar>
-                </>
+                </Box>
               ) : (
-                <>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Typography variant="body1" sx={{ mr: 2 }}>
                     Loading...
                   </Typography>
-                  <Avatar></Avatar>
-                </>
+                  <Avatar />
+                </Box>
               )}
+            </Toolbar>
+          </AppBar>
+        )}
+
+        {/* Drawer Component */}
+        <Drawer
+          variant={isTabletOrMobile ? "temporary" : "permanent"}
+          open={isTabletOrMobile ? open : true} // Control visibility on smaller screens
+          onClose={toggleDrawer(false)}
+          ModalProps={{
+            keepMounted: true, // Improves performance on mobile
+          }}
+          sx={{
+            zIndex: theme.zIndex.drawer + 1, // Set Drawer zIndex higher than AppBar
+            "& .MuiDrawer-paper": {
+              width: 230, // Sidebar width
+              boxSizing: "border-box",
+              backgroundColor: "#8BD3E6", // Set the background color
+            },
+          }}
+        >
+          {/* Sidebar Content */}
+          <CustomerSidebar active="search" />
+        </Drawer>
+
+        {/* Add space to prevent content overlap with AppBar
+        {isTabletOrMobile && <Toolbar />} */}
+
+        {/* Parent for header and main content */}
+        <Box
+          sx={{
+            flexGrow: 1,
+            p: isTabletOrMobile ? 0 : 3,
+            display: "flex",
+            flexDirection: "column",
+            marginLeft: isTabletOrMobile ? 0 : "229px",
+            mt: isTabletOrMobile ? 5 : 0,
+          }}
+        >
+          {/* Header(Only for desktop views) */}
+          {!isTabletOrMobile && (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 3,
+                mt: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontFamily: "Montserrat",
+                    fontWeight: "bold",
+                    mt: 0,
+                    ml: 1,
+                    textAlign: "center",
+                  }}
+                >
+                  Advanced Music Score Search Query Builder
+                </Typography>{" "}
+              </Box>
+
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                {user ? (
+                  <>
+                    <Typography
+                      variant="body1"
+                      sx={{ mr: 2, fontFamily: "Montserrat" }}
+                    >
+                      {user.username}
+                    </Typography>
+                    <Avatar
+                      alt={user.username}
+                      src={
+                        user && user.profile_picture
+                          ? user.profile_picture
+                          : null
+                      }
+                    >
+                      {(!user || !user.profile_picture) &&
+                        user.username.charAt(0).toUpperCase()}
+                    </Avatar>
+                  </>
+                ) : (
+                  <>
+                    <Typography variant="body1" sx={{ mr: 2 }}>
+                      Loading...
+                    </Typography>
+                    <Avatar></Avatar>
+                  </>
+                )}
+              </Box>
             </Box>
-          </Box>
-          <Divider sx={{ mt: 1 }} />
+          )}
+
+          {!isTabletOrMobile && <Divider sx={{ mt: 1 }} />}
 
           {/* Main Section*/}
 
           {/*Main Section  when no Search is done */}
           {!showSearchResults && (
-            <Container maxWidth="lg" sx={{ mt: 2 }}>
-              <Box
+            <Box
+              sx={{
+                width: "100%", // Make sure the wrapper doesn't exceed the screen width
+                height: "100%", // Ensure the height stays within the screen as well
+                maxWidth: "100vw", // This ensures the wrapper doesn't extend beyond the viewport width
+                overflowX: "hidden", // Prevent horizontal overflow
+                padding: isTabletOrMobile ? "0" : "0", // Padding for smaller devices
+              }}
+            >
+              <Container
+                maxWidth="lg"
                 sx={{
-                  backgroundColor: "#fcfcfc",
-                  borderRadius: 2,
-                  p: 4,
-                  boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.16)", // Added elevation
-                  border: "1px solid rgba(0, 0, 0, 0.12)", // Added subtle border
+                  mt: 5, // margin-top
+                  width: "100%", // Ensure it doesn't exceed the width of its parent container
+                  height: "100vh",
                 }}
               >
-                <Box sx={{ backgroundColor: "white", padding: 3 }}>
+                <Box
+                  sx={{
+                    backgroundColor: "#fcfcfc",
+                    borderRadius: 2,
+                    p: 4,
+                    boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.16)", // Added elevation
+                    border: "1px solid rgba(0, 0, 0, 0.12)", // Added subtle border
+                  }}
+                >
                   <Box
                     sx={{
-                      border: "1px solid",
-                      borderColor: "#8bd3e6",
-                      padding: 2,
-                      display: "inline-block",
-                      borderRadius: 3,
+                      backgroundColor: "white",
+                      padding: 3,
+                      display: isTabletOrMobile ?? "flex",
+                      flexDirection: isTabletOrMobile ?? "column",
                     }}
                   >
-                    <Typography
-                      variant="body1"
-                      color="black"
+                    {/* Box for "Search in : Collection" component */}
+                    <Box
                       sx={{
-                        fontFamily: "Montserrat, sans-serif",
-                        display: "inline",
+                        border: "1px solid",
+                        borderColor: "#8bd3e6",
+                        padding: 2,
+                        display: "inline-block",
+                        borderRadius: 3,
                       }}
                     >
-                      Search in:
-                    </Typography>
+                      <Typography
+                        variant="body1"
+                        color="black"
+                        sx={{
+                          fontFamily: "Montserrat, sans-serif",
+                          display: "inline",
+                        }}
+                      >
+                        Search in:
+                      </Typography>
 
-                    <Select
-                      value={selectedCollection}
-                      onChange={(e) => setSelectedCollection(e.target.value)}
-                      variant="standard"
-                      sx={{
-                        marginLeft: "10px",
-                        border: "none",
-                        outline: "none",
-                        fontFamily: "'Montserrat', sans-serif",
-                        "& .MuiSelect-select": {
-                          padding: 0,
-                          fontWeight: "bold",
-                        },
-                        "& .MuiSelect-icon": {
-                          display: "none",
-                        },
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          display: "none",
-                        },
-                        "&:hover:not(.Mui-disabled):before": {
-                          borderBottom: "2px solid #8BD3E6",
-                        },
-                        "&:focus-within:before": {
-                          borderBottom: "2px solid #8BD3E6",
-                        },
-                      }}
-                    >
-                      <MenuItem
-                        value="All"
+                      <Select
+                        value={selectedCollection}
+                        onChange={(e) => setSelectedCollection(e.target.value)}
+                        variant="standard"
                         sx={{
+                          marginLeft: "10px",
+                          border: "none",
+                          outline: "none",
                           fontFamily: "'Montserrat', sans-serif",
-                        }}
-                      >
-                        All
-                      </MenuItem>
-                      <MenuItem
-                        value="Lecturers"
-                        sx={{
-                          fontFamily: "'Montserrat', sans-serif",
-                        }}
-                      >
-                        Lecturers
-                      </MenuItem>
-                      <MenuItem
-                        value="Students"
-                        sx={{
-                          fontFamily: "'Montserrat', sans-serif",
-                        }}
-                      >
-                        Students
-                      </MenuItem>
-                      <MenuItem
-                        value="Freelancers"
-                        sx={{
-                          fontFamily: "'Montserrat', sans-serif",
-                        }}
-                      >
-                        Freelancers
-                      </MenuItem>
-                    </Select>
-                  </Box>
-
-                  {/* Search Query Row Component */}
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      mt: 2,
-                      gap: 2,
-                    }}
-                  >
-                    <Select
-                      value={searchCategory}
-                      onChange={handleCategoryChange}
-                      variant="outlined"
-                      sx={{
-                        width: "100px",
-                        fontFamily: "Montserrat, sans-serif",
-                        fontWeight: "bold",
-                        borderRadius: 3, // Set border radius here
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#8BD3E6", // Default border color
-                        },
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#67ADC1", // Border color on hover
-                        },
-                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#67ADC1", // Border color when focused
-                        },
-                      }}
-                    >
-                      <MenuItem
-                        value="All"
-                        sx={{ fontFamily: "Montserrat, sans-serif" }}
-                      >
-                        All
-                      </MenuItem>
-                      <MenuItem
-                        value="Title"
-                        sx={{ fontFamily: "Montserrat, sans-serif" }}
-                      >
-                        Title
-                      </MenuItem>
-                      <MenuItem
-                        value="Genre"
-                        sx={{ fontFamily: "Montserrat, sans-serif" }}
-                      >
-                        Genre
-                      </MenuItem>
-                      <MenuItem
-                        value="Composer"
-                        sx={{ fontFamily: "Montserrat, sans-serif" }}
-                      >
-                        Composer
-                      </MenuItem>
-                      <MenuItem
-                        value="Instrumentation"
-                        sx={{ fontFamily: "Montserrat, sans-serif" }}
-                      >
-                        Instrumentation
-                      </MenuItem>
-                      <MenuItem
-                        value="Emotion"
-                        sx={{ fontFamily: "Montserrat, sans-serif" }}
-                      >
-                        Emotion
-                      </MenuItem>
-                    </Select>
-
-                    <TextField
-                      variant="outlined"
-                      placeholder="Place your search text here ..."
-                      value={searchText}
-                      onChange={handleTextChange}
-                      sx={{
-                        flex: 1,
-                        "& .MuiOutlinedInput-root": {
-                          fontFamily: "Montserrat",
-                          borderRadius: 3, // Set border radius here
-                          "& fieldset": {
-                            borderColor: "#8BD3E6",
+                          "& .MuiSelect-select": {
+                            padding: 0,
+                            fontWeight: "bold",
                           },
-                          "&:hover fieldset": {
-                            borderColor: "#67ADC1",
+                          "& .MuiSelect-icon": {
+                            display: "none",
                           },
-                          "&.Mui-focused fieldset": {
-                            borderColor: "#67ADC1",
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            display: "none",
                           },
-                        },
-                        "& .MuiInputLabel-root": {
-                          fontFamily: "Montserrat",
-                        },
-                      }}
-                    />
-
-                    <Select
-                      value={searchLogic}
-                      onChange={handleLogicChange}
-                      variant="outlined"
-                      sx={{
-                        width: "100px",
-                        fontFamily: "Montserrat, sans-serif",
-                        fontWeight: "bold",
-                        borderRadius: 3, // Set border radius here
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#8BD3E6", // Default border color
-                        },
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#67ADC1", // Border color on hover
-                        },
-                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#67ADC1", // Border color when focused
-                        },
-                      }}
-                    >
-                      <MenuItem
-                        value="AND"
-                        sx={{ fontFamily: "Montserrat, sans-serif" }}
+                          "&:hover:not(.Mui-disabled):before": {
+                            borderBottom: "2px solid #8BD3E6",
+                          },
+                          "&:focus-within:before": {
+                            borderBottom: "2px solid #8BD3E6",
+                          },
+                        }}
                       >
-                        AND
-                      </MenuItem>
-                      <MenuItem
-                        value="OR"
-                        sx={{ fontFamily: "Montserrat, sans-serif" }}
-                      >
-                        OR
-                      </MenuItem>
-                      <MenuItem
-                        value="NOT"
-                        sx={{ fontFamily: "Montserrat, sans-serif" }}
-                      >
-                        NOT
-                      </MenuItem>
-                    </Select>
-
-                    <Button
-                      onClick={handleAddInput}
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      sx={{
-                        paddingTop: 2,
-                        paddingBottom: 2,
-                        color: "white",
-                        backgroundColor: "#78BBCC",
-                        fontFamily: "Montserrat, sans-serif",
-                        boxShadow: "none",
-                        "&:hover": {
-                          backgroundColor: "#67ADC1",
-                          boxShadow: "none",
-                        },
-                      }}
-                    >
-                      ADD TO QUERY
-                    </Button>
-                  </Box>
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      paddingTop: 3,
-                      paddingLeft: 2,
-                      paddingRight: 2,
-                      mt: 2,
-                      gap: 2,
-                    }}
-                  >
-                    <Grid container spacing={3}>
-                      {/* Left Grid */}
-                      <Grid item xs={12} sm={6}>
-                        <Typography
-                          sx={{ fontFamily: "Montserrat, sans-serif" }}
-                        >
-                          Query Preview
-                        </Typography>
-                        <Box
+                        <MenuItem
+                          value="All"
                           sx={{
-                            borderBottom: "0.5px solid #67ADC1",
-                            width: "100%",
-                            mt: 0.5,
-                            mb: 2,
+                            fontFamily: "'Montserrat', sans-serif",
                           }}
-                        />
-                        <TextField
-                          multiline
-                          rows={4}
+                        >
+                          All
+                        </MenuItem>
+                        <MenuItem
+                          value="Lecturers"
+                          sx={{
+                            fontFamily: "'Montserrat', sans-serif",
+                          }}
+                        >
+                          Lecturers
+                        </MenuItem>
+                        <MenuItem
+                          value="Students"
+                          sx={{
+                            fontFamily: "'Montserrat', sans-serif",
+                          }}
+                        >
+                          Students
+                        </MenuItem>
+                        <MenuItem
+                          value="Freelancers"
+                          sx={{
+                            fontFamily: "'Montserrat', sans-serif",
+                          }}
+                        >
+                          Freelancers
+                        </MenuItem>
+                      </Select>
+                    </Box>
+
+                    {/* Search Query Row Component Desktop */}
+                    {!isTabletOrMobile && (
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: isTabletOrMobile ?? "column",
+                          alignItems: "center",
+                          mt: 2,
+                          gap: 2,
+                        }}
+                      >
+                        <Select
+                          value={searchCategory}
+                          onChange={handleCategoryChange}
                           variant="outlined"
-                          fullWidth
-                          placeholder="Place your query here ..."
-                          value={queryPreview}
-                          onChange={handleQueryPreviewChange}
+                          sx={{
+                            width: "100px",
+                            fontFamily: "Montserrat, sans-serif",
+                            fontWeight: "bold",
+                            borderRadius: 3, // Set border radius here
+                            "& .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "#8BD3E6", // Default border color
+                            },
+                            "&:hover .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "#67ADC1", // Border color on hover
+                            },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "#67ADC1", // Border color when focused
+                            },
+                          }}
+                        >
+                          <MenuItem
+                            value="All"
+                            sx={{ fontFamily: "Montserrat, sans-serif" }}
+                          >
+                            All
+                          </MenuItem>
+                          <MenuItem
+                            value="Title"
+                            sx={{ fontFamily: "Montserrat, sans-serif" }}
+                          >
+                            Title
+                          </MenuItem>
+                          <MenuItem
+                            value="Genre"
+                            sx={{ fontFamily: "Montserrat, sans-serif" }}
+                          >
+                            Genre
+                          </MenuItem>
+                          <MenuItem
+                            value="Composer"
+                            sx={{ fontFamily: "Montserrat, sans-serif" }}
+                          >
+                            Composer
+                          </MenuItem>
+                          <MenuItem
+                            value="Instrumentation"
+                            sx={{ fontFamily: "Montserrat, sans-serif" }}
+                          >
+                            Instrumentation
+                          </MenuItem>
+                          <MenuItem
+                            value="Emotion"
+                            sx={{ fontFamily: "Montserrat, sans-serif" }}
+                          >
+                            Emotion
+                          </MenuItem>
+                        </Select>
+
+                        <TextField
+                          variant="outlined"
+                          placeholder="Place your search text here ..."
+                          value={searchText}
+                          onChange={handleTextChange}
                           sx={{
                             flex: 1,
                             "& .MuiOutlinedInput-root": {
@@ -1000,174 +948,434 @@ export default function CustomerAdvancedSearch() {
                             "& .MuiInputLabel-root": {
                               fontFamily: "Montserrat",
                             },
-                            mb: 3,
                           }}
                         />
 
-                        <Box
+                        <Select
+                          value={searchLogic}
+                          onChange={handleLogicChange}
+                          variant="outlined"
                           sx={{
-                            display: "flex",
-                            justifyContent: "flex-end",
+                            width: "100px",
+                            fontFamily: "Montserrat, sans-serif",
+                            fontWeight: "bold",
+                            borderRadius: 3, // Set border radius here
+                            "& .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "#8BD3E6", // Default border color
+                            },
+                            "&:hover .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "#67ADC1", // Border color on hover
+                            },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "#67ADC1", // Border color when focused
+                            },
                           }}
                         >
-                          {/* <Button
-                                variant="outlined"
-                                sx={{
-                                  fontFamily: "Montserrat, sans-serif",
-                                  borderColor: "#67ADC1", // Border color stays the same
-                                  color: "#67ADC1", // Ensure the text color is white
-                                  "&:hover": {
-                                    borderColor: "#67ADC1", // Border color stays the same on hover
-                                  },
-                                }}
-                              >
-                                Add Date Range
-                              </Button> */}
-                          <Box sx={{ display: "flex", gap: 2 }}>
-                            <Button
-                              variant="outlined"
-                              sx={buttonStyles2}
-                              onClick={clearQueryPreview}
-                            >
-                              Clear
-                            </Button>
-                            <Button
-                              variant="contained"
-                              onClick={handleSearch}
-                              disabled={!queryPreview}
-                              startIcon={<SearchIcon />} // Add the search icon
-                              sx={buttonStyles}
-                            >
-                              Search
-                            </Button>
-                          </Box>
-                        </Box>
-                      </Grid>
+                          <MenuItem
+                            value="AND"
+                            sx={{ fontFamily: "Montserrat, sans-serif" }}
+                          >
+                            AND
+                          </MenuItem>
+                          <MenuItem
+                            value="OR"
+                            sx={{ fontFamily: "Montserrat, sans-serif" }}
+                          >
+                            OR
+                          </MenuItem>
+                          <MenuItem
+                            value="NOT"
+                            sx={{ fontFamily: "Montserrat, sans-serif" }}
+                          >
+                            NOT
+                          </MenuItem>
+                        </Select>
 
-                      {/* Right Grid */}
-                      <Grid item xs={12} sm={6}>
+                        <Button
+                          onClick={handleAddInput}
+                          variant="contained"
+                          startIcon={<AddIcon />}
+                          sx={{
+                            paddingTop: 2,
+                            paddingBottom: 2,
+                            color: "white",
+                            backgroundColor: "#78BBCC",
+                            fontFamily: "Montserrat, sans-serif",
+                            boxShadow: "none",
+                            "&:hover": {
+                              backgroundColor: "#67ADC1",
+                              boxShadow: "none",
+                            },
+                          }}
+                        >
+                          ADD TO QUERY
+                        </Button>
+                      </Box>
+                    )}
+
+                    {isTabletOrMobile && (
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column", // Stack all children vertically
+                          alignItems: "flex-start", // Align items to the start (left-aligned)
+                          mt: 2,
+                          gap: 3, // Increase gap between each child box
+                          width: "100%",
+                        }}
+                      >
                         <Box
                           sx={{
                             display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            paddingLeft: 2, // Add padding at the start (left)
-                            paddingRight: 2, // Add padding at the end (right)
+                            flexDirection: "column", // Ensure inner box components are in a column
+                            width: "100%",
+                            gap: 2, // Add space between the select and text field components
                           }}
                         >
+                          <Select
+                            value={searchCategory}
+                            onChange={handleCategoryChange}
+                            variant="outlined"
+                            sx={{
+                              width: "100%",
+                              fontFamily: "Montserrat, sans-serif",
+                              fontWeight: "bold",
+                              borderRadius: 3,
+                              "& .MuiOutlinedInput-notchedOutline": {
+                                borderColor: "#8BD3E6",
+                              },
+                              "&:hover .MuiOutlinedInput-notchedOutline": {
+                                borderColor: "#67ADC1",
+                              },
+                              "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                {
+                                  borderColor: "#67ADC1",
+                                },
+                            }}
+                          >
+                            <MenuItem
+                              value="All"
+                              sx={{ fontFamily: "Montserrat, sans-serif" }}
+                            >
+                              All
+                            </MenuItem>
+                            <MenuItem
+                              value="Title"
+                              sx={{ fontFamily: "Montserrat, sans-serif" }}
+                            >
+                              Title
+                            </MenuItem>
+                            <MenuItem
+                              value="Genre"
+                              sx={{ fontFamily: "Montserrat, sans-serif" }}
+                            >
+                              Genre
+                            </MenuItem>
+                            <MenuItem
+                              value="Composer"
+                              sx={{ fontFamily: "Montserrat, sans-serif" }}
+                            >
+                              Composer
+                            </MenuItem>
+                            <MenuItem
+                              value="Instrumentation"
+                              sx={{ fontFamily: "Montserrat, sans-serif" }}
+                            >
+                              Instrumentation
+                            </MenuItem>
+                            <MenuItem
+                              value="Emotion"
+                              sx={{ fontFamily: "Montserrat, sans-serif" }}
+                            >
+                              Emotion
+                            </MenuItem>
+                          </Select>
+
+                          <TextField
+                            variant="outlined"
+                            placeholder="Place your search text here ..."
+                            value={searchText}
+                            onChange={handleTextChange}
+                            sx={{
+                              flex: 1,
+                              "& .MuiOutlinedInput-root": {
+                                fontFamily: "Montserrat",
+                                borderRadius: 3,
+                                "& fieldset": {
+                                  borderColor: "#8BD3E6",
+                                },
+                                "&:hover fieldset": {
+                                  borderColor: "#67ADC1",
+                                },
+                                "&.Mui-focused fieldset": {
+                                  borderColor: "#67ADC1",
+                                },
+                              },
+                              "& .MuiInputLabel-root": {
+                                fontFamily: "Montserrat",
+                              },
+                            }}
+                          />
+                        </Box>
+
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column", // Ensure inner box components are in a column
+                            gap: 2, // Add space between the select and button components
+                            width: "100%",
+                          }}
+                        >
+                          <Select
+                            value={searchLogic}
+                            onChange={handleLogicChange}
+                            variant="outlined"
+                            sx={{
+                              width: "100%",
+                              fontFamily: "Montserrat, sans-serif",
+                              fontWeight: "bold",
+                              borderRadius: 3,
+                              "& .MuiOutlinedInput-notchedOutline": {
+                                borderColor: "#8BD3E6",
+                              },
+                              "&:hover .MuiOutlinedInput-notchedOutline": {
+                                borderColor: "#67ADC1",
+                              },
+                              "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                {
+                                  borderColor: "#67ADC1",
+                                },
+                            }}
+                          >
+                            <MenuItem
+                              value="AND"
+                              sx={{ fontFamily: "Montserrat, sans-serif" }}
+                            >
+                              AND
+                            </MenuItem>
+                            <MenuItem
+                              value="OR"
+                              sx={{ fontFamily: "Montserrat, sans-serif" }}
+                            >
+                              OR
+                            </MenuItem>
+                            <MenuItem
+                              value="NOT"
+                              sx={{ fontFamily: "Montserrat, sans-serif" }}
+                            >
+                              NOT
+                            </MenuItem>
+                          </Select>
+
+                          <Button
+                            onClick={handleAddInput}
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            sx={{
+                              paddingTop: 2,
+                              paddingBottom: 2,
+                              color: "white",
+                              backgroundColor: "#78BBCC",
+                              fontFamily: "Montserrat, sans-serif",
+                              boxShadow: "none",
+                              "&:hover": {
+                                backgroundColor: "#67ADC1",
+                                boxShadow: "none",
+                              },
+                            }}
+                          >
+                            ADD TO QUERY
+                          </Button>
+                        </Box>
+                      </Box>
+                    )}
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        paddingTop: 3,
+                        paddingLeft: 2,
+                        paddingRight: 2,
+                        mt: 2,
+                        gap: 2,
+                      }}
+                    >
+                      <Grid container spacing={3}>
+                        {/* Left Grid */}
+                        <Grid item xs={12} sm={6}>
                           <Typography
                             sx={{ fontFamily: "Montserrat, sans-serif" }}
                           >
-                            <span style={{ fontWeight: "bold" }}>Boolean:</span>{" "}
-                            AND, OR, NOT
+                            Query Preview
                           </Typography>
+                          <Box
+                            sx={{
+                              borderBottom: "0.5px solid #67ADC1",
+                              width: "100%",
+                              mt: 0.5,
+                              mb: 2,
+                            }}
+                          />
+                          <TextField
+                            multiline
+                            rows={4}
+                            variant="outlined"
+                            fullWidth
+                            placeholder="Place your query here ..."
+                            value={queryPreview}
+                            onChange={handleQueryPreviewChange}
+                            sx={{
+                              flex: 1,
+                              "& .MuiOutlinedInput-root": {
+                                fontFamily: "Montserrat",
+                                borderRadius: 3, // Set border radius here
+                                "& fieldset": {
+                                  borderColor: "#8BD3E6",
+                                },
+                                "&:hover fieldset": {
+                                  borderColor: "#67ADC1",
+                                },
+                                "&.Mui-focused fieldset": {
+                                  borderColor: "#67ADC1",
+                                },
+                              },
+                              "& .MuiInputLabel-root": {
+                                fontFamily: "Montserrat",
+                              },
+                              mb: 3,
+                            }}
+                          />
 
                           <Box
                             sx={{
                               display: "flex",
-                              alignItems: "center",
+                              justifyContent: (!isTabletOrMobile)?"flex-end":"none",
+                              width:"100%",
                             }}
                           >
+                            <Box
+                              sx={{
+                                display: "flex", // Use flexbox to align buttons in a row
+                                flexDirection: isTabletOrMobile
+                                  ? "column"
+                                  : "row", // Stack vertically on tablet or mobile
+                                gap: 2, // Spacing between the buttons
+                                alignItems: "center", // Vertically align the buttons
+                                width: "100%", // Ensures the Box doesn't exceed its parent's width
+                                // maxWidth: "fit-content", // Prevents the Box from expanding too wide if the content is small
+                              }}
+                            >
+                              <Button
+                                variant="outlined"
+                                sx={{...buttonStyles2, width:"100%"}}
+                                onClick={clearQueryPreview}
+                              >
+                                Clear
+                              </Button>
+                              <Button
+                                variant="contained"
+                                onClick={handleSearch}
+                                disabled={!queryPreview}
+                                startIcon={<SearchIcon />} // Add the search icon
+                                sx={{...buttonStyles, px:5, width:"100%"}}
+                              >
+                                Search
+                              </Button>
+                            </Box>
+                          </Box>
+                        </Grid>
+
+                        {/* Right Grid */}
+                        <Grid item xs={12} sm={6}>
+
+                          <Box sx={{ mt: 1 }}>
                             <Typography
                               sx={{
                                 fontFamily: "Montserrat, sans-serif",
                                 fontWeight: "bold", // Make the text bold
+                                textAlign: "center",
+                                marginBottom: 1, // Add margin bottom
                               }}
                             >
-                              Field Tags:
+                              Metadata
                             </Typography>
-                            <Select
-                              defaultValue="default"
-                              value={sortOption}
-                              onChange={(e) => setSortOption(e.target.value)}
-                              variant="outlined"
+
+                            {(!isTabletOrMobile)&&(
+                              <Box
                               sx={{
-                                marginLeft: 2,
-                                fontFamily: "Montserrat, sans-serif",
-                                height: "36px", // Adjust the height of the Select component
-                                "& .MuiInputBase-root": {
-                                  height: "100%", // Consistent height for the input area
-                                  padding: "0 12px", // Padding inside the input box
-                                },
-                                "& .MuiOutlinedInput-notchedOutline": {
-                                  borderRadius: "4px", // Custom border radius
-                                  borderColor: "#8BD3E6", // Optional: Light blue border by default
-                                },
-                                "&:hover .MuiOutlinedInput-notchedOutline": {
-                                  borderColor: "#8BD3E6", // Light blue border on hover
-                                },
-                                "&.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                  {
-                                    borderColor: "#8BD3E6", // Light blue border on focus
-                                  },
+                                maxHeight: "200px", // Set a maximum height for the scrollable area
+                                overflowY: "auto", // Enable vertical scrolling
+                                display: "grid", // Use grid layout
+                                gridTemplateColumns: "repeat(3, 1fr)", // Three equal columns
+                                gap: 2, // Space between columns
+                                listStyleType: "none", // Remove default list styling
+                                paddingLeft: 5, // Add padding at the start (left)
+                                paddingRight: 5, // Add padding at the end (right)
+                                fontSize: "0.8rem", // Make text smaller (adjust as needed)
                               }}
                             >
-                              <MenuItem
-                                value="default"
-                                sx={{
-                                  fontFamily: "Montserrat, sans-serif",
-                                }}
-                              >
-                                Default
-                              </MenuItem>
-                              <MenuItem
-                                value="alphabetical"
-                                sx={{
-                                  fontFamily: "Montserrat, sans-serif",
-                                }}
-                              >
-                                Alphabetical
-                              </MenuItem>
-                            </Select>
-                          </Box>
-                        </Box>
-
-                        <Box sx={{ mt: 1 }}>
-                          <Typography
-                            sx={{
-                              fontFamily: "Montserrat, sans-serif",
-                              fontWeight: "bold", // Make the text bold
-                              textAlign: "center",
-                              marginBottom: 1, // Add margin bottom
-                            }}
-                          >
-                            Metadata
-                          </Typography>
-
-                          <Box
-                            sx={{
-                              maxHeight: "200px", // Set a maximum height for the scrollable area
-                              overflowY: "auto", // Enable vertical scrolling
-                              display: "grid", // Use grid layout
-                              gridTemplateColumns: "repeat(3, 1fr)", // Three equal columns
-                              gap: 2, // Space between columns
-                              listStyleType: "none", // Remove default list styling
-                              paddingLeft: 5, // Add padding at the start (left)
-                              paddingRight: 5, // Add padding at the end (right)
-                              fontSize: "0.8rem", // Make text smaller (adjust as needed)
-                            }}
-                          >
-                            {sortedMetadataItems.map((item, index) => (
-                              <li key={index} style={{ marginBottom: "10px" }}>
-                                <div
-                                  style={{
-                                    fontWeight: "bold",
-                                    fontFamily: "Montserrat, sans-serif",
-                                  }}
+                              {sortedMetadataItems.map((item, index) => (
+                                <li
+                                  key={index}
+                                  style={{ marginBottom: "10px" }}
                                 >
-                                  {item.code}
-                                </div>
-                                <div>{item.label}</div>
-                              </li>
-                            ))}
+                                  <div
+                                    style={{
+                                      fontWeight: "bold",
+                                      fontFamily: "Montserrat, sans-serif",
+                                    }}
+                                  >
+                                    {item.code}
+                                  </div>
+                                  <div>{item.label}</div>
+                                </li>
+                              ))}
+                            </Box>
+                            )}
+                            
+                              {(isTabletOrMobile)&&(
+                                <Box
+                                sx={{
+                                  maxHeight: "200px", // Set a maximum height for the scrollable area
+                                  overflowY: "auto", // Enable vertical scrolling
+                                  display: "grid", // Use grid layout
+                                  gridTemplateColumns: "repeat(1, 1fr)", // Three equal columns
+                                  gap: 2, // Space between columns
+                                  listStyleType: "none", // Remove default list styling
+                                  paddingLeft: 5, // Add padding at the start (left)
+                                  paddingRight: 5, // Add padding at the end (right)
+                                  fontSize: "0.8rem", // Make text smaller (adjust as needed)
+                                }}
+                              >
+                                {sortedMetadataItems.map((item, index) => (
+                                  <li
+                                    key={index}
+                                    style={{ marginBottom: "10px" }}
+                                  >
+                                    <div
+                                      style={{
+                                        fontWeight: "bold",
+                                        fontFamily: "Montserrat, sans-serif",
+                                      }}
+                                    >
+                                      {item.code}
+                                    </div>
+                                    <div>{item.label}</div>
+                                  </li>
+                                ))}
+                              </Box>
+                              )}
+                            
+
                           </Box>
-                        </Box>
+                        </Grid>
                       </Grid>
-                    </Grid>
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
-            </Container>
+              </Container>
+            </Box>
           )}
           {/* Advanced Search Component End */}
 

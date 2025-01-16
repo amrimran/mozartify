@@ -35,13 +35,13 @@ const theme = createTheme({
   },
   breakpoints: {
     values: {
-      xs: 0,    // mobile phones
-      sm: 600,  // tablets
-      md: 960,  // small laptops
+      xs: 0, // mobile phones
+      sm: 600, // tablets
+      md: 960, // small laptops
       lg: 1280, // desktops
       xl: 1920, // large screens
-    }
-  }
+    },
+  },
 });
 
 const GlobalStyle = createGlobalStyle`
@@ -59,11 +59,11 @@ const buttonStyles = {
   color: "#FFFFFF",
   backgroundColor: "#8BD3E6",
   border: "1px solid #8BD3E6",
-  boxShadow:"none",
+  boxShadow: "none",
   "&:hover": {
     backgroundColor: "#6FBCCF",
     borderColor: "#6FBCCF",
-    boxShadow:"none",
+    boxShadow: "none",
   },
 };
 
@@ -74,14 +74,15 @@ const buttonStyles2 = {
   color: "#8BD3E6",
   backgroundColor: "#FFFFFF",
   border: "1px solid #8BD3E6",
-  boxShadow:"none",
+  boxShadow: "none",
   "&:hover": {
     backgroundColor: "#E6F8FB",
     color: "#7AB9C4",
     borderColor: "#7AB9C4",
-    boxShadow:"none",
+    boxShadow: "none",
   },
 };
+
 export default function MusicEntryClerkUpload() {
   const navigate = useNavigate();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
@@ -240,13 +241,23 @@ export default function MusicEntryClerkUpload() {
             >
               <MenuIcon />
             </IconButton>
-            <Typography variant="h6" sx={{ color: "#3B3183", fontWeight: "bold" }}>
+            <Typography
+              variant="h6"
+              sx={{ color: "#3B3183", fontWeight: "bold" }}
+            >
               Digitize Music Scores
             </Typography>
-            
+
             {/* Mobile user info */}
             {!isLargeScreen && (
-              <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1 }}>
+              <Box
+                sx={{
+                  ml: "auto",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
                 {!isMobile && (
                   <Typography variant="body2" sx={{ color: "#3B3183" }}>
                     {user?.username}
@@ -263,12 +274,12 @@ export default function MusicEntryClerkUpload() {
             )}
           </Toolbar>
         </AppBar>
-  
+
         {/* Permanent drawer for large screens */}
         <Drawer variant="permanent" sx={styles.drawer}>
           <ClerkSidebar active="upload" />
         </Drawer>
-  
+
         {/* Temporary drawer for smaller screens */}
         <Drawer
           variant="temporary"
@@ -279,32 +290,33 @@ export default function MusicEntryClerkUpload() {
         >
           <ClerkSidebar active="upload" />
         </Drawer>
-  
+
         {/* Main Content */}
         <Box component="main" sx={styles.mainContent}>
+          
           {/* Header Section - Desktop */}
           {isLargeScreen && (
             <>
-              <Box sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                mb: 3,
-              }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 3,
+                }}
+              >
                 <Typography
                   variant="h4"
                   sx={{
                     fontFamily: "Montserrat",
                     fontWeight: "bold",
-                    fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" }
+                    fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
                   }}
                 >
                   Digitize Music Scores
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Typography variant="body1">
-                    {user?.username}
-                  </Typography>
+                  <Typography variant="body1">{user?.username}</Typography>
                   <Avatar
                     alt={user?.username}
                     src={user?.profile_picture}
@@ -317,7 +329,7 @@ export default function MusicEntryClerkUpload() {
               <Divider sx={{ mb: 4 }} />
             </>
           )}
-  
+
           {/* Upload Section */}
           <Box sx={styles.uploadBox}>
             <Box sx={styles.uploadContainer}>
@@ -326,7 +338,7 @@ export default function MusicEntryClerkUpload() {
                 alt="Import Icon"
                 style={{
                   width: isMobile ? "60px" : "100px",
-                  height: isMobile ? "60px" : "100px"
+                  height: isMobile ? "60px" : "100px",
                 }}
               />
               <Typography
@@ -334,12 +346,12 @@ export default function MusicEntryClerkUpload() {
                 sx={{
                   mt: 2,
                   fontFamily: "Montserrat",
-                  fontSize: { xs: "1rem", sm: "1.25rem" }
+                  fontSize: { xs: "1rem", sm: "1.25rem" },
                 }}
               >
                 Import from computer
               </Typography>
-              
+
               <input
                 type="file"
                 accept=".jpg,.jpeg,.png,.pdf"
@@ -347,7 +359,7 @@ export default function MusicEntryClerkUpload() {
                 style={{ display: "none" }}
                 id="upload-button"
               />
-              
+
               <label htmlFor="upload-button">
                 <Button
                   variant="contained"
@@ -358,7 +370,7 @@ export default function MusicEntryClerkUpload() {
                   Choose File
                 </Button>
               </label>
-  
+
               {selectedFile && (
                 <>
                   <Button
@@ -392,14 +404,14 @@ export default function MusicEntryClerkUpload() {
                   )}
                 </>
               )}
-              
+
               {uploadMessage && (
-                <Typography 
-                  variant="body1" 
-                  sx={{ 
-                    mt: 2, 
+                <Typography
+                  variant="body1"
+                  sx={{
+                    mt: 2,
                     color: "red",
-                    fontSize: { xs: "0.875rem", sm: "1rem" }
+                    fontSize: { xs: "0.875rem", sm: "1rem" },
                   }}
                 >
                   {uploadMessage}
@@ -408,7 +420,7 @@ export default function MusicEntryClerkUpload() {
             </Box>
           </Box>
         </Box>
-  
+
         {/* Dialog */}
         <Dialog
           open={dialogOpen}
@@ -418,7 +430,7 @@ export default function MusicEntryClerkUpload() {
               borderRadius: "16px",
               padding: "16px",
               width: { xs: "90%", sm: "auto" },
-              maxWidth: { xs: "90%", sm: 400 }
+              maxWidth: { xs: "90%", sm: 400 },
             },
           }}
         >
@@ -467,5 +479,4 @@ export default function MusicEntryClerkUpload() {
       </Box>
     </ThemeProvider>
   );
-  }
-  
+}
