@@ -233,7 +233,7 @@ export default function CustomerCollections() {
               variant="body1"
               sx={{
                 fontFamily: "Montserrat",
-                fontWeight: "medium",
+                fontWeight: "bold",
                 textAlign: isTablet || isMobile ? "center" : "left",
               }}
             >
