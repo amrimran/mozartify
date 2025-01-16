@@ -25,12 +25,15 @@ import {
   Toolbar,
   Drawer,
   useMediaQuery,
+  Skeleton,
 } from "@mui/material";
-import { Menu as MenuIcon } from "@mui/icons-material";
+import { Favorite } from "@mui/icons-material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { Menu as MenuIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
-import ClerkSidebar from "./MusicEntryClerkSidebar";
+import AdminSidebar from "./AdminSidebar";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -86,11 +89,11 @@ const buttonStyles2 = {
   },
 };
 
-export default function MusicEntryClerkSearch() {
+export default function AdminSearch() {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState(null);
 
   const [searchCriteria, setSearchCriteria] = useState([
@@ -115,6 +118,8 @@ export default function MusicEntryClerkSearch() {
 
   const [showSearchResults, setShowSearchResults] = useState(false);
 
+  const [loading, setLoading] = useState(true);
+
   const [page, setPage] = useState(1); // Track the current page
   const itemsPerPage = 5; // Number of items per page
   const [snackbar, setSnackbar] = useState({
@@ -123,7 +128,7 @@ export default function MusicEntryClerkSearch() {
     type: "", // Add this to handle snackbar type (e.g., "cart", "favorite", etc.)
   });
 
-  // Replace the hardcoded lists and add these state variables at the top of your CustomerSearch component:
+  // Replace the hardcoded lists and add these state variables at the top of your AdminSearch component:
   const [genreList, setGenreList] = useState([]);
   const [composerList, setComposerList] = useState([]);
   const [instrumentationList, setInstrumentationList] = useState([]); // Changed from instrumentList
@@ -231,7 +236,7 @@ export default function MusicEntryClerkSearch() {
       }
     };
     fetchUser();
-  }, [navigate]);
+  }, [navigate, favorites]);
 
   useEffect(() => {
     const fetchPurchasedScores = async () => {
@@ -287,7 +292,57 @@ export default function MusicEntryClerkSearch() {
     };
 
     fetchAddedToCartScores();
-  }, [navigate]);
+  }, [navigate, addedToCartScores]);
+
+  useEffect(() => {
+    // Simulate loading delay
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const addToCart = async (scoreId) => {
+    try {
+      await axios.post("http://localhost:3000/add-to-cart", {
+        musicScoreId: scoreId,
+      });
+      setAddedToCartScores([...addedToCartScores, scoreId]);
+      setSnackbar({
+        open: true,
+        message: "Added to cart successfully!",
+        type: "cart",
+      });
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+    }
+  };
+
+  const toggleFavorite = async (musicScoreId) => {
+    try {
+      const isFavorite = user?.favorites?.includes(musicScoreId);
+
+      const response = await axios.post("http://localhost:3000/set-favorites", {
+        musicScoreId,
+        action: isFavorite ? "remove" : "add", // Explicitly specify the action
+      });
+      setFavorites(response.data.favorites);
+
+      // Show appropriate snackbar message
+      setSnackbar({
+        open: true,
+        message: isFavorite
+          ? "Removed from favorites successfully!"
+          : "Added to favorites successfully!",
+        type: isFavorite ? "unfavorite" : "favorite",
+        reload: true, // Add a flag to determine whether to reload after snackbar
+      });
+      setFavorites(response.data.favorites);
+    } catch (error) {
+      console.error("Error updating favorites:", error);
+    }
+  };
 
   const handleSearch = () => {
     const combinedQueries = searchCriteria.reduce((acc, criteria, index) => {
@@ -376,13 +431,12 @@ export default function MusicEntryClerkSearch() {
   const collectionOptions = ["All", "Lecturers", "Students", "Freelancers"];
 
   const GlobalStyle = createGlobalStyle`
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Montserrat', sans-serif;
-    overflow-x: hidden;
-  }
-`;
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Montserrat', sans-serif;
+    }
+  `;
 
   // Styles object for responsive layout
   const styles = {
@@ -454,7 +508,7 @@ export default function MusicEntryClerkSearch() {
               variant="h6"
               sx={{ color: "#3B3183", fontWeight: "bold" }}
             >
-              Music Score Search
+              Music Score Repo Search
             </Typography>
 
             {/* Mobile user info */}
@@ -486,7 +540,7 @@ export default function MusicEntryClerkSearch() {
 
         {/* Permanent drawer for large screens */}
         <Drawer variant="permanent" sx={styles.drawer}>
-          <ClerkSidebar active="searchScores" />
+          <AdminSidebar active="search-scores" />
         </Drawer>
 
         {/* Temporary drawer for smaller screens */}
@@ -497,7 +551,7 @@ export default function MusicEntryClerkSearch() {
           ModalProps={{ keepMounted: true }}
           sx={styles.mobileDrawer}
         >
-          <ClerkSidebar active="searchScores" />
+          <AdminSidebar active="search-scores" />
         </Drawer>
 
         {/* Main Content */}
@@ -513,28 +567,49 @@ export default function MusicEntryClerkSearch() {
                   mb: 3,
                 }}
               >
-                <Typography
-                  variant="h4"
-                  sx={{
-                    fontFamily: "Montserrat",
-                    fontWeight: "bold",
-                    fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
-                  }}
-                >
-                  Music Score Repository Search
-                </Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Typography variant="body1">{user?.username}</Typography>
-                  <Avatar
-                    alt={user?.username}
-                    src={user?.profile_picture}
-                    sx={{ width: 40, height: 40 }}
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontFamily: "Montserrat",
+                      fontWeight: "bold",
+             
+                      ml: 1,
+                    }}
                   >
-                    {user?.username?.charAt(0).toUpperCase()}
-                  </Avatar>
+                    Music Score Repository Search 🔍
+                  </Typography>{" "}
+                </Box>
+
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  {user ? (
+                    <>
+                      <Typography variant="body1" sx={{ mr: 2 }}>
+                        {user.username}
+                      </Typography>
+                      <Avatar
+                        alt={user.username}
+                        src={
+                          user && user.profile_picture
+                            ? user.profile_picture
+                            : null
+                        }
+                      >
+                        {(!user || !user.profile_picture) &&
+                          user.username.charAt(0).toUpperCase()}
+                      </Avatar>
+                    </>
+                  ) : (
+                    <>
+                      <Typography variant="body1" sx={{ mr: 2 }}>
+                        Loading...
+                      </Typography>
+                      <Avatar></Avatar>
+                    </>
+                  )}
                 </Box>
               </Box>
-              <Divider sx={{ mb: 4 }} />
+              <Divider sx={{ my: 1 }} />
             </>
           )}
 
@@ -780,7 +855,7 @@ export default function MusicEntryClerkSearch() {
                     )}
                     <Button
                       onClick={() =>
-                        navigate("/clerk-search/clerk-advanced-search")
+                        navigate("/admin-search/admin-advanced-search")
                       }
                       variant="contained"
                       fullWidth={isMobile}
@@ -845,37 +920,32 @@ export default function MusicEntryClerkSearch() {
           {showSearchResults && (
             <Box
               sx={{
-                flexGrow: 1,
-                height: {
-                  xs: "calc(100vh - 20px)", // Very small subtraction for mobile
-                  lg: "calc(100vh - 50px)", // Small subtraction for larger screens
-                },
-                width: "100%",
-                overflow: "auto",
-                p: { xs: 1, sm: -5 },
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                gap: 2,
+                mt: 1,
+                ml: 2,
               }}
             >
-              {/* Back Button */}
-              <Box sx={{ mb: 2 }}>
-                <Button
-                  variant="contained"
-                  onClick={handleToggleSearchResults}
-                  startIcon={<ArrowBackIcon />}
-                  sx={buttonStyles2}
-                >
-                  Back
-                </Button>
-              </Box>
+              <Button
+                variant="contained"
+                onClick={handleToggleSearchResults}
+                startIcon={<ArrowBackIcon />}
+                sx={buttonStyles2}
+              >
+                Back
+              </Button>
 
-              {/* Filter Tags Section */}
               <Box
                 sx={{
                   display: "flex",
-                  gap: 1,
-                  px: 2,
-                  mb: 2,
-                  overflow: "auto",
-                  WebkitOverflowScrolling: "touch",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                  gap: 2,
+                  overflowX: "auto",
+                  flexGrow: 1,
+                  maxWidth: { xs: "100%", sm: "50vw" },
                 }}
               >
                 {hasFiltered && selectedGenres.length > 0 && (
@@ -958,9 +1028,28 @@ export default function MusicEntryClerkSearch() {
                   </Button>
                 )}
               </Box>
+            </Box>
+          )}
 
+          {showSearchResults && (
+            <Box
+              sx={{
+                flexGrow: 1,
+                height: {
+                  xs: "calc(100vh - 150px)", // This might be restricting scrolling
+                  lg: "calc(100vh - 200px)",
+                },
+                width: "100%",
+                overflow: "auto", // Change from "hidden" to "auto"
+                p: { xs: 1, sm: 2 },
+              }}
+            >
               {/* Main content grid */}
-              <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ flexGrow: 1 }}>
+              <Grid
+                container
+                spacing={{ xs: 1, sm: 2 }}
+                sx={{ flexGrow: 1, overflow: "hidden" }}
+              >
                 {/* Refine search sidebar */}
                 <Grid
                   item
@@ -968,7 +1057,7 @@ export default function MusicEntryClerkSearch() {
                   sm={4}
                   md={3}
                   sx={{
-                    mb: { xs: 2, sm: 0 },
+                    mb: { xs: 2, sm: 0 }, // Add margin bottom on mobile to separate from results
                   }}
                 >
                   <Box
@@ -1157,7 +1246,7 @@ export default function MusicEntryClerkSearch() {
                     </FormControl>
 
                     <Box sx={{ flexGrow: 1 }} />
-
+                    {/* Add Clear Refine button */}
                     <Button
                       variant="outlined"
                       fullWidth
@@ -1184,7 +1273,6 @@ export default function MusicEntryClerkSearch() {
                   </Box>
                 </Grid>
 
-                {/* Search Results Grid */}
                 <Grid item xs={12} sm={8} md={9}>
                   <Box
                     sx={{
@@ -1193,6 +1281,7 @@ export default function MusicEntryClerkSearch() {
                       flexDirection: "column",
                     }}
                   >
+                    {" "}
                     {paginatedResults.length === 0 && hasSearched && (
                       <Typography
                         variant="body1"
@@ -1214,6 +1303,7 @@ export default function MusicEntryClerkSearch() {
                           p: { xs: 1, sm: 2 },
                         }}
                       >
+                        {" "}
                         <List
                           sx={{
                             width: "100%",
@@ -1224,46 +1314,106 @@ export default function MusicEntryClerkSearch() {
                             <ListItemButton
                               key={item._id}
                               onClick={() =>
-                                navigate(`/clerk-music-score-view/${item._id}`)
+                                navigate(
+                                  `/admin-music-score-view/:scoreId/${item._id}`
+                                )
                               }
-                              sx={{
-                                flexDirection: { xs: "column", sm: "row" },
-                                alignItems: { xs: "flex-start", sm: "center" },
-                                gap: { xs: 1, sm: 2 },
-                                py: { xs: 1, sm: 2 },
-                              }}
                             >
                               <ListItemText
                                 primary={
-                                  <Typography
-                                    sx={{
-                                      fontFamily: "Montserrat",
-                                      fontWeight: "bold",
-                                      fontSize: { xs: "0.875rem", sm: "1rem" },
-                                    }}
-                                  >
-                                    {item.title}
-                                  </Typography>
+                                  loading ? (
+                                    <Skeleton
+                                      variant="text"
+                                      width={150}
+                                      height={24}
+                                      sx={{
+                                        mr: 2,
+                                        fontFamily: "Montserrat",
+                                        animation: "wave",
+                                      }}
+                                    />
+                                  ) : (
+                                    <Typography
+                                      sx={{
+                                        fontFamily: "Montserrat",
+                                        fontWeight: "bold",
+                                        fontSize: {
+                                          xs: "0.875rem",
+                                          sm: "1rem",
+                                        },
+                                      }}
+                                    >
+                                      {item.title}
+                                    </Typography>
+                                  )
                                 }
                                 secondary={
-                                  <Typography
-                                    variant="body2"
-                                    sx={{
-                                      fontFamily: "Montserrat",
-                                      fontSize: {
-                                        xs: "0.75rem",
-                                        sm: "0.875rem",
-                                      },
-                                    }}
-                                  >
-                                    {`Genre: ${item.genre} | Composer: ${item.composer} | Artist: ${item.artist}`}
-                                  </Typography>
+                                  loading ? (
+                                    <Skeleton
+                                      variant="text"
+                                      width={400}
+                                      height={24}
+                                      sx={{
+                                        mr: 2,
+                                        fontFamily: "Montserrat",
+                                        animation: "wave",
+                                      }}
+                                    />
+                                  ) : (
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        fontFamily: "Montserrat",
+                                        fontSize: {
+                                          xs: "0.75rem",
+                                          sm: "0.875rem",
+                                        },
+                                      }}
+                                    >
+                                      {`Genre: ${item.genre} | Composer: ${item.composer} | Artist: ${item.artist}`}
+                                    </Typography>
+                                  )
                                 }
                               />
+
+                              <ListItemIcon>
+                                {loading
+                                  ? null
+                                  : !purchasedScores.includes(item._id) &&
+                                    !addedToCartScores.includes(item._id) && (
+                                      <IconButton
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          addToCart(item._id);
+                                        }}
+                                      >
+                                        <ShoppingCartIcon />
+                                      </IconButton>
+                                    )}
+                              </ListItemIcon>
+
+                              <ListItemIcon>
+                                {loading ? null : (
+                                  <IconButton
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleFavorite(item._id);
+                                    }}
+                                  >
+                                    <Favorite
+                                      color={
+                                        favorites.includes(item._id)
+                                          ? "error"
+                                          : "disabled"
+                                      }
+                                    />
+                                  </IconButton>
+                                )}
+                              </ListItemIcon>
                             </ListItemButton>
                           ))}
                         </List>
-                        <Box sx={{ mt: "auto", py: 0 }}>
+                        <Box sx={{ mt: "auto", py: 2 }}>
                           <Pagination
                             count={Math.ceil(
                               (hasFiltered
@@ -1272,9 +1422,8 @@ export default function MusicEntryClerkSearch() {
                             )}
                             page={page}
                             onChange={handlePageChange}
-                            size={isMobile ? "small" : "medium"}
                             sx={{
-                              mt: 2,
+                              mt: 3,
                               display: "flex",
                               justifyContent: "center",
                               "& .MuiPaginationItem-root": {
@@ -1284,14 +1433,14 @@ export default function MusicEntryClerkSearch() {
                                 backgroundColor: "primary",
                                 color: "#000",
                                 "&.Mui-selected": {
-                                  backgroundColor: "#8BD3E6",
+                                  backgroundColor: "#8BD3E6", // Blue for selected
                                   color: "#fff",
                                   "&:hover": {
-                                    backgroundColor: "#8BD3E6",
+                                    backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
                                   },
                                 },
                                 "&:hover": {
-                                  backgroundColor: "#D3D3D3",
+                                  backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
                                 },
                               },
                             }}
@@ -1314,7 +1463,7 @@ export default function MusicEntryClerkSearch() {
               }
               handleSnackbarClose(); // Close the snackbar
               if (snackbar.reload) {
-                window.location.reload(); // Reload the page after snackbar closes
+                // window.location.reload(); // Reload the page after snackbar closes
               }
             }}
             anchorOrigin={{ vertical: "top", horizontal: "center" }}

@@ -21,52 +21,79 @@ import {
   InputLabel,
   FormControl,
   Pagination,
+  AppBar,
+  Toolbar,
+  Drawer,
+  useMediaQuery,
   Skeleton,
 } from "@mui/material";
-import { Favorite, PlayArrow } from "@mui/icons-material";
+import { Favorite } from "@mui/icons-material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { Menu as MenuIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import CustomerSidebar from "./CustomerSidebar";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 
-const buttonStyles2 = {
-  px: 5,
-  fontFamily: "Montserrat",
-  fontWeight: "bold",
-  color: "#8BD3E6",
-  backgroundColor: "#FFFFFF",
-  border: "1px solid #8BD3E6",
-  borderColor: "#8BD3E6",
-  boxShadow: "none",
-  "&:hover": {
-    boxShadow: "none",
-    backgroundColor: "#E6F8FB", // Subtle light blue hover effect
-    color: "#7AB9C4", // Slightly darker shade of the text
-    borderColor: "#7AB9C4", // Matches the text color for consistency
+// Constants
+const DRAWER_WIDTH = 225;
+
+// Theme setup
+const theme = createTheme({
+  typography: {
+    fontFamily: "Montserrat, Arial, sans-serif",
   },
-};
+  breakpoints: {
+    values: {
+      xs: 0, // mobile phones
+      sm: 752, // tablets
+      md: 960, // small laptops
+      lg: 1280, // desktops
+      xl: 1920, // large screens
+    },
+  },
+});
 
+// Button Styles
 const buttonStyles = {
-  px: 10,
+  px: { xs: 4, sm: 10 },
   fontFamily: "Montserrat",
   fontWeight: "bold",
   color: "#FFFFFF",
   backgroundColor: "#8BD3E6",
   border: "1px solid #8BD3E6",
-  borderColor: "#8BD3E6",
   boxShadow: "none",
   "&:hover": {
+    backgroundColor: "#6FBCCF",
+    borderColor: "#6FBCCF",
     boxShadow: "none",
-    backgroundColor: "#6FBCCF", // Slightly darker blue for hover
-    color: "#FFFFFF", // Keeps the text color consistent
-    borderColor: "#6FBCCF", // Matches the background color for cohesion
+  },
+};
+
+const buttonStyles2 = {
+  px: { xs: 4, sm: 10 },
+  fontFamily: "Montserrat",
+  fontWeight: "bold",
+  color: "#8BD3E6",
+  backgroundColor: "#FFFFFF",
+  border: "1px solid #8BD3E6",
+  boxShadow: "none",
+  "&:hover": {
+    backgroundColor: "#E6F8FB",
+    color: "#7AB9C4",
+    borderColor: "#7AB9C4",
+    boxShadow: "none",
   },
 };
 
 export default function CustomerSearch() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   const [user, setUser] = useState(null);
 
   const [searchCriteria, setSearchCriteria] = useState([
@@ -209,7 +236,7 @@ export default function CustomerSearch() {
       }
     };
     fetchUser();
-  }, [navigate]);
+  }, [navigate, favorites]);
 
   useEffect(() => {
     const fetchPurchasedScores = async () => {
@@ -265,7 +292,7 @@ export default function CustomerSearch() {
     };
 
     fetchAddedToCartScores();
-  }, [navigate]);
+  }, [navigate, addedToCartScores]);
 
   useEffect(() => {
     // Simulate loading delay
@@ -411,91 +438,210 @@ export default function CustomerSearch() {
     }
   `;
 
+  // Styles object for responsive layout
+  const styles = {
+    root: {
+      display: "flex",
+      minHeight: "100vh",
+      backgroundColor: "#FFFFFF",
+    },
+    appBar: {
+      display: isLargeScreen ? "none" : "block",
+      backgroundColor: "#FFFFFF",
+      boxShadow: "none",
+      borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+    },
+    drawer: {
+      width: DRAWER_WIDTH,
+      flexShrink: 0,
+      display: isLargeScreen ? "block" : "none",
+      "& .MuiDrawer-paper": {
+        width: DRAWER_WIDTH,
+        boxSizing: "border-box",
+      },
+    },
+    mobileDrawer: {
+      display: isLargeScreen ? "none" : "block",
+      "& .MuiDrawer-paper": {
+        width: DRAWER_WIDTH,
+        boxSizing: "border-box",
+      },
+    },
+    mainContent: {
+      flexGrow: 1,
+      p: { xs: 2, sm: 3 },
+      ml: isLargeScreen ? 1 : 0,
+      mt: isLargeScreen ? 2 : 8,
+      width: "100%",
+    },
+    searchContainer: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 2,
+      width: "100%",
+      maxWidth: { xs: "100%", md: "800px" },
+      margin: "0 auto",
+    },
+  };
+
+  // Drawer toggle handler
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <GlobalStyle />
-      <Box sx={{ display: "flex", minHeight: "100vh", maxHeight: "100vh" }}>
-        <CustomerSidebar active="search" />
-        <Box
-          sx={{
-            flexGrow: 1,
-            p: 3,
-            display: "flex",
-            flexDirection: "column",
-            marginLeft: "229px", // 225px (sidebar width) + 4px (yellow line)
-            overflowX: "hidden", // Prevent horizontal scrolling
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography
-                variant="h4"
+      <Box sx={styles.root}>
+        {/* Mobile AppBar */}
+        <AppBar position="fixed" sx={styles.appBar}>
+          <Toolbar>
+            <IconButton
+              color="inherit"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, color: "#3B3183" }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography
+              variant="h6"
+              sx={{ color: "#3B3183", fontWeight: "bold" }}
+            >
+              Music Score Repo Search
+            </Typography>
+
+            {/* Mobile user info */}
+            {!isLargeScreen && (
+              <Box
                 sx={{
-                  fontFamily: "Montserrat",
-                  fontWeight: "bold",
-                  mt: 4,
-                  ml: 1,
+                  ml: "auto",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
                 }}
               >
-                Music Score Repository Search 🔍
-              </Typography>{" "}
-            </Box>
+                {!isMobile && (
+                  <Typography variant="body2" sx={{ color: "#3B3183" }}>
+                    {user?.username}
+                  </Typography>
+                )}
+                <Avatar
+                  alt={user?.username}
+                  src={user?.profile_picture}
+                  sx={{ width: 32, height: 32 }}
+                >
+                  {user?.username?.charAt(0).toUpperCase()}
+                </Avatar>
+              </Box>
+            )}
+          </Toolbar>
+        </AppBar>
 
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              {user ? (
-                <>
-                  <Typography variant="body1" sx={{ mr: 2 }}>
-                    {user.username}
-                  </Typography>
-                  <Avatar
-                    alt={user.username}
-                    src={
-                      user && user.profile_picture ? user.profile_picture : null
-                    }
+        {/* Permanent drawer for large screens */}
+        <Drawer variant="permanent" sx={styles.drawer}>
+          <CustomerSidebar active="search" />
+        </Drawer>
+
+        {/* Temporary drawer for smaller screens */}
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={styles.mobileDrawer}
+        >
+          <CustomerSidebar active="search" />
+        </Drawer>
+
+        {/* Main Content */}
+        <Box component="main" sx={styles.mainContent}>
+          {/* Header Section - Desktop */}
+          {isLargeScreen && (
+            <>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 3,
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontFamily: "Montserrat",
+                      fontWeight: "bold",
+             
+                      ml: 1,
+                    }}
                   >
-                    {(!user || !user.profile_picture) &&
-                      user.username.charAt(0).toUpperCase()}
-                  </Avatar>
-                </>
-              ) : (
-                <>
-                  <Typography variant="body1" sx={{ mr: 2 }}>
-                    Loading...
-                  </Typography>
-                  <Avatar></Avatar>
-                </>
-              )}
-            </Box>
-          </Box>
-          <Divider sx={{ my: 1 }} />
+                    Music Score Repository Search 🔍
+                  </Typography>{" "}
+                </Box>
+
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  {user ? (
+                    <>
+                      <Typography variant="body1" sx={{ mr: 2 }}>
+                        {user.username}
+                      </Typography>
+                      <Avatar
+                        alt={user.username}
+                        src={
+                          user && user.profile_picture
+                            ? user.profile_picture
+                            : null
+                        }
+                      >
+                        {(!user || !user.profile_picture) &&
+                          user.username.charAt(0).toUpperCase()}
+                      </Avatar>
+                    </>
+                  ) : (
+                    <>
+                      <Typography variant="body1" sx={{ mr: 2 }}>
+                        Loading...
+                      </Typography>
+                      <Avatar></Avatar>
+                    </>
+                  )}
+                </Box>
+              </Box>
+              <Divider sx={{ my: 1 }} />
+            </>
+          )}
 
           {/* Basic Search Section */}
           {!showSearchResults && (
-            <Container maxWidth="lg" sx={{ mt: 4 }}>
+            <Container maxWidth="lg" sx={{ mt: { xs: 0, lg: 4 } }}>
               <Box
                 sx={{
                   backgroundColor: "#fcfcfc",
-
                   borderRadius: 2,
-                  p: 4,
-                  boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.16)", // Added elevation
-                  border: "1px solid rgba(0, 0, 0, 0.12)", // Added subtle border
+                  p: { xs: 2, sm: 3, md: 4 },
+                  boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.16)",
+                  border: "1px solid rgba(0, 0, 0, 0.12)",
                 }}
               >
-                <Box sx={{ mb: 3, display: "flex", alignItems: "center" }}>
+                <Box
+                  sx={{
+                    mb: { xs: 2, sm: 3 },
+                    display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
+                    alignItems: { xs: "stretch", sm: "center" },
+                    gap: { xs: 1, sm: 2 },
+                  }}
+                >
                   <Typography
                     variant="h6"
                     sx={{
                       fontFamily: "Montserrat",
-                      mr: 2,
+                      mr: { xs: 0, sm: 2 },
                       fontWeight: 500,
+                      fontSize: { xs: "0.875rem", sm: "1rem" },
+                      textAlign: { xs: "left", sm: "right" },
                     }}
                   >
                     Search in:
@@ -504,20 +650,18 @@ export default function CustomerSearch() {
                     value={selectedCollection}
                     onChange={(e) => setSelectedCollection(e.target.value)}
                     sx={{
-                      minWidth: 200,
+                      fontSize: { xs: "0.875rem", sm: "1rem" },
+                      width: { xs: "100%", sm: 200 },
                       fontFamily: "Montserrat",
                       backgroundColor: "white",
                       "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#8BD3E6", // Default color
+                        borderColor: "#8BD3E6",
                       },
                       "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#67ADC1", // Hover color
+                        borderColor: "#67ADC1",
                       },
                       "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#67ADC1", // Selected/focused color
-                      },
-                      "& .MuiSelect-select": {
-                        fontFamily: "Montserrat",
+                        borderColor: "#67ADC1",
                       },
                     }}
                   >
@@ -525,7 +669,10 @@ export default function CustomerSearch() {
                       <MenuItem
                         key={option}
                         value={option}
-                        sx={{ fontFamily: "Montserrat" }}
+                        sx={{
+                          fontFamily: "Montserrat",
+                          fontSize: { xs: "0.875rem", sm: "1rem" },
+                        }}
                       >
                         {option}
                       </MenuItem>
@@ -538,16 +685,22 @@ export default function CustomerSearch() {
                     key={index}
                     sx={{
                       display: "flex",
-                      alignItems: "center",
-                      gap: 2,
+                      flexDirection: { xs: "column", sm: "row" },
+                      alignItems: { xs: "stretch", sm: "center" },
+                      gap: { xs: 1, sm: 2 },
                       mb: 2,
                       backgroundColor: "white",
-                      p: 2,
+                      p: { xs: 1, sm: 2 },
                       borderRadius: 2,
                     }}
                   >
                     {index !== 0 && (
-                      <FormControl sx={{ width: 120 }}>
+                      <FormControl
+                        sx={{
+                          width: { xs: "100%", sm: 120 },
+                          mb: { xs: 1, sm: 0 },
+                        }}
+                      >
                         <InputLabel sx={{ fontFamily: "Montserrat" }}>
                           Logic
                         </InputLabel>
@@ -577,7 +730,12 @@ export default function CustomerSearch() {
                       </FormControl>
                     )}
 
-                    <FormControl sx={{ width: 150 }}>
+                    <FormControl
+                      sx={{
+                        width: { xs: "100%", sm: 150 },
+                        mb: { xs: 1, sm: 0 },
+                      }}
+                    >
                       <InputLabel sx={{ fontFamily: "Montserrat" }}>
                         Category
                       </InputLabel>
@@ -590,13 +748,13 @@ export default function CustomerSearch() {
                         sx={{
                           fontFamily: "Montserrat",
                           "& .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "#8BD3E6", // Default color
+                            borderColor: "#8BD3E6",
                           },
                           "&:hover .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "#67ADC1", // Hover color
+                            borderColor: "#67ADC1",
                           },
                           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "#67ADC1", // Selected/focused color
+                            borderColor: "#67ADC1",
                           },
                         }}
                       >
@@ -625,6 +783,8 @@ export default function CustomerSearch() {
                       value={criteria.text}
                       onChange={(e) => handleTextChange(index, e.target.value)}
                       sx={{
+                        flexGrow: 1,
+                        mb: { xs: 1, sm: 0 },
                         "& .MuiOutlinedInput-root": {
                           fontFamily: "Montserrat",
                           "& fieldset": {
@@ -637,16 +797,17 @@ export default function CustomerSearch() {
                             borderColor: "#67ADC1",
                           },
                         },
-                        "& .MuiInputLabel-root": {
-                          fontFamily: "Montserrat",
-                        },
                       }}
                     />
 
                     {searchCriteria.length > 1 && (
                       <IconButton
                         onClick={() => handleDeleteRow(index)}
-                        sx={{ color: "#B71C1C" }}
+                        sx={{
+                          color: "#B71C1C",
+                          alignSelf: { xs: "flex-end", sm: "center" },
+                          ml: { xs: 0, sm: 1 },
+                        }}
                       >
                         <DeleteIcon />
                       </IconButton>
@@ -657,17 +818,36 @@ export default function CustomerSearch() {
                 <Box
                   sx={{
                     display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
                     justifyContent: "space-between",
-                    mt: 3,
+                    alignItems: "center",
+                    gap: { xs: 1, sm: 2 },
+                    width: "100%",
                   }}
                 >
-                  <Box sx={{ display: "flex", gap: 2 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: { xs: "column", sm: "row" },
+                      gap: { xs: 1, sm: 2 },
+                      width: { xs: "100%", sm: "auto" },
+                    }}
+                  >
                     {searchCriteria.length < 3 && (
                       <Button
                         onClick={handleAddRow}
                         variant="outlined"
+                        fullWidth={isMobile}
                         sx={{
                           ...buttonStyles2,
+                          px: { xs: 2, sm: 3 },
+                          py: { xs: 0.75, sm: 1 },
+                          fontSize: {
+                            xs: "0.75rem",
+                            sm: "0.875rem",
+                            md: "1rem",
+                          },
+                          minWidth: { xs: "100%", sm: "auto" },
                         }}
                       >
                         Add Row
@@ -678,21 +858,38 @@ export default function CustomerSearch() {
                         navigate("/customer-search/customer-advanced-search")
                       }
                       variant="contained"
+                      fullWidth={isMobile}
                       sx={{
                         ...buttonStyles,
+                        px: { xs: 2, sm: 3 },
+                        py: { xs: 0.75, sm: 1 },
+                        fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" },
+                        minWidth: { xs: "100%", sm: "auto" },
                       }}
                     >
                       Advanced Search
                     </Button>
                   </Box>
 
-                  <Box sx={{ display: "flex", gap: 2 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: { xs: "column", sm: "row" },
+                      gap: { xs: 1, sm: 2 },
+                      width: { xs: "100%", sm: "auto" },
+                    }}
+                  >
                     <Button
                       onClick={handleClear}
                       variant="outlined"
+                      fullWidth={isMobile}
                       sx={{
                         boxShadow: "none",
                         ...buttonStyles2,
+                        px: { xs: 2, sm: 3 },
+                        py: { xs: 0.75, sm: 1 },
+                        fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" },
+                        minWidth: { xs: "100%", sm: "auto" },
                       }}
                     >
                       Clear
@@ -700,10 +897,15 @@ export default function CustomerSearch() {
                     <Button
                       onClick={handleSearch}
                       variant="contained"
+                      fullWidth={isMobile}
                       startIcon={<SearchIcon />}
                       sx={{
                         boxShadow: "none",
                         ...buttonStyles,
+                        px: { xs: 2, sm: 3 },
+                        py: { xs: 0.75, sm: 1 },
+                        fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" },
+                        minWidth: { xs: "100%", sm: "auto" },
                       }}
                     >
                       Search
@@ -743,7 +945,7 @@ export default function CustomerSearch() {
                   gap: 2,
                   overflowX: "auto",
                   flexGrow: 1,
-                  maxWidth: "50vw",
+                  maxWidth: { xs: "100%", sm: "50vw" },
                 }}
               >
                 {hasFiltered && selectedGenres.length > 0 && (
@@ -833,23 +1035,34 @@ export default function CustomerSearch() {
             <Box
               sx={{
                 flexGrow: 1,
-                height: "calc(100vh - 200px)",
+                height: {
+                  xs: "calc(100vh - 150px)", // This might be restricting scrolling
+                  lg: "calc(100vh - 200px)",
+                },
                 width: "100%",
-                overflow: "hidden",
-                p: 2,
+                overflow: "auto", // Change from "hidden" to "auto"
+                p: { xs: 1, sm: 2 },
               }}
             >
               {/* Main content grid */}
               <Grid
                 container
-                spacing={2}
+                spacing={{ xs: 1, sm: 2 }}
                 sx={{ flexGrow: 1, overflow: "hidden" }}
               >
                 {/* Refine search sidebar */}
-                <Grid item xs={3}>
+                <Grid
+                  item
+                  xs={12}
+                  sm={4}
+                  md={3}
+                  sx={{
+                    mb: { xs: 2, sm: 0 }, // Add margin bottom on mobile to separate from results
+                  }}
+                >
                   <Box
                     sx={{
-                      p: 2,
+                      p: { xs: 1, sm: 2 },
                       border: "1px solid #ddd",
                       borderRadius: 1,
                       display: "flex",
@@ -864,8 +1077,13 @@ export default function CustomerSearch() {
                       Refine Your Search
                     </Typography>
 
-                    <FormControl fullWidth sx={{ mb: 2 }}>
-                      <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                    <FormControl fullWidth sx={{ mb: { xs: 1, sm: 2 } }}>
+                      <InputLabel
+                        sx={{
+                          fontFamily: "Montserrat",
+                          fontSize: { xs: "0.75rem", sm: "1rem" },
+                        }}
+                      >
                         Genre
                       </InputLabel>
                       <Select
@@ -875,6 +1093,7 @@ export default function CustomerSearch() {
                         label="Genre"
                         renderValue={(selected) => selected.join(", ")}
                         sx={{
+                          fontSize: { xs: "0.75rem", sm: "1rem" },
                           borderRadius: "16px",
                           fontFamily: "Montserrat",
                           "&:hover .MuiOutlinedInput-notchedOutline": {
@@ -889,7 +1108,10 @@ export default function CustomerSearch() {
                           <MenuItem
                             key={genre}
                             value={genre}
-                            sx={{ fontFamily: "Montserrat" }}
+                            sx={{
+                              fontFamily: "Montserrat",
+                              fontSize: { xs: "0.75rem", sm: "1rem" },
+                            }}
                           >
                             {genre}
                           </MenuItem>
@@ -897,8 +1119,13 @@ export default function CustomerSearch() {
                       </Select>
                     </FormControl>
 
-                    <FormControl fullWidth sx={{ mb: 2 }}>
-                      <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                    <FormControl fullWidth sx={{ mb: { xs: 1, sm: 2 } }}>
+                      <InputLabel
+                        sx={{
+                          fontFamily: "Montserrat",
+                          fontSize: { xs: "0.75rem", sm: "1rem" },
+                        }}
+                      >
                         Composer
                       </InputLabel>
                       <Select
@@ -908,6 +1135,7 @@ export default function CustomerSearch() {
                         label="Composer"
                         renderValue={(selected) => selected.join(", ")}
                         sx={{
+                          fontSize: { xs: "0.75rem", sm: "1rem" },
                           borderRadius: "16px",
                           fontFamily: "Montserrat",
                           "&:hover .MuiOutlinedInput-notchedOutline": {
@@ -922,7 +1150,10 @@ export default function CustomerSearch() {
                           <MenuItem
                             key={composer}
                             value={composer}
-                            sx={{ fontFamily: "Montserrat" }}
+                            sx={{
+                              fontFamily: "Montserrat",
+                              fontSize: { xs: "0.75rem", sm: "1rem" },
+                            }}
                           >
                             {composer}
                           </MenuItem>
@@ -930,8 +1161,13 @@ export default function CustomerSearch() {
                       </Select>
                     </FormControl>
 
-                    <FormControl fullWidth sx={{ mb: 2 }}>
-                      <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                    <FormControl fullWidth sx={{ mb: { xs: 1, sm: 2 } }}>
+                      <InputLabel
+                        sx={{
+                          fontFamily: "Montserrat",
+                          fontSize: { xs: "0.75rem", sm: "1rem" },
+                        }}
+                      >
                         Instrumentation
                       </InputLabel>
                       <Select
@@ -941,6 +1177,7 @@ export default function CustomerSearch() {
                         label="Instrumentation"
                         renderValue={(selected) => selected.join(", ")}
                         sx={{
+                          fontSize: { xs: "0.75rem", sm: "1rem" },
                           borderRadius: "16px",
                           fontFamily: "Montserrat",
                           "&:hover .MuiOutlinedInput-notchedOutline": {
@@ -955,7 +1192,10 @@ export default function CustomerSearch() {
                           <MenuItem
                             key={instrument}
                             value={instrument}
-                            sx={{ fontFamily: "Montserrat" }}
+                            sx={{
+                              fontFamily: "Montserrat",
+                              fontSize: { xs: "0.75rem", sm: "1rem" },
+                            }}
                           >
                             {instrument}
                           </MenuItem>
@@ -963,8 +1203,13 @@ export default function CustomerSearch() {
                       </Select>
                     </FormControl>
 
-                    <FormControl fullWidth sx={{ mb: 2 }}>
-                      <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                    <FormControl fullWidth sx={{ mb: { xs: 1, sm: 2 } }}>
+                      <InputLabel
+                        sx={{
+                          fontFamily: "Montserrat",
+                          fontSize: { xs: "0.75rem", sm: "1rem" },
+                        }}
+                      >
                         Emotion
                       </InputLabel>
                       <Select
@@ -974,6 +1219,7 @@ export default function CustomerSearch() {
                         label="Emotion"
                         renderValue={(selected) => selected.join(", ")}
                         sx={{
+                          fontSize: { xs: "0.75rem", sm: "1rem" },
                           borderRadius: "16px",
                           fontFamily: "Montserrat",
                           "&:hover .MuiOutlinedInput-notchedOutline": {
@@ -988,7 +1234,10 @@ export default function CustomerSearch() {
                           <MenuItem
                             key={emotion}
                             value={emotion}
-                            sx={{ fontFamily: "Montserrat" }}
+                            sx={{
+                              fontFamily: "Montserrat",
+                              fontSize: { xs: "0.75rem", sm: "1rem" },
+                            }}
                           >
                             {emotion}
                           </MenuItem>
@@ -1002,7 +1251,11 @@ export default function CustomerSearch() {
                       variant="outlined"
                       fullWidth
                       onClick={handleClearFilters}
-                      sx={{ ...buttonStyles2, mb: 2 }}
+                      sx={{
+                        ...buttonStyles2,
+                        mb: { xs: 1, sm: 2 },
+                        fontSize: { xs: "0.75rem", sm: "1rem" },
+                      }}
                     >
                       Clear
                     </Button>
@@ -1010,14 +1263,17 @@ export default function CustomerSearch() {
                       variant="contained"
                       fullWidth
                       onClick={handleRefineClick}
-                      sx={buttonStyles}
+                      sx={{
+                        ...buttonStyles,
+                        fontSize: { xs: "0.75rem", sm: "1rem" },
+                      }}
                     >
                       Refine
                     </Button>
                   </Box>
                 </Grid>
 
-                <Grid item xs={9}>
+                <Grid item xs={12} sm={8} md={9}>
                   <Box
                     sx={{
                       height: "100%",
@@ -1029,14 +1285,31 @@ export default function CustomerSearch() {
                     {paginatedResults.length === 0 && hasSearched && (
                       <Typography
                         variant="body1"
-                        sx={{ fontFamily: "Montserrat" }}
+                        sx={{
+                          fontFamily: "Montserrat",
+                          textAlign: "center",
+                          mt: 4,
+                          fontSize: { xs: "0.875rem", sm: "1rem" },
+                        }}
                       >
                         No results found
                       </Typography>
                     )}
                     {paginatedResults.length > 0 && (
-                      <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
-                        <List>
+                      <Box
+                        sx={{
+                          flexGrow: 1,
+                          overflow: "auto",
+                          p: { xs: 1, sm: 2 },
+                        }}
+                      >
+                        {" "}
+                        <List
+                          sx={{
+                            width: "100%",
+                            bgcolor: "background.paper",
+                          }}
+                        >
                           {paginatedResults.map((item) => (
                             <ListItemButton
                               key={item._id}
@@ -1061,11 +1334,13 @@ export default function CustomerSearch() {
                                     />
                                   ) : (
                                     <Typography
-                                      variant="body1"
                                       sx={{
                                         fontFamily: "Montserrat",
                                         fontWeight: "bold",
-                                        fontSize: { xs: "0.9rem", sm: "1rem" },
+                                        fontSize: {
+                                          xs: "0.875rem",
+                                          sm: "1rem",
+                                        },
                                       }}
                                     >
                                       {item.title}
@@ -1089,16 +1364,13 @@ export default function CustomerSearch() {
                                       variant="body2"
                                       sx={{
                                         fontFamily: "Montserrat",
-                                        color: "black",
                                         fontSize: {
-                                          xs: "0.8rem",
-                                          sm: "0.9rem",
+                                          xs: "0.75rem",
+                                          sm: "0.875rem",
                                         },
-                                        mt: { xs: 1, sm: 0 },
                                       }}
                                     >
-                                      Genre: {item.genre} | Composer:{" "}
-                                      {item.composer} | Artist: {item.artist}
+                                      {`Genre: ${item.genre} | Composer: ${item.composer} | Artist: ${item.artist}`}
                                     </Typography>
                                   )
                                 }
@@ -1141,7 +1413,6 @@ export default function CustomerSearch() {
                             </ListItemButton>
                           ))}
                         </List>
-
                         <Box sx={{ mt: "auto", py: 2 }}>
                           <Pagination
                             count={Math.ceil(
@@ -1156,6 +1427,7 @@ export default function CustomerSearch() {
                               display: "flex",
                               justifyContent: "center",
                               "& .MuiPaginationItem-root": {
+                                fontSize: { xs: "0.75rem", sm: "1rem" },
                                 borderRadius: 2,
                                 fontFamily: "Montserrat",
                                 backgroundColor: "primary",
@@ -1213,6 +1485,6 @@ export default function CustomerSearch() {
           </Snackbar>
         </Box>
       </Box>
-    </>
+    </ThemeProvider>
   );
 }

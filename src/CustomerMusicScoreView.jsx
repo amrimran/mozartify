@@ -705,7 +705,7 @@ export default function CustomerMusicScoreView() {
     <>
       <GlobalStyle />
       <Box sx={{ display: "flex" }}>
-        <CustomerSidebar active="home" />
+        <CustomerSidebar active="library" />
         <Box
           sx={{
             flexGrow: 1,

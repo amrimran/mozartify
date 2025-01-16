@@ -376,13 +376,12 @@ export default function MusicEntryClerkSearch() {
   const collectionOptions = ["All", "Lecturers", "Students", "Freelancers"];
 
   const GlobalStyle = createGlobalStyle`
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Montserrat', sans-serif;
-    overflow-x: hidden;
-  }
-`;
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Montserrat', sans-serif;
+    }
+  `;
 
   // Styles object for responsive layout
   const styles = {
@@ -845,37 +844,33 @@ export default function MusicEntryClerkSearch() {
           {showSearchResults && (
             <Box
               sx={{
-                flexGrow: 1,
-                height: {
-                  xs: "calc(100vh - 20px)", // Very small subtraction for mobile
-                  lg: "calc(100vh - 50px)", // Small subtraction for larger screens
-                },
-                width: "100%",
-                overflow: "auto",
-                p: { xs: 1, sm: -5 },
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                gap: 2,
+                mt: 1,
+                ml: 2,
               }}
             >
-              {/* Back Button */}
-              <Box sx={{ mb: 2 }}>
-                <Button
-                  variant="contained"
-                  onClick={handleToggleSearchResults}
-                  startIcon={<ArrowBackIcon />}
-                  sx={buttonStyles2}
-                >
-                  Back
-                </Button>
-              </Box>
+              <Button
+                variant="contained"
+                onClick={handleToggleSearchResults}
+                startIcon={<ArrowBackIcon />}
+                sx={buttonStyles2}
+              >
+                Back
+              </Button>
 
-              {/* Filter Tags Section */}
               <Box
                 sx={{
                   display: "flex",
-                  gap: 1,
-                  px: 2,
-                  mb: 2,
-                  overflow: "auto",
-                  WebkitOverflowScrolling: "touch",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                  gap: 2,
+                  overflowX: "auto",
+                  flexGrow: 1,
+                  width: "100%", // Full width on mobile
+                  maxWidth: { xs: "100%", sm: "50vw" },
                 }}
               >
                 {hasFiltered && selectedGenres.length > 0 && (
@@ -958,9 +953,28 @@ export default function MusicEntryClerkSearch() {
                   </Button>
                 )}
               </Box>
+            </Box>
+          )}
 
+          {showSearchResults && (
+            <Box
+              sx={{
+                flexGrow: 1,
+                height: {
+                  xs: "calc(100vh - 150px)", // This might be restricting scrolling
+                  lg: "calc(100vh - 200px)",
+                },
+                width: "100%",
+                overflow: "auto", // Change from "hidden" to "auto"
+                p: { xs: 1, sm: 2 },
+              }}
+            >
               {/* Main content grid */}
-              <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ flexGrow: 1 }}>
+              <Grid
+                container
+                spacing={{ xs: 1, sm: 2 }}
+                sx={{ flexGrow: 1, overflow: "hidden" }}
+              >
                 {/* Refine search sidebar */}
                 <Grid
                   item
@@ -968,7 +982,7 @@ export default function MusicEntryClerkSearch() {
                   sm={4}
                   md={3}
                   sx={{
-                    mb: { xs: 2, sm: 0 },
+                    mb: { xs: 2, sm: 0 }, // Add margin bottom on mobile to separate from results
                   }}
                 >
                   <Box
@@ -1157,7 +1171,7 @@ export default function MusicEntryClerkSearch() {
                     </FormControl>
 
                     <Box sx={{ flexGrow: 1 }} />
-
+                    {/* Add Clear Refine button */}
                     <Button
                       variant="outlined"
                       fullWidth
@@ -1184,7 +1198,6 @@ export default function MusicEntryClerkSearch() {
                   </Box>
                 </Grid>
 
-                {/* Search Results Grid */}
                 <Grid item xs={12} sm={8} md={9}>
                   <Box
                     sx={{
@@ -1193,6 +1206,7 @@ export default function MusicEntryClerkSearch() {
                       flexDirection: "column",
                     }}
                   >
+                    {" "}
                     {paginatedResults.length === 0 && hasSearched && (
                       <Typography
                         variant="body1"
@@ -1214,6 +1228,7 @@ export default function MusicEntryClerkSearch() {
                           p: { xs: 1, sm: 2 },
                         }}
                       >
+                        {" "}
                         <List
                           sx={{
                             width: "100%",
@@ -1263,7 +1278,7 @@ export default function MusicEntryClerkSearch() {
                             </ListItemButton>
                           ))}
                         </List>
-                        <Box sx={{ mt: "auto", py: 0 }}>
+                        <Box sx={{ mt: "auto", py: 2 }}>
                           <Pagination
                             count={Math.ceil(
                               (hasFiltered
@@ -1274,7 +1289,7 @@ export default function MusicEntryClerkSearch() {
                             onChange={handlePageChange}
                             size={isMobile ? "small" : "medium"}
                             sx={{
-                              mt: 2,
+                              mt: 3,
                               display: "flex",
                               justifyContent: "center",
                               "& .MuiPaginationItem-root": {
@@ -1284,14 +1299,14 @@ export default function MusicEntryClerkSearch() {
                                 backgroundColor: "primary",
                                 color: "#000",
                                 "&.Mui-selected": {
-                                  backgroundColor: "#8BD3E6",
+                                  backgroundColor: "#8BD3E6", // Blue for selected
                                   color: "#fff",
                                   "&:hover": {
-                                    backgroundColor: "#8BD3E6",
+                                    backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
                                   },
                                 },
                                 "&:hover": {
-                                  backgroundColor: "#D3D3D3",
+                                  backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
                                 },
                               },
                             }}

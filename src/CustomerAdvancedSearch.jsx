@@ -209,6 +209,17 @@ export default function CustomerAdvancedSearch() {
     setSearchInputs([]);
   };
 
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+      // Simulate loading delay
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 1000);
+  
+      return () => clearTimeout(timer);
+    }, []);
+
   const handleClearFilters = () => {
     setSelectedGenres([]);
     setSelectedComposers([]);
@@ -1250,8 +1261,10 @@ export default function CustomerAdvancedSearch() {
                           <Box
                             sx={{
                               display: "flex",
-                              justifyContent: (!isTabletOrMobile)?"flex-end":"none",
-                              width:"100%",
+                              justifyContent: !isTabletOrMobile
+                                ? "flex-end"
+                                : "none",
+                              width: "100%",
                             }}
                           >
                             <Box
@@ -1268,7 +1281,7 @@ export default function CustomerAdvancedSearch() {
                             >
                               <Button
                                 variant="outlined"
-                                sx={{...buttonStyles2, width:"100%"}}
+                                sx={{ ...buttonStyles2, width: "100%" }}
                                 onClick={clearQueryPreview}
                               >
                                 Clear
@@ -1278,7 +1291,7 @@ export default function CustomerAdvancedSearch() {
                                 onClick={handleSearch}
                                 disabled={!queryPreview}
                                 startIcon={<SearchIcon />} // Add the search icon
-                                sx={{...buttonStyles, px:5, width:"100%"}}
+                                sx={{ ...buttonStyles, px: 5, width: "100%" }}
                               >
                                 Search
                               </Button>
@@ -1288,7 +1301,6 @@ export default function CustomerAdvancedSearch() {
 
                         {/* Right Grid */}
                         <Grid item xs={12} sm={6}>
-
                           <Box sx={{ mt: 1 }}>
                             <Typography
                               sx={{
@@ -1301,41 +1313,41 @@ export default function CustomerAdvancedSearch() {
                               Metadata
                             </Typography>
 
-                            {(!isTabletOrMobile)&&(
+                            {!isTabletOrMobile && (
                               <Box
-                              sx={{
-                                maxHeight: "200px", // Set a maximum height for the scrollable area
-                                overflowY: "auto", // Enable vertical scrolling
-                                display: "grid", // Use grid layout
-                                gridTemplateColumns: "repeat(3, 1fr)", // Three equal columns
-                                gap: 2, // Space between columns
-                                listStyleType: "none", // Remove default list styling
-                                paddingLeft: 5, // Add padding at the start (left)
-                                paddingRight: 5, // Add padding at the end (right)
-                                fontSize: "0.8rem", // Make text smaller (adjust as needed)
-                              }}
-                            >
-                              {sortedMetadataItems.map((item, index) => (
-                                <li
-                                  key={index}
-                                  style={{ marginBottom: "10px" }}
-                                >
-                                  <div
-                                    style={{
-                                      fontWeight: "bold",
-                                      fontFamily: "Montserrat, sans-serif",
-                                    }}
+                                sx={{
+                                  maxHeight: "200px", // Set a maximum height for the scrollable area
+                                  overflowY: "auto", // Enable vertical scrolling
+                                  display: "grid", // Use grid layout
+                                  gridTemplateColumns: "repeat(3, 1fr)", // Three equal columns
+                                  gap: 2, // Space between columns
+                                  listStyleType: "none", // Remove default list styling
+                                  paddingLeft: 5, // Add padding at the start (left)
+                                  paddingRight: 5, // Add padding at the end (right)
+                                  fontSize: "0.8rem", // Make text smaller (adjust as needed)
+                                }}
+                              >
+                                {sortedMetadataItems.map((item, index) => (
+                                  <li
+                                    key={index}
+                                    style={{ marginBottom: "10px" }}
                                   >
-                                    {item.code}
-                                  </div>
-                                  <div>{item.label}</div>
-                                </li>
-                              ))}
-                            </Box>
+                                    <div
+                                      style={{
+                                        fontWeight: "bold",
+                                        fontFamily: "Montserrat, sans-serif",
+                                      }}
+                                    >
+                                      {item.code}
+                                    </div>
+                                    <div>{item.label}</div>
+                                  </li>
+                                ))}
+                              </Box>
                             )}
-                            
-                              {(isTabletOrMobile)&&(
-                                <Box
+
+                            {isTabletOrMobile && (
+                              <Box
                                 sx={{
                                   maxHeight: "200px", // Set a maximum height for the scrollable area
                                   overflowY: "auto", // Enable vertical scrolling
@@ -1365,9 +1377,7 @@ export default function CustomerAdvancedSearch() {
                                   </li>
                                 ))}
                               </Box>
-                              )}
-                            
-
+                            )}
                           </Box>
                         </Grid>
                       </Grid>
@@ -1387,8 +1397,9 @@ export default function CustomerAdvancedSearch() {
                 alignItems: "center",
                 justifyContent: "flex-start",
                 gap: 2,
-                mt: 1,
+                mt: 5,
                 ml: 2,
+                mr:2,
               }}
             >
               <Button
@@ -1408,7 +1419,7 @@ export default function CustomerAdvancedSearch() {
                   gap: 2,
                   overflowX: "auto",
                   flexGrow: 1,
-                  maxWidth: "50vw",
+                  maxWidth: { xs: "100%", sm: "50vw" },
                 }}
               >
                 {hasFiltered && selectedGenres.length > 0 && (
@@ -1498,27 +1509,40 @@ export default function CustomerAdvancedSearch() {
             <Box
               sx={{
                 flexGrow: 1,
-                height: "calc(100vh - 200px)",
+                height: {
+                  xs: "calc(100vh - 150px)", // This might be restricting scrolling
+                  lg: "calc(100vh - 200px)",
+                },
                 width: "100%",
-                overflow: "hidden",
-                p: 2,
+                overflow: "auto", // Change from "hidden" to "auto"
+                p: { xs: 1, sm: 2 },
               }}
             >
               {/* Main content grid */}
               <Grid
                 container
-                spacing={2}
+                spacing={{ xs: 1, sm: 2 }}
                 sx={{ flexGrow: 1, overflow: "hidden" }}
               >
                 {/* Refine search sidebar */}
-                <Grid item xs={3}>
+                <Grid
+                  item
+                  xs={12}
+                  sm={4}
+                  md={3}
+                  sx={{
+                    mb: { xs: 2, sm: 0 }, // Add margin bottom on mobile to separate from results
+                  }}
+                >
                   <Box
                     sx={{
-                      p: 2,
+                      p: { xs: 1, sm: 2 },
                       border: "1px solid #ddd",
                       borderRadius: 1,
                       display: "flex",
                       flexDirection: "column",
+                      mr:2,
+                      mt:4
                     }}
                   >
                     <Typography
@@ -1529,8 +1553,13 @@ export default function CustomerAdvancedSearch() {
                       Refine Your Search
                     </Typography>
 
-                    <FormControl fullWidth sx={{ mb: 2 }}>
-                      <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                    <FormControl fullWidth sx={{ mb: { xs: 1, sm: 2 } }}>
+                      <InputLabel
+                        sx={{
+                          fontFamily: "Montserrat",
+                          fontSize: { xs: "0.75rem", sm: "1rem" },
+                        }}
+                      >
                         Genre
                       </InputLabel>
                       <Select
@@ -1540,6 +1569,7 @@ export default function CustomerAdvancedSearch() {
                         label="Genre"
                         renderValue={(selected) => selected.join(", ")}
                         sx={{
+                          fontSize: { xs: "0.75rem", sm: "1rem" },
                           borderRadius: "16px",
                           fontFamily: "Montserrat",
                           "&:hover .MuiOutlinedInput-notchedOutline": {
@@ -1554,7 +1584,10 @@ export default function CustomerAdvancedSearch() {
                           <MenuItem
                             key={genre}
                             value={genre}
-                            sx={{ fontFamily: "Montserrat" }}
+                            sx={{
+                              fontFamily: "Montserrat",
+                              fontSize: { xs: "0.75rem", sm: "1rem" },
+                            }}
                           >
                             {genre}
                           </MenuItem>
@@ -1562,8 +1595,13 @@ export default function CustomerAdvancedSearch() {
                       </Select>
                     </FormControl>
 
-                    <FormControl fullWidth sx={{ mb: 2 }}>
-                      <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                    <FormControl fullWidth sx={{ mb: { xs: 1, sm: 2 } }}>
+                      <InputLabel
+                        sx={{
+                          fontFamily: "Montserrat",
+                          fontSize: { xs: "0.75rem", sm: "1rem" },
+                        }}
+                      >
                         Composer
                       </InputLabel>
                       <Select
@@ -1573,6 +1611,7 @@ export default function CustomerAdvancedSearch() {
                         label="Composer"
                         renderValue={(selected) => selected.join(", ")}
                         sx={{
+                          fontSize: { xs: "0.75rem", sm: "1rem" },
                           borderRadius: "16px",
                           fontFamily: "Montserrat",
                           "&:hover .MuiOutlinedInput-notchedOutline": {
@@ -1587,7 +1626,10 @@ export default function CustomerAdvancedSearch() {
                           <MenuItem
                             key={composer}
                             value={composer}
-                            sx={{ fontFamily: "Montserrat" }}
+                            sx={{
+                              fontFamily: "Montserrat",
+                              fontSize: { xs: "0.75rem", sm: "1rem" },
+                            }}
                           >
                             {composer}
                           </MenuItem>
@@ -1595,8 +1637,13 @@ export default function CustomerAdvancedSearch() {
                       </Select>
                     </FormControl>
 
-                    <FormControl fullWidth sx={{ mb: 2 }}>
-                      <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                    <FormControl fullWidth sx={{ mb: { xs: 1, sm: 2 } }}>
+                      <InputLabel
+                        sx={{
+                          fontFamily: "Montserrat",
+                          fontSize: { xs: "0.75rem", sm: "1rem" },
+                        }}
+                      >
                         Instrumentation
                       </InputLabel>
                       <Select
@@ -1606,6 +1653,7 @@ export default function CustomerAdvancedSearch() {
                         label="Instrumentation"
                         renderValue={(selected) => selected.join(", ")}
                         sx={{
+                          fontSize: { xs: "0.75rem", sm: "1rem" },
                           borderRadius: "16px",
                           fontFamily: "Montserrat",
                           "&:hover .MuiOutlinedInput-notchedOutline": {
@@ -1620,7 +1668,10 @@ export default function CustomerAdvancedSearch() {
                           <MenuItem
                             key={instrument}
                             value={instrument}
-                            sx={{ fontFamily: "Montserrat" }}
+                            sx={{
+                              fontFamily: "Montserrat",
+                              fontSize: { xs: "0.75rem", sm: "1rem" },
+                            }}
                           >
                             {instrument}
                           </MenuItem>
@@ -1628,8 +1679,13 @@ export default function CustomerAdvancedSearch() {
                       </Select>
                     </FormControl>
 
-                    <FormControl fullWidth sx={{ mb: 2 }}>
-                      <InputLabel sx={{ fontFamily: "Montserrat" }}>
+                    <FormControl fullWidth sx={{ mb: { xs: 1, sm: 2 } }}>
+                      <InputLabel
+                        sx={{
+                          fontFamily: "Montserrat",
+                          fontSize: { xs: "0.75rem", sm: "1rem" },
+                        }}
+                      >
                         Emotion
                       </InputLabel>
                       <Select
@@ -1639,6 +1695,7 @@ export default function CustomerAdvancedSearch() {
                         label="Emotion"
                         renderValue={(selected) => selected.join(", ")}
                         sx={{
+                          fontSize: { xs: "0.75rem", sm: "1rem" },
                           borderRadius: "16px",
                           fontFamily: "Montserrat",
                           "&:hover .MuiOutlinedInput-notchedOutline": {
@@ -1653,7 +1710,10 @@ export default function CustomerAdvancedSearch() {
                           <MenuItem
                             key={emotion}
                             value={emotion}
-                            sx={{ fontFamily: "Montserrat" }}
+                            sx={{
+                              fontFamily: "Montserrat",
+                              fontSize: { xs: "0.75rem", sm: "1rem" },
+                            }}
                           >
                             {emotion}
                           </MenuItem>
@@ -1667,7 +1727,11 @@ export default function CustomerAdvancedSearch() {
                       variant="outlined"
                       fullWidth
                       onClick={handleClearFilters}
-                      sx={{ ...buttonStyles2, mb: 2 }}
+                      sx={{
+                        ...buttonStyles2,
+                        mb: { xs: 1, sm: 2 },
+                        fontSize: { xs: "0.75rem", sm: "1rem" },
+                      }}
                     >
                       Clear
                     </Button>
@@ -1675,14 +1739,17 @@ export default function CustomerAdvancedSearch() {
                       variant="contained"
                       fullWidth
                       onClick={handleRefineClick}
-                      sx={buttonStyles}
+                      sx={{
+                        ...buttonStyles,
+                        fontSize: { xs: "0.75rem", sm: "1rem" },
+                      }}
                     >
                       Refine
                     </Button>
                   </Box>
                 </Grid>
 
-                <Grid item xs={9}>
+                <Grid item xs={12} sm={8} md={9}>
                   <Box
                     sx={{
                       height: "100%",
@@ -1694,14 +1761,31 @@ export default function CustomerAdvancedSearch() {
                     {paginatedResults.length === 0 && hasSearched && (
                       <Typography
                         variant="body1"
-                        sx={{ fontFamily: "Montserrat" }}
+                        sx={{
+                          fontFamily: "Montserrat",
+                          textAlign: "center",
+                          mt: 4,
+                          fontSize: { xs: "0.875rem", sm: "1rem" },
+                        }}
                       >
                         No results found
                       </Typography>
                     )}
                     {paginatedResults.length > 0 && (
-                      <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
-                        <List>
+                      <Box
+                        sx={{
+                          flexGrow: 1,
+                          overflow: "auto",
+                          p: { xs: 1, sm: 2 },
+                        }}
+                      >
+                        {" "}
+                        <List
+                          sx={{
+                            width: "100%",
+                            bgcolor: "background.paper",
+                          }}
+                        >
                           {paginatedResults.map((item) => (
                             <ListItemButton
                               key={item._id}
@@ -1713,59 +1797,98 @@ export default function CustomerAdvancedSearch() {
                             >
                               <ListItemText
                                 primary={
-                                  <Typography
-                                    sx={{
-                                      fontFamily: "Montserrat",
-                                      fontWeight: "bold",
-                                    }}
-                                  >
-                                    {item.title}
-                                  </Typography>
+                                  loading ? (
+                                    <Skeleton
+                                      variant="text"
+                                      width={150}
+                                      height={24}
+                                      sx={{
+                                        mr: 2,
+                                        fontFamily: "Montserrat",
+                                        animation: "wave",
+                                      }}
+                                    />
+                                  ) : (
+                                    <Typography
+                                      sx={{
+                                        fontFamily: "Montserrat",
+                                        fontWeight: "bold",
+                                        fontSize: {
+                                          xs: "0.875rem",
+                                          sm: "1rem",
+                                        },
+                                      }}
+                                    >
+                                      {item.title}
+                                    </Typography>
+                                  )
                                 }
                                 secondary={
-                                  <Typography
-                                    variant="body2"
-                                    sx={{ fontFamily: "Montserrat" }}
-                                  >
-                                    {`Genre: ${item.genre} | Composer: ${item.composer} | Artist: ${item.artist}`}
-                                  </Typography>
+                                  loading ? (
+                                    <Skeleton
+                                      variant="text"
+                                      width={400}
+                                      height={24}
+                                      sx={{
+                                        mr: 2,
+                                        fontFamily: "Montserrat",
+                                        animation: "wave",
+                                      }}
+                                    />
+                                  ) : (
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        fontFamily: "Montserrat",
+                                        fontSize: {
+                                          xs: "0.75rem",
+                                          sm: "0.875rem",
+                                        },
+                                      }}
+                                    >
+                                      {`Genre: ${item.genre} | Composer: ${item.composer} | Artist: ${item.artist}`}
+                                    </Typography>
+                                  )
                                 }
                               />
 
                               <ListItemIcon>
-                                {!purchasedScores.includes(item._id) &&
-                                  !addedToCartScores.includes(item._id) && (
-                                    <IconButton
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        addToCart(item._id);
-                                      }}
-                                    >
-                                      <ShoppingCartIcon />
-                                    </IconButton>
-                                  )}
+                                {loading
+                                  ? null
+                                  : !purchasedScores.includes(item._id) &&
+                                    !addedToCartScores.includes(item._id) && (
+                                      <IconButton
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          addToCart(item._id);
+                                        }}
+                                      >
+                                        <ShoppingCartIcon />
+                                      </IconButton>
+                                    )}
                               </ListItemIcon>
 
                               <ListItemIcon>
-                                <IconButton
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleFavorite(item._id);
-                                  }}
-                                >
-                                  <Favorite
-                                    color={
-                                      favorites.includes(item._id)
-                                        ? "error"
-                                        : "disabled"
-                                    }
-                                  />
-                                </IconButton>
+                                {loading ? null : (
+                                  <IconButton
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleFavorite(item._id);
+                                    }}
+                                  >
+                                    <Favorite
+                                      color={
+                                        favorites.includes(item._id)
+                                          ? "error"
+                                          : "disabled"
+                                      }
+                                    />
+                                  </IconButton>
+                                )}
                               </ListItemIcon>
                             </ListItemButton>
                           ))}
                         </List>
-
                         <Box sx={{ mt: "auto", py: 2 }}>
                           <Pagination
                             count={Math.ceil(
@@ -1780,6 +1903,7 @@ export default function CustomerAdvancedSearch() {
                               display: "flex",
                               justifyContent: "center",
                               "& .MuiPaginationItem-root": {
+                                fontSize: { xs: "0.75rem", sm: "1rem" },
                                 borderRadius: 2,
                                 fontFamily: "Montserrat",
                                 backgroundColor: "primary",
@@ -1815,7 +1939,7 @@ export default function CustomerAdvancedSearch() {
               }
               handleSnackbarClose(); // Close the snackbar
               if (snackbar.reload) {
-                window.location.reload(); // Reload the page after snackbar closes
+                // window.location.reload(); // Reload the page after snackbar closes
               }
             }}
             anchorOrigin={{ vertical: "top", horizontal: "center" }}

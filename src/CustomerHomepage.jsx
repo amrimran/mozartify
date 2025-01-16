@@ -161,7 +161,7 @@ export default function CustomerHomepage() {
       }
     };
     fetchUser();
-  }, []);
+  }, [favorites]);
 
   useEffect(() => {
     const fetchPurchasedScores = async () => {
@@ -203,7 +203,7 @@ export default function CustomerHomepage() {
     };
 
     fetchAddedToCartScores();
-  }, [navigate]);
+  }, [navigate,addedToCartScores]);
 
   const addToCart = async (scoreId) => {
     try {

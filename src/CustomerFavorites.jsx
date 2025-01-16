@@ -824,7 +824,7 @@ export default function CustomerFavorites() {
               sx={{
                 fontFamily: "Montserrat",
                 fontWeight: "bold",
-                textAlign:"center",
+                textAlign: isMobile || isTablet ? "center" : "left", 
                 fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem" },
               }}
             >
