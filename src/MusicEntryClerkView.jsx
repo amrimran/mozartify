@@ -185,11 +185,12 @@ export default function ClerkMusicScoreView() {
     },
     detailsCard: {
       flex: { xs: "1 1 100%", md: "1 1 30%" },
-      height: "auto",
-      maxHeight: { xs: "none", md: "850px" },
+      height: "auto", // Fixed height
       p: 2,
       backgroundColor: "#F8F8F8",
       borderRadius: 2,
+      overflow: "hidden", // Hide overflow
+      position: "relative", // Make it relative for absolute child positioning
     },
     controlsContainer: {
       display: "flex",
@@ -366,22 +367,21 @@ export default function ClerkMusicScoreView() {
 
     const loadData = async () => {
       setLoading(true); // Start loading
-    
+
       const startTime = Date.now(); // Record the start time
-    
+
       // Fetch data
       await Promise.all([fetchUserSession(), fetchAbcFileAndMetadata()]);
-    
+
       // Calculate the time taken for fetching data
       const elapsedTime = Date.now() - startTime;
-    
+
       // Ensure a minimum loading time of 5 seconds
       const remainingTime = Math.max(1000 - elapsedTime, 0); // Calculate remaining time to delay
       setTimeout(() => {
         setLoading(false); // End loading
       }, remainingTime);
     };
-    
 
     loadData();
 
@@ -1071,8 +1071,20 @@ export default function ClerkMusicScoreView() {
             {/* Music Score Details */}
             {metadata ? (
               <Card sx={styles.detailsCard}>
-                <CardContent
-                  sx={{ bgcolor: "#FFFFFF", borderRadius: 2, p: 0, pl: -1 }}
+                 <CardContent
+                  sx={{ 
+                    bgcolor: "#FFFFFF", 
+                    borderRadius: 2, 
+                    p: 0, 
+                    pl: -1,
+                    position: "absolute",
+                    top: 16,
+                    left: 16,
+                    right: 16,
+                    bottom: 16,
+                    overflowY: "auto",
+                    boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.05)",
+                  }}
                 >
                   <List>
                     {/* Reordered Fields */}

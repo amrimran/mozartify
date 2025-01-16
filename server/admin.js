@@ -282,63 +282,77 @@ app.delete("/users/:id", async (req, res) => {
   }
 });
 
-// Fetch total statistics for dashboard
+// Backend endpoint
 app.get("/admin/stats", async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments({ role: "customer" }); // Filter by role
+    const totalUsers = await User.countDocuments({ role: "customer" });
     const totalUploads = await ABCFile.countDocuments();
 
     const totalPurchases = await Purchase.aggregate([
       { $group: { _id: null, total: { $sum: 1 } } },
     ]);
-    const purchaseCount =
-      totalPurchases.length > 0 ? totalPurchases[0].total : 0;
+    const purchaseCount = totalPurchases.length > 0 ? totalPurchases[0].total : 0;
 
-
-    // Aggregate uploads by month
+    // Aggregate uploads by year and month
     const uploadsByMonth = await ABCFile.aggregate([
       {
         $group: {
-          _id: { $month: "$dateUploaded" }, // Group by month
-          count: { $sum: 1 }, // Count uploads per month
+          _id: {
+            year: { $year: "$dateUploaded" },
+            month: { $month: "$dateUploaded" }
+          },
+          count: { $sum: 1 },
         },
       },
       {
-        $sort: { _id: 1 }, // Sort by month
+        $sort: { "_id.year": 1, "_id.month": 1 },
       },
     ]);
 
-    // Aggregate purchases by month
+    // Aggregate purchases by year and month
     const purchasesByMonth = await Purchase.aggregate([
       {
         $group: {
-          _id: { $month: "$purchase_date" }, // Group by month
-          count: { $sum: 1 }, // Count purchases per month
+          _id: {
+            year: { $year: "$purchase_date" },
+            month: { $month: "$purchase_date" }
+          },
+          count: { $sum: 1 },
         },
       },
       {
-        $sort: { _id: 1 }, // Sort by month
+        $sort: { "_id.year": 1, "_id.month": 1 },
       },
     ]);
 
-    // Prepare monthly stats for response
-    const monthlyUploads = Array(12).fill(0);
-    const monthlyPurchases = Array(12).fill(0);
+    // Process data by year
+    const uploadsByYear = {};
+    const purchasesByYear = {};
 
     uploadsByMonth.forEach((upload) => {
-      monthlyUploads[upload._id - 1] = upload.count; // _id is the month number (1-12)
+      const year = upload._id.year;
+      const month = upload._id.month - 1; // Convert to 0-based index
+      if (!uploadsByYear[year]) {
+        uploadsByYear[year] = Array(12).fill(0);
+      }
+      uploadsByYear[year][month] = upload.count;
     });
 
     purchasesByMonth.forEach((purchase) => {
-      monthlyPurchases[purchase._id - 1] = purchase.count; // _id is the month number (1-12)
+      const year = purchase._id.year;
+      const month = purchase._id.month - 1; // Convert to 0-based index
+      if (!purchasesByYear[year]) {
+        purchasesByYear[year] = Array(12).fill(0);
+      }
+      purchasesByYear[year][month] = purchase.count;
     });
 
     res.json({
       totalUsers,
       totalUploads,
       totalPurchases: purchaseCount,
-      monthlyUploads,
-      monthlyPurchases,
+      uploadsByYear,
+      purchasesByYear,
     });
   } catch (error) {
     console.error("Error fetching admin stats:", error);

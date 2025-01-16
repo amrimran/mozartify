@@ -573,7 +573,7 @@ export default function AdminSearch() {
                     sx={{
                       fontFamily: "Montserrat",
                       fontWeight: "bold",
-             
+
                       ml: 1,
                     }}
                   >
@@ -920,32 +920,37 @@ export default function AdminSearch() {
           {showSearchResults && (
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-start",
-                gap: 2,
-                mt: 1,
-                ml: 2,
+                flexGrow: 1,
+                height: {
+                  xs: "calc(100vh - 20px)", // Decreased subtraction for mobile
+                  lg: "calc(100vh - 50px)", // Decreased subtraction for larger screens
+                },
+                width: "100%",
+                overflow: "auto",
+                p: { xs: 1, sm: -5 },
               }}
             >
-              <Button
-                variant="contained"
-                onClick={handleToggleSearchResults}
-                startIcon={<ArrowBackIcon />}
-                sx={buttonStyles2}
-              >
-                Back
-              </Button>
+              {/* Back Button */}
+              <Box sx={{ mb: 2 }}>
+                <Button
+                  variant="contained"
+                  onClick={handleToggleSearchResults}
+                  startIcon={<ArrowBackIcon />}
+                  sx={buttonStyles2}
+                >
+                  Back
+                </Button>
+              </Box>
 
+              {/* Filter Tags Section */}
               <Box
                 sx={{
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "flex-start",
-                  gap: 2,
-                  overflowX: "auto",
-                  flexGrow: 1,
-                  maxWidth: { xs: "100%", sm: "50vw" },
+                  gap: 1,
+                  px: 2,
+                  mb: 2,
+                  overflow: "auto",
+                  WebkitOverflowScrolling: "touch",
                 }}
               >
                 {hasFiltered && selectedGenres.length > 0 && (
@@ -1028,28 +1033,9 @@ export default function AdminSearch() {
                   </Button>
                 )}
               </Box>
-            </Box>
-          )}
 
-          {showSearchResults && (
-            <Box
-              sx={{
-                flexGrow: 1,
-                height: {
-                  xs: "calc(100vh - 150px)", // This might be restricting scrolling
-                  lg: "calc(100vh - 200px)",
-                },
-                width: "100%",
-                overflow: "auto", // Change from "hidden" to "auto"
-                p: { xs: 1, sm: 2 },
-              }}
-            >
               {/* Main content grid */}
-              <Grid
-                container
-                spacing={{ xs: 1, sm: 2 }}
-                sx={{ flexGrow: 1, overflow: "hidden" }}
-              >
+              <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ flexGrow: 1 }}>
                 {/* Refine search sidebar */}
                 <Grid
                   item
@@ -1057,7 +1043,7 @@ export default function AdminSearch() {
                   sm={4}
                   md={3}
                   sx={{
-                    mb: { xs: 2, sm: 0 }, // Add margin bottom on mobile to separate from results
+                    mb: { xs: 2, sm: 0 },
                   }}
                 >
                   <Box
@@ -1246,7 +1232,7 @@ export default function AdminSearch() {
                     </FormControl>
 
                     <Box sx={{ flexGrow: 1 }} />
-                    {/* Add Clear Refine button */}
+
                     <Button
                       variant="outlined"
                       fullWidth
@@ -1273,6 +1259,7 @@ export default function AdminSearch() {
                   </Box>
                 </Grid>
 
+                {/* Search Results Grid */}
                 <Grid item xs={12} sm={8} md={9}>
                   <Box
                     sx={{
@@ -1281,7 +1268,6 @@ export default function AdminSearch() {
                       flexDirection: "column",
                     }}
                   >
-                    {" "}
                     {paginatedResults.length === 0 && hasSearched && (
                       <Typography
                         variant="body1"
@@ -1303,7 +1289,6 @@ export default function AdminSearch() {
                           p: { xs: 1, sm: 2 },
                         }}
                       >
-                        {" "}
                         <List
                           sx={{
                             width: "100%",
@@ -1314,106 +1299,46 @@ export default function AdminSearch() {
                             <ListItemButton
                               key={item._id}
                               onClick={() =>
-                                navigate(
-                                  `/admin-music-score-view/:scoreId/${item._id}`
-                                )
+                                navigate(`/clerk-music-score-view/${item._id}`)
                               }
+                              sx={{
+                                flexDirection: { xs: "column", sm: "row" },
+                                alignItems: { xs: "flex-start", sm: "center" },
+                                gap: { xs: 1, sm: 2 },
+                                py: { xs: 1, sm: 2 },
+                              }}
                             >
                               <ListItemText
                                 primary={
-                                  loading ? (
-                                    <Skeleton
-                                      variant="text"
-                                      width={150}
-                                      height={24}
-                                      sx={{
-                                        mr: 2,
-                                        fontFamily: "Montserrat",
-                                        animation: "wave",
-                                      }}
-                                    />
-                                  ) : (
-                                    <Typography
-                                      sx={{
-                                        fontFamily: "Montserrat",
-                                        fontWeight: "bold",
-                                        fontSize: {
-                                          xs: "0.875rem",
-                                          sm: "1rem",
-                                        },
-                                      }}
-                                    >
-                                      {item.title}
-                                    </Typography>
-                                  )
-                                }
-                                secondary={
-                                  loading ? (
-                                    <Skeleton
-                                      variant="text"
-                                      width={400}
-                                      height={24}
-                                      sx={{
-                                        mr: 2,
-                                        fontFamily: "Montserrat",
-                                        animation: "wave",
-                                      }}
-                                    />
-                                  ) : (
-                                    <Typography
-                                      variant="body2"
-                                      sx={{
-                                        fontFamily: "Montserrat",
-                                        fontSize: {
-                                          xs: "0.75rem",
-                                          sm: "0.875rem",
-                                        },
-                                      }}
-                                    >
-                                      {`Genre: ${item.genre} | Composer: ${item.composer} | Artist: ${item.artist}`}
-                                    </Typography>
-                                  )
-                                }
-                              />
-
-                              <ListItemIcon>
-                                {loading
-                                  ? null
-                                  : !purchasedScores.includes(item._id) &&
-                                    !addedToCartScores.includes(item._id) && (
-                                      <IconButton
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          addToCart(item._id);
-                                        }}
-                                      >
-                                        <ShoppingCartIcon />
-                                      </IconButton>
-                                    )}
-                              </ListItemIcon>
-
-                              <ListItemIcon>
-                                {loading ? null : (
-                                  <IconButton
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      toggleFavorite(item._id);
+                                  <Typography
+                                    sx={{
+                                      fontFamily: "Montserrat",
+                                      fontWeight: "bold",
+                                      fontSize: { xs: "0.875rem", sm: "1rem" },
                                     }}
                                   >
-                                    <Favorite
-                                      color={
-                                        favorites.includes(item._id)
-                                          ? "error"
-                                          : "disabled"
-                                      }
-                                    />
-                                  </IconButton>
-                                )}
-                              </ListItemIcon>
+                                    {item.title}
+                                  </Typography>
+                                }
+                                secondary={
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      fontFamily: "Montserrat",
+                                      fontSize: {
+                                        xs: "0.75rem",
+                                        sm: "0.875rem",
+                                      },
+                                    }}
+                                  >
+                                    {`Genre: ${item.genre} | Composer: ${item.composer} | Artist: ${item.artist}`}
+                                  </Typography>
+                                }
+                              />
                             </ListItemButton>
                           ))}
                         </List>
-                        <Box sx={{ mt: "auto", py: 2 }}>
+                        <Box sx={{ mt: "auto", py: 0 }}>
                           <Pagination
                             count={Math.ceil(
                               (hasFiltered
@@ -1422,8 +1347,9 @@ export default function AdminSearch() {
                             )}
                             page={page}
                             onChange={handlePageChange}
+                            size={isMobile ? "small" : "medium"}
                             sx={{
-                              mt: 3,
+                              mt: 2,
                               display: "flex",
                               justifyContent: "center",
                               "& .MuiPaginationItem-root": {
@@ -1433,14 +1359,14 @@ export default function AdminSearch() {
                                 backgroundColor: "primary",
                                 color: "#000",
                                 "&.Mui-selected": {
-                                  backgroundColor: "#8BD3E6", // Blue for selected
+                                  backgroundColor: "#8BD3E6",
                                   color: "#fff",
                                   "&:hover": {
-                                    backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
+                                    backgroundColor: "#8BD3E6",
                                   },
                                 },
                                 "&:hover": {
-                                  backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
+                                  backgroundColor: "#D3D3D3",
                                 },
                               },
                             }}

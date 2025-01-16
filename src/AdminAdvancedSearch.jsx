@@ -654,7 +654,7 @@ export default function AdminAdvancedSearch() {
           sx={{
             zIndex: theme.zIndex.drawer + 1, // Set Drawer zIndex higher than AppBar
             "& .MuiDrawer-paper": {
-              width: 230, // Sidebar width
+              width: 225, // Sidebar width
               boxSizing: "border-box",
               backgroundColor: "#8BD3E6", // Set the background color
             },

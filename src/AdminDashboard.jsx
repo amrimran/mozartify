@@ -236,30 +236,36 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
+    // Frontend component changes
     const fetchDashboardStats = async () => {
       try {
         const response = await axios.get("http://localhost:3003/admin/stats");
         const {
-          monthlyUploads,
-          monthlyPurchases,
+          uploadsByYear,
+          purchasesByYear,
           totalUsers,
           totalUploads,
           totalPurchases,
         } = response.data;
 
-        const uploadsChange =
-          monthlyUploads[monthlyUploads.length - 1] -
-          (monthlyUploads[monthlyUploads.length - 2] || 0);
-
+        // Get current date info
         const currentDate = new Date();
-        const currentMonthIndex = currentDate.getMonth();
-        const previousMonthIndex =
-          currentMonthIndex === 0 ? 11 : currentMonthIndex - 1;
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth();
 
-        const currentMonthPurchases = monthlyPurchases[currentMonthIndex] || 0;
-        const previousMonthPurchases =
-          monthlyPurchases[previousMonthIndex] || 0;
-        const purchasesChange = currentMonthPurchases - previousMonthPurchases;
+        // Calculate current month changes using current year data
+        const currentYearUploads =
+          uploadsByYear[currentYear] || Array(12).fill(0);
+        const currentYearPurchases =
+          purchasesByYear[currentYear] || Array(12).fill(0);
+
+        const uploadsChange =
+          currentYearUploads[currentMonth] -
+          (currentMonth > 0 ? currentYearUploads[currentMonth - 1] : 0);
+
+        const purchasesChange =
+          currentYearPurchases[currentMonth] -
+          (currentMonth > 0 ? currentYearPurchases[currentMonth - 1] : 0);
 
         setStatsData((prevStats) => [
           {
@@ -275,7 +281,7 @@ export default function AdminDashboard() {
           {
             ...prevStats[3],
             value: totalPurchases.toString(),
-            change: purchasesChange, // Will show the difference from previous month (or full amount if first month)
+            change: purchasesChange,
           },
         ]);
 
@@ -294,30 +300,53 @@ export default function AdminDashboard() {
           "Dec",
         ];
 
+        // Define distinct colors for different years
+        const yearColors = {
+          2024: {
+            upload: { primary: "rgba(135, 206, 250, 0.6)" }, // Light blue
+            purchase: {
+              border: "rgba(135, 206, 250, 0.6)",
+              background: "rgba(135, 206, 250, 0.6)",
+            },
+          },
+          2025: {
+            upload: { primary: "rgba(0, 0, 139, 0.6)" }, // Dark blue
+            purchase: {
+              border: "rgba(0, 0, 139, 0.6)",
+              background: "rgba(0, 0, 139, 0.6)",
+            },
+          },
+        };
+
+        // Create datasets for each year
+        const years = Object.keys(uploadsByYear).sort();
+        const uploadDatasets = years.map((year) => ({
+          label: `Uploads ${year}`,
+          data: uploadsByYear[year],
+          backgroundColor:
+            yearColors[year]?.upload.primary || `rgba(201, 203, 207, 0.6)`, // Fallback color
+          borderRadius: 6,
+        }));
+
+        const purchaseDatasets = years.map((year) => ({
+          label: `Purchases ${year}`,
+          data: purchasesByYear[year],
+          borderColor:
+            yearColors[year]?.purchase.border || "rgba(201, 203, 207, 0.8)",
+          backgroundColor:
+            yearColors[year]?.purchase.background || "rgba(201, 203, 207, 0.2)",
+          tension: 0.4,
+          fill: true,
+        }));
+
         setUploadsData({
           labels,
-          datasets: [
-            {
-              label: "Uploads",
-              data: monthlyUploads,
-              backgroundColor: "rgba(75, 192, 192, 0.6)",
-              borderRadius: 6,
-            },
-          ],
+          datasets: uploadDatasets,
         });
 
         setPurchasesData({
           labels,
-          datasets: [
-            {
-              label: "Purchases",
-              data: monthlyPurchases,
-              borderColor: "rgba(153, 102, 255, 0.6)",
-              backgroundColor: "rgba(153, 102, 255, 0.3)",
-              tension: 0.4,
-              fill: true,
-            },
-          ],
+          datasets: purchaseDatasets,
         });
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
