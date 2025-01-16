@@ -22,10 +22,6 @@ import {
   InputLabel,
   FormControl,
   Pagination,
-  AppBar,
-  Toolbar,
-  useMediaQuery,
-  Drawer,
 } from "@mui/material";
 import { Favorite, PlayArrow } from "@mui/icons-material";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -33,45 +29,12 @@ import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import { Menu as MenuIcon, Search as SearchIcon } from "@mui/icons-material";
+import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-
-const DRAWER_WIDTH = 225;
-
-// Theme setup
-const theme = createTheme({
-  typography: {
-    fontFamily: "Montserrat, Arial, sans-serif",
-  },
-  breakpoints: {
-    values: {
-      xs: 0, // mobile phones
-      sm: 950, // tablets
-      md: 960, // small laptops
-      lg: 1280, // desktops
-      xl: 1920, // large screens
-    },
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: "none",
-          fontFamily: "Montserrat",
-        },
-      },
-    },
-  },
-});
 
 export default function MusicEntryClerkAdvSearch() {
-  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null); //store user's information
 
   //store ui component state
   const [selectedTab, setSelectedTab] = useState(0);
@@ -587,280 +550,177 @@ export default function MusicEntryClerkAdvSearch() {
     }
   `;
 
-  // Styles object for responsive layout
-  const styles = {
-    root: {
-      display: "flex",
-      minHeight: "100vh",
-      backgroundColor: "#FFFFFF",
-    },
-    appBar: {
-      display: isLargeScreen ? "none" : "block",
-      backgroundColor: "#FFFFFF",
-      boxShadow: "none",
-      borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
-    },
-    drawer: {
-      width: DRAWER_WIDTH,
-      flexShrink: 0,
-      display: isLargeScreen ? "block" : "none",
-      "& .MuiDrawer-paper": {
-        width: DRAWER_WIDTH,
-        boxSizing: "border-box",
-      },
-    },
-    mobileDrawer: {
-      display: isLargeScreen ? "none" : "block",
-      "& .MuiDrawer-paper": {
-        width: DRAWER_WIDTH,
-        boxSizing: "border-box",
-      },
-    },
-    mainContent: {
-      flexGrow: 1,
-      p: { xs: 2, sm: 3 },
-      ml: isLargeScreen ? 2 : 0,
-      mt: isLargeScreen ? 2 : 8,
-      width: "100%",
-    },
-    searchContainer: {
-      mt: { xs: 2, sm: 5 },
-      width: "100%",
-    },
-  };
-
-  // Handlers
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
   return (
-    <ThemeProvider theme={theme}>
+    <>
       <GlobalStyle />
-      <Box sx={styles.root}>
-        {/* Mobile AppBar */}
-        <AppBar position="fixed" sx={styles.appBar}>
-          <Toolbar>
-            <IconButton
-              color="inherit"
-              edge="start"
-              onClick={handleDrawerToggle}
-              sx={{ mr: 2, color: "#3B3183" }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography
-              variant="h6"
-              sx={{ color: "#3B3183", fontWeight: "bold" }}
-            >
-              Advanced Music Score Search
-            </Typography>
+      <Box sx={{ display: "flex", minHeight: "100vh", maxHeight: "100vh" }}>
+        <ClerkSidebar active="searchScores" />
 
-            {/* Mobile user info */}
-            {!isLargeScreen && (
-              <Box
-                sx={{
-                  ml: "auto",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                }}
-              >
-                {!isMobile && (
-                  <Typography variant="body2" sx={{ color: "#3B3183" }}>
-                    {user?.username}
-                  </Typography>
-                )}
-                <Avatar
-                  alt={user?.username}
-                  src={user?.profile_picture}
-                  sx={{ width: 32, height: 32 }}
-                >
-                  {user?.username?.charAt(0).toUpperCase()}
-                </Avatar>
-              </Box>
-            )}
-          </Toolbar>
-        </AppBar>
-
-        {/* Permanent drawer for large screens */}
-        <Drawer variant="permanent" sx={styles.drawer}>
-          <ClerkSidebar active="searchScores" />
-        </Drawer>
-
-        {/* Temporary drawer for smaller screens */}
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{ keepMounted: true }}
-          sx={styles.mobileDrawer}
+        {/* Parent for header and main content */}
+        <Box
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            marginLeft: "229px",
+          }}
         >
-          <ClerkSidebar active="searchScores" />
-        </Drawer>
-
-        {/* Main Content */}
-        <Box component="main" sx={styles.mainContent}>
-          {/* Header Section - Desktop */}
-          {isLargeScreen && (
-            <>
-              <Box
+          {/* Header */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Typography
+                variant="h4"
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  mb: 3,
+                  fontFamily: "Montserrat",
+                  fontWeight: "bold",
+                  mt: 4,
+                  ml: 1,
                 }}
               >
-                <Typography
-                  variant="h4"
-                  sx={{
-                    fontFamily: "Montserrat",
-                    fontWeight: "bold",
-                    fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
-                  }}
-                >
-                  Advanced Music Score Search Query Builder
-                </Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Typography variant="body1">{user?.username}</Typography>
+                Advanced Music Score Search Query Builder
+              </Typography>{" "}
+            </Box>
+
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              {user ? (
+                <>
+                  <Typography variant="body1" sx={{ mr: 2 }}>
+                    {user.username}
+                  </Typography>
                   <Avatar
-                    alt={user?.username}
-                    src={user?.profile_picture}
-                    sx={{ width: 40, height: 40 }}
+                    alt={user.username}
+                    src={
+                      user && user.profile_picture ? user.profile_picture : null
+                    }
                   >
-                    {user?.username?.charAt(0).toUpperCase()}
+                    {(!user || !user.profile_picture) &&
+                      user.username.charAt(0).toUpperCase()}
                   </Avatar>
-                </Box>
-              </Box>
-              <Divider sx={{ mb: 4 }} />
-            </>
-          )}
+                </>
+              ) : (
+                <>
+                  <Typography variant="body1" sx={{ mr: 2 }}>
+                    Loading...
+                  </Typography>
+                  <Avatar></Avatar>
+                </>
+              )}
+            </Box>
+          </Box>
+          <Divider sx={{ mt: 1 }} />
+
+          {/* Main Section*/}
 
           {/*Main Section  when no Search is done */}
           {!showSearchResults && (
-            <Container
-              maxWidth="lg"
-              sx={{
-                mt: 2,
-                px: { xs: 1, sm: 2, lg: 3 },
-              }}
-            >
+            <Container maxWidth="lg" sx={{ mt: 2 }}>
               <Box
                 sx={{
                   backgroundColor: "#fcfcfc",
                   borderRadius: 2,
-                  p: { xs: 2, sm: 4 },
+                  p: 4,
                   boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.16)", // Added elevation
                   border: "1px solid rgba(0, 0, 0, 0.12)", // Added subtle border
                 }}
               >
-                <Box
-                  sx={{ backgroundColor: "white", padding: { xs: 1, sm: 3 } }}
-                >
+                <Box sx={{ backgroundColor: "white", padding: 3 }}>
                   <Box
                     sx={{
-                      display: "flex",
-                      flexDirection: { xs: "column", sm: "row" },
-                      alignItems: { xs: "flex-start", sm: "center" },
-                      gap: { xs: 1, sm: 2 },
-                      mb: 2,
+                      border: "1px solid",
+                      borderColor: "#8bd3e6",
+                      padding: 2,
+                      display: "inline-block",
+                      borderRadius: 3,
                     }}
                   >
-                    <Box
+                    <Typography
+                      variant="body1"
+                      color="black"
                       sx={{
-                        border: "1px solid",
-                        borderColor: "#8bd3e6",
-                        padding: 2,
-                        display: "inline-block",
-                        borderRadius: 3,
-                        width: { xs: "90%", sm: "auto" },
+                        fontFamily: "Montserrat, sans-serif",
+                        display: "inline",
                       }}
                     >
-                      <Typography
-                        variant="body1"
-                        color="black"
+                      Search in:
+                    </Typography>
+
+                    <Select
+                      value={selectedCollection}
+                      onChange={(e) => setSelectedCollection(e.target.value)}
+                      variant="standard"
+                      sx={{
+                        marginLeft: "10px",
+                        border: "none",
+                        outline: "none",
+                        fontFamily: "'Montserrat', sans-serif",
+                        "& .MuiSelect-select": {
+                          padding: 0,
+                          fontWeight: "bold",
+                        },
+                        "& .MuiSelect-icon": {
+                          display: "none",
+                        },
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          display: "none",
+                        },
+                        "&:hover:not(.Mui-disabled):before": {
+                          borderBottom: "2px solid #8BD3E6",
+                        },
+                        "&:focus-within:before": {
+                          borderBottom: "2px solid #8BD3E6",
+                        },
+                      }}
+                    >
+                      <MenuItem
+                        value="All"
                         sx={{
-                          fontFamily: "Montserrat, sans-serif",
-                          display: "inline",
-                          mr: 2,
-                        }}
-                      >
-                        Search in:
-                      </Typography>
-                      <Select
-                        value={selectedCollection}
-                        onChange={(e) => setSelectedCollection(e.target.value)}
-                        variant="standard"
-                        sx={{
-                          width: { xs: "100%", sm: "auto" },
-                          mt: { xs: 1, sm: 0 },
-                          marginLeft: "10px",
-                          border: "none",
-                          outline: "none",
                           fontFamily: "'Montserrat', sans-serif",
-                          "& .MuiSelect-select": {
-                            padding: 0,
-                            fontWeight: "bold",
-                          },
-                          "& .MuiSelect-icon": {
-                            display: "none",
-                          },
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            display: "none",
-                          },
-                          "&:hover:not(.Mui-disabled):before": {
-                            borderBottom: "2px solid #8BD3E6",
-                          },
-                          "&:focus-within:before": {
-                            borderBottom: "2px solid #8BD3E6",
-                          },
                         }}
                       >
-                        <MenuItem
-                          value="All"
-                          sx={{
-                            fontFamily: "'Montserrat', sans-serif",
-                          }}
-                        >
-                          All
-                        </MenuItem>
-                        <MenuItem
-                          value="Lecturers"
-                          sx={{
-                            fontFamily: "'Montserrat', sans-serif",
-                          }}
-                        >
-                          Lecturers
-                        </MenuItem>
-                        <MenuItem
-                          value="Students"
-                          sx={{
-                            fontFamily: "'Montserrat', sans-serif",
-                          }}
-                        >
-                          Students
-                        </MenuItem>
-                        <MenuItem
-                          value="Freelancers"
-                          sx={{
-                            fontFamily: "'Montserrat', sans-serif",
-                          }}
-                        >
-                          Freelancers
-                        </MenuItem>
-                      </Select>
-                    </Box>
+                        All
+                      </MenuItem>
+                      <MenuItem
+                        value="Lecturers"
+                        sx={{
+                          fontFamily: "'Montserrat', sans-serif",
+                        }}
+                      >
+                        Lecturers
+                      </MenuItem>
+                      <MenuItem
+                        value="Students"
+                        sx={{
+                          fontFamily: "'Montserrat', sans-serif",
+                        }}
+                      >
+                        Students
+                      </MenuItem>
+                      <MenuItem
+                        value="Freelancers"
+                        sx={{
+                          fontFamily: "'Montserrat', sans-serif",
+                        }}
+                      >
+                        Freelancers
+                      </MenuItem>
+                    </Select>
                   </Box>
 
                   {/* Search Query Row Component */}
                   <Box
                     sx={{
                       display: "flex",
-                      flexDirection: { xs: "column", sm: "row" },
                       alignItems: "center",
-                      gap: { xs: 1, sm: 2 },
                       mt: 2,
+                      gap: 2,
                     }}
                   >
                     <Select
@@ -868,7 +728,7 @@ export default function MusicEntryClerkAdvSearch() {
                       onChange={handleCategoryChange}
                       variant="outlined"
                       sx={{
-                        width: { xs: "100%", sm: "100px" },
+                        width: "100px",
                         fontFamily: "Montserrat, sans-serif",
                         fontWeight: "bold",
                         borderRadius: 3, // Set border radius here
@@ -927,7 +787,6 @@ export default function MusicEntryClerkAdvSearch() {
                       value={searchText}
                       onChange={handleTextChange}
                       sx={{
-                        width: "100%",
                         flex: 1,
                         "& .MuiOutlinedInput-root": {
                           fontFamily: "Montserrat",
@@ -953,7 +812,7 @@ export default function MusicEntryClerkAdvSearch() {
                       onChange={handleLogicChange}
                       variant="outlined"
                       sx={{
-                        width: { xs: "100%", sm: "100px" },
+                        width: "100px",
                         fontFamily: "Montserrat, sans-serif",
                         fontWeight: "bold",
                         borderRadius: 3, // Set border radius here
@@ -993,7 +852,6 @@ export default function MusicEntryClerkAdvSearch() {
                       variant="contained"
                       startIcon={<AddIcon />}
                       sx={{
-                        width: { xs: "100%", sm: "auto" },
                         paddingTop: 2,
                         paddingBottom: 2,
                         color: "white",
@@ -1010,17 +868,18 @@ export default function MusicEntryClerkAdvSearch() {
                     </Button>
                   </Box>
 
-                  {/* Query Preview Section */}
                   <Box
                     sx={{
                       display: "flex",
-                      flexDirection: { xs: "column", sm: "row" },
-                      alignItems: "stretch",
+                      alignItems: "center",
+                      paddingTop: 3,
+                      paddingLeft: 2,
+                      paddingRight: 2,
                       mt: 2,
-                      gap: { xs: 1, sm: 2 },
+                      gap: 2,
                     }}
                   >
-                    <Grid container spacing={{ xs: 2, sm: 3 }}>
+                    <Grid container spacing={3}>
                       {/* Left Grid */}
                       <Grid item xs={12} sm={6}>
                         <Typography
@@ -1515,43 +1374,24 @@ export default function MusicEntryClerkAdvSearch() {
                       </Select>
                     </FormControl>
 
-                    <Box
-                      sx={{
-                        flexGrow: 1,
-                        display: "flex",
-                        flexDirection: {
-                          xs: "column",  // 0-949px
-                          sm: "row"      // 950px and up
-                        },
-                        gap: 2,
-                        width: "100%",
-                        mt: 2,
-                      }}
+                    <Box sx={{ flexGrow: 1 }} />
+                    {/* Add Clear Refine button */}
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      onClick={handleClearFilters}
+                      sx={{ ...buttonStyles2, mb: 2 }}
                     >
-                      <Button
-                        variant="outlined"
-                        fullWidth={!isLargeScreen}
-                        onClick={handleClearFilters}
-                        sx={{
-                          ...buttonStyles2,
-                          mb: { xs: 1, sm: 0 },
-                          width: { xs: "100%", sm: "auto" },
-                        }}
-                      >
-                        Clear
-                      </Button>
-                      <Button
-                        variant="contained"
-                        fullWidth={!isLargeScreen}
-                        onClick={handleRefineClick}
-                        sx={{
-                          ...buttonStyles,
-                          width: { xs: "100%", sm: "auto" },
-                        }}
-                      >
-                        Refine
-                      </Button>
-                    </Box>
+                      Clear
+                    </Button>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      onClick={handleRefineClick}
+                      sx={buttonStyles}
+                    >
+                      Refine
+                    </Button>
                   </Box>
                 </Grid>
 
@@ -1677,6 +1517,6 @@ export default function MusicEntryClerkAdvSearch() {
           </Snackbar>
         </Box>
       </Box>
-    </ThemeProvider>
+    </>
   );
 }

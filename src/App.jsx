@@ -40,6 +40,8 @@ import Cancel from "./Cancel";
 import MusicEntryClerkSearch from "./MusicEntryClerkSearch";
 import MusicEntryClerkAdvSearch from "./MusicEntryClerkAdvSearch";
 import EmailVerification from "./EmailVerification";
+import AdminSearch from "./AdminSearch";
+import AdminAdvancedSearch from "./AdminAdvancedSearch";
 
 
 
@@ -93,6 +95,8 @@ function App() {
         <Route path="/clerk-search" element={<MusicEntryClerkSearch />} />
         <Route path="/clerk-search/clerk-advanced-search" element={<MusicEntryClerkAdvSearch />} />
         <Route path="/verify-email" element={<EmailVerification />} />
+        <Route path="/admin-search" element={<AdminSearch />} />
+        <Route path="/admin-search/admin-advanced-search" element={<AdminAdvancedSearch />} />
 
 
 

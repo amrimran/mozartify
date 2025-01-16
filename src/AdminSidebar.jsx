@@ -16,6 +16,7 @@ import ScoreIcon from "@mui/icons-material/Score";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
+import SearchIcon from "@mui/icons-material/Search";
 
 const AdminSidebar = ({ active }) => {
   const location = useLocation();
@@ -61,6 +62,12 @@ const AdminSidebar = ({ active }) => {
       label: "Manage Scores",
       icon: <ScoreIcon />,
       key: "manage-scores",
+    },
+    {
+      path: "/admin-search",
+      label: "Search Scores",
+      icon: <SearchIcon />,
+      key: "search-scores",
     },
   ];
 
