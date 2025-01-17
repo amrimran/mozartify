@@ -480,7 +480,7 @@ export default function CustomerMyCart() {
           >
             {isLargeScreen && (
               <Typography variant="h4" sx={{ fontWeight: "bold" }}>
-                My Cart 🛒
+                My Cart
               </Typography>
             )}
 

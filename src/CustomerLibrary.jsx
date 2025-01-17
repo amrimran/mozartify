@@ -795,7 +795,7 @@ export default function CustomerLibrary() {
                 width: "100%", // Ensure it spans full width for proper centering
               }}
             >
-              Library 🗂️
+              Library
             </Typography>
 
             {loading ? (

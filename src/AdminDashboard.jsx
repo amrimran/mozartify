@@ -550,7 +550,7 @@ export default function AdminDashboard() {
                     fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
                   }}
                 >
-                  Dashboard 🚥
+                  Dashboard
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <Typography variant="body1">

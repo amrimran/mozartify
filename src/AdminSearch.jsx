@@ -577,7 +577,7 @@ export default function AdminSearch() {
                       ml: 1,
                     }}
                   >
-                    Music Score Repository Search 🔍
+                    Music Score Repository Search
                   </Typography>{" "}
                 </Box>
 

@@ -931,7 +931,7 @@ export default function CustomerHomepage() {
               textAlign: { xs: "center", lg: "left" }, // Will be center until lg breakpoint
             }}
           >
-            {searchQuery || isFiltered ? "Search Result 🔎" : "Dashboard 🚥"}
+            {searchQuery || isFiltered ? "Search Result 🔎" : "Dashboard"}
           </Typography>
           {/* Only show results count when searching or filtering */}
           {(searchQuery || isFiltered) && (

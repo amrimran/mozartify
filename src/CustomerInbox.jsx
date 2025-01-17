@@ -699,7 +699,7 @@ const CustomerInbox = () => {
           >
             {isLargeScreen && (
               <Typography variant="h4" sx={{ fontWeight: "bold" }}>
-                Inbox 📥
+                Inbox
               </Typography>
             )}
 
