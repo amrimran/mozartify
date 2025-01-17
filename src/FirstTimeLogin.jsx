@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -11,69 +11,158 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  Stepper,
-  Step,
-  StepLabel,
   styled,
-} from '@mui/material';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+} from "@mui/material";
+import axios from "axios";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { createGlobalStyle } from "styled-components";
+
+const GlobalStyle = createGlobalStyle`
+  @keyframes skeleton-wave {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  * {
+    font-family: 'Montserrat', sans-serif;
+  }
+`;
+
+const dialogStyles = {
+  dialogPaper: {
+    borderRadius: "16px",
+    padding: "10px",
+    fontFamily: "Montserrat",
+  },
+  title: {
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    fontSize: "20px",
+    textAlign: "center",
+  },
+  content: {
+    fontFamily: "Montserrat",
+    textAlign: "center",
+  },
+  contentText: {
+    fontFamily: "Montserrat",
+    fontSize: "16px",
+    color: "#555",
+  },
+  actions: {
+    justifyContent: "center",
+    gap: "12px",
+    marginTop: "8px",
+  },
+  button: {
+    textTransform: "none",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    backgroundColor: "#8BD3E6",
+    border: "1px solid #8BD3E6",
+    borderRadius: "8px",
+    padding: "8px 24px",
+    boxShadow: "none",
+    "&:hover": {
+      boxShadow: "none",
+
+      backgroundColor: "#6FBCCF",
+      borderColor: "#6FBCCF",
+    },
+  },
+  deletebutton: {
+    textTransform: "none",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    backgroundColor: "#DB2226",
+    border: "1px solid #DB2226",
+    borderRadius: "8px",
+    padding: "8px 24px",
+    "&:hover": {
+      backgroundColor: "#B71C1C",
+      borderColor: "#B71C1C",
+    },
+  },
+};
 
 // Custom styled components
 const OptionButton = styled(Button)(({ theme }) => ({
-  borderRadius: '8px',
-  padding: '8px 16px',
-  margin: '4px',
-  textTransform: 'none',
-  fontFamily: 'Montserrat, sans-serif',
+  borderRadius: "8px",
+  padding: "8px 16px",
+  margin: "4px",
+  textTransform: "none",
+  fontFamily: "Montserrat, sans-serif",
   backgroundColor: theme.palette.grey[100],
   color: theme.palette.text.primary,
-  boxShadow: 'none',
-  '&:hover': {
+  boxShadow: "none",
+  "&:hover": {
     backgroundColor: theme.palette.grey[200],
-    boxShadow: 'none',
+    boxShadow: "none",
   },
-  '&.selected': {
+  "&.selected": {
     backgroundColor: theme.palette.primary.main,
     color: theme.palette.primary.contrastText,
-    '&:hover': {
+    "&:hover": {
       backgroundColor: theme.palette.primary.dark,
     },
   },
 }));
 
 const ActionButton = styled(Button)(({ theme }) => ({
-  padding: '12px 24px',
-  borderRadius: '8px',
-  fontFamily: 'Montserrat, sans-serif',
-  fontWeight: 'bold',
-  textTransform: 'none',
-  boxShadow: 'none',
-  '&:hover': {
-    boxShadow: 'none',
+  width: "100%",
+  padding: "16px",
+  borderRadius: "8px",
+  fontFamily: "Montserrat, sans-serif",
+  fontWeight: "bold",
+  color: "white",
+  textTransform: "uppercase",
+  marginTop: theme.spacing(2),
+  boxShadow: "none",
+  "&:hover": {
+    boxShadow: "none",
   },
 }));
 
 // Custom theme
 const theme = createTheme({
   typography: {
-    fontFamily: 'Montserrat, sans-serif',
+    fontFamily: "Montserrat, sans-serif",
     h1: {
-      fontSize: '2rem',
+      fontSize: "1.25rem",
       fontWeight: 600,
     },
     h2: {
-      fontSize: '1.5rem',
+      fontSize: "1.75rem",
+      fontWeight: 700,
+    },
+    h3: {
+      fontSize: "1.25rem",
       fontWeight: 600,
     },
     subtitle1: {
-      fontSize: '0.875rem',
-      color: '#666',
+      fontSize: "0.875rem",
+      color: "#666",
     },
   },
   palette: {
     primary: {
-      main: '#8BD3E6',
-      dark: '#6FBCCF',
+      main: "#8BD3E6",
+      dark: "#6FBCCF",
     },
   },
   components: {
@@ -85,53 +174,43 @@ const theme = createTheme({
         },
       },
     },
-    MuiStepper: {
-      styleOverrides: {
-        root: {
-          marginBottom: 32,
-        },
-      },
-    },
   },
 });
 
-const steps = ['Composers', 'Genres', 'Emotions'];
-
 const FirstTimeLogin = () => {
-  const [activeStep, setActiveStep] = useState(0);
   const [composerPreferences, setComposerPreferences] = useState([]);
   const [genrePreferences, setGenrePreferences] = useState([]);
   const [emotionPreferences, setEmotionPreferences] = useState([]);
+  const [dialogOpen, setDialogOpen] = useState(false); // State for dialog
+  const errorRef = useRef(null); // Ref for error alert
+
   const [options, setOptions] = useState({
     composers: [],
     genres: [],
     emotions: [],
   });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [dialogOpen, setDialogOpen] = useState(false);
-  
-  // Add effect to scroll to top when error occurs
-  useEffect(() => {
-    if (error) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [error]);
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPreferencesOptions = async () => {
       try {
-        const response = await fetch('http://localhost:3000/preferences-options');
-        const data = await response.json();
+        const response = await axios.get(
+          "http://localhost:3000/preferences-options"
+        );
+
         setOptions({
-          composers: data.composers.filter(Boolean),
-          genres: data.genres.filter(Boolean),
-          emotions: data.emotions.filter(Boolean),
+          composers: response.data.composers.filter(Boolean),
+          genres: response.data.genres.filter(Boolean),
+          emotions: response.data.emotions.filter(Boolean),
         });
+
         setLoading(false);
-      } catch (err) {
-        setError('Failed to load preferences options. Please try again.');
+      } catch (error) {
+        setErrorMessage(
+          "Failed to load preferences options. Please try again."
+        );
         setLoading(false);
       }
     };
@@ -139,100 +218,57 @@ const FirstTimeLogin = () => {
     fetchPreferencesOptions();
   }, []);
 
-  const handleSelection = (value) => {
+  const handleCheckboxChange = (value, type) => {
     const updatePreferences = (prev) =>
       prev.includes(value)
         ? prev.filter((item) => item !== value)
         : [...prev, value];
 
-    switch (activeStep) {
-      case 0:
+    switch (type) {
+      case "composer":
         setComposerPreferences(updatePreferences(composerPreferences));
         break;
-      case 1:
+      case "genre":
         setGenrePreferences(updatePreferences(genrePreferences));
         break;
-      case 2:
+      case "emotion":
         setEmotionPreferences(updatePreferences(emotionPreferences));
+        break;
+      default:
         break;
     }
   };
 
-  const handleNext = () => {
-    const isValid = () => {
-      switch (activeStep) {
-        case 0:
-          return composerPreferences.length > 0;
-        case 1:
-          return genrePreferences.length > 0;
-        case 2:
-          return emotionPreferences.length > 0;
-        default:
-          return false;
-      }
-    };
+  useEffect(() => {
+    if (errorMessage && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [errorMessage, errorRef]);
 
-    if (!isValid()) {
-      setError('Please select at least one option before continuing.');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (
+      !composerPreferences.length ||
+      !genrePreferences.length ||
+      !emotionPreferences.length
+    ) {
+      setErrorMessage("Please select at least one option from each category.");
       return;
     }
 
-    if (activeStep === steps.length - 1) {
-      handleSubmit();
-    } else {
-      setActiveStep((prevStep) => prevStep + 1);
-      setError('');
-    }
-  };
-
-  const handleBack = () => {
-    setActiveStep((prevStep) => prevStep - 1);
-    setError('');
-  };
-
-  const handleSubmit = async () => {
     try {
-      await fetch('http://localhost:3000/preferences-option', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          composer_preferences: composerPreferences,
-          genre_preferences: genrePreferences,
-          emotion_preferences: emotionPreferences,
-        }),
+      await axios.post("http://localhost:3000/preferences", {
+        composer_preferences: composerPreferences,
+        genre_preferences: genrePreferences,
+        emotion_preferences: emotionPreferences,
       });
-      setDialogOpen(true);
+      setDialogOpen(true); // Show the dialog
       setTimeout(() => {
-        navigate('/customer-homepage');
+        navigate("/customer-homepage"); // Redirect after delay
       }, 2000);
-    } catch (err) {
-      setError('Failed to save preferences. Please try again.');
-    }
-  };
-
-  const getCurrentOptions = () => {
-    switch (activeStep) {
-      case 0:
-        return {
-          title: 'Select Your Favorite Composers',
-          subtitle: 'Choose one or more composers you enjoy',
-          options: options.composers,
-          selected: composerPreferences,
-        };
-      case 1:
-        return {
-          title: 'Select Your Favorite Genres',
-          subtitle: 'Choose one or more genres you enjoy',
-          options: options.genres,
-          selected: genrePreferences,
-        };
-      case 2:
-        return {
-          title: 'Select Your Preferred Emotions',
-          subtitle: 'Choose one or more emotions that move you',
-          options: options.emotions,
-          selected: emotionPreferences,
-        };
+    } catch (error) {
+      setErrorMessage("Failed to save preferences. Please try again.");
     }
   };
 
@@ -240,11 +276,11 @@ const FirstTimeLogin = () => {
     return (
       <Box
         sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, #FFFFFF 0%, #B3E8F2 100%)',
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(135deg, #FFFFFF 0%, #B3E8F2 100%)",
         }}
       >
         <CircularProgress />
@@ -252,95 +288,117 @@ const FirstTimeLogin = () => {
     );
   }
 
-  const currentStep = getCurrentOptions();
-
   return (
-    <ThemeProvider theme={theme}>
-      <Box
-        sx={{
-          minHeight: '100vh',
-          py: 4,
-          px: 2,
-          background: 'linear-gradient(135deg, #FFFFFF 0%, #B3E8F2 100%)',
-        }}
-      >
-        <Container maxWidth="sm">
-          <Paper elevation={3}>
-            <Stepper activeStep={activeStep}>
-              {steps.map((label) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
+    <>
+      <GlobalStyle />
+      <ThemeProvider theme={theme}>
+        <Box
+          sx={{
+            minHeight: "100vh",
+            py: 4,
+            px: 2,
+            background: "linear-gradient(135deg, #FFFFFF 0%, #B3E8F2 100%)",
+          }}
+        >
+          <Container maxWidth="sm">
+            <Paper elevation={3}>
+              <Box textAlign="center" mb={3}>
+                <Typography variant="h2" gutterBottom>
+                  Tell Us About Your Music Taste
+                </Typography>
+                <Typography variant="subtitle1">
+                  Select your preferences to personalize your experience.
+                </Typography>
+              </Box>
 
-            <Box textAlign="center" mb={4}>
-              <Typography variant="h2" gutterBottom>
-                {currentStep.title}
-              </Typography>
-              <Typography variant="subtitle1">
-                {currentStep.subtitle}
-              </Typography>
-            </Box>
+              {errorMessage && (
+                <Alert severity="error" ref={errorRef} sx={{ mb: 3 }}>
+                  {errorMessage}
+                </Alert>
+              )}
 
-            {error && (
-              <Alert severity="error" sx={{ mb: 3 }}>
-                {error}
-              </Alert>
-            )}
+              <form onSubmit={handleSubmit}>
+                <Box mb={4}>
+                  <Typography variant="h3" gutterBottom>
+                    Favorite Composers
+                  </Typography>
+                  <Typography variant="subtitle1" gutterBottom>
+                    You may choose more than one
+                  </Typography>
+                  {options.composers.map((composer) => (
+                    <OptionButton
+                      key={composer}
+                      onClick={() => handleCheckboxChange(composer, "composer")}
+                      className={
+                        composerPreferences.includes(composer) ? "selected" : ""
+                      }
+                    >
+                      {composer}
+                    </OptionButton>
+                  ))}
+                </Box>
 
-            <Box mb={4}>
-              {currentStep.options.map((option) => (
-                <OptionButton
-                  key={option}
-                  onClick={() => handleSelection(option)}
-                  className={currentStep.selected.includes(option) ? 'selected' : ''}
-                >
-                  {option}
-                </OptionButton>
-              ))}
-            </Box>
+                <Box mb={4}>
+                  <Typography variant="h3" gutterBottom>
+                    Favorite Genres
+                  </Typography>
+                  <Typography variant="subtitle1" gutterBottom>
+                    You may choose more than one
+                  </Typography>
+                  {options.genres.map((genre) => (
+                    <OptionButton
+                      key={genre}
+                      onClick={() => handleCheckboxChange(genre, "genre")}
+                      className={
+                        genrePreferences.includes(genre) ? "selected" : ""
+                      }
+                    >
+                      {genre}
+                    </OptionButton>
+                  ))}
+                </Box>
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-              <ActionButton
-                onClick={handleBack}
-                disabled={activeStep === 0}
-                variant="outlined"
-                color="primary"
-              >
-                Back
-              </ActionButton>
-              <ActionButton
-                onClick={handleNext}
-                variant="contained"
-                color="primary"
-              >
-                {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
-              </ActionButton>
-            </Box>
-          </Paper>
-        </Container>
-      </Box>
+                <Box mb={2}>
+                  <Typography variant="h3" gutterBottom>
+                    Preferred Emotions
+                  </Typography>
+                  <Typography variant="subtitle1" gutterBottom>
+                    You may choose more than one
+                  </Typography>
+                  {options.emotions.map((emotion) => (
+                    <OptionButton
+                      key={emotion}
+                      onClick={() => handleCheckboxChange(emotion, "emotion")}
+                      className={
+                        emotionPreferences.includes(emotion) ? "selected" : ""
+                      }
+                    >
+                      {emotion}
+                    </OptionButton>
+                  ))}
+                </Box>
 
-      <Dialog
-        open={dialogOpen}
-        sx={{
-          '& .MuiDialog-paper': {
-            borderRadius: '16px',
-            padding: '16px',
-          },
-        }}
-      >
-        <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold' }}>
-          Great Taste!
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" sx={{ textAlign: 'center' }}>
-            Ready to explore?
-          </Typography>
-        </DialogContent>
-      </Dialog>
-    </ThemeProvider>
+                <Box>
+                  <ActionButton
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                  >
+                    Save
+                  </ActionButton>
+                </Box>
+              </form>
+            </Paper>
+          </Container>
+        </Box>
+        <Dialog open={dialogOpen}>
+          <DialogTitle sx={dialogStyles.title}>Great Taste!</DialogTitle>
+          <DialogContent sx={dialogStyles.content}>
+            <Typography variant="body1">Ready to explore?</Typography>
+          </DialogContent>
+        </Dialog>
+      </ThemeProvider>
+    </>
   );
 };
 
