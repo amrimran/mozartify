@@ -67,12 +67,12 @@ const CustomerSidebar = ({ active }) => {
       icon: <Search />,
       key: "search",
     },
-    {
-      path: "/customer-collections",
-      label: "Collections",
-      icon: <Folder />,
-      key: "collections",
-    },
+    // {
+    //   path: "/customer-collections",
+    //   label: "Collections",
+    //   icon: <Folder />,
+    //   key: "collections",
+    // },
 
     {
       path: "/customer-favorites",
