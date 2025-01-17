@@ -192,7 +192,7 @@ const FirstTimeLogin = () => {
 
   const handleSubmit = async () => {
     try {
-      await fetch('http://localhost:3000/preferences-option', {
+      await fetch('http://localhost:3000/preferences-options', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
