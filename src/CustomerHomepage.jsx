@@ -68,7 +68,7 @@ export default function CustomerHomepage() {
   const [emotion, setEmotion] = useState("");
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [itemsPerPage] = useState(5);
+  const [itemsPerPage] = useState(8);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
