@@ -258,14 +258,10 @@ const FirstTimeLogin = () => {
     }
 
     try {
-      await fetch('http://localhost:3000/preferences-options', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          composer_preferences: composerPreferences,
-          genre_preferences: genrePreferences,
-          emotion_preferences: emotionPreferences,
-        }),
+      await axios.post("http://localhost:3000/preferences", {
+        composer_preferences: composerPreferences,
+        genre_preferences: genrePreferences,
+        emotion_preferences: emotionPreferences,
       });
       setDialogOpen(true); // Show the dialog
       setTimeout(() => {
