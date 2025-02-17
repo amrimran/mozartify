@@ -74,7 +74,6 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-
 const buttonStyles = {
   px: { xs: 4, sm: 15 },
   fontFamily: "Montserrat",
@@ -506,7 +505,7 @@ const MusicEntryClerkEdit = () => {
                       fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
                     }}
                   >
-                    Edit Music Scores
+                    Edit Music Score
                   </Typography>
                   <IconButton
                     onClick={() => {
