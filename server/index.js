@@ -257,7 +257,6 @@ app.get("/login", async (req, res) => {
   }
 });
 
-// Backend (Express)
 app.post("/login", async (req, res) => {
   const { username_or_email, password } = req.body;
 

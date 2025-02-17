@@ -215,14 +215,14 @@ export default function Login() {
     // Clear any previous error message
     setErrorMessage("");
 
-    const loggedInUserId = localStorage.getItem("loggedInUserId");
+    // const loggedInUserId = localStorage.getItem("loggedInUserId");
 
-    if (loggedInUserId && loggedInUserId !== username_or_email) {
-      setErrorMessage(
-        "You cannot log in to multiple accounts on the same browser."
-      );
-      return; // Stop further execution of the login process
-    }
+    // if (loggedInUserId && loggedInUserId !== username_or_email) {
+    //   setErrorMessage(
+    //     "You cannot log in to multiple accounts on the same browser."
+    //   );
+    //   return; // Stop further execution of the login process
+    // }
 
     axios
       .post("http://localhost:3000/login", { username_or_email, password })
@@ -230,7 +230,7 @@ export default function Login() {
         const { message, role, first_timer, approval, _id } = result.data;
 
         if (message === "Success") {
-          localStorage.setItem("loggedInUserId", _id);
+          // localStorage.setItem("loggedInUserId", _id);
           // Check role and handle navigation
           if (role === "music_entry_clerk" && approval === "pending") {
             setErrorMessage(
