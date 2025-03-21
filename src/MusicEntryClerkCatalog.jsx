@@ -230,6 +230,7 @@ export default function MusicEntryClerkCatalog() {
   const [isSuccess, setIsSuccess] = useState(true);
   const [tabIndex, setTabIndex] = useState(0);
   const [coverImageUrl, setCoverImageUrl] = useState("");
+  const [instrumentationLoading, setInstrumentationLoading] = useState(false);
   const [catalogData, setCatalogData] = useState({
     filename: "",
     albums: "",
@@ -362,13 +363,12 @@ export default function MusicEntryClerkCatalog() {
 
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
-  
+
     // Scroll to top if in mobile view
     if (isMobile) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
-  
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -408,7 +408,7 @@ export default function MusicEntryClerkCatalog() {
   };
 
   const handleNext = () => {
-    if (tabIndex <= 9) {
+    if (tabIndex <= 10) {
       setTabIndex((prevIndex) => prevIndex + 1);
     }
   };
@@ -439,6 +439,7 @@ export default function MusicEntryClerkCatalog() {
     }
   };
 
+  // 1. First, modify the handleMp3FileChange function to NOT include instrumentation prediction
   const handleMp3FileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) {
@@ -458,8 +459,8 @@ export default function MusicEntryClerkCatalog() {
         ...prevData,
         emotion: "", // Clear previous emotion
         genre: "", // Clear previous genre
-        //instrumentation: "", // Clear previous instrument predictions
-        gender: "",
+        gender: "", // Clear previous gender
+        // Note: We're not clearing instrumentation here
       }));
 
       // Upload file to Firebase Storage
@@ -495,7 +496,7 @@ export default function MusicEntryClerkCatalog() {
       // Update catalogData with the predicted gender
       setCatalogData((prevData) => ({
         ...prevData,
-        gender: genderResponse.data.gender, // Assuming the prediction is an array, e.g., ['male', 'female', ...]
+        gender: genderResponse.data.gender,
       }));
 
       // Call genre prediction API
@@ -510,19 +511,7 @@ export default function MusicEntryClerkCatalog() {
         genre: genreResponse.data.genre, // Update genre field
       }));
 
-      // // Call instrument prediction API
-      // const instrumentResponse = await axios.post(
-      //   "http://127.0.0.1:8000/predict-instrument",
-      //   {
-      //     fileUrl: fileUrl, // The URL of the MP3 file from Firebase
-      //   }
-      // );
-
-      // // Update catalogData with the predicted instrumentation
-      // setCatalogData((prevData) => ({
-      //   ...prevData,
-      //   instrumentation: instrumentResponse.data.top_instruments, // Update instrumentation field
-      // }));
+      // Note: We no longer call the instrument prediction API here
 
       setDialogTitle("Prediction Complete");
       setDialogMessage("File uploaded and predictions completed successfully!");
@@ -530,7 +519,7 @@ export default function MusicEntryClerkCatalog() {
       setOpenDialog(true);
     } catch (error) {
       console.error(
-        "Error uploading MP3 or predicting emotion/gender/genre/instrument:",
+        "Error uploading MP3 or predicting emotion/gender/genre:",
         error
       );
 
@@ -552,6 +541,63 @@ export default function MusicEntryClerkCatalog() {
       setOpenDialog(true);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 2. Create a new function for handling instrumentation prediction separately
+  const handleInstrumentationPrediction = async () => {
+    // Make sure we have an MP3 file URL
+    if (!catalogData.mp3FileUrl) {
+      setDialogTitle("Error");
+      setDialogMessage("Please upload an MP3 file in the MP3 File tab first.");
+      setIsSuccess(false);
+      setOpenDialog(true);
+      return;
+    }
+
+    try {
+      // Set loading state for instrumentation
+      setInstrumentationLoading(true);
+
+      // Call instrument prediction API
+      const instrumentResponse = await axios.post(
+        "http://127.0.0.1:8000/predict-instrument",
+        {
+          fileUrl: catalogData.mp3FileUrl,
+        }
+      );
+
+      // Update catalogData with the predicted instrumentation
+      setCatalogData((prevData) => ({
+        ...prevData,
+        instrumentation: instrumentResponse.data.top_instruments,
+      }));
+
+      setDialogTitle("Prediction Complete");
+      setDialogMessage("Instrumentation prediction completed successfully!");
+      setIsSuccess(true);
+      setOpenDialog(true);
+    } catch (error) {
+      console.error("Error predicting instrumentation:", error);
+
+      let errorMessage =
+        "An unexpected error occurred with instrumentation prediction.";
+
+      if (error.response) {
+        errorMessage = `Backend error: ${error.response.data.detail || error.response.statusText}`;
+      } else if (error.request) {
+        errorMessage =
+          "Error communicating with the instrumentation prediction service.";
+      } else {
+        errorMessage = `An error occurred: ${error.message}`;
+      }
+
+      setDialogTitle("Error");
+      setDialogMessage(errorMessage);
+      setIsSuccess(false);
+      setOpenDialog(true);
+    } finally {
+      setInstrumentationLoading(false);
     }
   };
 
@@ -661,6 +707,7 @@ export default function MusicEntryClerkCatalog() {
     "Related Work",
     "Cover Image",
     "MP3 File",
+    "Instrumentation",
   ];
 
   return (
@@ -956,17 +1003,7 @@ export default function MusicEntryClerkCatalog() {
                       onChange={handleInputChange}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="instrumentation"
-                      label="Instrumentation"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.instrumentation || ""}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
+
                   <Grid item xs={12} sm={6}>
                     <FormControl
                       variant="outlined"
@@ -2300,6 +2337,132 @@ export default function MusicEntryClerkCatalog() {
                 </Grid>
               </Grid>
             )}
+            {tabIndex === 11 && (
+              <Grid container spacing={4} justifyContent="center">
+                <Grid item xs={12} sm={8} md={6}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      p: 3,
+                      mt: 3,
+                      borderRadius: 3,
+                      borderColor: "#8BD3E6",
+                      boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.1)",
+                      position: "relative", // For backdrop positioning
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontFamily: "Montserrat",
+                        fontWeight: "bold",
+                        mb: 3,
+                        textAlign: "center",
+                      }}
+                    >
+                      Instrumentation Details
+                    </Typography>
+
+                    <TextField
+                      required
+                      name="instrumentation"
+                      label="Instrumentation"
+                      variant="outlined"
+                      fullWidth
+                      multiline
+                      rows={4}
+                      sx={formStyles}
+                      value={catalogData.instrumentation || ""}
+                      onChange={handleInputChange}
+                      placeholder="Get instrumentation prediction or enter manually"
+                    />
+
+                    <Box
+                      sx={{ display: "flex", justifyContent: "center", mt: 3 }}
+                    >
+                      <Button
+                        variant="contained"
+                        onClick={handleInstrumentationPrediction}
+                        disabled={
+                          !catalogData.mp3FileUrl || instrumentationLoading
+                        }
+                        sx={{
+                          ...buttonStyles,
+                          boxShadow: "none",
+                        }}
+                      >
+                        {instrumentationLoading
+                          ? "Predicting..."
+                          : "Get Instrumentation Prediction"}
+                      </Button>
+                    </Box>
+
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontFamily: "Montserrat",
+                        mt: 2,
+                        color: "#666",
+                        textAlign: "center",
+                      }}
+                    >
+                      Note: Instrumentation prediction may take longer to
+                      process.
+                      {!catalogData.mp3FileUrl &&
+                        " Please upload an MP3 in the MP3 File tab first."}
+                    </Typography>
+
+                    {/* Backdrop for loading spinner */}
+                    <Backdrop
+                      open={instrumentationLoading}
+                      sx={{
+                        color: "#fff",
+                        zIndex: (theme) => theme.zIndex.drawer + 1,
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        bgcolor: "rgba(0, 0, 0, 0.6)",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        flexDirection: "column",
+                        borderRadius: 2,
+                      }}
+                    >
+                      <CircularProgress
+                        size={60}
+                        color="inherit"
+                        sx={{ mb: 2 }}
+                      />
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          color: "#fff",
+                          fontFamily: "Montserrat",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Analyzing instrumentation...
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "#fff",
+                          fontFamily: "Montserrat",
+                          mt: 1,
+                          maxWidth: "80%",
+                          textAlign: "center",
+                        }}
+                      >
+                        This may take a moment as we analyze the audio in detail
+                      </Typography>
+                    </Backdrop>
+                  </Card>
+                </Grid>
+              </Grid>
+            )}
             <Dialog
               open={openDialog}
               onClose={handleCloseDialog}
@@ -2373,7 +2536,7 @@ export default function MusicEntryClerkCatalog() {
               >
                 Save Metadata
               </Button>
-              {tabIndex < 10 && (
+              {tabIndex < 11 && (
                 <Button
                   variant="outlined"
                   size="large"
