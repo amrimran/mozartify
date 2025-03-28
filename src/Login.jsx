@@ -33,6 +33,16 @@ const buttonStyles = {
   },
 };
 
+const artsButtonStyles = {
+  ...buttonStyles,
+  backgroundColor: "#FFB6C1", // Soft pink color
+  border: "1px solid #FFB6C1",
+  "&:hover": {
+    backgroundColor: "#FFA0B3", // Slightly darker pink for hover
+    borderColor: "#FFA0B3",
+  },
+};
+
 const FormContainer = styled(Box)(({ theme }) => ({
   backgroundColor: "#FFFFFF",
   borderRadius: "20px",
@@ -209,43 +219,53 @@ export default function Login() {
       });
   }, []);
 
-  const handleLogin = (e) => {
+  const handleLogin = (e, type) => {
     e.preventDefault();
 
     // Clear any previous error message
     setErrorMessage("");
 
-    // const loggedInUserId = localStorage.getItem("loggedInUserId");
-
-    // if (loggedInUserId && loggedInUserId !== username_or_email) {
-    //   setErrorMessage(
-    //     "You cannot log in to multiple accounts on the same browser."
-    //   );
-    //   return; // Stop further execution of the login process
-    // }
-
     axios
       .post("http://localhost:3000/login", { username_or_email, password })
       .then((result) => {
-        const { message, role, first_timer, approval, _id } = result.data;
+        const { message, role, first_timer, approval } = result.data;
 
         if (message === "Success") {
-          // localStorage.setItem("loggedInUserId", _id);
-          // Check role and handle navigation
-          if (role === "music_entry_clerk" && approval === "pending") {
-            setErrorMessage(
-              "Your account is awaiting approval. Please contact the admin."
-            );
-          } else if (first_timer && role === "customer") {
-            navigate("/first-time-login");
-          } else if (role === "customer") {
-            navigate("/customer-homepage");
-          } else if (role === "music_entry_clerk") {
-            navigate("/clerk-homepage");
-          } else if (role === "admin") {
-            navigate("/admin-dashboard");
-          } else {
-            navigate("/login");
+          // Determine redirection based on type parameter instead of loginType state
+          if (type === "music") {
+            // Original music login redirections
+            if (role === "music_entry_clerk" && approval === "pending") {
+              setErrorMessage(
+                "Your account is awaiting approval. Please contact the admin."
+              );
+            } else if (first_timer && role === "customer") {
+              navigate("/first-time-login");
+            } else if (role === "customer") {
+              navigate("/customer-homepage");
+            } else if (role === "music_entry_clerk") {
+              navigate("/clerk-homepage");
+            } else if (role === "admin") {
+              navigate("/admin-dashboard");
+            } else {
+              navigate("/login");
+            }
+          } else if (type === "arts") {
+            // Arts login redirections
+            if (role === "music_entry_clerk" && approval === "pending") {
+              setErrorMessage(
+                "Your account is awaiting approval. Please contact the admin."
+              );
+            } else if (first_timer && role === "customer") {
+              navigate("/arts-first-time-login");
+            } else if (role === "customer") {
+              navigate("/arts-customer-homepage");
+            } else if (role === "music_entry_clerk") {
+              navigate("/arts-clerk-homepage");
+            } else if (role === "admin") {
+              navigate("/admin-dashboard"); // Assuming admin dashboard is the same
+            } else {
+              navigate("/login");
+            }
           }
         } else {
           // Generic error handling if "message" is not "Success"
@@ -270,6 +290,14 @@ export default function Login() {
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
+  };
+
+  const handleMusicLogin = (e) => {
+    handleLogin(e, "music");
+  };
+
+  const handleArtsLogin = (e) => {
+    handleLogin(e, "arts");
   };
 
   return (
@@ -300,7 +328,7 @@ export default function Login() {
           onClick={() => window.location.replace("http://localhost:5173")}
         />
 
-        <FormContainer component="form" onSubmit={handleLogin}>
+        <FormContainer component="form" onSubmit={(e) => e.preventDefault()}>
           <Typography
             variant={isMobile ? "h6" : "h5"}
             align="center"
@@ -401,14 +429,27 @@ export default function Login() {
           <Button
             variant="outlined"
             size={isMobile ? "medium" : "large"}
-            type="submit"
+            onClick={handleMusicLogin}
             sx={{
               mt: { xs: 2, sm: 3 },
               ...buttonStyles,
               width: { xs: "100%", sm: "auto" },
             }}
           >
-            Login Now
+            Music Login
+          </Button>
+
+          <Button
+            variant="outlined"
+            size={isMobile ? "medium" : "large"}
+            onClick={handleArtsLogin}
+            sx={{
+              mt: { xs: 2, sm: 3 },
+              ...artsButtonStyles, // Using the pink styles here
+              width: { xs: "100%", sm: "auto" },
+            }}
+          >
+            ARTS Login
           </Button>
 
           <Typography

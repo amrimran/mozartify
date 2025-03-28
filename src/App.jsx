@@ -43,6 +43,17 @@ import MusicEntryClerkAdvSearch from "./MusicEntryClerkAdvSearch";
 import EmailVerification from "./EmailVerification";
 import AdminSearch from "./AdminSearch";
 import AdminAdvancedSearch from "./AdminAdvancedSearch";
+import ArtsClerkHomepage from "./ArtsClerkHomepage";
+import ArtsClerkUpload from "./ArtsClerkUpload";
+import ArtsClerkCatalog from "./ArtsClerkCatalog";
+import ArtsClerkSearch from "./ArtsClerkSearch";
+import ArtsClerkView from "./ArtsClerkView";
+import ArtsClerkProfile from "./ArtsClerkProfile";
+import ArtsFormBuilder from "./ArtsFormBuilder";
+
+
+
+
 
 
 
@@ -73,7 +84,6 @@ function App() {
         <Route path="/customer-inbox/customer-add-new-feedback" element={<CustomerAddNewFeedback />} />
         <Route path="/customer-profile" element={<CustomerProfile />} />
         <Route path="/customer-collections" element={<CustomerCollections />} />
-
         <Route path="/clerk-homepage" element={<MusicEntryClerkHomepage />} />
         <Route path="/clerk-upload" element={<MusicEntryClerkUpload />} />
         <Route path="/clerk-preview" element={<MusicEntryClerkPreview />} />
@@ -100,6 +110,14 @@ function App() {
         <Route path="/verify-email" element={<EmailVerification />} />
         <Route path="/admin-search" element={<AdminSearch />} />
         <Route path="/admin-search/admin-advanced-search" element={<AdminAdvancedSearch />} />
+        <Route path="/arts-clerk-homepage" element={<ArtsClerkHomepage />} />
+        <Route path="/arts-clerk-upload" element={<ArtsClerkUpload />} />
+        <Route path="/arts-clerk-catalog/:id" element={<ArtsClerkCatalog />} />
+        <Route path="/arts-clerk-search" element={<ArtsClerkSearch />} />
+        <Route path="/arts-clerk-view/:artworkId" element={<ArtsClerkView />} />
+        <Route path="/arts-clerk-profile" element={<ArtsClerkProfile />} />
+        <Route path="/arts-form-builder" element={<ArtsFormBuilder/>} />
+
 
 
 

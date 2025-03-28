@@ -1,76 +1,113 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const multer = require('multer');
-const path = require('path');
-const { exec } = require('child_process');
-const fs = require('fs');
-const axios = require('axios');
-const ABCFileModel = require('./models/ABCFile'); // Import the ABCFile model
-const DeletedABCFile = require('./models/deletedABCFile'); 
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const multer = require("multer");
+const path = require("path");
+const { exec } = require("child_process");
+const fs = require("fs");
+const axios = require("axios");
+const ABCFileModel = require("./models/ABCFile");
+const DeletedABCFile = require("./models/deletedABCFile");
+const Artwork = require("./models/Arts.js");
+const DeletedArtwork = require('./models/DeletedArts.js'); 
 
 const app = express();
 app.use(express.json());
 
-// CORS setup to allow multiple origins
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173'];
+// CORS setup with multiple origins and enhanced configuration
+const allowedOrigins = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173"];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+  })
+);
+
+// Enhanced CORS configuration
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
+  origin: ['http://localhost:5173', 'http://127.0.0.1:5173'], // Allow your frontend origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Explicitly allow all methods you're using
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
+  credentials: true // Allow cookies if you need them
 }));
 
 // Static file serving for uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // MongoDB connection
-mongoose.connect(process.env.DB_URI)
+mongoose
+  .connect(process.env.DB_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // Configure file storage for uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
     cb(null, file.originalname);
-  }
+  },
 });
 
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const acceptedFileTypes = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
+    const acceptedFileTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+      "application/pdf",
+    ];
     if (acceptedFileTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only JPEG, PNG, JPG, and PDF files are allowed.'));
+      cb(
+        new Error(
+          "Invalid file type. Only JPEG, PNG, JPG, and PDF files are allowed."
+        )
+      );
     }
-  }
+  },
 });
 
 // Endpoint to upload file, transcribe, convert, and save to MongoDB
-app.post('/upload', upload.single('file'), (req, res) => {
+app.post("/upload", upload.single("file"), (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ message: 'No file uploaded' });
+    return res.status(400).json({ message: "No file uploaded" });
   }
 
-  const inputFilePath = path.join(__dirname, 'uploads', req.file.filename);
-  const outputDir = path.join(__dirname, 'uploads', `${path.parse(req.file.filename).name}`);
-  const mxlFilePath = path.join(outputDir, `${path.parse(req.file.filename).name}.mxl`);
-  const abcFilePath = path.join(outputDir, `${path.parse(req.file.filename).name}.abc`);
+  const inputFilePath = path.join(__dirname, "uploads", req.file.filename);
+  const outputDir = path.join(
+    __dirname,
+    "uploads",
+    `${path.parse(req.file.filename).name}`
+  );
+  const mxlFilePath = path.join(
+    outputDir,
+    `${path.parse(req.file.filename).name}.mxl`
+  );
+  const abcFilePath = path.join(
+    outputDir,
+    `${path.parse(req.file.filename).name}.abc`
+  );
 
   fs.mkdir(outputDir, { recursive: true }, (err) => {
     if (err) {
       console.error(`Error creating directory: ${err.message}`);
-      return res.status(500).json({ message: 'Error creating directory', error: err.message });
+      return res
+        .status(500)
+        .json({ message: "Error creating directory", error: err.message });
     }
 
     console.log(`Running Audiveris on file: ${inputFilePath}`);
@@ -79,46 +116,66 @@ app.post('/upload', upload.single('file'), (req, res) => {
     exec(command, (error, stdout, stderr) => {
       if (error) {
         console.error(`Error executing Audiveris: ${error.message}`);
-        return res.status(500).json({ message: 'Error processing file with Audiveris', error: error.message });
+        return res
+          .status(500)
+          .json({
+            message: "Error processing file with Audiveris",
+            error: error.message,
+          });
       }
 
-        const xml2abcPath = path.resolve(__dirname, 'node_modules/.bin/xml2abc');
-        const xml2abcCommand = `"${xml2abcPath}" -o ${outputDir} ${mxlFilePath}`;
+      const xml2abcPath = path.resolve(__dirname, "node_modules/.bin/xml2abc");
+      const xml2abcCommand = `"${xml2abcPath}" -o ${outputDir} ${mxlFilePath}`;
 
-        exec(xml2abcCommand, (xml2abcError) => {
-          if (xml2abcError) {
-            return res.status(500).json({ message: 'Error converting .xml to .abc with xml2abc-js', error: xml2abcError.message });
+      exec(xml2abcCommand, (xml2abcError) => {
+        if (xml2abcError) {
+          return res
+            .status(500)
+            .json({
+              message: "Error converting .xml to .abc with xml2abc-js",
+              error: xml2abcError.message,
+            });
+        }
+
+        fs.readFile(abcFilePath, "utf8", async (readError, data) => {
+          if (readError) {
+            return res
+              .status(500)
+              .json({
+                message: "Error reading .abc file",
+                error: readError.message,
+              });
           }
 
-          fs.readFile(abcFilePath, 'utf8', async (readError, data) => {
-            if (readError) {
-              return res.status(500).json({ message: 'Error reading .abc file', error: readError.message });
-            }
+          try {
+            const abcFile = new ABCFileModel({
+              filename: req.file.filename,
+              content: data,
+            });
+            await abcFile.save();
 
-            try {
-              const abcFile = new ABCFileModel({
-                filename: req.file.filename,
-                content: data,
+            res.json({
+              filePath: `/uploads/${req.file.filename}`,
+              mxlFilePath: `/uploads/${path.parse(req.file.filename).name}/${path.parse(req.file.filename).name}.mxl`,
+              abcFilePath: `/uploads/${path.parse(req.file.filename).name}/${path.parse(req.file.filename).name}.abc`,
+              message: "File uploaded and processed successfully",
+            });
+          } catch (saveError) {
+            res
+              .status(500)
+              .json({
+                message: "Error saving .abc file to MongoDB",
+                error: saveError.message,
               });
-              await abcFile.save();
-
-              res.json({
-                filePath: `/uploads/${req.file.filename}`,
-                mxlFilePath: `/uploads/${path.parse(req.file.filename).name}/${path.parse(req.file.filename).name}.mxl`,
-                abcFilePath: `/uploads/${path.parse(req.file.filename).name}/${path.parse(req.file.filename).name}.abc`,
-                message: 'File uploaded and processed successfully'
-              });
-            } catch (saveError) {
-              res.status(500).json({ message: 'Error saving .abc file to MongoDB', error: saveError.message });
-            }
-          });
+          }
         });
       });
     });
   });
+});
 
 // Endpoint to handle emotion prediction request based on Firebase URL
-app.post('/predictEmotion', async (req, res) => {
+app.post("/predictEmotion", async (req, res) => {
   const { fileUrl } = req.body;
   if (!fileUrl) {
     console.error("No file URL provided");
@@ -127,7 +184,9 @@ app.post('/predictEmotion', async (req, res) => {
 
   try {
     console.log("Sending Firebase file URL to FastAPI server:", fileUrl);
-    const response = await axios.post('http://127.0.0.1:5173/predict-emotion', { fileUrl });
+    const response = await axios.post("http://127.0.0.1:5173/predict-emotion", {
+      fileUrl,
+    });
     res.json(response.data);
   } catch (error) {
     console.error("Error while predicting emotion:", error.message);
@@ -136,7 +195,7 @@ app.post('/predictEmotion', async (req, res) => {
 });
 
 // Endpoint to handle gender prediction request based on Firebase URL
-app.post('/predictGender', async (req, res) => {
+app.post("/predictGender", async (req, res) => {
   const { fileUrl } = req.body;
   if (!fileUrl) {
     console.error("No file URL provided");
@@ -145,7 +204,10 @@ app.post('/predictGender', async (req, res) => {
 
   try {
     console.log("Sending Firebase file URL to FastAPI gender server:", fileUrl);
-    const genderResponse = await axios.post('http://127.0.0.1:9000/predict-gender', { fileUrl });
+    const genderResponse = await axios.post(
+      "http://127.0.0.1:9000/predict-gender",
+      { fileUrl }
+    );
 
     // Return the gender prediction
     res.json({ gender: genderResponse.data.gender });
@@ -156,7 +218,7 @@ app.post('/predictGender', async (req, res) => {
 });
 
 // Endpoint to handle genre prediction request based on Firebase URL
-app.post('/predictGenre', async (req, res) => {
+app.post("/predictGenre", async (req, res) => {
   const { fileUrl } = req.body;
   if (!fileUrl) {
     console.error("No file URL provided");
@@ -165,7 +227,10 @@ app.post('/predictGenre', async (req, res) => {
 
   try {
     console.log("Sending Firebase file URL to FastAPI genre server:", fileUrl);
-    const genreResponse = await axios.post('http://127.0.0.1:8001/predict-genre', { fileUrl });
+    const genreResponse = await axios.post(
+      "http://127.0.0.1:8001/predict-genre",
+      { fileUrl }
+    );
 
     // Return the genre prediction
     res.json({ genre: genreResponse.data.genre });
@@ -174,7 +239,6 @@ app.post('/predictGenre', async (req, res) => {
     res.status(500).send("Error while predicting genre");
   }
 });
-
 
 // // Endpoint for instrument prediction from URL
 // app.post('/predictInstrument', async (req, res) => {
@@ -186,7 +250,7 @@ app.post('/predictGenre', async (req, res) => {
 //   try {
 //     // Forward the file URL to FastAPI for instrument prediction
 //     const genderResponse = await axios.post('http://127.0.0.1:8000/predict-instrument', { fileUrl });
-    
+
 //     // Return the response from FastAPI (list of top instruments) to the frontend
 //     res.json({
 //       instrumentation: response.data.top_instruments,
@@ -199,22 +263,24 @@ app.post('/predictGenre', async (req, res) => {
 // });
 
 // Additional endpoints
-app.get('/abc-file', async (req, res) => {
+app.get("/abc-file", async (req, res) => {
   try {
-    const { sortOrder = 'desc', sortBy = '_id' } = req.query;
-    const mongoSortOrder = sortOrder === 'asc' ? 1 : -1;
-    
-    const abcFiles = await ABCFileModel.find({ deleted: false })
-      .sort({ [sortBy]: mongoSortOrder });
-    
+    const { sortOrder = "desc", sortBy = "_id" } = req.query;
+    const mongoSortOrder = sortOrder === "asc" ? 1 : -1;
+
+    const abcFiles = await ABCFileModel.find({ deleted: false }).sort({
+      [sortBy]: mongoSortOrder,
+    });
+
     res.status(200).json(abcFiles);
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching files', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching files", error: err.message });
   }
 });
 
-
-app.get('/abc-file/:identifier', async (req, res) => {
+app.get("/abc-file/:identifier", async (req, res) => {
   try {
     const { identifier } = req.params;
     let abcFile;
@@ -226,16 +292,18 @@ app.get('/abc-file/:identifier', async (req, res) => {
     }
 
     if (!abcFile) {
-      return res.status(404).json({ message: 'File not found' });
+      return res.status(404).json({ message: "File not found" });
     }
 
     res.status(200).json(abcFile);
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching file', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching file", error: err.message });
   }
 });
 
-app.put('/abc-file/:filename/content', async (req, res) => {
+app.put("/abc-file/:filename/content", async (req, res) => {
   try {
     const { filename } = req.params;
     const { content } = req.body;
@@ -247,46 +315,128 @@ app.put('/abc-file/:filename/content', async (req, res) => {
     );
 
     if (!abcFile) {
-      return res.status(404).json({ message: 'File not found' });
+      return res.status(404).json({ message: "File not found" });
     }
 
-    res.status(200).json({ message: 'ABC content updated successfully', abcFile });
+    res
+      .status(200)
+      .json({ message: "ABC content updated successfully", abcFile });
   } catch (err) {
-    res.status(500).json({ message: 'Error updating ABC content', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Error updating ABC content", error: err.message });
   }
 });
 
 // Endpoint to get catalog data by filename
-app.get('/catalog/:fileName', async (req, res) => {
+app.get("/catalog/:fileName", async (req, res) => {
   try {
-    const catalogData = await ABCFileModel.findOne({ filename: req.params.fileName });
+    const catalogData = await ABCFileModel.findOne({
+      filename: req.params.fileName,
+    });
     if (!catalogData) {
-      return res.status(404).json({ message: 'File not found' });
+      return res.status(404).json({ message: "File not found" });
     }
     res.status(200).json(catalogData);
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching catalog data', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching catalog data", error: err.message });
   }
 });
 
 // Save catalog metadata
-app.post('/catalog', async (req, res) => {
+app.post("/catalog", async (req, res) => {
   try {
     const fields = [
-      'albums', 'alternativeTitle', 'artist', 'backgroundResources', 'callNumber', 'composer', 
-      'composerTimePeriod', 'contributor', 'copyright', 'cosmeticsAndProp', 'country', 'coverImageUrl',
-      'creator', 'dateAccessioned', 'dateAvailable', 'dateIssued', 'dateOfBirth', 'dateOfComposition', 
-      'dateOfCreation', 'dateOfRecording', 'description', 'digitalCollection', 'edition', 'editor', 
-      'element', 'ethnicGroup', 'firstPublication', 'format', 'gamutScale', 'genre', 'historicalContext', 
-      'identifier', 'instrumentation', 'intonation', 'key', 'language', 'lastModified', 'length', 
-      'librettist', 'lyrics', 'melodicClassification', 'melodyDescriptions', 'methodOfImplementation', 
-      'miscNotes', 'movementsSections', 'mp3FileUrl', 'mp3FileName', 'notation', 'numberInPublication',
-      'objectCollections', 'occasionOfPerforming', 'performingSkills', 'permalink', 'pieceStyle', 
-      'placeOfBirth', 'placeOfOrigin', 'placeOfProsper', 'placeOfResidence', 'position', 'prevalence', 
-      'publisher', 'purposeOfCreation', 'recordingPerson', 'region', 'relatedArtists', 'relatedWork', 
-      'rights', 'sheetMusic', 'sponsor', 'stagePerformance', 'subject', 'targetAudience', 'temperament', 
-      'timeOfOrigin', 'timeOfProsper', 'title', 'trackFunction', 'tracks', 'type', 'uri', 'vocalStyle',
-      'westernParallel', 'workTitle', 'emotion', 'gender', 'price', 'collection', 'dateUploaded'
+      "albums",
+      "alternativeTitle",
+      "artist",
+      "backgroundResources",
+      "callNumber",
+      "composer",
+      "composerTimePeriod",
+      "contributor",
+      "copyright",
+      "cosmeticsAndProp",
+      "country",
+      "coverImageUrl",
+      "creator",
+      "dateAccessioned",
+      "dateAvailable",
+      "dateIssued",
+      "dateOfBirth",
+      "dateOfComposition",
+      "dateOfCreation",
+      "dateOfRecording",
+      "description",
+      "digitalCollection",
+      "edition",
+      "editor",
+      "element",
+      "ethnicGroup",
+      "firstPublication",
+      "format",
+      "gamutScale",
+      "genre",
+      "historicalContext",
+      "identifier",
+      "instrumentation",
+      "intonation",
+      "key",
+      "language",
+      "lastModified",
+      "length",
+      "librettist",
+      "lyrics",
+      "melodicClassification",
+      "melodyDescriptions",
+      "methodOfImplementation",
+      "miscNotes",
+      "movementsSections",
+      "mp3FileUrl",
+      "mp3FileName",
+      "notation",
+      "numberInPublication",
+      "objectCollections",
+      "occasionOfPerforming",
+      "performingSkills",
+      "permalink",
+      "pieceStyle",
+      "placeOfBirth",
+      "placeOfOrigin",
+      "placeOfProsper",
+      "placeOfResidence",
+      "position",
+      "prevalence",
+      "publisher",
+      "purposeOfCreation",
+      "recordingPerson",
+      "region",
+      "relatedArtists",
+      "relatedWork",
+      "rights",
+      "sheetMusic",
+      "sponsor",
+      "stagePerformance",
+      "subject",
+      "targetAudience",
+      "temperament",
+      "timeOfOrigin",
+      "timeOfProsper",
+      "title",
+      "trackFunction",
+      "tracks",
+      "type",
+      "uri",
+      "vocalStyle",
+      "westernParallel",
+      "workTitle",
+      "emotion",
+      "gender",
+      "price",
+      "collection",
+      "dateUploaded",
     ];
 
     const updateData = {};
@@ -295,7 +445,7 @@ app.post('/catalog', async (req, res) => {
       updateData.deleted = true;
     } else {
       // Normal metadata update logic
-      fields.forEach(field => {
+      fields.forEach((field) => {
         updateData[field] = req.body[field] || ""; // Set to empty string if undefined
       });
     }
@@ -307,24 +457,26 @@ app.post('/catalog', async (req, res) => {
     );
 
     if (!abcFile) {
-      return res.status(404).json({ message: 'File not found' });
+      return res.status(404).json({ message: "File not found" });
     }
 
-    res.status(200).json({ message: 'Metadata saved successfully' });
+    res.status(200).json({ message: "Metadata saved successfully" });
   } catch (err) {
-    res.status(500).json({ message: 'Error saving metadata', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Error saving metadata", error: err.message });
   }
 });
 
-app.post('/delete-and-transfer-abc-file', async (req, res) => {
+app.post("/delete-and-transfer-abc-file", async (req, res) => {
   try {
     const { filename } = req.body;
 
     // Find the original file
     const originalFile = await ABCFileModel.findOne({ filename });
-    
+
     if (!originalFile) {
-      return res.status(404).json({ message: 'File not found' });
+      return res.status(404).json({ message: "File not found" });
     }
 
     // Create a new document in the DeletedABCFile collection
@@ -333,7 +485,7 @@ app.post('/delete-and-transfer-abc-file', async (req, res) => {
       dateUploaded: originalFile.dateUploaded || new Date(),
       deleted: true,
       downloads: originalFile.downloads || 0,
-      downloadEvents: originalFile.downloadEvents || []
+      downloadEvents: originalFile.downloadEvents || [],
     });
 
     // Save the file to the deleted collection
@@ -342,18 +494,158 @@ app.post('/delete-and-transfer-abc-file', async (req, res) => {
     // Update the original document to mark it as deleted
     await ABCFileModel.findOneAndDelete({ filename });
 
-    res.status(200).json({ 
-      message: 'File successfully transferred to deleted collection',
-      deletedFile
+    res.status(200).json({
+      message: "File successfully transferred to deleted collection",
+      deletedFile,
     });
   } catch (err) {
-    console.error('Error in delete and transfer:', err);
-    res.status(500).json({ 
-      message: 'Error transferring file to deleted collection', 
-      error: err.message 
+    console.error("Error in delete and transfer:", err);
+    res.status(500).json({
+      message: "Error transferring file to deleted collection",
+      error: err.message,
     });
   }
 });
+
+//ARTS ENDPOINTS
+
+// Create a new artwork
+app.post('/catalogArts', async (req, res) => {
+  try {
+    const { _id, title, artist, price, collection, dateUploaded, imageUrl } = req.body;
+    
+    // If _id is provided, update existing artwork
+    if (_id) {
+      const artwork = await Artwork.findByIdAndUpdate(
+        _id,
+        { title, artist, price, collection, dateUploaded, imageUrl },
+        { new: true }
+      );
+
+      if (!artwork) {
+        return res.status(404).json({ message: 'Artwork not found' });
+      }
+
+      return res.status(200).json(artwork);
+    }
+    
+    // If no _id, create new artwork
+    const artwork = new Artwork({
+      title,
+      artist,
+      price,
+      collection,
+      dateUploaded: new Date(dateUploaded),
+      imageUrl,
+    });
+
+    await artwork.save();
+    res.status(201).json(artwork);
+  } catch (err) {
+    console.error("Error in /catalogArts:", err);
+    res.status(500).json({ message: 'Error processing artwork', error: err.message });
+  }
+});
+
+// Get artwork by ID
+app.get('/catalogArts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find by ID if valid ObjectId, otherwise try to find by filename
+    let artwork;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      artwork = await Artwork.findById(id);
+    } else {
+      artwork = await Artwork.findOne({ filename: id }); 
+    }
+
+    if (!artwork) {
+      return res.status(404).json({ message: 'Artwork not found' });
+    }
+
+    res.status(200).json(artwork);
+  } catch (err) {
+    console.error("Error fetching artwork:", err);
+    res.status(500).json({ message: 'Error fetching artwork', error: err.message });
+  }
+});
+
+// Get all artworks
+app.get("/catalogArts", async (req, res) => {
+  try {
+    const artworks = await Artwork.find({ deleted: { $ne: true } });
+    res.status(200).json(artworks);
+  } catch (err) {
+    console.error("Error fetching artworks:", err);
+    res.status(500).json({ message: "Error fetching artworks", error: err.message });
+  }
+});
+
+// Update artwork
+app.put('/catalogArts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, artist, price, collection, dateUploaded, imageUrl } = req.body;
+
+    // Create update object with all fields
+    const updateData = { 
+      title, 
+      artist, 
+      price, 
+      collection, 
+      dateUploaded
+    };
+    
+    // Only include imageUrl in the update if it's provided (not empty)
+    if (imageUrl !== undefined) {
+      updateData.imageUrl = imageUrl;
+    }
+
+    const artwork = await Artwork.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
+
+    if (!artwork) {
+      return res.status(404).json({ message: 'Artwork not found' });
+    }
+
+    res.status(200).json(artwork);
+  } catch (err) {
+    console.error("Error updating artwork:", err);
+    res.status(500).json({ message: 'Error updating artwork', error: err.message });
+  }
+});
+
+// Delete artwork
+app.delete('/catalogArts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const artwork = await Artwork.findById(id);
+    if (!artwork) {
+      return res.status(404).json({ message: 'Artwork not found' });
+    }
+
+    // Move to deleted collection
+    const deletedArtwork = new DeletedArtwork({
+      ...artwork.toObject(),
+      deletedAt: new Date(),
+    });
+    await deletedArtwork.save();
+
+    // Remove from active collection
+    await Artwork.findByIdAndDelete(id);
+
+    res.status(200).json({ message: 'Artwork deleted successfully' });
+  } catch (err) {
+    console.error("Error deleting artwork:", err);
+    res.status(500).json({ message: 'Error deleting artwork', error: err.message });
+  }
+});
+
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
