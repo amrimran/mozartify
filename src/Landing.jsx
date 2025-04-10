@@ -23,9 +23,47 @@ import UMLogo from "./assets/UMLogo.png";
 import slide1 from "./assets/slide1.png";
 import slide2 from "./assets/slide2.png";
 import slide3 from "./assets/slide3.png";
-import slide4 from "./assets/slide4.png";
 import features from "./assets/features.png";
 import searchmusic from "./assets/searchmusic.png";
+import searchpainting from "./assets/searchpainting.png";
+import { keyframes } from "@emotion/react";
+
+// Custom ripple animation
+const ripple = keyframes`
+  0% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+`;
+
+const fishRipple = keyframes`
+  0% {
+    background-position: 0% 50%;
+    background-color: #6FBCCF;
+  }
+  50% {
+    background-position: 100% 50%;
+    background-color: #8ACDD9;
+  }
+  100% {
+    background-position: 0% 50%;
+    background-color: #4E96A8;
+  }
+`;
+
+// Bounce hover effect
+const bounce = keyframes`
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+`;
 
 const GlobalStyle = createGlobalStyle`
   html, body {
@@ -83,6 +121,17 @@ const GlobalStyle = createGlobalStyle`
     max-height: 93vh;
     height: auto;
     object-fit: cover;
+  }
+
+  .carousel .slide {
+    transition: transform 1.0s ease-in-out, opacity 1.0s ease-in-out;
+    transform: scale(0.95); /* Slight zoom-out effect */
+    opacity: 0.9;
+  }
+
+  .carousel .slide.selected {
+    transform: scale(1);
+    opacity: 1;
   }
 
   @media (min-width: 601px) {
@@ -262,10 +311,15 @@ export default function Landing() {
           showStatus={false}
           infiniteLoop
           autoPlay
-          interval={5000}
+          interval={3000}
+          swipeable={true}
+          emulateTouch={true}
+          useKeyboardArrows={true}
+          stopOnHover={false} // Prevents stuttering
+          dynamicHeight={false} // Fixes jumpy transitions
           className="custom-carousel"
         >
-          {[slide1, slide2, slide3, slide4].map((slide, index) => (
+          {[slide1, slide2, slide3].map((slide, index) => (
             <div key={index}>
               <img src={slide} alt={`Slide ${index + 1}`} />
             </div>
@@ -365,12 +419,50 @@ export default function Landing() {
             right: "50%",
             marginLeft: "-50vw",
             marginRight: "-50vw",
+            marginBottom: 10,
             overflow: "hidden",
           }}
         >
           <img
             src={searchmusic}
             alt="Search Music"
+            style={{
+              width: "100vw",
+              height: "auto",
+              display: "block",
+            }}
+          />
+        </Box>
+
+        <Typography
+          color="#3B3183"
+          component="h1"
+          variant="h3"
+          gutterBottom
+          fontFamily="Montserrat"
+          fontWeight="bold"
+          align="center"
+          sx={{
+            fontSize: { xs: "2rem", sm: "3rem" },
+            mb: 5,
+          }}
+        >
+          or these for paintings
+        </Typography>
+        <Box
+          sx={{
+            width: "100vw",
+            position: "relative",
+            left: "50%",
+            right: "50%",
+            marginLeft: "-50vw",
+            marginRight: "-50vw",
+            overflow: "hidden",
+          }}
+        >
+          <img
+            src={searchpainting}
+            alt="Search Art"
             style={{
               width: "100vw",
               height: "auto",
@@ -402,7 +494,7 @@ export default function Landing() {
             mb: 2,
           }}
         >
-          DIGITIZE YOUR MUSIC
+          DIGITIZE YOUR CREATIVE COLLECTION JOURNEY
         </Typography>
         <Typography
           color="#ffffff"
@@ -417,7 +509,7 @@ export default function Landing() {
             mb: 4,
           }}
         >
-          EXPERIENCE TODAY
+          MUSIC AND ART, ALL IN ONE PLACE.
         </Typography>
         <Container maxWidth="sm" sx={{ textAlign: "center" }}>
           <Button
@@ -431,11 +523,22 @@ export default function Landing() {
               fontFamily: "Montserrat",
               fontWeight: "bold",
               color: "#FFFFFF",
-              backgroundColor: "#8BD3E6",
-              border: "1px solid #8BD3E6",
+              backgroundColor: "#6FBCCF",
+              border: "1px solid #6FBCCF",
+              position: "relative",
+              overflow: "hidden",
+              transition: "all 0.3s ease",
+              backgroundSize: "200% 100%",
               "&:hover": {
-                backgroundColor: "#6FBCCF",
-                borderColor: "#6FBCCF",
+                animation: `${fishRipple} 1.5s ease infinite`,
+                borderColor: "#4E96A8",
+                boxShadow: "0 4px 12px rgba(110, 188, 207, 0.3)",
+              },
+              "& .MuiTouchRipple-root": {
+                "& span": {
+                  backgroundColor: "rgba(255, 255, 255, 0.4)",
+                  borderRadius: "50%",
+                },
               },
               fontSize: { xs: "0.875rem", sm: "1rem" },
             }}

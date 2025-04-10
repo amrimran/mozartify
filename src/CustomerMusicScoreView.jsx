@@ -1540,7 +1540,6 @@ export default function CustomerMusicScoreView() {
                     scrollBehavior: "smooth", // Add smooth scrolling
                   }}
                 >
-                  
                   {abcContent ? (
                     <div id="abc-container" style={{ width: "100%" }}>
                       {/* ABC notation will be rendered here */}

@@ -24,6 +24,7 @@ import {
   Drawer,
   useTheme,
   createTheme,
+  Badge,
   ThemeProvider,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -36,11 +37,13 @@ import AdminSidebar from "./AdminSidebar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { createGlobalStyle } from "styled-components";
+import { useUnread } from "./UnreadContext.jsx";
 
 const DRAWER_WIDTH = 230;
 
 const AdminInbox = () => {
   const [feedbackData, setFeedbackData] = useState([]);
+  const { unreadCount, setUnreadCount } = useUnread();
   const [currentUser, setCurrentUser] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
@@ -485,26 +488,44 @@ const AdminInbox = () => {
     }
   }, [chatMessages]);
 
-  const handleOpenChat = (feedback) => {
-    setSelectedFeedback(feedback);
-    const messages = [
-      {
-        type: "feedback",
-        content: feedback.detail,
-        date: feedback.feedbackDate,
-        attachment: feedback.attachment_url,
-        sender: "customer",
-      },
-      ...(feedback.replies || []).map((reply) => ({
-        type: "reply",
-        content: reply.message,
-        date: reply.date,
-        sender: reply.sender,
-      })),
-    ];
+  const handleOpenChat = async (feedback) => {
+    try {
+      // Mark the feedback as read in the database
+      await axios.put(
+        `http://localhost:3002/api/feedback/${feedback._id}/mark-read-admin`
+      );
+      setUnreadCount(unreadCount - 1);
 
-    setChatMessages(messages);
-    setDrawerOpen(true);
+      // Update the local state
+      setFeedbackData((prevFeedbacks) =>
+        prevFeedbacks.map((f) =>
+          f._id === feedback._id ? { ...f, isReadAdmin: true } : f
+        )
+      );
+
+      setSelectedFeedback(feedback);
+
+      const messages = [
+        {
+          type: "feedback",
+          content: feedback.detail,
+          date: feedback.feedbackDate,
+          attachment: feedback.attachment_url,
+          sender: "customer",
+        },
+        ...(feedback.replies || []).map((reply) => ({
+          type: "reply",
+          content: reply.message,
+          date: reply.date,
+          sender: reply.sender || "customer",
+        })),
+      ];
+
+      setChatMessages(messages);
+      setDrawerOpen(true);
+    } catch (error) {
+      console.error("Error marking feedback as read:", error);
+    }
   };
 
   const handleSendReply = async () => {
@@ -910,19 +931,33 @@ const AdminInbox = () => {
                               </IconButton>
 
                               {/* Chat Icon */}
-                              <IconButton
-                                onClick={() => handleOpenChat(row)}
+                              <Badge
+                                color="error"
+                                variant="dot"
+                                invisible={row.isReadAdmin} // Hide when isReadCustomer is true
                                 sx={{
-                                  color: "#8BD3E6",
-                                  padding: "6px",
-                                  borderRadius: "8px",
-                                  ":hover": {
-                                    bgcolor: "transparent",
+                                  "& .MuiBadge-badge": {
+                                    top: 2, // Adjust vertical position
+                                    right: 2, // Adjust horizontal position
+                                    transform: "scale(1.2)", // Slightly enlarge badge
                                   },
                                 }}
                               >
-                                <ChatIcon sx={{ fontSize: "20px" }} />
-                              </IconButton>
+                                <IconButton
+                                  onClick={() => handleOpenChat(row)}
+                                  sx={{
+                                    color: "#8BD3E6",
+                                    padding: "6px",
+                                    borderRadius: "8px",
+                                    transition: "background-color 0.3s ease",
+                                    ":hover": {
+                                      bgcolor: "rgba(139, 211, 230, 0.2)", // Light blue background on hover
+                                    },
+                                  }}
+                                >
+                                  <ChatIcon sx={{ fontSize: "20px" }} />
+                                </IconButton>
+                              </Badge>
 
                               {/* Delete Icon */}
                               <IconButton

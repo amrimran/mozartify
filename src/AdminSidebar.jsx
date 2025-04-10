@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios"; // Add axios import
 import {
   Box,
@@ -18,8 +18,50 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 import SearchIcon from "@mui/icons-material/Search";
 
+import { useUnread } from "./UnreadContext.jsx";
+axios.defaults.withCredentials = true;
+
 const AdminSidebar = ({ active }) => {
   const location = useLocation();
+  const [user, setUser] = useState(null);
+  const { unreadCount, setUnreadCount } = useUnread();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/current-user");
+        setUser(response.data);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+        navigate("/login");
+      }
+    };
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    const fetchFeedbackData = async () => {
+      if (!user?._id) return;
+
+      try {
+        const response = await axios.get(
+          `http://localhost:3002/api/feedback/all`
+        );
+
+        const unreadMessages = response.data.filter(
+          (feedback) => !feedback.isReadAdmin
+        ).length;
+
+        setUnreadCount(unreadMessages); // Update context state
+      } catch (error) {
+        console.error("Error fetching feedback count data:", error);
+      }
+    };
+
+    fetchFeedbackData();
+  }, [user?._id, active]);
+
+  const getUnreadFeedbackCount = () => unreadCount;
 
   const handleNavigation = async (path, key) => {
     if (key === "logout") {
@@ -50,7 +92,13 @@ const AdminSidebar = ({ active }) => {
       icon: <HomeIcon />,
       key: "dashboard",
     },
-    { path: "/admin-inbox", label: "Inbox", icon: <MailIcon />, key: "inbox" },
+    {
+      path: "/admin-inbox",
+      label: "Inbox",
+      icon: <MailIcon />,
+      isInbox: true,
+      key: "inbox",
+    },
     {
       path: "/admin-manage-users",
       label: "Manage User",
@@ -173,6 +221,22 @@ const AdminSidebar = ({ active }) => {
                   </Typography>
                 }
               />
+              {item.isInbox && getUnreadFeedbackCount() > 0 && (
+                <Typography
+                  sx={{
+                    fontSize: "0.75rem",
+                    fontWeight: "bold",
+                    color: "white",
+                    backgroundColor: "red",
+                    padding: "2px 6px",
+                    borderRadius: "8px",
+                    ml: 1, // Add some margin-left for spacing
+                    display: "inline-block",
+                  }}
+                >
+                  {unreadCount}
+                </Typography>
+              )}
             </ListItemButton>
           ))}
         </List>

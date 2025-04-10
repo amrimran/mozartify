@@ -34,6 +34,7 @@ import {
   useTheme,
   createTheme,
   ThemeProvider,
+  Badge,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -44,12 +45,16 @@ import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { createGlobalStyle } from "styled-components";
 
+import { useUnread } from "./UnreadContext.jsx";
+
 axios.defaults.withCredentials = true;
 
 const DRAWER_WIDTH = 230;
 
 const CustomerInbox = () => {
   const [user, setUser] = useState(null);
+
+  const { unreadCount, setUnreadCount } = useUnread();
 
   //feedback variables
   const [feedbackData, setFeedbackData] = useState([]);
@@ -493,26 +498,44 @@ const CustomerInbox = () => {
     }
   };
 
-  const handleOpenChat = (feedback) => {
-    setSelectedFeedback(feedback);
-    const messages = [
-      {
-        type: "feedback",
-        content: feedback.detail,
-        date: feedback.feedbackDate,
-        attachment: feedback.attachment_url,
-        sender: "customer",
-      },
-      ...(feedback.replies || []).map((reply) => ({
-        type: "reply",
-        content: reply.message,
-        date: reply.date,
-        sender: reply.sender || "customer",
-      })),
-    ];
+  const handleOpenChat = async (feedback) => {
+    try {
+      // Mark the feedback as read in the database
+      await axios.put(
+        `http://localhost:3002/api/feedback/${feedback._id}/mark-read-customer`
+      );
+      setUnreadCount(unreadCount - 1);
 
-    setChatMessages(messages);
-    setDrawerOpen(true);
+      // Update the local state
+      setFeedbackData((prevFeedbacks) =>
+        prevFeedbacks.map((f) =>
+          f._id === feedback._id ? { ...f, isReadCustomer: true } : f
+        )
+      );
+
+      setSelectedFeedback(feedback);
+
+      const messages = [
+        {
+          type: "feedback",
+          content: feedback.detail,
+          date: feedback.feedbackDate,
+          attachment: feedback.attachment_url,
+          sender: "customer",
+        },
+        ...(feedback.replies || []).map((reply) => ({
+          type: "reply",
+          content: reply.message,
+          date: reply.date,
+          sender: reply.sender || "customer",
+        })),
+      ];
+
+      setChatMessages(messages);
+      setDrawerOpen(true);
+    } catch (error) {
+      console.error("Error marking feedback as read:", error);
+    }
   };
 
   useEffect(() => {
@@ -590,6 +613,7 @@ const CustomerInbox = () => {
         `http://localhost:3002/api/feedback/reply/${selectedFeedback._id}`,
         {
           message: newReply,
+          sender: "customer",
         }
       );
 
@@ -945,21 +969,39 @@ const CustomerInbox = () => {
                                 padding: "16px",
                                 display: "flex",
                                 gap: "8px",
+                                alignItems: "center",
                               }}
                             >
-                              <IconButton
-                                onClick={() => handleOpenChat(row)}
+                              {/* Chat Button with Badge Indicator */}
+                              <Badge
+                                color="error"
+                                variant="dot"
+                                invisible={row.isReadCustomer} // Hide when isReadCustomer is true
                                 sx={{
-                                  color: "#8BD3E6",
-                                  padding: "6px",
-                                  borderRadius: "8px",
-                                  ":hover": {
-                                    bgcolor: "transparent",
+                                  "& .MuiBadge-badge": {
+                                    top: 2, // Adjust vertical position
+                                    right: 2, // Adjust horizontal position
+                                    transform: "scale(1.2)", // Slightly enlarge badge
                                   },
                                 }}
                               >
-                                <ChatIcon sx={{ fontSize: "20px" }} />
-                              </IconButton>
+                                <IconButton
+                                  onClick={() => handleOpenChat(row)}
+                                  sx={{
+                                    color: "#8BD3E6",
+                                    padding: "6px",
+                                    borderRadius: "8px",
+                                    transition: "background-color 0.3s ease",
+                                    ":hover": {
+                                      bgcolor: "rgba(139, 211, 230, 0.2)", // Light blue background on hover
+                                    },
+                                  }}
+                                >
+                                  <ChatIcon sx={{ fontSize: "20px" }} />
+                                </IconButton>
+                              </Badge>
+
+                              {/* Delete Button */}
                               <IconButton
                                 onClick={() => handleDelete(row._id)}
                                 sx={{

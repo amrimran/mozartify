@@ -212,13 +212,13 @@ export default function CustomerAdvancedSearch() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-      // Simulate loading delay
-      const timer = setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-  
-      return () => clearTimeout(timer);
-    }, []);
+    // Simulate loading delay
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleClearFilters = () => {
     setSelectedGenres([]);
@@ -1399,7 +1399,7 @@ export default function CustomerAdvancedSearch() {
                 gap: 2,
                 mt: 5,
                 ml: 2,
-                mr:2,
+                mr: 2,
               }}
             >
               <Button
@@ -1541,8 +1541,8 @@ export default function CustomerAdvancedSearch() {
                       borderRadius: 1,
                       display: "flex",
                       flexDirection: "column",
-                      mr:2,
-                      mt:4
+                      mr: 2,
+                      mt: 4,
                     }}
                   >
                     <Typography
