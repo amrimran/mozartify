@@ -48,8 +48,8 @@ const FormContainer = styled(Box)(({ theme }) => ({
   borderRadius: "20px",
   boxShadow: "0px 3px 6px rgba(0,0,0,1)",
   padding: "40px", // Reduced base padding
-  width: "90%", // Default width for mobile
-  maxWidth: "400px", // Reduced from 500px
+  width: "95%", // Default width for mobile
+  maxWidth: "700px", // Reduced from 500px
   display: "flex",
   flexDirection: "column",
   justifyContent: "center",
@@ -194,15 +194,16 @@ export default function Login() {
     axios
       .get("http://localhost:3000/login", { withCredentials: true })
       .then((response) => {
-        const { message, role, first_timer, approval } = response.data;
+        const { message, role, music_first_timer,art_first_timer, approval } = response.data;
 
+        //need to adjust to cater the art one
         if (message === "Success") {
           // Handle navigation based on role and approval status
           if (role === "music_entry_clerk" && approval === "pending") {
             setErrorMessage(
               "Your account is awaiting approval. Please contact the admin."
             );
-          } else if (first_timer && role === "customer") {
+          } else if (music_first_timer && role === "customer") {
             navigate("/first-time-login");
           } else if (role === "customer") {
             navigate("/customer-homepage");
@@ -258,7 +259,7 @@ export default function Login() {
             } else if (first_timer && role === "customer") {
               navigate("/arts-first-time-login");
             } else if (role === "customer") {
-              navigate("/arts-customer-homepage");
+              navigate("/customer-homepage-2");
             } else if (role === "music_entry_clerk") {
               navigate("/arts-clerk-homepage");
             } else if (role === "admin") {
@@ -268,14 +269,11 @@ export default function Login() {
             }
           }
         } else {
-          // Generic error handling if "message" is not "Success"
           setErrorMessage("Login failed. Please try again.");
         }
       })
       .catch((err) => {
         console.error("Login error:", err);
-
-        // Handle specific error responses from the backend
         if (err.response && err.response.status === 403) {
           setErrorMessage(err.response.data.message); // Display the backend error message
         } else if (err.response && err.response.status === 400) {
@@ -432,7 +430,7 @@ export default function Login() {
             onClick={handleMusicLogin}
             sx={{
               mt: { xs: 2, sm: 3 },
-              ...buttonStyles,
+              ...buttonStyles, // Using the pink styles here
               width: { xs: "100%", sm: "auto" },
             }}
           >

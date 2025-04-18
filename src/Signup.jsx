@@ -655,7 +655,7 @@ export default function Signup() {
                       }}
                     />
                   }
-                  label="Music Entry Clerk"
+                  label="Clerk"
                   componentsProps={{
                     typography: {
                       sx: {

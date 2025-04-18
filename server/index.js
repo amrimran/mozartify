@@ -16,9 +16,12 @@ const SALT_ROUNDS = 10; // Number of hashing rounds
 
 const UserModel = require("./models/User");
 const PurchaseModel = require("./models/Purchase");
+const Purchase2Model = require("./models/Purchase2");
 const CartModel = require("./models/Cart");
+const Cart2Model = require("./models/Cart2");
 const DeletedUserModel = require("./models/DeletedUser");
 const ABCFileModel = require("./models/ABCFile");
+const ArtworkModel = require("./models/Artwork");
 
 const app = express();
 
@@ -248,7 +251,8 @@ app.get("/login", async (req, res) => {
       message: "Success",
       userId: user._id,
       role: user.role,
-      first_timer: user.first_timer,
+      music_first_timer: user.music_first_timer,
+      art_first_timer: user.art_first_timer,
       approval: user.approval,
     });
   } catch (err) {
@@ -258,7 +262,7 @@ app.get("/login", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-  const { username_or_email, password } = req.body;
+  const { username_or_email, password} = req.body;
 
   try {
     const user = await UserModel.findOne({
@@ -319,7 +323,8 @@ app.post("/login", async (req, res) => {
       message: "Success",
       userId: user._id,
       role: user.role,
-      first_timer: user.first_timer,
+      music_first_timer: user.music_first_timer,
+      art_first_timer: user.art_first_timer,
       approval: user.approval,
     });
   } catch (err) {
@@ -362,6 +367,18 @@ app.get("/preferences-options", async (req, res) => {
     const emotions = await ABCFileModel.distinct("emotion");
 
     res.status(200).json({ composers, genres, emotions });
+  } catch (error) {
+    console.error("Error fetching preferences:", error);
+    res.status(500).json({ error: "Failed to fetch preferences." });
+  }
+});
+
+app.get("/art-preferences-options", async (req, res) => {
+  try {
+    const artist = await ArtworkModel.distinct("artist");
+    const collection = await ArtworkModel.distinct("collection");
+
+    res.status(200).json({ artist, collection});
   } catch (error) {
     console.error("Error fetching preferences:", error);
     res.status(500).json({ error: "Failed to fetch preferences." });
@@ -415,6 +432,52 @@ app.post("/preferences", async (req, res) => {
   }
 });
 
+app.post("/art-preferences", async (req, res) => {
+  const { artist_preferences, colletion_preferences } =
+    req.body;
+  const userId = req.session.userId;
+  let client;
+  const dbName = "mozartify";
+  const collectionName = "users";
+
+  if (!ObjectId.isValid(userId)) {
+    return res.status(400).json({ error: "Invalid user ID" });
+  }
+
+  try {
+    client = new MongoClient(process.env.DB_URI);
+    await client.connect();
+    const db = client.db(dbName);
+    const collectiondb = db.collection(collectionName);
+
+    const updateResult = await collectiondb.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          artist_preferences,
+          colletion_preferences,
+          art_first_timer: false,
+        },
+      }
+    );
+
+    if (updateResult.modifiedCount === 0) {
+      return res
+        .status(404)
+        .json({ error: "User not found or preferences not updated" });
+    }
+
+    res.status(200).json({ message: "Preferences updated successfully" });
+  } catch (err) {
+    console.error(`Error: ${err}`);
+    res.status(500).json({ error: "Failed to update preferences" });
+  } finally {
+    if (client) {
+      await client.close();
+    }
+  }
+});
+
 app.get("/refine-search", async (req, res) => {
   try {
     const composers = await ABCFileModel.distinct("composer");
@@ -423,6 +486,19 @@ app.get("/refine-search", async (req, res) => {
     const instrumentation = await ABCFileModel.distinct("instrumentation");
 
     res.status(200).json({ composers, genres, emotions, instrumentation });
+  } catch (error) {
+    console.error("Error fetching preferences:", error);
+    res.status(500).json({ error: "Failed to fetch preferences." });
+  }
+});
+
+app.get("/artwork-refine-search", async (req, res) => {
+  try {
+    const artists = await ArtworkModel.distinct("artist");
+    const prices = await ArtworkModel.distinct("price");
+    const collections = await ArtworkModel.distinct("collection");
+
+    res.status(200).json({ artists, prices, collections });
   } catch (error) {
     console.error("Error fetching preferences:", error);
     res.status(500).json({ error: "Failed to fetch preferences." });
@@ -551,7 +627,8 @@ app.delete("/user/delete", async (req, res) => {
       password: user.password,
       role: user.role,
       approval: user.approval,
-      favorites: user.favorites,
+      favorites_music: user.favorites_music,
+      favorites_art: user.favorites_art,
       deletedAt: new Date(),
     });
 
@@ -758,6 +835,28 @@ app.get("/search-music-scores", async (req, res) => {
   }
 });
 
+app.get("/search-artworks", async (req, res) => {
+  const { query } = req.query;
+
+  try {
+    let Artworks;
+
+    if (query) {
+      Artworks = await ArtworkModel.find({
+        $or: [
+          { title: { $regex: query, $options: "i" } },
+          { colletion: { $regex: query, $options: "i" } },
+          { artist: { $regex: query, $options: "i" } },
+        ],
+      });
+    }
+
+    res.json(Artworks);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
+});
+
 app.post("/advanced-search", async (req, res) => {
   const { combinedQueries, selectedCollection } = req.body;
 
@@ -843,6 +942,81 @@ app.post("/advanced-search", async (req, res) => {
   }
 });
 
+app.post("/artwork-advanced-search", async (req, res) => {
+  const { combinedQueries, selectedCollection } = req.body;
+
+  console.log("Received combinedQueries:", combinedQueries);
+  console.log("Received selectedCollection:", selectedCollection);
+
+  let query = {};
+
+  if (selectedCollection !== "All") {
+    query.collection = selectedCollection;
+  }
+
+  let searchConditions = [];
+
+  combinedQueries.forEach((row, index) => {
+    let condition = {};
+    let dbField;
+
+    if (row.searchCategory && row.searchText) {
+      switch (row.searchCategory) {
+        case "Title":
+          dbField = "title";
+          condition[dbField] = { $regex: row.searchText, $options: "i" };
+          break;
+        case "Artist":
+          dbField = "artist";
+          condition[dbField] = { $regex: row.searchText, $options: "i" };
+          break;
+        case "Collection":
+          dbField = "collection";
+          condition[dbField] = { $regex: row.searchText, $options: "i" };
+          break;
+        case "All":
+          searchConditions.push({
+            $or: [
+              { title: { $regex: row.searchText, $options: "i" } },
+              { artist: { $regex: row.searchText, $options: "i" } },
+              { collection: { $regex: row.searchText, $options: "i" } },
+            ],
+          });
+          return;
+        default:
+          return;
+      }
+    }
+
+    if (index > 0 && row.logic && row.logic !== "AND") {
+      if (row.logic === "OR") {
+        searchConditions.push({ [dbField]: condition[dbField] });
+      } else if (row.logic === "NOT") {
+        searchConditions.push({ [dbField]: { $not: condition[dbField] } });
+      }
+    } else {
+      searchConditions.push(condition);
+    }
+  });
+
+  if (searchConditions.length > 0) {
+    if (searchConditions.length === 1) {
+      query = searchConditions[0];
+    } else if (searchConditions.length > 1) {
+      query.$and = searchConditions;
+    }
+  }
+
+  try {
+    console.log(query);
+    const results = await ArtworkModel.find(query);
+    res.json(results);
+  } catch (error) {
+    console.error("Error searching artworks:", error);
+    res.status(500).json({ error: "Failed to search artworks" });
+  }
+});
+
 app.post("/search", async (req, res) => {
   const { combinedQueries, selectedCollection } = req.body;
 
@@ -916,6 +1090,79 @@ app.post("/search", async (req, res) => {
   }
 });
 
+app.post("/artwork-search", async (req, res) => {
+  const { combinedQueries, selectedCollection } = req.body;
+
+  let searchConditions = [];
+
+  // Add collection filter if applicable
+  if (selectedCollection !== "All") {
+    searchConditions.push({ collection: selectedCollection });
+  }
+
+  combinedQueries.forEach((row, index) => {
+    let condition = {};
+    let dbField;
+
+    if (row.category && row.text) {
+      switch (row.category) {
+        case "Title":
+          dbField = "title";
+          condition[dbField] = { $regex: row.text, $options: "i" };
+          break;
+        case "Artist":
+          dbField = "artist";
+          condition[dbField] = { $regex: row.text, $options: "i" };
+          break;
+        case "Collection":
+          dbField = "collection";
+          condition[dbField] = { $regex: row.text, $options: "i" };
+          break;
+        case "All":
+          searchConditions.push({
+            $or: [
+              { title: { $regex: row.text, $options: "i" } },
+              { artist: { $regex: row.text, $options: "i" } },
+              { collection: { $regex: row.text, $options: "i" } },
+            ],
+          });
+          return;
+        default:
+          return;
+      }
+    }
+
+    if (index > 0 && row.logic && row.logic !== "AND") {
+      if (row.logic === "OR") {
+        searchConditions.push({ [dbField]: condition[dbField] });
+      } else if (row.logic === "NOT") {
+        searchConditions.push({ [dbField]: { $not: condition[dbField] } });
+      }
+    } else {
+      searchConditions.push(condition);
+    }
+  });
+
+  // Combine all conditions into the query
+  let query = {};
+  if (searchConditions.length > 0) {
+    if (searchConditions.length === 1) {
+      query = searchConditions[0];
+    } else {
+      query.$and = searchConditions;
+    }
+  }
+
+  try {
+    console.log(query); // For debugging
+    const results = await ArtworkModel.find(query);
+    res.json(results);
+  } catch (error) {
+    console.error("Error searching artworks:", error);
+    res.status(500).json({ error: "Failed to search artworks." });
+  }
+});
+
 app.get("/filter-music-scores", async (req, res) => {
   const { genre, composer, emotion, instrumentation } = req.query;
 
@@ -941,6 +1188,28 @@ app.get("/filter-music-scores", async (req, res) => {
     const filteredScores = await ABCFileModel.find(filter);
 
     res.json(filteredScores);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
+});
+
+app.get("/filter-artworks", async (req, res) => {
+  const { collection, artist} = req.query;
+
+  try {
+    const filter = {};
+
+    if (collection) {
+      filter.collection = collection;
+    }
+
+    if (artist) {
+      filter.artist = artist;
+    }
+
+    const filteredArtworks = await ArtworkModel.find(filter);
+
+    res.json(filteredArtworks);
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err });
   }
@@ -986,6 +1255,21 @@ app.get("/user-purchases", async (req, res) => {
   }
 });
 
+app.get("/user-artwork-purchases", async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    const purchases = await Purchase2Model.find({ user_id: userId }).select(
+      "artwork_id"
+    );
+
+    res.json(purchases);
+  } catch (error) {
+    console.error("Error fetching purchases for the user:", error);
+    res.status(500).send("Error fetching purchases for the user.");
+  }
+});
+
 app.get("/user-cart", async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -1005,6 +1289,97 @@ app.get("/user-cart", async (req, res) => {
   }
 });
 
+app.get("/user-artwork-cart", async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    const cart = await Cart2Model.findOne({ user_id: userId });
+
+    if (!cart || cart.artwork_ids.length === 0) {
+      return res.json([]);
+    }
+
+    const cartItems = cart.artwork_ids.map((artworkId) => ({ artwork_id: artworkId }));
+
+    res.json(cartItems);
+  } catch (error) {
+    console.error("Error fetching cart items for the user:", error);
+    res.status(500).send("Error fetching cart items for the user.");
+  }
+});
+
+// Get artwork by ID
+app.get('/fetchArts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find by ID if valid ObjectId, otherwise try to find by filename
+    let artwork;
+    if (mongoose.Types.ObjectId.isValid(id)) { 
+      artwork = await ArtworkModel.findById(id);
+    } else {
+      artwork = await ArtworkModel.findOne({ filename: id }); 
+    }
+
+    if (!artwork) {
+      return res.status(404).json({ message: 'Artwork not found' });
+    }
+
+    res.status(200).json(artwork);
+  } catch (err) {
+    console.error("Error fetching artwork:", err);
+    res.status(500).json({ message: 'Error fetching artwork', error: err.message });
+  }
+});
+
+app.get('/check-purchase/:artwork_id', async (req, res) => {
+  try {
+    const { artwork_id } = req.params;
+    const userId = req.session.userId;
+
+    // Find purchase in purchase2 collection
+    const purchase = await Purchase2Model.findOne({
+      user_id: userId,
+      artwork_id: artwork_id
+    });
+
+    res.status(200).json({ 
+      hasPurchased: !!purchase,
+      purchase
+    });
+
+  } catch (err) {
+    console.error("Error checking purchase:", err);
+    res.status(500).json({ 
+      message: 'Error checking purchase status', 
+      error: err.message 
+    });
+  }
+});
+
+app.get('/download-artwork', async (req, res) => {
+  try {
+    const { imageUrl } = req.query;
+    
+    // Verify user has permission to download
+    // (Add your authentication/authorization logic here)
+    
+    const response = await axios.get(imageUrl, {
+      responseType: 'stream'
+    });
+    
+    // Set appropriate headers
+    res.setHeader('Content-Disposition', `attachment; filename="artwork.jpg"`);
+    res.setHeader('Content-Type', response.headers['content-type']);
+    
+    response.data.pipe(res);
+  } catch (error) {
+    console.error('Download error:', error);
+    res.status(500).send('Download failed');
+  }
+});
+
+
 app.post("/add-to-cart", async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -1023,6 +1398,30 @@ app.post("/add-to-cart", async (req, res) => {
 
     await cart.save();
     res.status(200).json({ message: "Score added to cart" });
+  } catch (error) {
+    console.error("Error updating cart:", error);
+    res.status(500).send("Error updating cart.");
+  }
+});
+
+app.post("/add-to-cart-artwork", async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const { artworkId } = req.body;
+
+    let cart = await Cart2Model.findOne({ user_id: userId });
+
+    if (!cart) {
+      cart = new Cart2Model({ user_id: userId, artwork_ids: [artworkId] });
+    } else {
+      // If the cart exists, append the new music score ID
+      if (!cart.artwork_ids.includes(artworkId)) {
+        cart.artwork_ids.push(artworkId);
+      }
+    }
+
+    await cart.save();
+    res.status(200).json({ message: "Artwork added to cart." });
   } catch (error) {
     console.error("Error updating cart:", error);
     res.status(500).send("Error updating cart.");
@@ -1070,6 +1469,29 @@ app.delete("/remove-item-from-cart/:id", async (req, res) => {
   }
 });
 
+app.delete("/remove-artwork-from-cart/:id", async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const artworkId = req.params.id;
+
+    // Find the user's cart and remove the scoreId from the score_ids array
+    const cart = await Cart2Model.findOneAndUpdate(
+      { user_id: userId },
+      { $pull: { artwork_ids: artworkId } },
+      { new: true } // Return the updated cart
+    );
+
+    if (!cart) {
+      return res.status(404).json({ message: "No cart found for the user." });
+    }
+
+    res.json(cart);
+  } catch (error) {
+    console.error("Error removing item from cart:", error);
+    res.status(500).send("Error removing item from cart.");
+  }
+});
+
 app.get("/music-score/:id", async (req, res) => {
   try {
     const scoreId = req.params.id;
@@ -1084,6 +1506,23 @@ app.get("/music-score/:id", async (req, res) => {
   } catch (error) {
     console.error("Error fetching music score:", error);
     res.status(500).send("Error fetching music score.");
+  }
+});
+
+app.get("/artwork/:id", async (req, res) => {
+  try {
+    const artworkId = req.params.id;
+
+    const artwork = await ArtworkModel.findById(artworkId);
+
+    if (!artwork) {
+      return res.status(404).json({ message: "Artwork not found" });
+    }
+
+    res.json(artwork);
+  } catch (error) {
+    console.error("Error fetching artwork:", error);
+    res.status(500).send("Error fetching artwork.");
   }
 });
 
@@ -1120,6 +1559,39 @@ app.get("/music-scores", async (req, res) => {
   }
 });
 
+app.get("/artworks", async (req, res) => {
+  try {
+    const artworkIds = req.query.artworkIds;
+
+    if (!artworkIds) {
+      return res.status(400).json({ message: "No score IDs provided" });
+    }
+
+    let artworkIdArray;
+
+    if (Array.isArray(artworkIds)) {
+      artworkIdArray = artworkIds;
+    } else if (typeof artworkIds === "string") {
+      artworkIdArray = artworkIds.split(",");
+    } else {
+      return res.status(400).json({ message: "Invalid score IDs format" });
+    }
+
+    const artworks = await ArtworkModel.find({
+      _id: { $in: artworkIdArray },
+    });
+
+    if (artworks.length === 0) {
+      return res.status(404).json({ message: "No music scores found" });
+    }
+
+    res.json(artworks);
+  } catch (error) {
+    console.error("Error fetching music scores:", error);
+    res.status(500).send("Error fetching music scores.");
+  }
+});
+
 app.get("/popular-music-scores", async (req, res) => {
   try {
     const popularScores = await ABCFileModel.find()
@@ -1132,21 +1604,79 @@ app.get("/popular-music-scores", async (req, res) => {
   }
 });
 
+app.get("/popular-artworks", async (req, res) => {
+  try {
+    const popularArtworks = await ArtworkModel.find()
+      .sort({ downloads: -1 })
+      .limit(10);
+
+    res.json(popularArtworks);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
+});
+
 app.get("/user-liked-scores", async (req, res) => {
   try {
     const userId = req.session.userId;
 
     const user = await UserModel.findById(userId);
 
-    if (!user || !user.favorites || user.favorites.length === 0) {
+    if (!user || !user.favorites_music || user.favorites_music.length === 0) {
       return res.status(404).json({ message: "No liked scores found" });
     }
 
     const likedScores = await ABCFileModel.find({
-      _id: { $in: user.favorites },
+      _id: { $in: user.favorites_music },
     });
 
     res.json(likedScores);
+  } catch (error) {
+    console.error("Error fetching liked music scores:", error);
+    res.status(500).json({ message: "Error fetching liked music scores." });
+  }
+});
+
+app.get("/user-liked-artworks", async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    const user = await UserModel.findById(userId);
+
+    if (!user || !user.favorites_art || user.favorites_art.length === 0) {
+      return res.status(404).json({ message: "No liked arts found" });
+    }
+
+    const likedArtworks = await ArtworkModel.find({
+      _id: { $in: user.favorites_art },
+    });
+
+    res.json(likedArtworks);
+  } catch (error) {
+    console.error("Error fetching liked artworks:", error);
+    res.status(500).json({ message: "Error fetching liked artworks." });
+  }
+});
+
+app.get("/user-composed-scores", async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    const user = await UserModel.findById(userId);
+
+    if (
+      !user ||
+      !user.composed_score_ids ||
+      user.composed_score_ids.length === 0
+    ) {
+      return res.status(404).json({ message: "No composed scores found" });
+    }
+
+    const composedScores = await ABCFileModel.find({
+      _id: { $in: user.composed_score_ids },
+    });
+
+    res.json(composedScores);
   } catch (error) {
     console.error("Error fetching liked music scores:", error);
     res.status(500).json({ message: "Error fetching liked music scores." });
@@ -1168,11 +1698,11 @@ app.post("/set-favorites", async (req, res) => {
     }
 
     if (action === "add") {
-      if (!user.favorites.includes(musicScoreId)) {
-        user.favorites.push(musicScoreId);
+      if (!user.favorites_music.includes(musicScoreId)) {
+        user.favorites_music.push(musicScoreId);
       }
     } else if (action === "remove") {
-      user.favorites = user.favorites.filter(
+      user.favorites_music = user.favorites_music.filter(
         (favId) => favId.toString() !== musicScoreId
       );
     } else {
@@ -1183,7 +1713,44 @@ app.post("/set-favorites", async (req, res) => {
 
     res.json({
       message: "Favorite updated successfully",
-      favorites: user.favorites,
+      favorites_music: user.favorites_music,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
+});
+
+app.post("/set-favorites-artwork", async (req, res) => {
+  const userId = req.session.userId;
+  const { artworkId, action } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(artworkId)) {
+    return res.status(400).json({ message: "Invalid artworkId format" });
+  }
+
+  try {
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (action === "add") {
+      if (!user.favorites_art.includes(artworkId)) {
+        user.favorites_art.push(artworkId);
+      }
+    } else if (action === "remove") {
+      user.favorites_art = user.favorites_art.filter(
+        (favId) => favId.toString() !== artworkId
+      );
+    } else {
+      return res.status(400).json({ message: "Invalid action specified" });
+    }
+
+    await user.save();
+
+    res.json({
+      message: "Favorite updated successfully",
+      favorites_art: user.favorites_art,
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err });
@@ -1202,10 +1769,31 @@ app.get("/customer-music-score-view/:id", async (req, res) => {
   }
 });
 
+app.get("/customer-artwork-view/:id", async (req, res) => {
+  try {
+    const artwork = await ArtworkModel.findById(req.params.id);
+    if (!artwork) {
+      return res.status(404).json({ message: "Artwork not found" });
+    }
+    res.json(artwork);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
+});
+
 app.get("/api/image-path", async (req, res) => {
   try {
     const score = await ABCFileModel.findOne();
     res.json({ path: score.coverImageUrl });
+  } catch (error) {
+    res.status(500).send("Server error");
+  }
+});
+
+app.get("/api/image-path-artwork", async (req, res) => {
+  try {
+    const artwork = await ArtworkModel.findOne();
+    res.json({ path: artwork.imageUrl });
   } catch (error) {
     res.status(500).send("Server error");
   }
@@ -1239,7 +1827,7 @@ const calculateRecommendations = async (userId) => {
         matchCount++;
       }
 
-      // Check emotion preference match (weight: 0.25)
+      // Check emotion preference match (weight: 0.25)f
       if (user.emotion_preferences.includes(music.emotion)) {
         score += 0.25;
         matchCount++;
@@ -1251,7 +1839,7 @@ const calculateRecommendations = async (userId) => {
       }
 
       // Avoid recommending music that's already in favorites
-      if (user.favorites.includes(music._id)) {
+      if (user.favorites_music.includes(music._id)) {
         score = 0;
       }
 
@@ -1261,27 +1849,117 @@ const calculateRecommendations = async (userId) => {
       };
     });
 
+        // Sort by score and get top recommendations
+        const sortedRecommendations = scoredMusic
+        .sort((a, b) => b.score - a.score)
+        .filter((item) => item.score > 0) // Only include items with matches
+        .map((item) => item.artworkData);
+  
+      // Limit to 10 recommendations but ensure variety
+      const recommendations = [];
+      const usedGenres = new Set();
+      let index = 0;
+  
+      while (
+        recommendations.length < 10 &&
+        index < sortedRecommendations.length
+      ) {
+        const currentScore = sortedRecommendations[index];
+  
+        // Ensure genre diversity in recommendations
+        if (!usedGenres.has(currentScore.genre) || usedArtist.size >= 5) {
+          recommendations.push(currentScore);
+          usedGenres.add(currentScore.genre);
+        }
+  
+        index++;
+      }
+  
+      // If we have fewer than 10 recommendations, fill with popular items
+      if (recommendations.length < 10) {
+        const popularMusicScores = await ABCFileModel.find({
+          _id: {
+            $nin: [...recommendations.map((r) => r._id), ...user.favorites_music],
+          },
+        })
+          .sort({ downloads: -1 })
+          .limit(10 - recommendations.length);
+  
+        recommendations.push(...popularMusicScores);
+      }
+  
+      return recommendations;
+    } catch (error) {
+      console.error("Error generating recommendations:", error);
+      throw error;
+    }
+  };
+
+    const calculateArtworkRecommendations = async (userId) => {
+      try {
+        // Get user and their preferences
+        const user = await UserModel.findById(userId);
+        if (!user) {
+          throw new Error("User not found");
+        }
+    
+        // Get all available scores
+        let allArtworks = await ArtworkModel.find({});
+    
+        // Calculate scores for each music piece based on user preferences
+        const scoredArtwork = allArtworks.map((artwork) => {
+          let score = 0;
+          let matchCount = 0;
+    
+          // Check composer preference match (highest weight: 0.4)
+          if (user.collection_preferences.includes(artwork.collection)) {
+            score += 0.4;
+            matchCount++;
+          }
+    
+          // Check genre preference match (weight: 0.35)
+          if (user.artist_preferences.includes(artwork.artist)) {
+            score += 0.35;
+            matchCount++;
+          }
+    
+          // Bonus points for multiple matches
+          if (matchCount > 1) {
+            score += 0.1 * matchCount;
+          }
+    
+          // Avoid recommending music that's already in favorites
+          if (user.favorites_art.includes(artwork._id)) {
+            score = 0;
+          }
+    
+          return {
+            score,
+            artworkData: artwork,
+          };
+        });
+
     // Sort by score and get top recommendations
-    const sortedRecommendations = scoredMusic
+    const sortedRecommendations = scoredArtwork
       .sort((a, b) => b.score - a.score)
       .filter((item) => item.score > 0) // Only include items with matches
-      .map((item) => item.musicData);
+      .map((item) => item.artworkData);
 
     // Limit to 10 recommendations but ensure variety
     const recommendations = [];
-    const usedGenres = new Set();
+    const usedArtist = new Set();
     let index = 0;
 
     while (
       recommendations.length < 10 &&
       index < sortedRecommendations.length
     ) {
-      const currentMusic = sortedRecommendations[index];
+      const currentArtwork = sortedRecommendations[index];
 
       // Ensure genre diversity in recommendations
-      if (!usedGenres.has(currentMusic.genre) || usedGenres.size >= 5) {
-        recommendations.push(currentMusic);
-        usedGenres.add(currentMusic.genre);
+      if (!usedArtist.has(currentArtwork.genre) || usedArtist.size >= 5) {
+        recommendations.push(currentArtwork);
+        usedArtist.add(currentArtwork.genre);
       }
 
       index++;
@@ -1289,15 +1967,15 @@ const calculateRecommendations = async (userId) => {
 
     // If we have fewer than 10 recommendations, fill with popular items
     if (recommendations.length < 10) {
-      const popularScores = await ABCFileModel.find({
+      const popularArtworks = await ArtworkModel.find({
         _id: {
-          $nin: [...recommendations.map((r) => r._id), ...user.favorites],
+          $nin: [...recommendations.map((r) => r._id), ...user.favorites_art],
         },
       })
         .sort({ downloads: -1 })
         .limit(10 - recommendations.length);
 
-      recommendations.push(...popularScores);
+      recommendations.push(...popularArtworks);
     }
 
     return recommendations;
@@ -1314,6 +1992,20 @@ app.get("/recommendations", async (req, res) => {
     }
 
     const recommendations = await calculateRecommendations(req.session.userId);
+    res.json(recommendations);
+  } catch (error) {
+    console.error("Error in recommendations endpoint:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get("/artwork-recommendations", async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "User not logged in" });
+    }
+
+    const recommendations = await calculateArtworkRecommendations(req.session.userId);
     res.json(recommendations);
   } catch (error) {
     console.error("Error in recommendations endpoint:", error);
@@ -1402,6 +2094,35 @@ app.post("/create-checkout-session", async (req, res) => {
   res.json({ id: paymentSession.id });
 });
 
+app.post("/create-checkout-session-artwork", async (req, res) => {
+  let userId = req.session.userId;
+  userId = userId.toString();
+
+  const { cartItems } = req.body;
+
+  const lineItems = cartItems.map((item) => ({
+    price_data: {
+      currency: "myr",
+      product_data: {
+        name: item.title,
+      },
+      unit_amount: parseFloat(item.price) * 100,
+    },
+    quantity: 1,
+  }));
+
+  const paymentSession = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    line_items: lineItems,
+    mode: "payment",
+    success_url: `http://localhost:5173/success-2`,
+    cancel_url: `http://localhost:5173/cancel`,
+    client_reference_id: userId,
+  });
+
+  res.json({ id: paymentSession.id });
+});
+
 app.post("/complete-purchase", async (req, res) => {
   const userId = req.session.userId;
 
@@ -1450,6 +2171,63 @@ app.post("/complete-purchase", async (req, res) => {
 
     // Clear the cart
     cart.score_ids = [];
+    await cart.save();
+
+    res.json({ message: "Purchase completed successfully" });
+  } catch (error) {
+    console.error("Error completing purchase:", error);
+    res.status(500).json({ message: "Failed to complete purchase" });
+  }
+});
+
+app.post("/complete-purchase-artwork", async (req, res) => {
+  const userId = req.session.userId;
+
+  try {
+    const cart = await Cart2Model.findOne({ user_id: userId });
+
+    if (!cart || cart.artwork_ids.length === 0) {
+      return res.status(400).json({ message: "Cart is empty" });
+    }
+
+    const purchaseItems = await Promise.all(
+      cart.artwork_ids.map(async (artwork_id) => {
+        const artwork = await ArtworkModel.findById(artwork_id);
+        if (!artwork) {
+          throw new Error(`Music score with ID ${artwork_id} not found`);
+        }
+
+        return {
+          user_id: userId,
+          purchase_date: new Date(),
+          price: parseFloat(artwork.price), // Convert string to number
+          artwork_id: artwork_id,
+        };
+      })
+    );
+
+    // Insert purchase items
+    await Purchase2Model.insertMany(purchaseItems);
+
+    // After saving the cart, check for duplicates
+    for (const item of purchaseItems) {
+      const { user_id, artwork_id } = item;
+
+      // Find duplicates with the same user_id and score_id
+      const duplicates = await Purchase2Model.find({
+        user_id,
+        artwork_id,
+      });
+
+      if (duplicates.length > 1) {
+        // Delete one of the duplicates (you can adjust the deletion logic as needed)
+        const duplicateToDelete = duplicates[1]; // Keep the first one, delete the second
+        await Purchase2Model.deleteOne({ _id: duplicateToDelete._id });
+      }
+    }
+
+    // Clear the cart
+    cart.artwork_ids = [];
     await cart.save();
 
     res.json({ message: "Purchase completed successfully" });

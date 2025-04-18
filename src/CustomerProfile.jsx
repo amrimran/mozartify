@@ -45,7 +45,6 @@ axios.defaults.withCredentials = true;
 const DRAWER_WIDTH = 230;
 
 export default function CustomerProfile() {
-
   const [mobileOpen, setMobileOpen] = useState(false);
   const [username, setUsername] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
@@ -377,7 +376,6 @@ export default function CustomerProfile() {
   return (
     <ThemeProvider theme={theme}>
       <Box sx={styles.root}>
-        
         {/* App Bar for mobile/tablet */}
         <AppBar position="fixed" sx={styles.appBar}>
           <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>

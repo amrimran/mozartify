@@ -573,7 +573,7 @@ export default function CustomerSearch() {
                     sx={{
                       fontFamily: "Montserrat",
                       fontWeight: "bold",
-             
+
                       ml: 1,
                     }}
                   >

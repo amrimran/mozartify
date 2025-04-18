@@ -82,7 +82,7 @@ export default function CustomerFavorites() {
       try {
         const response = await axios.get("http://localhost:3000/current-user");
         setUser(response.data);
-        setFavorites(response.data.favorites);
+        setFavorites(response.data.favorites_music);
       } catch (error) {
         console.error("Error fetching current user:", error);
         navigate("/login");
@@ -245,7 +245,7 @@ export default function CustomerFavorites() {
 
   const toggleFavorite = async (musicScoreId) => {
     try {
-      const isFavorite = user?.favorites?.includes(musicScoreId);
+      const isFavorite = user?.favorites_music?.includes(musicScoreId);
 
       // Optimistically update the favorites locally for instant feedback
       setFavorites((prevFavorites) => {
@@ -265,7 +265,7 @@ export default function CustomerFavorites() {
       });
 
       // Update the favorites with the server response (ensures consistency)
-      setFavorites(response.data.favorites);
+      setFavorites(response.data.favorites_music);
 
       // Show appropriate snackbar message
       setSnackbar({
@@ -824,7 +824,7 @@ export default function CustomerFavorites() {
               sx={{
                 fontFamily: "Montserrat",
                 fontWeight: "bold",
-                textAlign: isMobile || isTablet ? "center" : "left", 
+                textAlign: isMobile || isTablet ? "center" : "left",
                 fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem" },
               }}
             >

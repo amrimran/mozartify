@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
   Box,
@@ -18,14 +18,56 @@ import {
   AccountCircle,
   ExitToApp,
   Search,
+  EditNote,
+  ChangeCircle,
 } from "@mui/icons-material";
-import Folder from '@mui/icons-material/FolderCopy';
 import SidebarMozartifyLogo from "./assets/mozartify.png";
+import { useUnread } from "./UnreadContext.jsx";
 
 axios.defaults.withCredentials = true;
 
 const CustomerSidebar = ({ active }) => {
   const currentPath = window.location.pathname;
+  const [user, setUser] = useState(null);
+  const { unreadCount, setUnreadCount } = useUnread();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/current-user");
+        setUser(response.data);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+        navigate("/login");
+      }
+    };
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    const fetchFeedbackData = async () => {
+      if (!user?._id) return;
+
+      try {
+        const response = await axios.get(
+          `http://localhost:3002/api/feedback?userId=${user._id}`
+        );
+
+        const unreadMessages = response.data.filter(
+          (feedback) => !feedback.isReadCustomer
+        ).length;
+
+        setUnreadCount(unreadMessages); // Update context state
+      } catch (error) {
+        console.error("Error fetching feedback count data:", error);
+      }
+    };
+
+    fetchFeedbackData();
+  }, [user?._id, active]);
+
+  const getUnreadFeedbackCount = () => unreadCount;
+
   const handleNavigation = async (path, key) => {
     if (key === "logout") {
       try {
@@ -73,6 +115,12 @@ const CustomerSidebar = ({ active }) => {
     //   icon: <Folder />,
     //   key: "collections",
     // },
+    {
+      path: "/customer-compose",
+      label: "Compose",
+      icon: <EditNote />,
+      key: "compose",
+    },
 
     {
       path: "/customer-favorites",
@@ -96,6 +144,12 @@ const CustomerSidebar = ({ active }) => {
   ];
 
   const bottomNavigationItems = [
+    {
+      path: "/customer-homepage-2",
+      label: "Art InstaLogin",
+      icon: <ChangeCircle />,
+      key: "art",
+    },
     {
       path: "/customer-profile",
       label: "User Profile",
@@ -179,6 +233,22 @@ const CustomerSidebar = ({ active }) => {
                   </Typography>
                 }
               />
+              {item.isInbox && getUnreadFeedbackCount() > 0 && (
+                <Typography
+                  sx={{
+                    fontSize: "0.75rem",
+                    fontWeight: "bold",
+                    color: "white",
+                    backgroundColor: "red",
+                    padding: "2px 6px",
+                    borderRadius: "8px",
+                    ml: 1, // Add some margin-left for spacing
+                    display: "inline-block",
+                  }}
+                >
+                  {unreadCount}
+                </Typography>
+              )}
             </ListItemButton>
           ))}
         </List>

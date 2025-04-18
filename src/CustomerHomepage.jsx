@@ -154,7 +154,7 @@ export default function CustomerHomepage() {
       try {
         const response = await axios.get("http://localhost:3000/current-user");
         setUser(response.data);
-        setFavorites(response.data.favorites);
+        setFavorites(response.data.favorites_music);
       } catch (error) {
         console.error("Error fetching current user:", error);
         navigate("/login");
@@ -203,7 +203,7 @@ export default function CustomerHomepage() {
     };
 
     fetchAddedToCartScores();
-  }, [navigate,addedToCartScores]);
+  }, [navigate, addedToCartScores]);
 
   const addToCart = async (scoreId) => {
     try {
@@ -342,7 +342,7 @@ export default function CustomerHomepage() {
 
   const toggleFavorite = async (musicScoreId) => {
     try {
-      const isFavorite = user?.favorites?.includes(musicScoreId);
+      const isFavorite = user?.favorites_music?.includes(musicScoreId);
 
       // Optimistically update the favorites locally for instant feedback
       setFavorites((prevFavorites) => {
@@ -362,7 +362,7 @@ export default function CustomerHomepage() {
       });
 
       // Update the favorites with the server response (ensures consistency)
-      setFavorites(response.data.favorites);
+      setFavorites(response.data.favorites_music);
 
       // Show appropriate snackbar message
       setSnackbar({
@@ -943,7 +943,7 @@ export default function CustomerHomepage() {
               >
                 {searchedScores.length > 99 ? "99+" : searchedScores.length}
               </Box>{" "}
-              results 
+              results
             </Typography>
           )}
 
