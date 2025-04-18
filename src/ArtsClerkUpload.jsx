@@ -248,11 +248,6 @@ export default function ArtsClerkUpload() {
         // Save artwork metadata to the backend
         try {
           const response = await axios.post("http://localhost:3001/catalogArts", {
-            title: "Untitled", // Default title
-            artist: "Unknown", // Default artist
-            price: "0", // Default price
-            collection: "Uncategorized", // Default collection
-            dateUploaded: new Date().toISOString(),
             imageUrl: downloadURL,
           });
   
@@ -260,7 +255,6 @@ export default function ArtsClerkUpload() {
           navigate(`/arts-clerk-catalog/${response.data._id}`, {
             state: {
               imageUrl: downloadURL,
-              uploadTime: new Date().toISOString(),
             },
           });
         } catch (error) {

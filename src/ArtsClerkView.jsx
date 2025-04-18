@@ -21,6 +21,7 @@ import {
   IconButton,
   Drawer,
   CircularProgress,
+  Chip,
 } from "@mui/material";
 import { Menu as MenuIcon, Edit, Delete } from "@mui/icons-material";
 import { useParams, useNavigate } from "react-router-dom";
@@ -186,6 +187,7 @@ export default function ArtsClerkView() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [artwork, setArtwork] = useState(null);
+  const [dynamicFields, setDynamicFields] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -265,6 +267,19 @@ export default function ArtsClerkView() {
     },
     detailValue: {
       width: "60%",
+      wordBreak: "break-word",
+    },
+    categorySection: {
+      mt: 3,
+      mb: 2,
+    },
+    categoryTitle: {
+      fontFamily: "Montserrat",
+      fontWeight: "bold",
+      fontSize: "1.1rem",
+      borderBottom: "2px solid #FFB6C1",
+      pb: 0.5,
+      mb: 1,
     },
     actionButtons: {
       display: "flex",
@@ -274,6 +289,20 @@ export default function ArtsClerkView() {
       flexDirection: { xs: "column", sm: "row" },
     },
   };
+
+  // Fetch dynamic fields configuration
+  useEffect(() => {
+    const fetchDynamicFields = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/dynamic-fields');
+        setDynamicFields(response.data);
+      } catch (error) {
+        console.error('Error fetching dynamic fields:', error);
+      }
+    };
+
+    fetchDynamicFields();
+  }, []);
 
   // Fetch current user data
   useEffect(() => {
@@ -291,7 +320,7 @@ export default function ArtsClerkView() {
   }, [navigate]);
 
   useEffect(() => {
-    console.log("Artwork ID:", artworkId); // Debugging line
+    console.log("Artwork ID:", artworkId);
 
     const fetchArtwork = async () => {
       setLoading(true);
@@ -299,7 +328,7 @@ export default function ArtsClerkView() {
         const response = await axios.get(
           `http://localhost:3001/catalogArts/${artworkId}`
         );
-        console.log("Fetched Data:", response.data); // Debugging line
+        console.log("Fetched Data:", response.data);
 
         if (response.data) {
           setArtwork(response.data);
@@ -347,6 +376,7 @@ export default function ArtsClerkView() {
     }
   };
 
+  // Format date values
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -356,6 +386,91 @@ export default function ArtsClerkView() {
       day: "numeric",
     });
   };
+
+  // Format field value based on field type
+  const formatFieldValue = (value, fieldType) => {
+    if (value === null || value === undefined) return "N/A";
+    
+    switch (fieldType) {
+      case 'date':
+        return formatDate(value);
+      case 'price':
+        return isNaN(value) ? value : `RM ${parseFloat(value).toFixed(2)}`;
+      case 'number':
+        return isNaN(value) ? value : parseFloat(value).toString();
+      default:
+        return value.toString();
+    }
+  };
+
+  // Get field object by ID
+  const getFieldById = (fieldId) => {
+    return dynamicFields.find(field => 
+      field._id === fieldId || field._id === fieldId.$oid
+    );
+  };
+
+  // Group fields by category for better organization
+  const getGroupedFields = () => {
+    if (!artwork || !artwork.dynamicFieldValues || !dynamicFields.length) {
+      return {};
+    }
+
+    // Create a map of categories
+    const categorizedFields = {};
+    
+    // Process each field value
+    artwork.dynamicFieldValues.forEach(fieldValue => {
+      const field = getFieldById(fieldValue.fieldId);
+      
+      if (!field) return; // Skip if field definition not found
+      
+      const category = field.category || 'General';
+      
+      if (!categorizedFields[category]) {
+        categorizedFields[category] = [];
+      }
+      
+      categorizedFields[category].push({
+        field,
+        value: fieldValue.value
+      });
+    });
+    
+    // Sort fields within each category by displayOrder
+    Object.keys(categorizedFields).forEach(category => {
+      categorizedFields[category].sort((a, b) => 
+        (a.field.displayOrder || 0) - (b.field.displayOrder || 0)
+      );
+    });
+    
+    return categorizedFields;
+  };
+
+  // Get a title field for the artwork
+  const getArtworkTitle = () => {
+    if (!artwork || !artwork.dynamicFieldValues) return "Untitled";
+    
+    // Look for fields with names related to title
+    const titleFields = ['title', 'artwork_title', 'name'];
+    
+    for (const fieldName of titleFields) {
+      const titleField = dynamicFields.find(df => df.name === fieldName);
+      if (titleField) {
+        const titleValue = artwork.dynamicFieldValues.find(
+          dv => dv.fieldId === titleField._id || dv.fieldId.$oid === titleField._id
+        );
+        if (titleValue && titleValue.value) {
+          return titleValue.value;
+        }
+      }
+    }
+    
+    return "Untitled";
+  };
+
+  const groupedFields = getGroupedFields();
+  const artworkTitle = getArtworkTitle();
 
   return (
     <ThemeProvider theme={customTheme}>
@@ -523,7 +638,7 @@ export default function ArtsClerkView() {
                   {artwork.imageUrl ? (
                     <img
                       src={artwork.imageUrl}
-                      alt={artwork.title}
+                      alt={artworkTitle}
                       style={{
                         width: "100%",
                         maxHeight: isMobile ? 300 : isTablet ? 400 : 500,
@@ -571,48 +686,44 @@ export default function ArtsClerkView() {
                       pb: 1,
                     }}
                   >
-                    {artwork.title || "Untitled"}
+                    {artworkTitle}
                   </Typography>
 
-                  <Box sx={{ mb: 3 }}>
-                    <Box sx={styles.detailRow}>
-                      <Typography variant="body1" sx={styles.detailLabel}>
-                        Artist:
-                      </Typography>
-                      <Typography variant="body1" sx={styles.detailValue}>
-                        {artwork.artist || "Unknown Artist"}
-                      </Typography>
-                    </Box>
+                  {/* Display fields grouped by category */}
+                  {Object.keys(groupedFields).length > 0 ? (
+                    Object.entries(groupedFields).map(([category, fields]) => (
+                      <Box key={category} sx={styles.categorySection}>
+                        <Typography variant="h6" sx={styles.categoryTitle}>
+                          {category}
+                        </Typography>
+                        
+                        <Box sx={{ mb: 2 }}>
+                          {fields.map(({ field, value }) => (
+                            <Box key={field._id} sx={styles.detailRow}>
+                              <Typography variant="body1" sx={styles.detailLabel}>
+                                {field.label}:
+                              </Typography>
+                              <Typography variant="body1" sx={styles.detailValue}>
+                                {formatFieldValue(value, field.fieldType)}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      </Box>
+                    ))
+                  ) : (
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        textAlign: "center", 
+                        color: "text.secondary",
+                        py: 2
+                      }}
+                    >
+                      No details available for this artwork
+                    </Typography>
+                  )}
 
-                    <Box sx={styles.detailRow}>
-                      <Typography variant="body1" sx={styles.detailLabel}>
-                        Collection:
-                      </Typography>
-                      <Typography variant="body1" sx={styles.detailValue}>
-                        {artwork.collection || "Not specified"}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={styles.detailRow}>
-                      <Typography variant="body1" sx={styles.detailLabel}>
-                        Price:
-                      </Typography>
-                      <Typography variant="body1" sx={styles.detailValue}>
-                        {artwork.price
-                          ? `RM ${artwork.price}`
-                          : "Not specified"}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={styles.detailRow}>
-                      <Typography variant="body1" sx={styles.detailLabel}>
-                        Date Uploaded:
-                      </Typography>
-                      <Typography variant="body1" sx={styles.detailValue}>
-                        {formatDate(artwork.dateUploaded)}
-                      </Typography>
-                    </Box>
-                  </Box>
 
                   {/* Action Buttons */}
                   <Box sx={styles.actionButtons}>

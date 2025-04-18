@@ -10,7 +10,9 @@ const axios = require("axios");
 const ABCFileModel = require("./models/ABCFile");
 const DeletedABCFile = require("./models/deletedABCFile");
 const Artwork = require("./models/Arts.js");
-const DeletedArtwork = require('./models/DeletedArts.js'); 
+const DeletedArtwork = require('./models/DeletedArts.js');
+const DynamicField = require('./models/DynamicFields');
+
 
 const app = express();
 app.use(express.json());
@@ -509,16 +511,28 @@ app.post("/delete-and-transfer-abc-file", async (req, res) => {
 
 //ARTS ENDPOINTS
 
-// Create a new artwork
+// Create a new artwork or update existing one
 app.post('/catalogArts', async (req, res) => {
   try {
-    const { _id, title, artist, price, collection, dateUploaded, imageUrl } = req.body;
+    // Pull everything from the request body, including dynamicFieldValues
+    const { _id, imageUrl, dynamicFieldValues, ...otherFields } = req.body;
     
     // If _id is provided, update existing artwork
     if (_id) {
+      // Create update object with dynamicFieldValues and any other fields
+      const updateData = { 
+        ...otherFields,
+        dynamicFieldValues
+      };
+      
+      // Only include imageUrl in the update if it's provided (not empty)
+      if (imageUrl !== undefined) {
+        updateData.imageUrl = imageUrl;
+      }
+
       const artwork = await Artwork.findByIdAndUpdate(
         _id,
-        { title, artist, price, collection, dateUploaded, imageUrl },
+        updateData,
         { new: true }
       );
 
@@ -531,12 +545,9 @@ app.post('/catalogArts', async (req, res) => {
     
     // If no _id, create new artwork
     const artwork = new Artwork({
-      title,
-      artist,
-      price,
-      collection,
-      dateUploaded: new Date(dateUploaded),
+      ...otherFields,
       imageUrl,
+      dynamicFieldValues
     });
 
     await artwork.save();
@@ -582,42 +593,6 @@ app.get("/catalogArts", async (req, res) => {
   }
 });
 
-// Update artwork
-app.put('/catalogArts/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { title, artist, price, collection, dateUploaded, imageUrl } = req.body;
-
-    // Create update object with all fields
-    const updateData = { 
-      title, 
-      artist, 
-      price, 
-      collection, 
-      dateUploaded
-    };
-    
-    // Only include imageUrl in the update if it's provided (not empty)
-    if (imageUrl !== undefined) {
-      updateData.imageUrl = imageUrl;
-    }
-
-    const artwork = await Artwork.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true }
-    );
-
-    if (!artwork) {
-      return res.status(404).json({ message: 'Artwork not found' });
-    }
-
-    res.status(200).json(artwork);
-  } catch (err) {
-    console.error("Error updating artwork:", err);
-    res.status(500).json({ message: 'Error updating artwork', error: err.message });
-  }
-});
 
 // Delete artwork
 app.delete('/catalogArts/:id', async (req, res) => {
@@ -643,6 +618,158 @@ app.delete('/catalogArts/:id', async (req, res) => {
   } catch (err) {
     console.error("Error deleting artwork:", err);
     res.status(500).json({ message: 'Error deleting artwork', error: err.message });
+  }
+});
+
+//DYNAMIC FIELD ENDPOINTS
+
+// GET all dynamic fields
+app.get('/dynamic-fields', async (req, res) => {
+  try {
+    const fields = await DynamicField.find({ isActive: true }).sort({ displayOrder: 1 });
+    res.status(200).json(fields);
+  } catch (err) {
+    console.error("Error fetching dynamic fields:", err);
+    res.status(500).json({ message: 'Error fetching dynamic fields', error: err.message });
+  }
+});
+
+// GET a specific dynamic field by ID
+app.get('/dynamic-fields/:id', async (req, res) => {
+  try {
+    const field = await DynamicField.findById(req.params.id);
+    if (!field) {
+      return res.status(404).json({ message: 'Dynamic field not found' });
+    }
+    res.status(200).json(field);
+  } catch (err) {
+    console.error("Error fetching dynamic field:", err);
+    res.status(500).json({ message: 'Error fetching dynamic field', error: err.message });
+  }
+});
+
+// CREATE a new dynamic field
+app.post('/dynamic-fields', async (req, res) => {
+  try {
+    const newField = new DynamicField(req.body);
+    const savedField = await newField.save();
+    res.status(201).json(savedField);
+  } catch (err) {
+    console.error("Error creating dynamic field:", err);
+    res.status(500).json({ message: 'Error creating dynamic field', error: err.message });
+  }
+});
+
+// UPDATE a dynamic field
+app.put('/dynamic-fields/:id', async (req, res) => {
+  try {
+    const updatedField = await DynamicField.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!updatedField) {
+      return res.status(404).json({ message: 'Dynamic field not found' });
+    }
+    res.status(200).json(updatedField);
+  } catch (err) {
+    console.error("Error updating dynamic field:", err);
+    res.status(500).json({ message: 'Error updating dynamic field', error: err.message });
+  }
+});
+
+// DELETE a dynamic field (soft delete by setting isActive to false)
+app.delete('/dynamic-fields/:id', async (req, res) => {
+  try {
+    const field = await DynamicField.findByIdAndUpdate(
+      req.params.id,
+      { isActive: false },
+      { new: true }
+    );
+    if (!field) {
+      return res.status(404).json({ message: 'Dynamic field not found' });
+    }
+    res.status(200).json({ message: 'Dynamic field deactivated successfully' });
+  } catch (err) {
+    console.error("Error deactivating dynamic field:", err);
+    res.status(500).json({ message: 'Error deactivating dynamic field', error: err.message });
+  }
+});
+
+// GET all dynamic fields organized by tab
+app.get('/dynamic-fields/by-tab', async (req, res) => {
+  try {
+    const fields = await DynamicField.find({ isActive: true }).sort({ tabIndex: 1, displayOrder: 1 });
+    
+    // Group fields by tabIndex
+    const fieldsByTab = fields.reduce((acc, field) => {
+      const tabIndex = field.tabIndex || 0;
+      if (!acc[tabIndex]) {
+        acc[tabIndex] = [];
+      }
+      acc[tabIndex].push(field);
+      return acc;
+    }, {});
+    
+    res.status(200).json(fieldsByTab);
+  } catch (err) {
+    console.error("Error fetching fields by tab:", err);
+    res.status(500).json({ message: 'Error fetching fields by tab', error: err.message });
+  }
+});
+
+// Get dynamic field values for an artwork
+app.get('/catalogArts/:id/dynamic-fields', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find artwork by ID
+    const artwork = await Artwork.findById(id)
+      .populate({
+        path: 'dynamicFieldValues.fieldId',
+        model: 'DynamicField'
+      });
+    
+    if (!artwork) {
+      return res.status(404).json({ message: 'Artwork not found' });
+    }
+    
+    res.status(200).json(artwork.dynamicFieldValues);
+  } catch (err) {
+    console.error("Error fetching dynamic field values:", err);
+    res.status(500).json({ message: 'Error fetching dynamic field values', error: err.message });
+  }
+});
+
+// Update dynamic field values for an artwork
+app.post('/catalogArts/:id/dynamic-fields', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fieldValues } = req.body;
+    
+    if (!Array.isArray(fieldValues)) {
+      return res.status(400).json({ message: 'Field values must be an array' });
+    }
+    
+    // Find artwork by ID
+    const artwork = await Artwork.findById(id);
+    
+    if (!artwork) {
+      return res.status(404).json({ message: 'Artwork not found' });
+    }
+    
+    // Update dynamic field values
+    artwork.dynamicFieldValues = fieldValues;
+    
+    await artwork.save();
+    
+    res.status(200).json({ 
+      message: 'Dynamic field values updated successfully',
+      dynamicFieldValues: artwork.dynamicFieldValues
+    });
+  } catch (err) {
+    console.error("Error updating dynamic field values:", err);
+    res.status(500).json({ message: 'Error updating dynamic field values', error: err.message });
   }
 });
 

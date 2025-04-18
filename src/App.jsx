@@ -49,7 +49,9 @@ import ArtsClerkCatalog from "./ArtsClerkCatalog";
 import ArtsClerkSearch from "./ArtsClerkSearch";
 import ArtsClerkView from "./ArtsClerkView";
 import ArtsClerkProfile from "./ArtsClerkProfile";
-import ArtsFormBuilder from "./ArtsFormBuilder";
+import DynamicFieldManager from "./DynamicFieldManager";
+
+
 
 
 
@@ -116,7 +118,9 @@ function App() {
         <Route path="/arts-clerk-search" element={<ArtsClerkSearch />} />
         <Route path="/arts-clerk-view/:artworkId" element={<ArtsClerkView />} />
         <Route path="/arts-clerk-profile" element={<ArtsClerkProfile />} />
-        <Route path="/arts-form-builder" element={<ArtsFormBuilder/>} />
+        <Route path="/dynamic-field-manager" element={<DynamicFieldManager/>} />
+
+
 
 
 

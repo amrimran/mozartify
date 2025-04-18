@@ -3,24 +3,17 @@ import { useParams } from "react-router-dom";
 import {
   Box,
   Typography,
-  TextField,
   Button,
   Avatar,
   Tabs,
   Tab,
   Divider,
   Grid,
-  Card,
-  InputAdornment,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   useMediaQuery,
   AppBar,
   Toolbar,
@@ -36,10 +29,9 @@ import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import axios from "axios";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { format } from "date-fns";
 import { Menu as MenuIcon } from "@mui/icons-material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import DynamicField from "./DynamicField"; // Import the DynamicField component
 
 const DRAWER_WIDTH = 225;
 
@@ -63,11 +55,9 @@ const GlobalStyle = createGlobalStyle`
       margin: 0;
       padding: 0;
       font-family: 'Montserrat', sans-serif;
-          overflow-x: hidden; // Prevent horizontal scrolling
-
+      overflow-x: hidden; // Prevent horizontal scrolling
     }
-
-  `;
+`;
 
 const styles = {
   root: {
@@ -230,16 +220,17 @@ export default function ArtsClerkCatalog() {
   const [isSuccess, setIsSuccess] = useState(true);
   const [tabIndex, setTabIndex] = useState(0);
   const [catalogData, setCatalogData] = useState({
-    filename: "",
-    title: "",
-    artist: "",
-    price: "",
-    collection: "",
-    dateUploaded: "",
+    imageUrl: "",
+    dynamicFieldValues: [] // Store dynamic field values
   });
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false); // Define loading state
-  const { id: artworkId } = useParams(); // Get the ID from the URL and rename it to `artworkId`
+  const [loading, setLoading] = useState(false);
+  const { id: artworkId } = useParams();
+  
+  // New state for dynamic fields
+  const [dynamicFields, setDynamicFields] = useState([]);
+  const [tabLabels, setTabLabels] = useState(["Identification", "Date", "Image"]);
+  const [fieldsByTab, setFieldsByTab] = useState({});
 
   // Fetch current user data
   useEffect(() => {
@@ -256,6 +247,40 @@ export default function ArtsClerkCatalog() {
     fetchUser();
   }, [navigate]);
 
+  // Fetch dynamic fields
+  useEffect(() => {
+    const fetchDynamicFields = async () => {
+      try {
+        const response = await axios.get("http://localhost:3001/dynamic-fields");
+        setDynamicFields(response.data);
+        
+        // Group fields by tab
+        const groupedFields = response.data.reduce((acc, field) => {
+          const tabIndex = field.tabIndex || 0;
+          if (!acc[tabIndex]) {
+            acc[tabIndex] = [];
+          }
+          acc[tabIndex].push(field);
+          return acc;
+        }, {});
+        
+        setFieldsByTab(groupedFields);
+        
+        // Determine tab labels from dynamic fields
+        const customTabs = [...new Set(response.data.map(field => field.category))];
+        if (customTabs.length > 0) {
+          // Keep default Image tab as the last tab
+          setTabLabels([...customTabs, "Image"]);
+        }
+      } catch (error) {
+        console.error("Error fetching dynamic fields:", error);
+      }
+    };
+    
+    fetchDynamicFields();
+  }, []);
+
+  // Fetch artwork data when ID is available
   useEffect(() => {
     if (artworkId) {
       const fetchCatalogData = async () => {
@@ -273,7 +298,6 @@ export default function ArtsClerkCatalog() {
               setCatalogData((prev) => ({
                 ...prev,
                 imageUrl: state.imageUrl,
-                dateUploaded: state.uploadTime || prev.dateUploaded,
               }));
             }
           }
@@ -284,7 +308,7 @@ export default function ArtsClerkCatalog() {
 
       fetchCatalogData();
     }
-  }, [fileName, location]);
+  }, [artworkId, location]);
 
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
@@ -301,10 +325,52 @@ export default function ArtsClerkCatalog() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setCatalogData((prevData) => ({
-      ...prevData,
-      [name]: value, // Ensure empty fields are sent as empty strings
-    }));
+    
+    // Check if this is a dynamic field value
+    const dynamicField = dynamicFields.find(field => field.name === name);
+    
+    if (dynamicField) {
+      // Handle dynamic field value changes
+      setCatalogData(prevData => {
+        // Find if we already have this field in our values
+        const existingValueIndex = prevData.dynamicFieldValues.findIndex(
+          item => item.fieldId === dynamicField._id
+        );
+        
+        const updatedDynamicFieldValues = [...prevData.dynamicFieldValues];
+        
+        if (existingValueIndex >= 0) {
+          // Update existing value
+          updatedDynamicFieldValues[existingValueIndex] = {
+            ...updatedDynamicFieldValues[existingValueIndex],
+            value: value
+          };
+        } else {
+          // Add new value
+          updatedDynamicFieldValues.push({
+            fieldId: dynamicField._id,
+            value: value
+          });
+        }
+        
+        return {
+          ...prevData,
+          dynamicFieldValues: updatedDynamicFieldValues
+        };
+      });
+    } else {
+      // Handle standard field value changes
+      setCatalogData(prevData => ({
+        ...prevData,
+        [name]: value
+      }));
+    }
+  };
+
+  // Get value for a dynamic field
+  const getDynamicFieldValue = (fieldId) => {
+    const fieldValue = catalogData.dynamicFieldValues?.find(item => item.fieldId === fieldId);
+    return fieldValue ? fieldValue.value : '';
   };
 
   // Helper function to show dialog
@@ -319,62 +385,14 @@ export default function ArtsClerkCatalog() {
     setOpenDialog(false);
   };
 
-  const handleDateChange = (name, newValue) => {
-    setCatalogData((prevData) => ({
-      ...prevData,
-      [name]: newValue ? newValue.toISOString() : "",
-    }));
-  };
-
   const handleNext = () => {
     if (tabIndex < tabLabels.length - 1) {
       setTabIndex((prevIndex) => prevIndex + 1);
     }
   };
 
-  useEffect(() => {}, [openDialog, dialogTitle, dialogMessage]);
-
-  // validation function
-  const validateRequiredFields = (data) => {
-    const requiredFields = {
-      title: "Title",
-      artist: "Artist",
-      price: "Price",
-      dateUploaded: "Date Uploaded",
-    };
-
-    const missingFields = [];
-
-    // Check each required field
-    Object.entries(requiredFields).forEach(([field, label]) => {
-      if (!data[field] || data[field].trim() === "") {
-        missingFields.push(label);
-      }
-    });
-
-    // Price validation
-    if (data.price && (isNaN(data.price) || parseFloat(data.price) <= 0)) {
-      missingFields.push("Valid Price (must be greater than 0)");
-    }
-
-    return missingFields;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Validate all required fields
-    const missingFields = validateRequiredFields(catalogData);
-
-    if (missingFields.length > 0) {
-      setDialogTitle("Missing Required Fields");
-      setDialogMessage(
-        `Please fill in the following required fields:\n${missingFields.join(", ")}`
-      );
-      setIsSuccess(false);
-      setOpenDialog(true);
-      return;
-    }
 
     try {
       // Include the _id in the data to submit
@@ -431,8 +449,178 @@ export default function ArtsClerkCatalog() {
     return fullLabel;
   };
 
-  // Tab labels array for easier management
-  const tabLabels = ["Identification", "Date", "Image"];
+  // Handle image upload
+  const handleImageUpload = (file) => {
+    if (file) {
+      setLoading(true);
+
+      // Upload the file to Firebase Storage
+      const storageRef = ref(
+        storage,
+        `artworks/${Date.now()}_${file.name}`
+      );
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          // Track upload progress
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(progress);
+        },
+        (error) => {
+          // Handle unsuccessful uploads
+          console.error("Error uploading image:", error);
+          setLoading(false);
+          showDialog(
+            "Upload Failed",
+            "Failed to upload the image. Please try again.",
+            false
+          );
+        },
+        async () => {
+          // Handle successful upload
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+
+            // Update the state with the new image URL
+            setCatalogData((prev) => ({
+              ...prev,
+              imageUrl: downloadURL,
+            }));
+
+            setLoading(false);
+            showDialog(
+              "Image Updated",
+              "The image has been successfully uploaded. Don't forget to save the metadata to apply all changes.",
+              true
+            );
+          } catch (error) {
+            console.error("Error getting download URL:", error);
+            setLoading(false);
+            showDialog(
+              "Upload Failed",
+              "Failed to process the uploaded image. Please try again.",
+              false
+            );
+          }
+        }
+      );
+    }
+  };
+
+  // Render the fields based on the current tab
+const renderTabContent = () => {
+  // Last tab is always the Image tab
+  if (tabIndex === tabLabels.length - 1) {
+    return (
+      <Grid item xs={12}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 2,
+          }}
+        >
+          {/* Display the uploaded image */}
+          {catalogData.imageUrl && (
+            <img
+              src={catalogData.imageUrl}
+              alt="Uploaded Artwork"
+              style={{
+                width: "100%",
+                maxWidth: "300px",
+                height: "auto",
+                borderRadius: "8px",
+                border: "1px solid #FFB6C1",
+              }}
+            />
+          )}
+          
+          {/* Progress indicator */}
+          {loading && (
+            <Box sx={{ width: "100%", maxWidth: "300px", mt: 2 }}>
+              <Typography
+                variant="body2"
+                sx={{ mb: 1, textAlign: "center" }}
+              >
+                Uploading... {Math.round(uploadProgress)}%
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={uploadProgress}
+                sx={{
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: "#FFE5E5",
+                  "& .MuiLinearProgress-bar": {
+                    backgroundColor: "#FFB6C1",
+                    borderRadius: 4,
+                  },
+                }}
+              />
+            </Box>
+          )}
+
+          {/* Button to change the image */}
+          <input
+            type="file"
+            accept=".jpg,.jpeg,.png,.gif,.webp"
+            onChange={(e) => {
+              const file = e.target.files[0];
+              if (file) {
+                handleImageUpload(file);
+              }
+            }}
+            style={{ display: "none" }}
+            id="change-image-button"
+          />
+          <label htmlFor="change-image-button">
+            <Button
+              variant="contained"
+              component="span"
+              disabled={loading}
+              sx={{
+                ...buttonStyles,
+                width: "200px",
+              }}
+            >
+              {loading ? "Uploading..." : "Change Image"}
+            </Button>
+          </label>
+        </Box>
+      </Grid>
+    );
+  }
+
+  // For other tabs, render the dynamic fields for the current tab
+  const fieldsForCurrentTab = fieldsByTab[tabIndex] || [];
+  
+  // If no fields exist for this tab, just show a message
+  if (fieldsForCurrentTab.length === 0) {
+    return (
+      <Grid item xs={12}>
+        <Typography variant="body1" sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+          No fields configured for this tab. Use the field manager to add fields.
+        </Typography>
+      </Grid>
+    );
+  }
+
+  // Render the dynamic fields for this tab
+  return fieldsForCurrentTab.map(field => (
+    <Grid item xs={12} sm={6} key={field._id}>
+      <DynamicField
+        field={field}
+        value={getDynamicFieldValue(field._id)}
+        onChange={handleInputChange}
+        formStyles={formStyles}
+        isMobile={isMobile}
+      />
+    </Grid>
+  ));
+};
 
   return (
     <ThemeProvider theme={theme}>
@@ -655,306 +843,7 @@ export default function ArtsClerkCatalog() {
               spacing={2}
               direction={isMobile ? "column" : "row"} // Stacked for mobile
             >
-              {" "}
-              {tabIndex === 0 && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="title"
-                      label="Title"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.title}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      required
-                      name="artist"
-                      label="Artist"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.artist}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      required
-                      name="price"
-                      label="Price"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.price}
-                      onChange={handleInputChange}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment
-                            position="start"
-                            sx={{ fontFamily: "Montserrat" }}
-                          >
-                            RM
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <FormControl
-                      variant="outlined"
-                      fullWidth
-                      sx={{
-                        ...formStyles,
-                        mb: 2,
-                        width: isMobile ? "90%" : "90%", // Adjust width based on isMobile
-                        "& .MuiInputBase-root": {
-                          fontFamily: "Montserrat", // Apply Montserrat font
-                          "& fieldset": {
-                            borderColor: "#FFB6C1", // Default border color
-                          },
-                          "&:hover fieldset": {
-                            borderColor: "#FFA0B3", // Border color on hover
-                          },
-                          "&.Mui-focused fieldset": {
-                            borderColor: "#FFA0B3", // Border color on focus
-                          },
-                        },
-                        "& .MuiInputLabel-root": {
-                          fontFamily: "Montserrat", // Apply Montserrat font to the label
-                        },
-                      }}
-                      required
-                    >
-                      <InputLabel id="collection-label">Collection</InputLabel>
-                      <Select
-                        labelId="collection-label"
-                        name="collection"
-                        value={catalogData.collection}
-                        onChange={handleInputChange}
-                        label="Collection"
-                        required
-                        sx={{
-                          fontFamily: "Montserrat", // Apply font family to select
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "#FFB6C1", // Default border color
-                          },
-                          "&:hover .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "#FFA0B3", // Border color on hover
-                          },
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "#FFA0B3", // Border color on focus
-                          },
-                          "& .MuiSvgIcon-root": {
-                            color: "#FFB6C1", // Dropdown arrow color
-                          },
-                          "&.Mui-focused .MuiSvgIcon-root": {
-                            color: "#FFA0B3", // Arrow color on focus
-                          },
-                        }}
-                      >
-                        <MenuItem
-                          value="Student"
-                          sx={{ fontFamily: "Montserrat" }}
-                        >
-                          Student
-                        </MenuItem>
-                        <MenuItem
-                          value="Lecturers"
-                          sx={{ fontFamily: "Montserrat" }}
-                        >
-                          Lecturers
-                        </MenuItem>
-                        <MenuItem
-                          value="Freelancers"
-                          sx={{ fontFamily: "Montserrat" }}
-                        >
-                          Freelancers
-                        </MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                </>
-              )}
-              {tabIndex === 1 && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DatePicker
-                        label="Date Uploaded"
-                        value={
-                          catalogData.dateUploaded
-                            ? new Date(catalogData.dateUploaded)
-                            : null
-                        }
-                        onChange={(newValue) => {
-                          handleInputChange({
-                            target: {
-                              name: "dateUploaded",
-                              value: newValue ? newValue.toISOString() : "",
-                            },
-                          });
-                        }}
-                        format="dd/MM/yyyy"
-                        slots={{ textField: TextField }}
-                        slotProps={{
-                          textField: {
-                            variant: "outlined",
-                            fullWidth: true,
-                            required: true,
-                            sx: formStyles,
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
-                </>
-              )}
-              {tabIndex === 2 && (
-                <Grid item xs={12}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 2,
-                    }}
-                  >
-                    {/* Display the uploaded image */}
-                    {catalogData.imageUrl && (
-                      <img
-                        src={catalogData.imageUrl}
-                        alt="Uploaded Artwork"
-                        style={{
-                          width: "100%",
-                          maxWidth: "300px",
-                          height: "auto",
-                          borderRadius: "8px",
-                          border: "1px solid #FFB6C1",
-                        }}
-                      />
-                    )}
-                    {/* Progress indicator */}
-                    {loading && (
-                      <Box sx={{ width: "100%", maxWidth: "300px", mt: 2 }}>
-                        <Typography
-                          variant="body2"
-                          sx={{ mb: 1, textAlign: "center" }}
-                        >
-                          Uploading... {Math.round(uploadProgress)}%
-                        </Typography>
-                        <LinearProgress
-                          variant="determinate"
-                          value={uploadProgress}
-                          sx={{
-                            height: 8,
-                            borderRadius: 4,
-                            backgroundColor: "#FFE5E5",
-                            "& .MuiLinearProgress-bar": {
-                              backgroundColor: "#FFB6C1",
-                              borderRadius: 4,
-                            },
-                          }}
-                        />
-                      </Box>
-                    )}
-
-                    {/* Button to change the image */}
-                    <input
-                      type="file"
-                      accept=".jpg,.jpeg,.png,.gif,.webp"
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          setLoading(true); // Show loading state
-
-                          // Upload the file to Firebase Storage
-                          const storageRef = ref(
-                            storage,
-                            `artworks/${Date.now()}_${file.name}`
-                          );
-                          const uploadTask = uploadBytesResumable(
-                            storageRef,
-                            file
-                          );
-
-                          uploadTask.on(
-                            "state_changed",
-                            (snapshot) => {
-                              // Track upload progress
-                              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                              setUploadProgress(progress);
-                            },
-                            (error) => {
-                              // Handle unsuccessful uploads
-                              console.error("Error uploading image:", error);
-                              setLoading(false);
-                              showDialog(
-                                "Upload Failed",
-                                "Failed to upload the image. Please try again.",
-                                false
-                              );
-                            },
-                            async () => {
-                              // Handle successful upload
-                              try {
-                                const downloadURL = await getDownloadURL(
-                                  uploadTask.snapshot.ref
-                                );
-
-                                // Update the state with the new image URL
-                                setCatalogData((prev) => ({
-                                  ...prev,
-                                  imageUrl: downloadURL,
-                                }));
-
-                                setLoading(false);
-                                showDialog(
-                                  "Image Updated",
-                                  "The image has been successfully uploaded. Don't forget to save the metadata to apply all changes.",
-                                  true
-                                );
-                              } catch (error) {
-                                console.error(
-                                  "Error getting download URL:",
-                                  error
-                                );
-                                setLoading(false);
-                                showDialog(
-                                  "Upload Failed",
-                                  "Failed to process the uploaded image. Please try again.",
-                                  false
-                                );
-                              }
-                            }
-                          );
-                        }
-                      }}
-                      style={{ display: "none" }}
-                      id="change-image-button"
-                    />
-                    <label htmlFor="change-image-button">
-                      <Button
-                        variant="contained"
-                        component="span"
-                        disabled={loading}
-                        sx={{
-                          ...buttonStyles,
-                          width: "200px",
-                        }}
-                      >
-                        {loading ? "Uploading..." : "Change Image"}
-                      </Button>
-                    </label>
-                  </Box>
-                </Grid>
-              )}
+              {renderTabContent()}
             </Grid>
 
             <Dialog
@@ -978,7 +867,7 @@ export default function ArtsClerkCatalog() {
               </DialogContent>
 
               <DialogActions sx={dialogStyles.actions.sx}>
-                {["Missing Required Fields", "Error", "Image Updated"].includes(
+                {["Error", "Image Updated"].includes(
                   dialogTitle
                 ) ? (
                   <Button
@@ -1027,7 +916,7 @@ export default function ArtsClerkCatalog() {
               >
                 Save Metadata
               </Button>
-              {tabIndex < 2 && (
+              {tabIndex < tabLabels.length - 1 && (
                 <Button
                   variant="outlined"
                   size="large"

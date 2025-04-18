@@ -80,12 +80,17 @@ const ArtsClerkSidebar = ({ active, disableActiveTab }) => {
       icon: <ImageIcon />,
       key: "manageArtwork",
     },
-  
     {
       path: "/arts-clerk-catalog",
       label: "Edit Metadata",
       icon: <ViewListIcon />,
       key: "catalogMetadata",
+    },
+    {
+      path: "/dynamic-field-manager",
+      label: "Manage Field",
+      icon: <EditIcon />,
+      key: "manageField",
     },
   ];
 

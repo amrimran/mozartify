@@ -133,14 +133,10 @@ export default function ArtsClerkHomepage() {
   const [loading, setLoading] = useState(true);
   const [isFiltered, setIsFiltered] = useState(false);
   const [artworks, setArtworks] = useState([]);
+  const [dynamicFields, setDynamicFields] = useState([]);
   const itemsPerPage = 12;
-  const [medium, setMedium] = useState("");
-  const [artist, setArtist] = useState("");
-  const [style, setStyle] = useState("");
-  const [artTheme, setArtTheme] = useState("");
-  const [unfilteredSearchedArtworks, setUnfilteredSearchedArtworks] = useState(
-    []
-  );
+  const [filterValues, setFilterValues] = useState({});
+  const [unfilteredSearchedArtworks, setUnfilteredSearchedArtworks] = useState([]);
   const [searchedArtworks, setSearchedArtworks] = useState([]);
   const [filteredArtworks, setFilteredArtworks] = useState([]);
 
@@ -265,41 +261,89 @@ export default function ArtsClerkHomepage() {
     </Card>
   );
 
+  // Fetch dynamic fields to know how to display artwork data
+  useEffect(() => {
+    const fetchDynamicFields = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/dynamic-fields');
+        setDynamicFields(response.data);
+      } catch (error) {
+        console.error('Error fetching dynamic fields:', error);
+      }
+    };
+
+    fetchDynamicFields();
+  }, []);
+
+  // Helper function to get field value from dynamicFieldValues array
+  const getFieldValue = (artwork, fieldName) => {
+    if (!artwork || !artwork.dynamicFieldValues) return null;
+
+    // Find the field by name in our dynamicFields array
+    const field = dynamicFields.find(f => f.name === fieldName);
+    if (!field) return null;
+
+    // Find the corresponding field value in artwork's dynamicFieldValues
+    const fieldValue = artwork.dynamicFieldValues.find(
+      dfv => dfv.fieldId === field._id || dfv.fieldId.$oid === field._id
+    );
+
+    return fieldValue ? fieldValue.value : null;
+  };
+
+  // Get display title for an artwork
+  const getArtworkTitle = (artwork) => {
+    // Try to get title from dynamic fields
+    const titleField = getFieldValue(artwork, 'title') || 
+                      getFieldValue(artwork, 'artwork_title') || 
+                      getFieldValue(artwork, 'name');
+    
+    return titleField || "Untitled";
+  };
+
+  // Get display artist for an artwork
+  const getArtworkArtist = (artwork) => {
+    // Try to get artist from dynamic fields
+    const artistField = getFieldValue(artwork, 'artist') || 
+                       getFieldValue(artwork, 'artist_name') || 
+                       getFieldValue(artwork, 'creator');
+    
+    return artistField || "Unknown Artist";
+  };
+
   const fetchArtworks = async (order = "desc", field = "createdAt") => {
     setLoading(true);
     try {
-      // Add setTimeout to create a 2-second delay for smoother UX
+      // Add setTimeout to create a delay for smoother UX
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Use your MongoDB API instead of Firebase
+      // Use your MongoDB API
       const response = await axios.get("http://localhost:3001/catalogArts");
 
       if (response.data) {
-        // Transform response data to match the expected format
-        const artworkData = response.data.map((artwork) => ({
-          id: artwork._id, // MongoDB ObjectId
-          title: artwork.title || "Untitled",
-          artist: artwork.artist || "Unknown Artist",
-          imageUrl: artwork.imageUrl || "",
-          price: artwork.price || "",
-          collection: artwork.collection || "",
-          dateUploaded: artwork.dateUploaded || new Date(),
-          filename: artwork.filename || "",
-        }));
-
-        // Sort data based on the requested field and order
-        const sortedData = artworkData.sort((a, b) => {
-          if (field === "title" || field === "artist") {
-            // String sorting
-            const aValue = a[field]?.toLowerCase() || "";
-            const bValue = b[field]?.toLowerCase() || "";
+        const artworkData = response.data;
+        
+        // Sort data based on dynamic fields or fallback to default sorting
+        const sortedData = [...artworkData].sort((a, b) => {
+          if (field === "title") {
+            // String sorting by title
+            const aValue = getArtworkTitle(a).toLowerCase();
+            const bValue = getArtworkTitle(b).toLowerCase();
+            return order === "asc"
+              ? aValue.localeCompare(bValue)
+              : bValue.localeCompare(aValue);
+          } else if (field === "artist") {
+            // String sorting by artist
+            const aValue = getArtworkArtist(a).toLowerCase();
+            const bValue = getArtworkArtist(b).toLowerCase();
             return order === "asc"
               ? aValue.localeCompare(bValue)
               : bValue.localeCompare(aValue);
           } else {
-            // Date sorting (for dateUploaded)
-            const aValue = new Date(a[field] || 0);
-            const bValue = new Date(b[field] || 0);
+            // Date sorting (for dateUploaded/createdAt)
+            // Try to get date field or fall back to MongoDB's _id which contains a timestamp
+            const aValue = new Date(a.createdAt || a._id || 0);
+            const bValue = new Date(b.createdAt || b._id || 0);
             return order === "asc" ? aValue - bValue : bValue - aValue;
           }
         });
@@ -334,39 +378,31 @@ export default function ArtsClerkHomepage() {
     if (searchQuery) {
       const fetchSearchedArtworks = async () => {
         try {
-          // Fetch artworks from MongoDB API instead of Firebase
+          // Fetch artworks from MongoDB API
           const response = await axios.get("http://localhost:3001/catalogArts");
 
           if (!response.data) {
             throw new Error("No data received from API");
           }
 
-          // Transform response data to match expected format
-          const allArtworks = response.data.map((artwork) => ({
-            id: artwork._id,
-            title: artwork.title || "Untitled",
-            artist: artwork.artist || "Unknown Artist",
-            price: artwork.price || "",
-            collection: artwork.collection || "",
-            dateUploaded: artwork.dateUploaded || new Date(),
-            imageUrl: artwork.imageUrl || "",
-            filename: artwork.filename || "",
-          }));
-
           // Filter based on search query
-          const filteredResults = allArtworks.filter((artwork) => {
+          const filteredResults = response.data.filter((artwork) => {
             const searchLower = searchQuery.toLowerCase();
+            
+            // Search in title and artist from dynamic fields
+            const title = getArtworkTitle(artwork).toLowerCase();
+            const artist = getArtworkArtist(artwork).toLowerCase();
+            
+            // Search in all dynamic field values
+            const dynamicFieldsMatch = artwork.dynamicFieldValues?.some(fieldValue => {
+              const value = String(fieldValue.value).toLowerCase();
+              return value.includes(searchLower);
+            }) || false;
+            
             return (
-              (artwork.title &&
-                artwork.title.toLowerCase().includes(searchLower)) ||
-              (artwork.artist &&
-                artwork.artist.toLowerCase().includes(searchLower)) ||
-              (artwork.collection &&
-                artwork.collection.toLowerCase().includes(searchLower)) ||
-              (artwork.price &&
-                artwork.price.toString().includes(searchLower)) ||
-              (artwork.filename &&
-                artwork.filename.toLowerCase().includes(searchLower))
+              title.includes(searchLower) ||
+              artist.includes(searchLower) ||
+              dynamicFieldsMatch
             );
           });
 
@@ -385,7 +421,7 @@ export default function ArtsClerkHomepage() {
       setUnfilteredSearchedArtworks([]);
       setSearchedArtworks([]);
     }
-  }, [searchQuery]);
+  }, [searchQuery, dynamicFields]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -419,7 +455,7 @@ export default function ArtsClerkHomepage() {
       return searchedArtworks;
     } else if (searchQuery) {
       // If we're only searching without filters, show search results
-      return searchedArtworks;
+      return unfilteredSearchedArtworks;
     } else if (isFiltered) {
       // If we're only filtering without search, show filtered artworks
       return filteredArtworks;
@@ -436,57 +472,55 @@ export default function ArtsClerkHomepage() {
   );
   const pageCount = Math.ceil(displayedArtworks.length / itemsPerPage);
 
-  const applyFilters = (artworks) => {
-    return artworks.filter((artwork) => {
-      return (
-        (!medium || artwork.medium === medium) &&
-        (!artist ||
-          artwork.artist.toLowerCase().includes(artist.toLowerCase())) &&
-        (!artTheme ||
-          artwork.theme.toLowerCase().includes(theme.toLowerCase())) &&
-        (!style || artwork.style.toLowerCase().includes(style.toLowerCase()))
-      );
-    });
+  // Handle filter value changes
+  const handleFilterChange = (fieldId, value) => {
+    setFilterValues(prev => ({
+      ...prev,
+      [fieldId]: value
+    }));
   };
 
-  const clearFilters = () => {
-    setMedium("");
-    setArtist("");
-    setArtTheme("");
-    setStyle("");
-    setIsFiltered(false);
-    if (searchQuery) {
-      setSearchedArtworks(unfilteredSearchedArtworks);
-    }
-  };
-
-  const handleFilterRequest = async () => {
-    const hasFilter = medium || artist || style || artTheme;
+  // Apply filters based on dynamic fields
+  const applyFilters = () => {
+    // Check if any filter is set
+    const hasFilter = Object.values(filterValues).some(value => value !== "" && value !== null);
 
     if (hasFilter) {
       setIsFiltered(true);
       try {
+        // Determine which artworks to filter
+        const artworksToFilter = searchQuery ? unfilteredSearchedArtworks : artworks;
+        
+        // Apply filters to the artworks
+        const filtered = artworksToFilter.filter(artwork => {
+          // For each filter value, check if the artwork matches
+          return Object.entries(filterValues).every(([fieldId, filterValue]) => {
+            // Skip empty filters
+            if (!filterValue || filterValue === "") return true;
+            
+            // Find corresponding field value in the artwork
+            const fieldValueObj = artwork.dynamicFieldValues?.find(fv => 
+              fv.fieldId === fieldId || fv.fieldId.$oid === fieldId
+            );
+            
+            // If no field value found, don't match
+            if (!fieldValueObj) return false;
+            
+            // Check if the field value contains the filter value (case insensitive)
+            const fieldValue = String(fieldValueObj.value).toLowerCase();
+            const filter = String(filterValue).toLowerCase();
+            
+            return fieldValue.includes(filter);
+          });
+        });
+        
         if (searchQuery) {
-          // Apply filters to search results
-          const filteredSearchResults = applyFilters(
-            unfilteredSearchedArtworks
-          );
-          setSearchedArtworks(filteredSearchResults);
+          setSearchedArtworks(filtered);
         } else {
-          // Apply filters to all artworks
-          const artworkRef = collection(storage, "artworks");
-          const querySnapshot = await getDocs(artworkRef);
-
-          const allArtworks = querySnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-
-          const filtered = applyFilters(allArtworks);
           setFilteredArtworks(filtered);
         }
       } catch (error) {
-        console.error("Error fetching filtered artworks:", error);
+        console.error("Error applying filters:", error);
       }
     } else {
       setIsFiltered(false);
@@ -494,12 +528,43 @@ export default function ArtsClerkHomepage() {
         setSearchedArtworks(unfilteredSearchedArtworks);
       }
     }
+    
+    // Close the filter drawer
+    setIsDrawerOpen(false);
+  };
+
+  const clearFilters = () => {
+    setFilterValues({});
+    setIsFiltered(false);
+    if (searchQuery) {
+      setSearchedArtworks(unfilteredSearchedArtworks);
+    }
   };
 
   const handleCardClick = (artworkId) => {
     console.log("Artwork ID being passed:", artworkId);
     navigate(`/arts-clerk-view/${artworkId}`);
   };
+
+  // Get filter fields based on categories
+  const getFilterFields = () => {
+    // Group fields by category
+    const categorizedFields = {};
+    
+    dynamicFields.forEach(field => {
+      if (!field.category) return;
+      
+      if (!categorizedFields[field.category]) {
+        categorizedFields[field.category] = [];
+      }
+      
+      categorizedFields[field.category].push(field);
+    });
+    
+    return categorizedFields;
+  };
+
+  const filterFields = getFilterFields();
 
   return (
     <ThemeProvider theme={customTheme}>
@@ -752,8 +817,8 @@ export default function ArtsClerkHomepage() {
             ) : paginatedArtworks.length > 0 ? (
               paginatedArtworks.map((artwork) => (
                 <Card
-                  key={artwork.id}
-                  onClick={() => handleCardClick(artwork.id)}
+                  key={artwork._id}
+                  onClick={() => handleCardClick(artwork._id)}
                   sx={{
                     width: { xs: "100%", sm: 210 },
                     display: "flex",
@@ -771,7 +836,7 @@ export default function ArtsClerkHomepage() {
                     <CardMedia
                       component="img"
                       image={artwork.imageUrl}
-                      alt={artwork.title}
+                      alt={getArtworkTitle(artwork)}
                       sx={{
                         height: { xs: 200, sm: 280 },
                         width: { xs: "100%", sm: 200 },
@@ -834,7 +899,7 @@ export default function ArtsClerkHomepage() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {artwork.title || "Untitled"}
+                      {getArtworkTitle(artwork)}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -849,7 +914,7 @@ export default function ArtsClerkHomepage() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {artwork.artist || "Unknown Artist"}
+                      {getArtworkArtist(artwork)}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -899,7 +964,7 @@ export default function ArtsClerkHomepage() {
         </Box>
       </Box>
 
-      {/* Filter Drawer */}
+      {/* Filter Drawer - Updated for Dynamic Fields */}
       <Drawer
         anchor="right"
         open={isDrawerOpen}
@@ -933,121 +998,109 @@ export default function ArtsClerkHomepage() {
             Filter Options
           </Typography>
 
-          {/* Filter Form Section */}
+          {/* Dynamic Filter Form Section - Grouped by categories */}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-            <FormControl fullWidth>
-              <InputLabel>Medium</InputLabel>
-              <Select
-                value={medium}
-                onChange={(e) => setMedium(e.target.value)}
-                label="Medium"
+            {Object.entries(filterFields).map(([category, fields]) => (
+              <Box key={category} sx={{ mb: 3 }}>
+                <Typography 
+                  variant="subtitle1" 
+                  sx={{ 
+                    fontWeight: "bold", 
+                    mb: 1, 
+                    fontFamily: "Montserrat",
+                    borderBottom: "1px solid #FFB6C1",
+                    pb: 0.5
+                  }}
+                >
+                  {category}
+                </Typography>
+                
+                {fields.map((field) => (
+                  <FormControl key={field._id} fullWidth sx={{ mb: 2 }}>
+                    <InputLabel>{field.label}</InputLabel>
+                    
+                    {field.fieldType === 'select' ? (
+                      // Select/dropdown field
+                      <Select
+                        value={filterValues[field._id] || ''}
+                        onChange={(e) => handleFilterChange(field._id, e.target.value)}
+                        label={field.label}
+                        sx={{
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#FFB6C1",
+                          },
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#FFA0B3",
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#FFA0B3",
+                          },
+                        }}
+                      >
+                        <MenuItem value="">Any</MenuItem>
+                        {field.options && field.options.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    ) : (
+                      // Text input field for other field types
+                      <TextField
+                        label={field.label}
+                        value={filterValues[field._id] || ''}
+                        onChange={(e) => handleFilterChange(field._id, e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            "& fieldset": {
+                              borderColor: "#FFB6C1",
+                            },
+                            "&:hover fieldset": {
+                              borderColor: "#FFA0B3",
+                            },
+                            "&.Mui-focused fieldset": {
+                              borderColor: "#FFA0B3",
+                            },
+                          },
+                        }}
+                      />
+                    )}
+                  </FormControl>
+                ))}
+              </Box>
+            ))}
+            
+            {Object.keys(filterFields).length === 0 && (
+              <Typography
+                variant="body1"
                 sx={{
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#FFB6C1",
-                  },
-                  "&:hover .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#FFA0B3",
-                  },
-                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#FFA0B3",
-                  },
+                  textAlign: "center",
+                  color: "text.secondary",
+                  fontFamily: "Montserrat",
+                  my: 2
                 }}
               >
-                {mediums.map((item) => (
-                  <MenuItem key={item} value={item}>
-                    {item}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth>
-              <InputLabel>Artist</InputLabel>
-              <Select
-                value={artist}
-                onChange={(e) => setArtist(e.target.value)}
-                label="Artist"
-                sx={{
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#FFB6C1",
-                  },
-                  "&:hover .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#FFA0B3",
-                  },
-                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#FFA0B3",
-                  },
-                }}
-              >
-                {artists.map((item) => (
-                  <MenuItem key={item} value={item}>
-                    {item}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth>
-              <InputLabel>Theme</InputLabel>
-              <Select
-                value={artTheme}
-                onChange={(e) => setTheme(e.target.value)}
-                label="Theme"
-                sx={{
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#FFB6C1",
-                  },
-                  "&:hover .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#FFA0B3",
-                  },
-                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#FFA0B3",
-                  },
-                }}
-              >
-                {themes.map((item) => (
-                  <MenuItem key={item} value={item}>
-                    {item}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <TextField
-              label="Style"
-              value={style}
-              onChange={(e) => setStyle(e.target.value)}
-              fullWidth
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": {
-                    borderColor: "#FFB6C1",
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "#FFA0B3",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#FFA0B3",
-                  },
-                },
-              }}
-            />
+                No filter fields available. Please configure dynamic fields in the field management section.
+              </Typography>
+            )}
           </Box>
 
-          {/* Buttons Section - Using marginTop: auto to push it to bottom */}
+          {/* Buttons Section */}
           <Box
             sx={{
               display: "flex",
               flexDirection: "column",
               gap: 2,
-              mt: "2", // This pushes the button section to the bottom
+              mt: "auto", // This pushes the button section to the bottom
               pt: 4, // Adds padding top for spacing
             }}
           >
             <Button
               variant="contained"
               fullWidth
-              onClick={handleFilterRequest}
+              onClick={applyFilters}
               sx={buttonStyles}
             >
               APPLY FILTERS
@@ -1076,54 +1129,3 @@ export default function ArtsClerkHomepage() {
     </ThemeProvider>
   );
 }
-
-// Data arrays for select inputs
-const mediums = [
-  "Oil Painting",
-  "Acrylic Painting",
-  "Watercolor",
-  "Digital Art",
-  "Photography",
-  "Sculpture",
-  "Mixed Media",
-  "Charcoal Drawing",
-  "Pencil Drawing",
-  "Pastel",
-];
-
-const artists = [
-  "Leonardo da Vinci",
-  "Vincent van Gogh",
-  "Frida Kahlo",
-  "Pablo Picasso",
-  "Georgia O'Keeffe",
-  "Salvador Dalí",
-  "Claude Monet",
-  "Andy Warhol",
-];
-
-const themes = [
-  "Nature",
-  "Portraiture",
-  "Abstract",
-  "Still Life",
-  "Urban",
-  "Fantasy",
-  "Historical",
-  "Cultural",
-  "Landscape",
-  "Surrealism",
-];
-
-const styles = [
-  "Impressionism",
-  "Cubism",
-  "Realism",
-  "Surrealism",
-  "Abstract Expressionism",
-  "Pop Art",
-  "Minimalism",
-  "Baroque",
-  "Renaissance",
-  "Contemporary",
-];
