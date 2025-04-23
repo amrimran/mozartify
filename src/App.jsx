@@ -14,7 +14,7 @@ import CustomerSearch2 from "./CustomerSearch2";;
 import CustomerAdvancedSearch from "./CustomerAdvancedSearch";
 import CustomerAdvancedSearch2 from "./CustomerAdvancedSearch2";
 import CustomerCompose from "./CustomerCompose";
-import CustomerNewCompose from "./CustomerNewCompose";
+// import CustomerNewCompose from "./CustomerNewCompose";
 import CustomerEdit from "./CustomerEdit";
 import CustomerCatalog from "./CustomerCatalog";
 import CustomerFavorites from "./CustomerFavorites";
@@ -69,7 +69,7 @@ import ArtsClerkView from "./ArtsClerkView";
 import ArtsClerkProfile from "./ArtsClerkProfile";
 import DynamicFieldManager from "./DynamicFieldManager";
 import { UnreadProvider } from "./UnreadContext";
-import CompositionPage from './CompositionPage';
+// import CompositionPage from './CompositionPage';
 
 
 
@@ -97,7 +97,7 @@ function App() {
         <Route path="/customer-search/customer-advanced-search" element={<CustomerAdvancedSearch />} />
         <Route path="/customer-search-2/customer-advanced-search-2" element={<CustomerAdvancedSearch2 />} />
         <Route path="/customer-compose" element={<CustomerCompose />} />
-        <Route path="/customer-compose/customer-new-compose" element={<CustomerNewCompose />} />
+        {/* <Route path="/customer-compose/customer-new-compose" element={<CustomerNewCompose />} /> */}
         <Route path="/customer-compose/customer-new-compose/customer-edit" element={<CustomerEdit />} />
         <Route path="/customer-compose/customer-new-compose/customer-edit/customer-catalog" element={<CustomerCatalog />} />
         <Route path="/customer-favorites" element={<CustomerFavorites />} />
@@ -152,11 +152,7 @@ function App() {
         <Route path="/arts-clerk-view/:artworkId" element={<ArtsClerkView />} />
         <Route path="/arts-clerk-profile" element={<ArtsClerkProfile />} />
         <Route path="/dynamic-field-manager" element={<DynamicFieldManager/>} />
-
-
-
-
-        <Route path="/composition-page" element={<CompositionPage />} />
+        {/* <Route path="/composition-page" element={<CompositionPage />} /> */}
 
 
 

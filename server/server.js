@@ -514,16 +514,12 @@ app.post("/delete-and-transfer-abc-file", async (req, res) => {
 // Create a new artwork or update existing one
 app.post('/catalogArts', async (req, res) => {
   try {
-    // Pull everything from the request body, including dynamicFieldValues
-    const { _id, imageUrl, dynamicFieldValues, ...otherFields } = req.body;
+    // Extract basic and dynamic fields from request body
+    const { _id, imageUrl, ...allFields } = req.body;
     
     // If _id is provided, update existing artwork
     if (_id) {
-      // Create update object with dynamicFieldValues and any other fields
-      const updateData = { 
-        ...otherFields,
-        dynamicFieldValues
-      };
+      const updateData = { ...allFields };
       
       // Only include imageUrl in the update if it's provided (not empty)
       if (imageUrl !== undefined) {
@@ -543,11 +539,11 @@ app.post('/catalogArts', async (req, res) => {
       return res.status(200).json(artwork);
     }
     
-    // If no _id, create new artwork
+    // If no _id, create new artwork with all fields directly
     const artwork = new Artwork({
-      ...otherFields,
+      ...allFields,
       imageUrl,
-      dynamicFieldValues
+      dateUploaded: new Date()
     });
 
     await artwork.save();
@@ -592,7 +588,6 @@ app.get("/catalogArts", async (req, res) => {
     res.status(500).json({ message: "Error fetching artworks", error: err.message });
   }
 });
-
 
 // Delete artwork
 app.delete('/catalogArts/:id', async (req, res) => {
@@ -715,61 +710,6 @@ app.get('/dynamic-fields/by-tab', async (req, res) => {
   } catch (err) {
     console.error("Error fetching fields by tab:", err);
     res.status(500).json({ message: 'Error fetching fields by tab', error: err.message });
-  }
-});
-
-// Get dynamic field values for an artwork
-app.get('/catalogArts/:id/dynamic-fields', async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Find artwork by ID
-    const artwork = await Artwork.findById(id)
-      .populate({
-        path: 'dynamicFieldValues.fieldId',
-        model: 'DynamicField'
-      });
-    
-    if (!artwork) {
-      return res.status(404).json({ message: 'Artwork not found' });
-    }
-    
-    res.status(200).json(artwork.dynamicFieldValues);
-  } catch (err) {
-    console.error("Error fetching dynamic field values:", err);
-    res.status(500).json({ message: 'Error fetching dynamic field values', error: err.message });
-  }
-});
-
-// Update dynamic field values for an artwork
-app.post('/catalogArts/:id/dynamic-fields', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { fieldValues } = req.body;
-    
-    if (!Array.isArray(fieldValues)) {
-      return res.status(400).json({ message: 'Field values must be an array' });
-    }
-    
-    // Find artwork by ID
-    const artwork = await Artwork.findById(id);
-    
-    if (!artwork) {
-      return res.status(404).json({ message: 'Artwork not found' });
-    }
-    
-    // Update dynamic field values
-    artwork.dynamicFieldValues = fieldValues;
-    
-    await artwork.save();
-    
-    res.status(200).json({ 
-      message: 'Dynamic field values updated successfully',
-      dynamicFieldValues: artwork.dynamicFieldValues
-    });
-  } catch (err) {
-    console.error("Error updating dynamic field values:", err);
-    res.status(500).json({ message: 'Error updating dynamic field values', error: err.message });
   }
 });
 

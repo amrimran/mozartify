@@ -403,27 +403,22 @@ export default function ArtsClerkView() {
     }
   };
 
-  // Get field object by ID
-  const getFieldById = (fieldId) => {
-    return dynamicFields.find(field => 
-      field._id === fieldId || field._id === fieldId.$oid
-    );
-  };
-
   // Group fields by category for better organization
   const getGroupedFields = () => {
-    if (!artwork || !artwork.dynamicFieldValues || !dynamicFields.length) {
+    if (!artwork || !dynamicFields.length) {
       return {};
     }
 
     // Create a map of categories
     const categorizedFields = {};
     
-    // Process each field value
-    artwork.dynamicFieldValues.forEach(fieldValue => {
-      const field = getFieldById(fieldValue.fieldId);
+    // Process each field in dynamicFields
+    dynamicFields.forEach(field => {
+      // Get the field value directly from artwork object
+      const fieldValue = artwork[field.name];
       
-      if (!field) return; // Skip if field definition not found
+      // Skip if no value exists for this field
+      if (fieldValue === undefined || fieldValue === null) return;
       
       const category = field.category || 'General';
       
@@ -433,7 +428,7 @@ export default function ArtsClerkView() {
       
       categorizedFields[category].push({
         field,
-        value: fieldValue.value
+        value: fieldValue
       });
     });
     
@@ -449,20 +444,14 @@ export default function ArtsClerkView() {
 
   // Get a title field for the artwork
   const getArtworkTitle = () => {
-    if (!artwork || !artwork.dynamicFieldValues) return "Untitled";
+    if (!artwork) return "Untitled";
     
     // Look for fields with names related to title
     const titleFields = ['title', 'artwork_title', 'name'];
     
     for (const fieldName of titleFields) {
-      const titleField = dynamicFields.find(df => df.name === fieldName);
-      if (titleField) {
-        const titleValue = artwork.dynamicFieldValues.find(
-          dv => dv.fieldId === titleField._id || dv.fieldId.$oid === titleField._id
-        );
-        if (titleValue && titleValue.value) {
-          return titleValue.value;
-        }
+      if (artwork[fieldName]) {
+        return artwork[fieldName];
       }
     }
     

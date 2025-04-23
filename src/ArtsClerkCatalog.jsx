@@ -220,8 +220,8 @@ export default function ArtsClerkCatalog() {
   const [isSuccess, setIsSuccess] = useState(true);
   const [tabIndex, setTabIndex] = useState(0);
   const [catalogData, setCatalogData] = useState({
-    imageUrl: "",
-    dynamicFieldValues: [] // Store dynamic field values
+    imageUrl: ""
+    // Dynamic fields will be added directly as properties
   });
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -326,51 +326,20 @@ export default function ArtsClerkCatalog() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
-    // Check if this is a dynamic field value
-    const dynamicField = dynamicFields.find(field => field.name === name);
-    
-    if (dynamicField) {
-      // Handle dynamic field value changes
-      setCatalogData(prevData => {
-        // Find if we already have this field in our values
-        const existingValueIndex = prevData.dynamicFieldValues.findIndex(
-          item => item.fieldId === dynamicField._id
-        );
-        
-        const updatedDynamicFieldValues = [...prevData.dynamicFieldValues];
-        
-        if (existingValueIndex >= 0) {
-          // Update existing value
-          updatedDynamicFieldValues[existingValueIndex] = {
-            ...updatedDynamicFieldValues[existingValueIndex],
-            value: value
-          };
-        } else {
-          // Add new value
-          updatedDynamicFieldValues.push({
-            fieldId: dynamicField._id,
-            value: value
-          });
-        }
-        
-        return {
-          ...prevData,
-          dynamicFieldValues: updatedDynamicFieldValues
-        };
-      });
-    } else {
-      // Handle standard field value changes
-      setCatalogData(prevData => ({
-        ...prevData,
-        [name]: value
-      }));
-    }
+    // Update the field value directly as a property
+    setCatalogData(prevData => ({
+      ...prevData,
+      [name]: value
+    }));
   };
 
-  // Get value for a dynamic field
+  // Get value for a dynamic field directly from catalogData
   const getDynamicFieldValue = (fieldId) => {
-    const fieldValue = catalogData.dynamicFieldValues?.find(item => item.fieldId === fieldId);
-    return fieldValue ? fieldValue.value : '';
+    const field = dynamicFields.find(f => f._id === fieldId);
+    if (!field) return '';
+    
+    // Get the value from the direct property
+    return catalogData[field.name] || '';
   };
 
   // Helper function to show dialog
@@ -510,117 +479,117 @@ export default function ArtsClerkCatalog() {
   };
 
   // Render the fields based on the current tab
-const renderTabContent = () => {
-  // Last tab is always the Image tab
-  if (tabIndex === tabLabels.length - 1) {
-    return (
-      <Grid item xs={12}>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 2,
-          }}
-        >
-          {/* Display the uploaded image */}
-          {catalogData.imageUrl && (
-            <img
-              src={catalogData.imageUrl}
-              alt="Uploaded Artwork"
-              style={{
-                width: "100%",
-                maxWidth: "300px",
-                height: "auto",
-                borderRadius: "8px",
-                border: "1px solid #FFB6C1",
-              }}
-            />
-          )}
-          
-          {/* Progress indicator */}
-          {loading && (
-            <Box sx={{ width: "100%", maxWidth: "300px", mt: 2 }}>
-              <Typography
-                variant="body2"
-                sx={{ mb: 1, textAlign: "center" }}
-              >
-                Uploading... {Math.round(uploadProgress)}%
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={uploadProgress}
-                sx={{
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: "#FFE5E5",
-                  "& .MuiLinearProgress-bar": {
-                    backgroundColor: "#FFB6C1",
-                    borderRadius: 4,
-                  },
+  const renderTabContent = () => {
+    // Last tab is always the Image tab
+    if (tabIndex === tabLabels.length - 1) {
+      return (
+        <Grid item xs={12}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            {/* Display the uploaded image */}
+            {catalogData.imageUrl && (
+              <img
+                src={catalogData.imageUrl}
+                alt="Uploaded Artwork"
+                style={{
+                  width: "100%",
+                  maxWidth: "300px",
+                  height: "auto",
+                  borderRadius: "8px",
+                  border: "1px solid #FFB6C1",
                 }}
               />
-            </Box>
-          )}
+            )}
+            
+            {/* Progress indicator */}
+            {loading && (
+              <Box sx={{ width: "100%", maxWidth: "300px", mt: 2 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ mb: 1, textAlign: "center" }}
+                >
+                  Uploading... {Math.round(uploadProgress)}%
+                </Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={uploadProgress}
+                  sx={{
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: "#FFE5E5",
+                    "& .MuiLinearProgress-bar": {
+                      backgroundColor: "#FFB6C1",
+                      borderRadius: 4,
+                    },
+                  }}
+                />
+              </Box>
+            )}
 
-          {/* Button to change the image */}
-          <input
-            type="file"
-            accept=".jpg,.jpeg,.png,.gif,.webp"
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (file) {
-                handleImageUpload(file);
-              }
-            }}
-            style={{ display: "none" }}
-            id="change-image-button"
-          />
-          <label htmlFor="change-image-button">
-            <Button
-              variant="contained"
-              component="span"
-              disabled={loading}
-              sx={{
-                ...buttonStyles,
-                width: "200px",
+            {/* Button to change the image */}
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.gif,.webp"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  handleImageUpload(file);
+                }
               }}
-            >
-              {loading ? "Uploading..." : "Change Image"}
-            </Button>
-          </label>
-        </Box>
-      </Grid>
-    );
-  }
+              style={{ display: "none" }}
+              id="change-image-button"
+            />
+            <label htmlFor="change-image-button">
+              <Button
+                variant="contained"
+                component="span"
+                disabled={loading}
+                sx={{
+                  ...buttonStyles,
+                  width: "200px",
+                }}
+              >
+                {loading ? "Uploading..." : "Change Image"}
+              </Button>
+            </label>
+          </Box>
+        </Grid>
+      );
+    }
 
-  // For other tabs, render the dynamic fields for the current tab
-  const fieldsForCurrentTab = fieldsByTab[tabIndex] || [];
-  
-  // If no fields exist for this tab, just show a message
-  if (fieldsForCurrentTab.length === 0) {
-    return (
-      <Grid item xs={12}>
-        <Typography variant="body1" sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
-          No fields configured for this tab. Use the field manager to add fields.
-        </Typography>
-      </Grid>
-    );
-  }
+    // For other tabs, render the dynamic fields for the current tab
+    const fieldsForCurrentTab = fieldsByTab[tabIndex] || [];
+    
+    // If no fields exist for this tab, just show a message
+    if (fieldsForCurrentTab.length === 0) {
+      return (
+        <Grid item xs={12}>
+          <Typography variant="body1" sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+            No fields configured for this tab. Use the field manager to add fields.
+          </Typography>
+        </Grid>
+      );
+    }
 
-  // Render the dynamic fields for this tab
-  return fieldsForCurrentTab.map(field => (
-    <Grid item xs={12} sm={6} key={field._id}>
-      <DynamicField
-        field={field}
-        value={getDynamicFieldValue(field._id)}
-        onChange={handleInputChange}
-        formStyles={formStyles}
-        isMobile={isMobile}
-      />
-    </Grid>
-  ));
-};
+    // Render the dynamic fields for this tab
+    return fieldsForCurrentTab.map(field => (
+      <Grid item xs={12} sm={6} key={field._id}>
+        <DynamicField
+          field={field}
+          value={catalogData[field.name] || ''}
+          onChange={handleInputChange}
+          formStyles={formStyles}
+          isMobile={isMobile}
+        />
+      </Grid>
+    ));
+  };
 
   return (
     <ThemeProvider theme={theme}>

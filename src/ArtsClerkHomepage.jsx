@@ -275,40 +275,24 @@ export default function ArtsClerkHomepage() {
     fetchDynamicFields();
   }, []);
 
-  // Helper function to get field value from dynamicFieldValues array
-  const getFieldValue = (artwork, fieldName) => {
-    if (!artwork || !artwork.dynamicFieldValues) return null;
-
-    // Find the field by name in our dynamicFields array
-    const field = dynamicFields.find(f => f.name === fieldName);
-    if (!field) return null;
-
-    // Find the corresponding field value in artwork's dynamicFieldValues
-    const fieldValue = artwork.dynamicFieldValues.find(
-      dfv => dfv.fieldId === field._id || dfv.fieldId.$oid === field._id
-    );
-
-    return fieldValue ? fieldValue.value : null;
-  };
-
   // Get display title for an artwork
   const getArtworkTitle = (artwork) => {
-    // Try to get title from dynamic fields
-    const titleField = getFieldValue(artwork, 'title') || 
-                      getFieldValue(artwork, 'artwork_title') || 
-                      getFieldValue(artwork, 'name');
+    // Get title directly from artwork properties
+    if (artwork.title) return artwork.title;
+    if (artwork.artwork_title) return artwork.artwork_title;
+    if (artwork.name) return artwork.name;
     
-    return titleField || "Untitled";
+    return "Untitled";
   };
 
   // Get display artist for an artwork
   const getArtworkArtist = (artwork) => {
-    // Try to get artist from dynamic fields
-    const artistField = getFieldValue(artwork, 'artist') || 
-                       getFieldValue(artwork, 'artist_name') || 
-                       getFieldValue(artwork, 'creator');
+    // Get artist directly from artwork properties
+    if (artwork.artist) return artwork.artist;
+    if (artwork.artist_name) return artwork.artist_name;
+    if (artwork.creator) return artwork.creator;
     
-    return artistField || "Unknown Artist";
+    return "Unknown Artist";
   };
 
   const fetchArtworks = async (order = "desc", field = "createdAt") => {
@@ -323,7 +307,7 @@ export default function ArtsClerkHomepage() {
       if (response.data) {
         const artworkData = response.data;
         
-        // Sort data based on dynamic fields or fallback to default sorting
+        // Sort data based on direct properties or fallback to default sorting
         const sortedData = [...artworkData].sort((a, b) => {
           if (field === "title") {
             // String sorting by title
@@ -389,20 +373,25 @@ export default function ArtsClerkHomepage() {
           const filteredResults = response.data.filter((artwork) => {
             const searchLower = searchQuery.toLowerCase();
             
-            // Search in title and artist from dynamic fields
+            // Search directly in artwork properties
             const title = getArtworkTitle(artwork).toLowerCase();
             const artist = getArtworkArtist(artwork).toLowerCase();
             
-            // Search in all dynamic field values
-            const dynamicFieldsMatch = artwork.dynamicFieldValues?.some(fieldValue => {
-              const value = String(fieldValue.value).toLowerCase();
-              return value.includes(searchLower);
-            }) || false;
+            // Search in all artwork properties
+            const hasMatchingProperty = Object.entries(artwork).some(([key, value]) => {
+              // Skip non-string values, arrays, and objects
+              if (typeof value !== 'string' && typeof value !== 'number') return false;
+              
+              // Make sure we're only checking fields that we care about (skip system fields)
+              if (['_id', 'imageUrl', 'createdAt', 'updatedAt', '__v'].includes(key)) return false;
+              
+              return String(value).toLowerCase().includes(searchLower);
+            });
             
             return (
               title.includes(searchLower) ||
               artist.includes(searchLower) ||
-              dynamicFieldsMatch
+              hasMatchingProperty
             );
           });
 
@@ -473,10 +462,10 @@ export default function ArtsClerkHomepage() {
   const pageCount = Math.ceil(displayedArtworks.length / itemsPerPage);
 
   // Handle filter value changes
-  const handleFilterChange = (fieldId, value) => {
+  const handleFilterChange = (fieldName, value) => {
     setFilterValues(prev => ({
       ...prev,
-      [fieldId]: value
+      [fieldName]: value
     }));
   };
 
@@ -494,23 +483,21 @@ export default function ArtsClerkHomepage() {
         // Apply filters to the artworks
         const filtered = artworksToFilter.filter(artwork => {
           // For each filter value, check if the artwork matches
-          return Object.entries(filterValues).every(([fieldId, filterValue]) => {
+          return Object.entries(filterValues).every(([fieldName, filterValue]) => {
             // Skip empty filters
             if (!filterValue || filterValue === "") return true;
             
-            // Find corresponding field value in the artwork
-            const fieldValueObj = artwork.dynamicFieldValues?.find(fv => 
-              fv.fieldId === fieldId || fv.fieldId.$oid === fieldId
-            );
+            // Get field value directly from artwork property
+            const fieldValue = artwork[fieldName];
             
             // If no field value found, don't match
-            if (!fieldValueObj) return false;
+            if (fieldValue === undefined || fieldValue === null) return false;
             
             // Check if the field value contains the filter value (case insensitive)
-            const fieldValue = String(fieldValueObj.value).toLowerCase();
-            const filter = String(filterValue).toLowerCase();
+            const fieldValueStr = String(fieldValue).toLowerCase();
+            const filterValueStr = String(filterValue).toLowerCase();
             
-            return fieldValue.includes(filter);
+            return fieldValueStr.includes(filterValueStr);
           });
         });
         
@@ -1022,8 +1009,8 @@ export default function ArtsClerkHomepage() {
                     {field.fieldType === 'select' ? (
                       // Select/dropdown field
                       <Select
-                        value={filterValues[field._id] || ''}
-                        onChange={(e) => handleFilterChange(field._id, e.target.value)}
+                        value={filterValues[field.name] || ''}
+                        onChange={(e) => handleFilterChange(field.name, e.target.value)}
                         label={field.label}
                         sx={{
                           "& .MuiOutlinedInput-notchedOutline": {
@@ -1048,8 +1035,8 @@ export default function ArtsClerkHomepage() {
                       // Text input field for other field types
                       <TextField
                         label={field.label}
-                        value={filterValues[field._id] || ''}
-                        onChange={(e) => handleFilterChange(field._id, e.target.value)}
+                        value={filterValues[field.name] || ''}
+                        onChange={(e) => handleFilterChange(field.name, e.target.value)}
                         fullWidth
                         variant="outlined"
                         sx={{
