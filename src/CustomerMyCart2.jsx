@@ -237,7 +237,9 @@ export default function CustomerMyCart2() {
 
   const fetchCartItemIDs = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/user-artwork-cart");
+      const response = await axios.get(
+        "http://localhost:3000/user-artwork-cart"
+      );
       if (response.data.length === 0) {
         setCartItemIDs([]);
         return;
@@ -276,6 +278,14 @@ export default function CustomerMyCart2() {
     fetchCartItems();
   }, [cartItemIDs]);
 
+  const getArtworkField = (cartItems, fieldId) => {
+    return cartItems?.dynamicFieldValues?.find((f) => f.fieldId === fieldId)
+      ?.value;
+  };
+
+  
+ 
+
   const subtotal =
     cartItems.length > 0
       ? cartItems.reduce((sum, item) => sum + parseFloat(item.price), 0)
@@ -283,7 +293,9 @@ export default function CustomerMyCart2() {
 
   const handleRemoveItem = async (id) => {
     try {
-      await axios.delete(`http://localhost:3000/remove-artwork-from-cart/${id}`);
+      await axios.delete(
+        `http://localhost:3000/remove-artwork-from-cart/${id}`
+      );
       await fetchCartItemIDs();
     } catch (error) {
       console.error("Error removing item from cart:", error);
@@ -598,16 +610,16 @@ export default function CustomerMyCart2() {
                                   fontSize: isMobile ? "0.8rem" : "1rem",
                                 }}
                               >
-                                {item?.title}
+                                {item.title}
                               </Typography>
                             </Box>
                           </TableCell>
                           {!isMobile && (
                             <>
+                              <TableCell sx={{ p: 2 }}>{item.artist}</TableCell>
                               <TableCell sx={{ p: 2 }}>
-                                {item.artist}
+                                {item.collection}
                               </TableCell>
-                              <TableCell sx={{ p: 2 }}>{item.collection}</TableCell>
                             </>
                           )}
                           <TableCell

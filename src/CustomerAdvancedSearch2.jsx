@@ -85,19 +85,17 @@ export default function CustomerAdvancedSearch2() {
     type: "", // Add this to handle snackbar type (e.g., "cart", "favorite", etc.)
   });
 
-  // Replace the hardcoded lists and add these state variables at the top of your CustomerSearch component:
-  const [artistList, setArtistList] = useState([]);
-  const [collectionList, setCollectionList] = useState([]);
+  const [refineFilters, setRefineFilters] = useState({});
+  const [selectedFilters, setSelectedFilters] = useState({});
 
   // Add this useEffect hook after your other useEffect hooks:
   useEffect(() => {
     const fetchRefineLists = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/artwork-refine-search");
-        const { artists, collections } = response.data;
-
-        setCollectionList(collections);
-        setArtistList(artists);
+        const response = await axios.get(
+          "http://localhost:3000/artwork-refine-search"
+        );
+        setRefineFilters(response.data);
       } catch (error) {
         console.error("Error fetching refine search lists:", error);
       }
@@ -153,13 +151,9 @@ export default function CustomerAdvancedSearch2() {
     setselectedCollections(e.target.value);
   };
 
-
   const handleRefineClick = () => {
     // Check if all four filter categories are empty
-    if (
-      selectedArtists.length === 0 &&
-      selectedCollections.length === 0
-    ) {
+    if (selectedArtists.length === 0 && selectedCollections.length === 0) {
       // If all filters are empty, reset the filtered results and set hasFiltered to false
       setFilteredResults([]); // Optional: reset filtered results
       setHasFiltered(false);
@@ -210,7 +204,13 @@ export default function CustomerAdvancedSearch2() {
   ).slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
   //advanced search query builder variables
-  const collectionOptions = ["All", "Lecturers", "Students", "Freelancers", "Uncategorized"];
+  const collectionOptions = [
+    "All",
+    "Lecturers",
+    "Students",
+    "Freelancers",
+    "Uncategorized",
+  ];
 
   const metadataItems = [
     { code: "All", label: "All" },
@@ -289,7 +289,9 @@ export default function CustomerAdvancedSearch2() {
   useEffect(() => {
     const fetchAddedToCartArtworks = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/user-artwork-cart");
+        const response = await axios.get(
+          "http://localhost:3000/user-artwork-cart"
+        );
 
         if (response.data.length === 0) {
           setAddedToCartArtworks([]);
@@ -328,10 +330,13 @@ export default function CustomerAdvancedSearch2() {
     try {
       const isFavorite = user?.favorites_art?.includes(artworkId);
 
-      const response = await axios.post("http://localhost:3000/set-favorites-artwork", {
-        artworkId,
-        action: isFavorite ? "remove" : "add", // Explicitly specify the action
-      });
+      const response = await axios.post(
+        "http://localhost:3000/set-favorites-artwork",
+        {
+          artworkId,
+          action: isFavorite ? "remove" : "add", // Explicitly specify the action
+        }
+      );
       setFavorites(response.data.favorites_art);
 
       // Show appropriate snackbar message
@@ -1391,89 +1396,62 @@ export default function CustomerAdvancedSearch2() {
                       Refine Your Search
                     </Typography>
 
-                    <FormControl fullWidth sx={{ mb: { xs: 1, sm: 2 } }}>
-                      <InputLabel
-                        sx={{
-                          fontFamily: "Montserrat",
-                          fontSize: { xs: "0.75rem", sm: "1rem" },
-                        }}
-                      >
-                        Artist
-                      </InputLabel>
-                      <Select
-                        multiple
-                        value={selectedArtists}
-                        onChange={handleArtistChange}
-                        label="Artist"
-                        renderValue={(selected) => selected.join(", ")}
-                        sx={{
-                          fontSize: { xs: "0.75rem", sm: "1rem" },
-                          borderRadius: "16px",
-                          fontFamily: "Montserrat",
-                          "&:hover .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "#8BD3E6",
-                          },
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "#8BD3E6",
-                          },
-                        }}
-                      >
-                        {artistList.map((artist) => (
-                          <MenuItem
-                            key={artist}
-                            value={artist}
+                    {Object.entries(refineFilters).map(
+                      ([filterName, values]) => (
+                        <FormControl
+                          key={filterName}
+                          fullWidth
+                          sx={{ mb: { xs: 1, sm: 2 } }}
+                        >
+                          <InputLabel
                             sx={{
                               fontFamily: "Montserrat",
                               fontSize: { xs: "0.75rem", sm: "1rem" },
+                              textTransform: "capitalize",
                             }}
                           >
-                            {artist}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    <FormControl fullWidth sx={{ mb: { xs: 1, sm: 2 } }}>
-                      <InputLabel
-                        sx={{
-                          fontFamily: "Montserrat",
-                          fontSize: { xs: "0.75rem", sm: "1rem" },
-                        }}
-                      >
-                        Collection
-                      </InputLabel>
-                      <Select
-                        multiple
-                        value={selectedCollections}
-                        onChange={handleCollectionChange}
-                        label="Collection"
-                        renderValue={(selected) => selected.join(", ")}
-                        sx={{
-                          fontSize: { xs: "0.75rem", sm: "1rem" },
-                          borderRadius: "16px",
-                          fontFamily: "Montserrat",
-                          "&:hover .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "#8BD3E6",
-                          },
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "#8BD3E6",
-                          },
-                        }}
-                      >
-                        {collectionList.map((collection) => (
-                          <MenuItem
-                            key={collection}
-                            value={collection}
+                            {filterName}
+                          </InputLabel>
+                          <Select
+                            multiple
+                            value={selectedFilters[filterName] || []}
+                            onChange={(e) =>
+                              setSelectedFilters((prev) => ({
+                                ...prev,
+                                [filterName]: e.target.value,
+                              }))
+                            }
+                            label={filterName}
+                            renderValue={(selected) => selected.join(", ")}
                             sx={{
-                              fontFamily: "Montserrat",
                               fontSize: { xs: "0.75rem", sm: "1rem" },
+                              borderRadius: "16px",
+                              fontFamily: "Montserrat",
+                              "&:hover .MuiOutlinedInput-notchedOutline": {
+                                borderColor: "#FFB6A5",
+                              },
+                              "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                {
+                                  borderColor: "#FFB6A5",
+                                },
                             }}
                           >
-                            {collection}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                            {values.map((value) => (
+                              <MenuItem
+                                key={value}
+                                value={value}
+                                sx={{
+                                  fontFamily: "Montserrat",
+                                  fontSize: { xs: "0.75rem", sm: "1rem" },
+                                }}
+                              >
+                                {value}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      )
+                    )}
 
                     <Box sx={{ flexGrow: 1 }} />
                     {/* Add Clear Refine button */}

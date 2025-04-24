@@ -21,7 +21,7 @@ const CartModel = require("./models/Cart");
 const Cart2Model = require("./models/Cart2");
 const DeletedUserModel = require("./models/DeletedUser");
 const ABCFileModel = require("./models/ABCFile");
-const ArtworkModel = require("./models/Artwork");
+const ArtworkModel = require("./models/Arts");
 
 const app = express();
 
@@ -494,16 +494,33 @@ app.get("/refine-search", async (req, res) => {
 
 app.get("/artwork-refine-search", async (req, res) => {
   try {
-    const artists = await ArtworkModel.distinct("artist");
-    const prices = await ArtworkModel.distinct("price");
-    const collections = await ArtworkModel.distinct("collection");
+    // Get one sample doc to inspect fields
+    const sample = await ArtworkModel.findOne().lean();
+    if (!sample) {
+      return res.status(200).json({});
+    }
 
-    res.status(200).json({ artists, prices, collections });
+    // Fields to exclude
+    const excludeFields = ["_id", "__v", "downloads", "deleted","imageUrl", "dateUploaded", "createdAt", "updatedAt", "title"];
+
+    // Extract filterable fields
+    const fieldsToFilter = Object.keys(sample).filter(
+      (key) => !excludeFields.includes(key)
+    );
+
+    // Fetch distinct values for each field
+    const filters = {};
+    for (const field of fieldsToFilter) {
+      filters[field] = await ArtworkModel.distinct(field);
+    }
+
+    res.status(200).json(filters);
   } catch (error) {
     console.error("Error fetching preferences:", error);
     res.status(500).json({ error: "Failed to fetch preferences." });
   }
 });
+
 
 app.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
@@ -950,29 +967,24 @@ app.post("/artwork-advanced-search", async (req, res) => {
 
   let query = {};
 
-  if (selectedCollection !== "All") {
+  // Handle collection filter separately
+  if (selectedCollection && selectedCollection !== "All") {
     query.collection = selectedCollection;
   }
 
   let searchConditions = [];
 
   combinedQueries.forEach((row, index) => {
-    let condition = {};
-    let dbField;
-
     if (row.searchCategory && row.searchText) {
       switch (row.searchCategory) {
         case "Title":
-          dbField = "title";
-          condition[dbField] = { $regex: row.searchText, $options: "i" };
+          searchConditions.push({ title: { $regex: row.searchText, $options: "i" } });
           break;
         case "Artist":
-          dbField = "artist";
-          condition[dbField] = { $regex: row.searchText, $options: "i" };
+          searchConditions.push({ artist: { $regex: row.searchText, $options: "i" } });
           break;
         case "Collection":
-          dbField = "collection";
-          condition[dbField] = { $regex: row.searchText, $options: "i" };
+          searchConditions.push({ collection: { $regex: row.searchText, $options: "i" } });
           break;
         case "All":
           searchConditions.push({
@@ -980,35 +992,35 @@ app.post("/artwork-advanced-search", async (req, res) => {
               { title: { $regex: row.searchText, $options: "i" } },
               { artist: { $regex: row.searchText, $options: "i" } },
               { collection: { $regex: row.searchText, $options: "i" } },
-            ],
+            ]
           });
-          return;
-        default:
-          return;
+          break;
       }
-    }
-
-    if (index > 0 && row.logic && row.logic !== "AND") {
-      if (row.logic === "OR") {
-        searchConditions.push({ [dbField]: condition[dbField] });
-      } else if (row.logic === "NOT") {
-        searchConditions.push({ [dbField]: { $not: condition[dbField] } });
-      }
-    } else {
-      searchConditions.push(condition);
     }
   });
 
+  // Combine search conditions with collection filter
   if (searchConditions.length > 0) {
     if (searchConditions.length === 1) {
-      query = searchConditions[0];
-    } else if (searchConditions.length > 1) {
-      query.$and = searchConditions;
+      // If there's only one condition, merge it with the collection filter
+      if (query.collection) {
+        query = { $and: [query, searchConditions[0]] };
+      } else {
+        query = searchConditions[0];
+      }
+    } else {
+      // For multiple conditions, combine them with $and and then with collection filter
+      const combinedSearch = { $and: searchConditions };
+      if (query.collection) {
+        query = { $and: [query, combinedSearch] };
+      } else {
+        query = combinedSearch;
+      }
     }
   }
 
   try {
-    console.log(query);
+    console.log("Final query:", JSON.stringify(query, null, 2));
     const results = await ArtworkModel.find(query);
     res.json(results);
   } catch (error) {
@@ -1240,6 +1252,30 @@ app.post("/check-purchase", async (req, res) => {
   }
 });
 
+app.post("/check-artwork-purchase", async (req, res) => {
+  try {
+    const { artwork_id, user_id } = req.body;
+
+    // Validate input
+    if (!artwork_id || !user_id) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing artwork_id or user_id" });
+    }
+
+    const purchases = await Purchase2Model.find({ artwork_id, user_id });
+
+    if (purchases.length > 0) {
+      return res.json({ success: true, exists: true, data: purchases });
+    } else {
+      return res.json({ success: true, exists: false, data: [] });
+    }
+  } catch (error) {
+    console.error("Error checking purchase:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 app.get("/user-purchases", async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -1313,7 +1349,6 @@ app.get('/fetchArts/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Find by ID if valid ObjectId, otherwise try to find by filename
     let artwork;
     if (mongoose.Types.ObjectId.isValid(id)) { 
       artwork = await ArtworkModel.findById(id);
@@ -1435,6 +1470,23 @@ app.post("/submit-rating", async (req, res) => {
     // Update the database with the rating
     await PurchaseModel.findOneAndUpdate(
       { score_id: scoreId, user_id: userId }, // Find the relevant document
+      { $set: { ratingGiven: rating } }, // Update the rating
+      { new: true } // Return the updated document
+    );
+
+    res.status(200).json({ success: true, message: "Rating submitted!" });
+  } catch (error) {
+    console.error("Error submitting rating:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+app.post("/submit-artwork-rating", async (req, res) => {
+  const { rating, artworkId, userId } = req.body;
+
+  try {
+    await Purchase2Model.findOneAndUpdate(
+      { artwork_id: artworkId, user_id: userId }, // Find the relevant document
       { $set: { ratingGiven: rating } }, // Update the rating
       { new: true } // Return the updated document
     );
@@ -1853,7 +1905,7 @@ const calculateRecommendations = async (userId) => {
         const sortedRecommendations = scoredMusic
         .sort((a, b) => b.score - a.score)
         .filter((item) => item.score > 0) // Only include items with matches
-        .map((item) => item.artworkData);
+        .map((item) => item.musicData);
   
       // Limit to 10 recommendations but ensure variety
       const recommendations = [];
@@ -1867,7 +1919,7 @@ const calculateRecommendations = async (userId) => {
         const currentScore = sortedRecommendations[index];
   
         // Ensure genre diversity in recommendations
-        if (!usedGenres.has(currentScore.genre) || usedArtist.size >= 5) {
+        if (!usedGenres.has(currentScore.genre) || usedGenres.size >= 5) {
           recommendations.push(currentScore);
           usedGenres.add(currentScore.genre);
         }
