@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios"; // Add this import
+import axios from "axios";
 import {
   Box,
   List,
@@ -23,13 +23,14 @@ import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import ViewListIcon from "@mui/icons-material/ViewList";
+import TuneIcon from "@mui/icons-material/Tune"; // New icon for field manager
 import SidebarMozartifyLogo from "./assets/mozartify.png";
-import { useNavigate } from "react-router-dom"; // Import useNavigate at the top
+import { useNavigate } from "react-router-dom";
 
 const ClerkSidebar = ({ active, disableActiveTab }) => {
   const location = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
 
   const handleNavigation = async (path, key) => {
     if (key === "logout") {
@@ -90,6 +91,12 @@ const ClerkSidebar = ({ active, disableActiveTab }) => {
       icon: <ViewListIcon />,
       key: "catalogMetadata",
     },
+    {
+      path: "/music-field-manager",
+      label: "Field Manager",
+      icon: <TuneIcon />,
+      key: "fieldManager",
+    },
   ];
 
   const bottomNavigationItems = [
@@ -137,8 +144,8 @@ const ClerkSidebar = ({ active, disableActiveTab }) => {
   };
 
   const isDisabled = (key) => {
-    // Always allow interaction for 'dashboard' and 'upload'
-    if (key === "dashboard" || key === "upload") {
+    // Always allow interaction for 'dashboard', 'upload', and 'fieldManager'
+    if (key === "dashboard" || key === "upload" || key === "fieldManager") {
       return false;
     }
 

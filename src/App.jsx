@@ -67,9 +67,11 @@ import ArtsClerkCatalog from "./ArtsClerkCatalog";
 import ArtsClerkSearch from "./ArtsClerkSearch";
 import ArtsClerkView from "./ArtsClerkView";
 import ArtsClerkProfile from "./ArtsClerkProfile";
-import DynamicFieldManager from "./DynamicFieldManager";
+import ArtsFieldManager from "./ArtsFieldManager";
 import { UnreadProvider } from "./UnreadContext";
 // import CompositionPage from './CompositionPage';
+import MusicFieldManager from "./MusicFieldManager";
+
 
 
 
@@ -151,8 +153,10 @@ function App() {
         <Route path="/arts-clerk-search" element={<ArtsClerkSearch />} />
         <Route path="/arts-clerk-view/:artworkId" element={<ArtsClerkView />} />
         <Route path="/arts-clerk-profile" element={<ArtsClerkProfile />} />
-        <Route path="/dynamic-field-manager" element={<DynamicFieldManager/>} />
+        <Route path="/arts-field-manager" element={<ArtsFieldManager/>} />
         {/* <Route path="/composition-page" element={<CompositionPage />} /> */}
+        <Route path="/music-field-manager" element={<MusicFieldManager/>} />
+
 
 
 

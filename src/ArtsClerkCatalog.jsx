@@ -20,6 +20,9 @@ import {
   IconButton,
   Drawer,
   LinearProgress,
+  Card,
+  CircularProgress,
+  Skeleton,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
@@ -27,11 +30,11 @@ import ClerkSidebar from "./ArtsClerkSidebar";
 import { storage } from "./firebase";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import axios from "axios";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { Menu as MenuIcon } from "@mui/icons-material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import DynamicField from "./DynamicField"; // Import the DynamicField component
+import DynamicField from "./DynamicField"; 
 
 const DRAWER_WIDTH = 225;
 
@@ -55,7 +58,7 @@ const GlobalStyle = createGlobalStyle`
       margin: 0;
       padding: 0;
       font-family: 'Montserrat', sans-serif;
-      overflow-x: hidden; // Prevent horizontal scrolling
+      overflow-x: hidden;
     }
 `;
 
@@ -66,7 +69,7 @@ const styles = {
     backgroundColor: "#FFFFFF",
   },
   appBar: {
-    display: "block",
+    display: { xs: "block", lg: "none" },
     backgroundColor: "#FFFFFF",
     boxShadow: "none",
     borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
@@ -84,6 +87,8 @@ const styles = {
     p: { xs: 2, sm: 3 },
     mt: 8,
     width: "100%",
+    maxWidth: "100vw",
+    overflowX: "hidden",
   },
 };
 
@@ -96,24 +101,24 @@ const formStyles = (theme) => ({
   "& .MuiFormLabel-root": {
     fontFamily: "Montserrat",
     "&.Mui-focused": {
-      color: "#FFA0B3", // Label color on focus
+      color: "#FFA0B3",
     },
   },
   "& .MuiOutlinedInput-root": {
     borderRadius: 2,
     "& fieldset": {
-      borderColor: "#FFB6C1", // Default border color
+      borderColor: "#FFB6C1",
     },
     "&:hover fieldset": {
-      borderColor: "#FFA0B3", // Border color on hover
+      borderColor: "#FFA0B3",
     },
     "&.Mui-focused fieldset": {
-      borderColor: "#FFA0B3", // Border color on focus
+      borderColor: "#FFA0B3",
     },
   },
   width: "90%",
   [theme.breakpoints.down("sm")]: {
-    width: "90%", // Shorter width for mobile devices
+    width: "90%",
   },
 });
 
@@ -166,7 +171,7 @@ const dialogStyles = {
     sx: {
       textAlign: "center",
       paddingX: { xs: 2, sm: 3 },
-      paddingTop: "0 !important", // Override default padding
+      paddingTop: "0 !important",
     },
   },
   contentText: {
@@ -211,7 +216,7 @@ export default function ArtsClerkCatalog() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { fileName } = location.state || {};
+  const { id: artworkId } = useParams();
   const [originalData, setOriginalData] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
@@ -221,15 +226,13 @@ export default function ArtsClerkCatalog() {
   const [tabIndex, setTabIndex] = useState(0);
   const [catalogData, setCatalogData] = useState({
     imageUrl: ""
-    // Dynamic fields will be added directly as properties
   });
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
-  const { id: artworkId } = useParams();
   
-  // New state for dynamic fields
+  // New state for tab-based system
+  const [tabsData, setTabsData] = useState([]);
   const [dynamicFields, setDynamicFields] = useState([]);
-  const [tabLabels, setTabLabels] = useState(["Identification", "Date", "Image"]);
   const [fieldsByTab, setFieldsByTab] = useState({});
 
   // Fetch current user data
@@ -246,39 +249,6 @@ export default function ArtsClerkCatalog() {
 
     fetchUser();
   }, [navigate]);
-
-  // Fetch dynamic fields
-  useEffect(() => {
-    const fetchDynamicFields = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/dynamic-fields");
-        setDynamicFields(response.data);
-        
-        // Group fields by tab
-        const groupedFields = response.data.reduce((acc, field) => {
-          const tabIndex = field.tabIndex || 0;
-          if (!acc[tabIndex]) {
-            acc[tabIndex] = [];
-          }
-          acc[tabIndex].push(field);
-          return acc;
-        }, {});
-        
-        setFieldsByTab(groupedFields);
-        
-        // Determine tab labels from dynamic fields
-        const customTabs = [...new Set(response.data.map(field => field.category))];
-        if (customTabs.length > 0) {
-          // Keep default Image tab as the last tab
-          setTabLabels([...customTabs, "Image"]);
-        }
-      } catch (error) {
-        console.error("Error fetching dynamic fields:", error);
-      }
-    };
-    
-    fetchDynamicFields();
-  }, []);
 
   // Fetch artwork data when ID is available
   useEffect(() => {
@@ -310,6 +280,50 @@ export default function ArtsClerkCatalog() {
     }
   }, [artworkId, location]);
 
+  // Fetch dynamic tabs and fields
+  useEffect(() => {
+    const fetchTabsAndFields = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch tabs
+        const tabsResponse = await axios.get("http://localhost:3001/arts-tabs");
+        const fetchedTabs = tabsResponse.data;
+        
+        // Sort tabs by display order
+        fetchedTabs.sort((a, b) => a.displayOrder - b.displayOrder);
+        setTabsData(fetchedTabs);
+        
+        // Fetch fields
+        const fieldsResponse = await axios.get("http://localhost:3001/dynamic-fields");
+        const fetchedFields = fieldsResponse.data;
+        setDynamicFields(fetchedFields);
+
+        // Organize fields by tab ID
+        const groupedFields = fetchedFields.reduce((acc, field) => {
+          const tabId = field.tabId;
+          if (!acc[tabId]) {
+            acc[tabId] = [];
+          }
+          
+          // Sort fields by display order within each tab group
+          acc[tabId].push(field);
+          acc[tabId].sort((a, b) => a.displayOrder - b.displayOrder);
+          
+          return acc;
+        }, {});
+
+        setFieldsByTab(groupedFields);
+      } catch (error) {
+        console.error("Error fetching dynamic data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTabsAndFields();
+  }, []);
+
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
 
@@ -333,15 +347,6 @@ export default function ArtsClerkCatalog() {
     }));
   };
 
-  // Get value for a dynamic field directly from catalogData
-  const getDynamicFieldValue = (fieldId) => {
-    const field = dynamicFields.find(f => f._id === fieldId);
-    if (!field) return '';
-    
-    // Get the value from the direct property
-    return catalogData[field.name] || '';
-  };
-
   // Helper function to show dialog
   const showDialog = (title, message, success = true) => {
     setDialogTitle(title);
@@ -355,13 +360,47 @@ export default function ArtsClerkCatalog() {
   };
 
   const handleNext = () => {
-    if (tabIndex < tabLabels.length - 1) {
+    // Get the number of tabs available (dynamic tabs + image tab)
+    const totalTabs = tabsData.length + 1;
+    if (tabIndex < totalTabs - 1) {
       setTabIndex((prevIndex) => prevIndex + 1);
     }
   };
 
+  // Validate required fields
+  const validateRequiredFields = (data) => {
+    const missingFields = [];
+
+    // Check for required fields in dynamic fields
+    dynamicFields.forEach(field => {
+      if (field.required && field.isActive && (!data[field.name] || String(data[field.name]).trim() === "")) {
+        missingFields.push(field.label);
+      }
+    });
+
+    // Price validation if it exists
+    if (data.price && (isNaN(data.price) || parseFloat(data.price) <= 0)) {
+      missingFields.push("Valid Price (must be greater than 0)");
+    }
+
+    return missingFields;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate all required fields
+    const missingFields = validateRequiredFields(catalogData);
+
+    if (missingFields.length > 0) {
+      setDialogTitle("Missing Required Fields");
+      setDialogMessage(
+        `Please fill in the following required fields:\n${missingFields.join(", ")}`
+      );
+      setIsSuccess(false);
+      setOpenDialog(true);
+      return;
+    }
 
     try {
       // Include the _id in the data to submit
@@ -370,9 +409,6 @@ export default function ArtsClerkCatalog() {
         _id: artworkId, // Use the ID from the URL
       };
 
-      console.log("Attempting to submit data:", dataToSubmit);
-
-      // Use the existing POST endpoint that's configured to handle updates
       const response = await fetch("http://localhost:3001/catalogArts", {
         method: "POST",
         headers: {
@@ -383,12 +419,8 @@ export default function ArtsClerkCatalog() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Server error response:", errorText);
         throw new Error(`Failed to save data: ${response.status} ${errorText}`);
       }
-
-      const responseData = await response.json();
-      console.log("Server response data:", responseData);
 
       setOriginalData(dataToSubmit);
       setDialogTitle("Success");
@@ -396,7 +428,7 @@ export default function ArtsClerkCatalog() {
       setIsSuccess(true);
       setOpenDialog(true);
     } catch (error) {
-      console.error("Full submission error details:", error);
+      console.error("Submission error:", error);
 
       setDialogTitle("Error");
       setDialogMessage(`Failed to save data: ${error.message}`);
@@ -411,8 +443,11 @@ export default function ArtsClerkCatalog() {
       switch (fullLabel) {
         case "Identification":
           return "ID";
+        case "Additional Info":
+          return "Info";
         default:
-          return fullLabel;
+          // If label is longer than 6 characters, abbreviate it
+          return fullLabel.length > 6 ? `${fullLabel.substring(0, 5)}...` : fullLabel;
       }
     }
     return fullLabel;
@@ -478,10 +513,45 @@ export default function ArtsClerkCatalog() {
     }
   };
 
+  // Generate tabs including dynamic tabs and image tab
+  const getTabs = () => {
+    // First include all dynamic tabs
+    const allTabs = [...tabsData];
+
+    // Add the image tab as the last tab if it's not already included
+    const imageTabExists = allTabs.some(tab => tab.name === "Image");
+    
+    if (!imageTabExists && allTabs.length > 0) {
+      const lastTabId = Math.max(...allTabs.map(tab => tab.tabId));
+      allTabs.push({
+        tabId: lastTabId + 1,
+        name: "Image",
+        isHardcoded: true
+      });
+    } else if (allTabs.length === 0) {
+      // If no tabs exist, at least add the image tab
+      allTabs.push({
+        tabId: 0,
+        name: "Image",
+        isHardcoded: true
+      });
+    }
+
+    return allTabs;
+  };
+
   // Render the fields based on the current tab
   const renderTabContent = () => {
-    // Last tab is always the Image tab
-    if (tabIndex === tabLabels.length - 1) {
+    const allTabs = getTabs();
+    const currentTab = allTabs.find((tab, index) => index === tabIndex) || 
+                       allTabs.find(tab => tab.name === "Image");
+    
+    if (!currentTab) {
+      return <Typography>Tab content not found</Typography>;
+    }
+    
+    // Handle Image tab
+    if (currentTab.name === "Image" || currentTab.isHardcoded) {
       return (
         <Grid item xs={12}>
           <Box
@@ -563,52 +633,43 @@ export default function ArtsClerkCatalog() {
       );
     }
 
-    // For other tabs, render the dynamic fields for the current tab
-    const fieldsForCurrentTab = fieldsByTab[tabIndex] || [];
+    // For regular tabs, render the dynamic fields
+    const fieldsForTab = fieldsByTab[currentTab.tabId] || [];
     
-    // If no fields exist for this tab, just show a message
-    if (fieldsForCurrentTab.length === 0) {
+    if (fieldsForTab.length === 0) {
       return (
         <Grid item xs={12}>
-          <Typography variant="body1" sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
-            No fields configured for this tab. Use the field manager to add fields.
+          <Typography variant="body1" sx={{ textAlign: 'center', py: 4, color: '#666' }}>
+            No fields configured for this tab.
           </Typography>
         </Grid>
       );
     }
 
-    // Render the dynamic fields for this tab
-    return fieldsForCurrentTab.map(field => (
-      <Grid item xs={12} sm={6} key={field._id}>
-        <DynamicField
-          field={field}
-          value={catalogData[field.name] || ''}
-          onChange={handleInputChange}
-          formStyles={formStyles}
-          isMobile={isMobile}
-        />
+    return (
+      <Grid container spacing={2} direction={isMobile ? "column" : "row"}>
+        {fieldsForTab.map((field) => (
+          <Grid item xs={12} sm={6} key={field._id}>
+            <DynamicField
+              field={field}
+              value={catalogData[field.name] || ''}
+              onChange={handleInputChange}
+              formStyles={formStyles(theme)}
+              isMobile={isMobile}
+            />
+          </Grid>
+        ))}
       </Grid>
-    ));
+    );
   };
 
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyle />
-      <Box
-        sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#FFFFFF" }}
-      >
+      <Box sx={styles.root}>
         {/* Mobile AppBar */}
-        <AppBar
-          position="fixed"
-          sx={{
-            display: { lg: "none" },
-            backgroundColor: "#FFFFFF",
-            boxShadow: "none",
-            borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
-          }}
-        >
+        <AppBar position="fixed" sx={styles.appBar}>
           <Toolbar>
-            {/* Menu Button */}
             <IconButton
               color="inherit"
               edge="start"
@@ -618,7 +679,6 @@ export default function ArtsClerkCatalog() {
               <MenuIcon />
             </IconButton>
 
-            {/* Title */}
             <Typography
               variant="h6"
               sx={{
@@ -630,7 +690,6 @@ export default function ArtsClerkCatalog() {
               Catalog Metadata
             </Typography>
 
-            {/* Avatar in App Bar */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               {!isMobile && (
                 <Typography
@@ -696,6 +755,8 @@ export default function ArtsClerkCatalog() {
             p: { xs: 2, sm: 3 },
             mt: { xs: 8, lg: 2 },
             ml: { lg: `${DRAWER_WIDTH}px` },
+            maxWidth: "100%",
+            overflowX: "hidden"
           }}
         >
           {/* Desktop Header */}
@@ -747,6 +808,7 @@ export default function ArtsClerkCatalog() {
           {/* Divider */}
           {isLargeScreen && <Divider sx={{ mb: 3 }} />}
 
+          {/* Tab Navigation */}
           <Tabs
             value={tabIndex}
             onChange={handleTabChange}
@@ -794,27 +856,51 @@ export default function ArtsClerkCatalog() {
             scrollButtons="auto"
             allowScrollButtonsMobile
           >
-            {tabLabels.map((label, index) => (
-              <Tab
-                key={index}
-                label={getTabLabel(label)}
-                sx={{
-                  display: isMobile && tabIndex !== index ? "none" : "block",
-                  whiteSpace: "nowrap",
-                }}
-              />
-            ))}
+            {loading ? (
+              // Show skeleton tabs while loading
+              Array(5).fill(0).map((_, i) => (
+                <Tab 
+                  key={i}
+                  label={
+                    <Skeleton 
+                      variant="text" 
+                      width={60} 
+                      height={24} 
+                      sx={{ bgcolor: "#f0f0f0" }} 
+                    />
+                  } 
+                />
+              ))
+            ) : (
+              // Show actual tabs when loaded
+              getTabs().map((tab) => (
+                <Tab key={tab.tabId} label={getTabLabel(tab.name)} />
+              ))
+            )}
           </Tabs>
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, pl: 4 }}>
-            <Grid
-              container
-              spacing={2}
-              direction={isMobile ? "column" : "row"} // Stacked for mobile
-            >
-              {renderTabContent()}
-            </Grid>
+          {/* Form and Tab Content */}
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, pl: { xs: 0, sm: 4 }, maxWidth: "100%" }}>
+            {/* Show skeleton while loading, actual content when loaded */}
+            {loading ? (
+              <Box sx={{ p: 2 }}>
+                <Grid container spacing={2}>
+                  {Array(4).fill(0).map((_, i) => (
+                    <Grid item xs={12} sm={6} key={i}>
+                      <Skeleton 
+                        variant="rectangular" 
+                        height={56} 
+                        sx={{ borderRadius: 1, mb: 2 }} 
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            ) : (
+              renderTabContent()
+            )}
 
+            {/* Dialog for messages */}
             <Dialog
               open={openDialog}
               onClose={handleCloseDialog}
@@ -836,7 +922,7 @@ export default function ArtsClerkCatalog() {
               </DialogContent>
 
               <DialogActions sx={dialogStyles.actions.sx}>
-                {["Error", "Image Updated"].includes(
+                {["Missing Required Fields", "Error", "Image Updated"].includes(
                   dialogTitle
                 ) ? (
                   <Button
@@ -864,13 +950,16 @@ export default function ArtsClerkCatalog() {
               </DialogActions>
             </Dialog>
 
+            {/* Form Action Buttons */}
             <Box
               sx={{
                 display: "flex",
                 justifyContent: "center",
                 flexDirection: { xs: "column", sm: "row" },
-                alignItems: "flex-start",
+                alignItems: "center",
                 mt: 3,
+                mb: 2,
+                gap: { xs: 2, sm: 3 }
               }}
             >
               <Button
@@ -879,20 +968,18 @@ export default function ArtsClerkCatalog() {
                 type="submit"
                 sx={{
                   ...buttonStyles,
-                  mb: { xs: 2, sm: 0 },
                   width: { xs: "95%", sm: "auto" },
                 }}
               >
                 Save Metadata
               </Button>
-              {tabIndex < tabLabels.length - 1 && (
+              {!loading && tabIndex < getTabs().length - 1 && (
                 <Button
                   variant="outlined"
                   size="large"
                   onClick={handleNext}
                   sx={{
                     ...buttonStyles,
-                    ml: { xs: 0, sm: 2 },
                     width: { xs: "95%", sm: "auto" },
                   }}
                 >

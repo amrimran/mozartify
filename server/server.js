@@ -10,8 +10,11 @@ const axios = require("axios");
 const ABCFileModel = require("./models/ABCFile");
 const DeletedABCFile = require("./models/deletedABCFile");
 const Artwork = require("./models/Arts.js");
-const DeletedArtwork = require('./models/DeletedArts.js');
-const DynamicField = require('./models/DynamicFields');
+const DeletedArtwork = require('./models/DeletedArts');
+const ArtsDynamicField = require('./models/ArtsDynamicField');
+const ArtsTab = require('./models/ArtsTab');
+const MusicDynamicField = require('./models/MusicDynamicField');
+const MusicTab = require('./models/MusicTab');
 
 
 const app = express();
@@ -347,115 +350,21 @@ app.get("/catalog/:fileName", async (req, res) => {
   }
 });
 
-// Save catalog metadata
+// Save catalog metadata with strict:false approach
 app.post("/catalog", async (req, res) => {
   try {
-    const fields = [
-      "albums",
-      "alternativeTitle",
-      "artist",
-      "backgroundResources",
-      "callNumber",
-      "composer",
-      "composerTimePeriod",
-      "contributor",
-      "copyright",
-      "cosmeticsAndProp",
-      "country",
-      "coverImageUrl",
-      "creator",
-      "dateAccessioned",
-      "dateAvailable",
-      "dateIssued",
-      "dateOfBirth",
-      "dateOfComposition",
-      "dateOfCreation",
-      "dateOfRecording",
-      "description",
-      "digitalCollection",
-      "edition",
-      "editor",
-      "element",
-      "ethnicGroup",
-      "firstPublication",
-      "format",
-      "gamutScale",
-      "genre",
-      "historicalContext",
-      "identifier",
-      "instrumentation",
-      "intonation",
-      "key",
-      "language",
-      "lastModified",
-      "length",
-      "librettist",
-      "lyrics",
-      "melodicClassification",
-      "melodyDescriptions",
-      "methodOfImplementation",
-      "miscNotes",
-      "movementsSections",
-      "mp3FileUrl",
-      "mp3FileName",
-      "notation",
-      "numberInPublication",
-      "objectCollections",
-      "occasionOfPerforming",
-      "performingSkills",
-      "permalink",
-      "pieceStyle",
-      "placeOfBirth",
-      "placeOfOrigin",
-      "placeOfProsper",
-      "placeOfResidence",
-      "position",
-      "prevalence",
-      "publisher",
-      "purposeOfCreation",
-      "recordingPerson",
-      "region",
-      "relatedArtists",
-      "relatedWork",
-      "rights",
-      "sheetMusic",
-      "sponsor",
-      "stagePerformance",
-      "subject",
-      "targetAudience",
-      "temperament",
-      "timeOfOrigin",
-      "timeOfProsper",
-      "title",
-      "trackFunction",
-      "tracks",
-      "type",
-      "uri",
-      "vocalStyle",
-      "westernParallel",
-      "workTitle",
-      "emotion",
-      "gender",
-      "price",
-      "collection",
-      "dateUploaded",
-    ];
-
-    const updateData = {};
-    if (req.body.deleted === true) {
-      // Only set `deleted` to true, don't touch other fields
-      updateData.deleted = true;
-    } else {
-      // Normal metadata update logic
-      fields.forEach((field) => {
-        updateData[field] = req.body[field] || ""; // Set to empty string if undefined
-      });
+    // Get the filename from the request body
+    const { filename } = req.body;
+    
+    if (!filename) {
+      return res.status(400).json({ message: "Filename is required" });
     }
 
+    // Use the entire request body as the update data
     const abcFile = await ABCFileModel.findOneAndUpdate(
-      { filename: req.body.filename },
-      updateData,
-      { new: true }
+      { filename },
+      req.body,
+      { new: true, strict: false }
     );
 
     if (!abcFile) {
@@ -464,9 +373,8 @@ app.post("/catalog", async (req, res) => {
 
     res.status(200).json({ message: "Metadata saved successfully" });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Error saving metadata", error: err.message });
+    console.error("Error saving metadata:", err);
+    res.status(500).json({ message: "Error saving metadata", error: err.message });
   }
 });
 
@@ -616,12 +524,12 @@ app.delete('/catalogArts/:id', async (req, res) => {
   }
 });
 
-//DYNAMIC FIELD ENDPOINTS
+// ARTS DYNAMIC FIELD ENDPOINTS
 
 // GET all dynamic fields
 app.get('/dynamic-fields', async (req, res) => {
   try {
-    const fields = await DynamicField.find({ isActive: true }).sort({ displayOrder: 1 });
+    const fields = await ArtsDynamicField.find({ isActive: true }).sort({ displayOrder: 1 });
     res.status(200).json(fields);
   } catch (err) {
     console.error("Error fetching dynamic fields:", err);
@@ -632,7 +540,7 @@ app.get('/dynamic-fields', async (req, res) => {
 // GET a specific dynamic field by ID
 app.get('/dynamic-fields/:id', async (req, res) => {
   try {
-    const field = await DynamicField.findById(req.params.id);
+    const field = await ArtsDynamicField.findById(req.params.id);
     if (!field) {
       return res.status(404).json({ message: 'Dynamic field not found' });
     }
@@ -646,7 +554,7 @@ app.get('/dynamic-fields/:id', async (req, res) => {
 // CREATE a new dynamic field
 app.post('/dynamic-fields', async (req, res) => {
   try {
-    const newField = new DynamicField(req.body);
+    const newField = new ArtsDynamicField(req.body);
     const savedField = await newField.save();
     res.status(201).json(savedField);
   } catch (err) {
@@ -658,7 +566,7 @@ app.post('/dynamic-fields', async (req, res) => {
 // UPDATE a dynamic field
 app.put('/dynamic-fields/:id', async (req, res) => {
   try {
-    const updatedField = await DynamicField.findByIdAndUpdate(
+    const updatedField = await ArtsDynamicField.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
@@ -676,7 +584,7 @@ app.put('/dynamic-fields/:id', async (req, res) => {
 // DELETE a dynamic field (soft delete by setting isActive to false)
 app.delete('/dynamic-fields/:id', async (req, res) => {
   try {
-    const field = await DynamicField.findByIdAndUpdate(
+    const field = await ArtsDynamicField.findByIdAndUpdate(
       req.params.id,
       { isActive: false },
       { new: true }
@@ -694,15 +602,15 @@ app.delete('/dynamic-fields/:id', async (req, res) => {
 // GET all dynamic fields organized by tab
 app.get('/dynamic-fields/by-tab', async (req, res) => {
   try {
-    const fields = await DynamicField.find({ isActive: true }).sort({ tabIndex: 1, displayOrder: 1 });
+    const fields = await ArtsDynamicField.find({ isActive: true }).sort({ tabId: 1, displayOrder: 1 });
     
-    // Group fields by tabIndex
+    // Group fields by tabId
     const fieldsByTab = fields.reduce((acc, field) => {
-      const tabIndex = field.tabIndex || 0;
-      if (!acc[tabIndex]) {
-        acc[tabIndex] = [];
+      const tabId = field.tabId || 0;
+      if (!acc[tabId]) {
+        acc[tabId] = [];
       }
-      acc[tabIndex].push(field);
+      acc[tabId].push(field);
       return acc;
     }, {});
     
@@ -710,6 +618,411 @@ app.get('/dynamic-fields/by-tab', async (req, res) => {
   } catch (err) {
     console.error("Error fetching fields by tab:", err);
     res.status(500).json({ message: 'Error fetching fields by tab', error: err.message });
+  }
+});
+
+
+// ========== ARTS TAB ENDPOINTS ==========
+
+// Get all tabs
+app.get('/arts-tabs', async (req, res) => {
+  try {
+    const tabs = await ArtsTab.find({}).sort({ displayOrder: 1 });
+    res.status(200).json(tabs);
+  } catch (err) {
+    console.error("Error fetching arts tabs:", err);
+    res.status(500).json({ message: 'Error fetching arts tabs', error: err.message });
+  }
+});
+
+// Get a specific tab by ID
+app.get('/arts-tabs/:id', async (req, res) => {
+  try {
+    const tab = await ArtsTab.findOne({ tabId: req.params.id });
+    if (!tab) {
+      return res.status(404).json({ message: 'Tab not found' });
+    }
+    res.status(200).json(tab);
+  } catch (err) {
+    console.error("Error fetching tab:", err);
+    res.status(500).json({ message: 'Error fetching tab', error: err.message });
+  }
+});
+
+// Create a new tab
+app.post('/arts-tabs', async (req, res) => {
+  try {
+    // Find the highest tabId to ensure uniqueness
+    const highestTab = await ArtsTab.findOne().sort('-tabId');
+    const nextTabId = highestTab ? highestTab.tabId + 1 : 0;
+    
+    // Find the highest displayOrder to add the new tab at the end
+    const lastTab = await ArtsTab.findOne().sort('-displayOrder');
+    const nextDisplayOrder = lastTab ? lastTab.displayOrder + 1 : 0;
+    
+    const newTab = new ArtsTab({
+      ...req.body,
+      tabId: nextTabId,
+      displayOrder: nextDisplayOrder
+    });
+    
+    const savedTab = await newTab.save();
+    res.status(201).json(savedTab);
+  } catch (err) {
+    console.error("Error creating tab:", err);
+    res.status(500).json({ message: 'Error creating tab', error: err.message });
+  }
+});
+
+// Update a tab
+app.put('/arts-tabs/:id', async (req, res) => {
+  try {
+    const updatedTab = await ArtsTab.findOneAndUpdate(
+      { tabId: req.params.id },
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!updatedTab) {
+      return res.status(404).json({ message: 'Tab not found' });
+    }
+    res.status(200).json(updatedTab);
+  } catch (err) {
+    console.error("Error updating tab:", err);
+    res.status(500).json({ message: 'Error updating tab', error: err.message });
+  }
+});
+
+// Delete a tab (only if it has no fields)
+app.delete('/arts-tabs/:id', async (req, res) => {
+  try {
+    // Check if there are any fields in this tab
+    const fieldsInTab = await ArtsDynamicField.countDocuments({ tabId: req.params.id });
+    
+    if (fieldsInTab > 0) {
+      return res.status(400).json({ 
+        message: 'Cannot delete tab with fields. Please move or deactivate fields first.' 
+      });
+    }
+    
+    const deletedTab = await ArtsTab.findOneAndDelete({ tabId: req.params.id });
+    
+    if (!deletedTab) {
+      return res.status(404).json({ message: 'Tab not found' });
+    }
+    
+    res.status(200).json({ message: 'Tab deleted successfully' });
+  } catch (err) {
+    console.error("Error deleting tab:", err);
+    res.status(500).json({ message: 'Error deleting tab', error: err.message });
+  }
+});
+
+// Update tab order - batch update
+app.put('/arts-tabs/reorder', async (req, res) => {
+  try {
+    const { tabs } = req.body;
+    
+    if (!Array.isArray(tabs)) {
+      return res.status(400).json({ message: 'Invalid request format. Expected array of tabs.' });
+    }
+    
+    // Update each tab's display order
+    const updatePromises = tabs.map((tab, index) => 
+      ArtsTab.findOneAndUpdate(
+        { tabId: tab.tabId },
+        { displayOrder: index },
+        { new: true }
+      )
+    );
+    
+    const updatedTabs = await Promise.all(updatePromises);
+    res.status(200).json(updatedTabs);
+  } catch (err) {
+    console.error("Error reordering tabs:", err);
+    res.status(500).json({ message: 'Error reordering tabs', error: err.message });
+  }
+});
+
+// Initialize default tabs if none exist
+app.post('/arts-tabs/initialize', async (req, res) => {
+  try {
+    const existingTabs = await ArtsTab.countDocuments();
+    
+    if (existingTabs > 0) {
+      return res.status(400).json({ message: 'Tabs are already initialized' });
+    }
+    
+    const defaultTabs = [
+      { tabId: 0, name: "Identification", displayOrder: 0 },
+      { tabId: 1, name: "Date", displayOrder: 1 },
+      { tabId: 2, name: "Additional Info", displayOrder: 2 },
+      { tabId: 3, name: "Image", displayOrder: 3 }
+    ];
+    
+    await ArtsTab.insertMany(defaultTabs);
+    
+    res.status(201).json({ message: 'Default tabs initialized successfully' });
+  } catch (err) {
+    console.error("Error initializing tabs:", err);
+    res.status(500).json({ message: 'Error initializing tabs', error: err.message });
+  }
+});
+
+// Update dynamic-fields endpoints to use tabId instead of category
+app.get('/dynamic-fields/by-tab/:tabId', async (req, res) => {
+  try {
+    const fields = await ArtsDynamicField.find({ 
+      tabId: parseInt(req.params.tabId),
+      isActive: true 
+    }).sort({ displayOrder: 1 });
+    
+    res.status(200).json(fields);
+  } catch (err) {
+    console.error("Error fetching fields by tab:", err);
+    res.status(500).json({ message: 'Error fetching fields by tab', error: err.message });
+  }
+});
+
+
+// ========== MUSIC DYNAMIC FIELD ENDPOINTS ==========
+
+// Get all dynamic fields
+app.get('/music-dynamic-fields', async (req, res) => {
+  try {
+    const fields = await MusicDynamicField.find({}).sort({ tabId: 1, displayOrder: 1 });
+    res.status(200).json(fields);
+  } catch (err) {
+    console.error("Error fetching music dynamic fields:", err);
+    res.status(500).json({ message: 'Error fetching music dynamic fields', error: err.message });
+  }
+});
+
+// Get a specific dynamic field by ID
+app.get('/music-dynamic-fields/:id', async (req, res) => {
+  try {
+    const field = await MusicDynamicField.findById(req.params.id);
+    if (!field) {
+      return res.status(404).json({ message: 'Dynamic field not found' });
+    }
+    res.status(200).json(field);
+  } catch (err) {
+    console.error("Error fetching dynamic field:", err);
+    res.status(500).json({ message: 'Error fetching dynamic field', error: err.message });
+  }
+});
+
+// Create a new dynamic field
+app.post('/music-dynamic-fields', async (req, res) => {
+  try {
+    const newField = new MusicDynamicField(req.body);
+    const savedField = await newField.save();
+    res.status(201).json(savedField);
+  } catch (err) {
+    console.error("Error creating dynamic field:", err);
+    res.status(500).json({ message: 'Error creating dynamic field', error: err.message });
+  }
+});
+
+// Update a dynamic field
+app.put('/music-dynamic-fields/:id', async (req, res) => {
+  try {
+    const updatedField = await MusicDynamicField.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!updatedField) {
+      return res.status(404).json({ message: 'Dynamic field not found' });
+    }
+    res.status(200).json(updatedField);
+  } catch (err) {
+    console.error("Error updating dynamic field:", err);
+    res.status(500).json({ message: 'Error updating dynamic field', error: err.message });
+  }
+});
+
+// Deactivate a dynamic field (soft delete)
+app.delete('/music-dynamic-fields/:id', async (req, res) => {
+  try {
+    const field = await MusicDynamicField.findByIdAndUpdate(
+      req.params.id,
+      { isActive: false },
+      { new: true }
+    );
+    if (!field) {
+      return res.status(404).json({ message: 'Dynamic field not found' });
+    }
+    res.status(200).json({ message: 'Dynamic field deactivated successfully' });
+  } catch (err) {
+    console.error("Error deactivating dynamic field:", err);
+    res.status(500).json({ message: 'Error deactivating dynamic field', error: err.message });
+  }
+});
+
+// Get all dynamic fields by tabId
+app.get('/music-dynamic-fields/by-tab/:tabId', async (req, res) => {
+  try {
+    const fields = await MusicDynamicField.find({ 
+      tabId: req.params.tabId,
+      isActive: true 
+    }).sort({ displayOrder: 1 });
+    
+    res.status(200).json(fields);
+  } catch (err) {
+    console.error("Error fetching fields by tab:", err);
+    res.status(500).json({ message: 'Error fetching fields by tab', error: err.message });
+  }
+});
+
+// ========== MUSIC TAB ENDPOINTS ==========
+
+// Get all tabs
+app.get('/music-tabs', async (req, res) => {
+  try {
+    const tabs = await MusicTab.find({}).sort({ displayOrder: 1 });
+    res.status(200).json(tabs);
+  } catch (err) {
+    console.error("Error fetching music tabs:", err);
+    res.status(500).json({ message: 'Error fetching music tabs', error: err.message });
+  }
+});
+
+// Get a specific tab by ID
+app.get('/music-tabs/:id', async (req, res) => {
+  try {
+    const tab = await MusicTab.findOne({ tabId: req.params.id });
+    if (!tab) {
+      return res.status(404).json({ message: 'Tab not found' });
+    }
+    res.status(200).json(tab);
+  } catch (err) {
+    console.error("Error fetching tab:", err);
+    res.status(500).json({ message: 'Error fetching tab', error: err.message });
+  }
+});
+
+// Create a new tab
+app.post('/music-tabs', async (req, res) => {
+  try {
+    // Find the highest tabId to ensure uniqueness
+    const highestTab = await MusicTab.findOne().sort('-tabId');
+    const nextTabId = highestTab ? highestTab.tabId + 1 : 0;
+    
+    // Find the highest displayOrder to add the new tab at the end
+    const lastTab = await MusicTab.findOne().sort('-displayOrder');
+    const nextDisplayOrder = lastTab ? lastTab.displayOrder + 1 : 0;
+    
+    const newTab = new MusicTab({
+      ...req.body,
+      tabId: nextTabId,
+      displayOrder: nextDisplayOrder
+    });
+    
+    const savedTab = await newTab.save();
+    res.status(201).json(savedTab);
+  } catch (err) {
+    console.error("Error creating tab:", err);
+    res.status(500).json({ message: 'Error creating tab', error: err.message });
+  }
+});
+
+// Update a tab
+app.put('/music-tabs/:id', async (req, res) => {
+  try {
+    const updatedTab = await MusicTab.findOneAndUpdate(
+      { tabId: req.params.id },
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!updatedTab) {
+      return res.status(404).json({ message: 'Tab not found' });
+    }
+    res.status(200).json(updatedTab);
+  } catch (err) {
+    console.error("Error updating tab:", err);
+    res.status(500).json({ message: 'Error updating tab', error: err.message });
+  }
+});
+
+// Delete a tab (only if it has no fields)
+app.delete('/music-tabs/:id', async (req, res) => {
+  try {
+    // Check if there are any fields in this tab
+    const fieldsInTab = await MusicDynamicField.countDocuments({ tabId: req.params.id });
+    
+    if (fieldsInTab > 0) {
+      return res.status(400).json({ 
+        message: 'Cannot delete tab with fields. Please move or deactivate fields first.' 
+      });
+    }
+    
+    const deletedTab = await MusicTab.findOneAndDelete({ tabId: req.params.id });
+    
+    if (!deletedTab) {
+      return res.status(404).json({ message: 'Tab not found' });
+    }
+    
+    res.status(200).json({ message: 'Tab deleted successfully' });
+  } catch (err) {
+    console.error("Error deleting tab:", err);
+    res.status(500).json({ message: 'Error deleting tab', error: err.message });
+  }
+});
+
+// Update tab order - batch update
+app.put('/music-tabs/reorder', async (req, res) => {
+  try {
+    const { tabs } = req.body;
+    
+    if (!Array.isArray(tabs)) {
+      return res.status(400).json({ message: 'Invalid request format. Expected array of tabs.' });
+    }
+    
+    // Update each tab's display order
+    const updatePromises = tabs.map((tab, index) => 
+      MusicTab.findOneAndUpdate(
+        { tabId: tab.tabId },
+        { displayOrder: index },
+        { new: true }
+      )
+    );
+    
+    const updatedTabs = await Promise.all(updatePromises);
+    res.status(200).json(updatedTabs);
+  } catch (err) {
+    console.error("Error reordering tabs:", err);
+    res.status(500).json({ message: 'Error reordering tabs', error: err.message });
+  }
+});
+
+// Initialize default tabs if none exist
+app.post('/music-tabs/initialize', async (req, res) => {
+  try {
+    const existingTabs = await MusicTab.countDocuments();
+    
+    if (existingTabs > 0) {
+      return res.status(400).json({ message: 'Tabs are already initialized' });
+    }
+    
+    const defaultTabs = [
+      { tabId: 0, name: "Identification", displayOrder: 0 },
+      { tabId: 1, name: "Creators", displayOrder: 1 },
+      { tabId: 2, name: "Dates", displayOrder: 2 },
+      { tabId: 3, name: "Content", displayOrder: 3 },
+      { tabId: 4, name: "Format", displayOrder: 4 },
+      { tabId: 5, name: "Rights", displayOrder: 5 },
+      { tabId: 6, name: "Geography", displayOrder: 6 },
+      { tabId: 7, name: "Performance", displayOrder: 7 },
+      { tabId: 8, name: "Related Work", displayOrder: 8 },
+      
+    ];
+    
+    await MusicTab.insertMany(defaultTabs);
+    
+    res.status(201).json({ message: 'Default tabs initialized successfully' });
+  } catch (err) {
+    console.error("Error initializing tabs:", err);
+    res.status(500).json({ message: 'Error initializing tabs', error: err.message });
   }
 });
 

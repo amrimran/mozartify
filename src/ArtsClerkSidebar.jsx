@@ -14,19 +14,17 @@ import {
   DialogActions,
   Button,
 } from "@mui/material";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import HomeIcon from "@mui/icons-material/Home";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import ImageIcon from "@mui/icons-material/Image";
-import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import ViewListIcon from "@mui/icons-material/ViewList";
-import BrushIcon from "@mui/icons-material/Brush";
-import ColorLensIcon from "@mui/icons-material/ColorLens";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
-import { useNavigate } from "react-router-dom";
+import TuneIcon from "@mui/icons-material/Tune"; // New icon for field manager
+
 
 const ArtsClerkSidebar = ({ active, disableActiveTab }) => {
   const location = useLocation();
@@ -87,9 +85,9 @@ const ArtsClerkSidebar = ({ active, disableActiveTab }) => {
       key: "catalogMetadata",
     },
     {
-      path: "/dynamic-field-manager",
-      label: "Manage Field",
-      icon: <EditIcon />,
+      path: "/arts-field-manager",
+      label: "Field Manager",
+      icon: <TuneIcon />,
       key: "manageField",
     },
   ];

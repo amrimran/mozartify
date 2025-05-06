@@ -32,6 +32,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
+import DynamicField from "./DynamicField";
 import { storage } from "./firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import axios from "axios";
@@ -64,10 +65,8 @@ const GlobalStyle = createGlobalStyle`
       margin: 0;
       padding: 0;
       font-family: 'Montserrat', sans-serif;
-          overflow-x: hidden; // Prevent horizontal scrolling
-
+      overflow-x: hidden; // Prevent horizontal scrolling
     }
-
   `;
 
 const styles = {
@@ -77,7 +76,7 @@ const styles = {
     backgroundColor: "#FFFFFF",
   },
   appBar: {
-    display: "block",
+    display: { xs: "block", lg: "none" }, // Show on small/medium, hide on large
     backgroundColor: "#FFFFFF",
     boxShadow: "none",
     borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
@@ -95,6 +94,8 @@ const styles = {
     p: { xs: 2, sm: 3 },
     mt: 8,
     width: "100%",
+    maxWidth: "100vw",
+    overflowX: "hidden",
   },
 };
 
@@ -233,95 +234,12 @@ export default function MusicEntryClerkCatalog() {
   const [instrumentationLoading, setInstrumentationLoading] = useState(false);
   const [catalogData, setCatalogData] = useState({
     filename: "",
-    albums: "",
-    alternativeTitle: "",
-    artist: "",
-    backgroundResources: "",
-    callNumber: "",
-    collection: "",
-    composer: "",
-    composerTimePeriod: "",
-    contributor: "",
-    copyright: "",
-    cosmeticsAndProp: "",
-    country: "",
-    coverImageUrl: "",
-    creator: "",
-    dateAccessioned: "",
-    dateAvailable: "",
-    dateIssued: "",
-    dateOfBirth: "",
-    dateOfComposition: "",
-    dateOfCreation: "",
-    dateOfRecording: "",
-    dateUploaded: "",
-    description: "",
-    digitalCollection: "",
-    edition: "",
-    editor: "",
-    element: "",
-    ethnicGroup: "",
-    firstPublication: "",
-    format: "",
-    gamutScale: "",
-    genre: "",
-    historicalContext: "",
-    identifier: "",
-    instrumentation: "",
-    intonation: "",
-    key: "",
-    language: "",
-    lastModified: "",
-    length: "",
-    librettist: "",
-    lyrics: "",
-    melodicClassification: "",
-    melodyDescriptions: "",
-    methodOfImplementation: "",
-    miscNotes: "",
-    movementsSections: "",
-    mp3FileUrl: "",
-    mp3FileName: "",
-    notation: "",
-    numberInPublication: "",
-    objectCollections: "",
-    occasionOfPerforming: "",
-    performingSkills: "",
-    permalink: "",
-    pieceStyle: "",
-    placeOfBirth: "",
-    placeOfOrigin: "",
-    placeOfProsper: "",
-    placeOfResidence: "",
-    position: "",
-    prevalence: "",
-    price: "",
-    publisher: "",
-    purposeOfCreation: "",
-    recordingPerson: "",
-    region: "",
-    relatedArtists: "",
-    relatedWork: "",
-    rights: "",
-    sheetMusic: "",
-    sponsor: "",
-    stagePerformance: "",
-    subject: "",
-    targetAudience: "",
-    temperament: "",
-    timeOfOrigin: "",
-    timeOfProsper: "",
-    title: "",
-    trackFunction: "",
-    tracks: "",
-    type: "",
-    uri: "",
-    vocalStyle: "",
-    westernParallel: "",
-    workTitle: "",
   });
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false); // Define loading state
+  const [loading, setLoading] = useState(false);
+  const [tabsData, setTabsData] = useState([]);
+  const [dynamicFields, setDynamicFields] = useState([]);
+  const [fieldsByTab, setFieldsByTab] = useState({});
 
   // Fetch current user data
   useEffect(() => {
@@ -347,10 +265,10 @@ export default function MusicEntryClerkCatalog() {
             `http://localhost:3001/catalog/${fileName}`
           );
           if (response.data) {
-            console.log("Fetched data:", response.data); // Log the fetched data
-            setCatalogData(response.data); // Populate the form with existing data
-            setOriginalData(response.data); // Store original data
-            setCoverImageUrl(response.data.coverImageUrl); // Set cover image URL from database
+            console.log("Fetched data:", response.data);
+            setCatalogData(response.data);
+            setOriginalData(response.data);
+            setCoverImageUrl(response.data.coverImageUrl);
           }
         } catch (error) {
           console.error("Error fetching catalog data:", error);
@@ -360,6 +278,50 @@ export default function MusicEntryClerkCatalog() {
       fetchCatalogData();
     }
   }, [fileName]);
+
+  // Fetch dynamic tabs and fields
+  useEffect(() => {
+    const fetchTabsAndFields = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch tabs
+        const tabsResponse = await axios.get("http://localhost:3001/music-tabs");
+        const fetchedTabs = tabsResponse.data;
+        
+        // Sort tabs by display order
+        fetchedTabs.sort((a, b) => a.displayOrder - b.displayOrder);
+        setTabsData(fetchedTabs);
+        
+        // Fetch fields
+        const fieldsResponse = await axios.get("http://localhost:3001/music-dynamic-fields");
+        const fetchedFields = fieldsResponse.data;
+        setDynamicFields(fetchedFields);
+
+        // Organize fields by tab ID
+        const groupedFields = fetchedFields.reduce((acc, field) => {
+          const tabId = field.tabId;
+          if (!acc[tabId]) {
+            acc[tabId] = [];
+          }
+          
+          // Sort fields by display order within each tab group
+          acc[tabId].push(field);
+          acc[tabId].sort((a, b) => a.displayOrder - b.displayOrder);
+          
+          return acc;
+        }, {});
+
+        setFieldsByTab(groupedFields);
+      } catch (error) {
+        console.error("Error fetching dynamic data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTabsAndFields();
+  }, []);
 
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
@@ -374,17 +336,12 @@ export default function MusicEntryClerkCatalog() {
     setMobileOpen(!mobileOpen);
   };
 
-  // Add function to check for changes
-  const hasChanges = () => {
-    if (!originalData) return false;
-    return JSON.stringify(catalogData) !== JSON.stringify(originalData);
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setCatalogData((prevData) => ({
       ...prevData,
-      [name]: value, // Ensure empty fields are sent as empty strings
+      [name]: value,
     }));
   };
 
@@ -408,14 +365,14 @@ export default function MusicEntryClerkCatalog() {
   };
 
   const handleNext = () => {
-    if (tabIndex <= 10) {
+    // Get the number of tabs available (dynamic tabs + 3 hardcoded tabs)
+    const totalTabs = tabsData.length + 3;
+    if (tabIndex < totalTabs - 1) {
       setTabIndex((prevIndex) => prevIndex + 1);
     }
   };
 
-  useEffect(() => {}, [openDialog, dialogTitle, dialogMessage]);
-
-  // Modify handleCoverImageChange
+  // Handle cover image upload
   const handleCoverImageChange = (e) => {
     if (e.target.files[0]) {
       const file = e.target.files[0];
@@ -439,7 +396,7 @@ export default function MusicEntryClerkCatalog() {
     }
   };
 
-  // 1. First, modify the handleMp3FileChange function to NOT include instrumentation prediction
+  // MP3 file upload and prediction
   const handleMp3FileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) {
@@ -457,10 +414,9 @@ export default function MusicEntryClerkCatalog() {
       // Clear previous values when mp3 changed
       setCatalogData((prevData) => ({
         ...prevData,
-        emotion: "", // Clear previous emotion
-        genre: "", // Clear previous genre
-        gender: "", // Clear previous gender
-        // Note: We're not clearing instrumentation here
+        emotion: "",
+        genre: "",
+        gender: "",
       }));
 
       // Upload file to Firebase Storage
@@ -484,7 +440,7 @@ export default function MusicEntryClerkCatalog() {
       // Update catalogData with the new emotion
       setCatalogData((prevData) => ({
         ...prevData,
-        emotion: emotionResponse.data.predicted_mood, // Update emotion field
+        emotion: emotionResponse.data.predicted_mood,
       }));
 
       // Call gender prediction API
@@ -508,10 +464,8 @@ export default function MusicEntryClerkCatalog() {
       // Update catalogData with the new genre
       setCatalogData((prevData) => ({
         ...prevData,
-        genre: genreResponse.data.genre, // Update genre field
+        genre: genreResponse.data.genre,
       }));
-
-      // Note: We no longer call the instrument prediction API here
 
       setDialogTitle("Prediction Complete");
       setDialogMessage("File uploaded and predictions completed successfully!");
@@ -544,7 +498,7 @@ export default function MusicEntryClerkCatalog() {
     }
   };
 
-  // 2. Create a new function for handling instrumentation prediction separately
+  // Instrumentation prediction
   const handleInstrumentationPrediction = async () => {
     // Make sure we have an MP3 file URL
     if (!catalogData.mp3FileUrl) {
@@ -601,29 +555,30 @@ export default function MusicEntryClerkCatalog() {
     }
   };
 
-  // Add this validation function before the handleSubmit function
+  // Validation function
   const validateRequiredFields = (data) => {
-    const requiredFields = {
-      title: "Title",
-      artist: "Artist",
-      composer: "Composer",
-      price: "Price",
-      collection: "Collection",
-      dateUploaded: "Date Uploaded",
-      emotion: "Emotion",
-      genre: "Genre",
-    };
-
     const missingFields = [];
 
-    // Check each required field
-    Object.entries(requiredFields).forEach(([field, label]) => {
-      if (!data[field] || data[field].trim() === "") {
+    // Check for required fields in dynamic fields
+    dynamicFields.forEach(field => {
+      if (field.required && field.isActive && (!data[field.name] || String(data[field.name]).trim() === "")) {
+        missingFields.push(field.label);
+      }
+    });
+
+    // Also check hardcoded required fields for the special tabs
+    const hardcodedRequiredFields = {
+      "emotion": "Emotion",
+      "genre": "Genre"
+    };
+
+    Object.entries(hardcodedRequiredFields).forEach(([field, label]) => {
+      if (!data[field] || String(data[field]).trim() === "") {
         missingFields.push(label);
       }
     });
 
-    // Price validation
+    // Price validation if it exists
     if (data.price && (isNaN(data.price) || parseFloat(data.price) <= 0)) {
       missingFields.push("Valid Price (must be greater than 0)");
     }
@@ -631,7 +586,7 @@ export default function MusicEntryClerkCatalog() {
     return missingFields;
   };
 
-  // Update the handleSubmit function
+  // Form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -687,1657 +642,331 @@ export default function MusicEntryClerkCatalog() {
           return "Geo";
         case "Related Work":
           return "Related";
+        case "Cover Image":
+          return "Cover";
+        case "MP3 File":
+          return "MP3";
+        case "Instrumentation":
+          return "Inst.";
         default:
-          return fullLabel;
+          // If label is longer than 6 characters, abbreviate it
+          return fullLabel.length > 6 ? `${fullLabel.substring(0, 5)}...` : fullLabel;
       }
     }
     return fullLabel;
   };
 
-  // Tab labels array for easier management
-  const tabLabels = [
-    "Identification",
-    "Creators",
-    "Dates",
-    "Content",
-    "Format",
-    "Rights",
-    "Geography",
-    "Performance",
-    "Related Work",
-    "Cover Image",
-    "MP3 File",
-    "Instrumentation",
-  ];
+  // Render the form fields based on tab ID
+  const renderDynamicFields = (tabId) => {
+    const fields = fieldsByTab[tabId] || [];
+    // Filter only active fields
+    const activeFields = fields.filter(field => field.isActive);
 
-  return (
-    <ThemeProvider theme={theme}>
-      <GlobalStyle />
-      <Box
-        sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#FFFFFF" }}
-      >
-        {/* Mobile AppBar */}
-        <AppBar
-          position="fixed"
-          sx={{
-            display: { lg: "none" },
-            backgroundColor: "#FFFFFF",
-            boxShadow: "none",
-            borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
-          }}
-        >
-          <Toolbar>
-            {/* Menu Button */}
-            <IconButton
-              color="inherit"
-              edge="start"
-              onClick={handleDrawerToggle}
-              sx={{ mr: 2, color: "#3B3183" }}
-            >
-              <MenuIcon />
-            </IconButton>
-
-            {/* Title */}
-            <Typography
-              variant="h6"
-              sx={{
-                color: "#3B3183",
-                fontWeight: "bold",
-                flexGrow: 1,
-              }}
-            >
-              Catalog Metadata
+    return (
+      <Grid container spacing={2} direction={isMobile ? "column" : "row"}>
+        {activeFields.map((field) => (
+          <Grid item xs={12} sm={6} key={field._id}>
+            <DynamicField
+              field={field}
+              value={catalogData[field.name] || ''}
+              onChange={handleInputChange}
+              formStyles={formStyles(theme)}
+              isMobile={isMobile}
+            />
+          </Grid>
+        ))}
+        {activeFields.length === 0 && (
+          <Grid item xs={12}>
+            <Typography variant="body1" sx={{ textAlign: "center", py: 4, color: "#666" }}>
+              No fields have been configured for this tab.
             </Typography>
+          </Grid>
+        )}
+      </Grid>
+    );
+  };
 
-            {/* Avatar in App Bar */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {!isMobile && (
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: "#3B3183",
-                    display: { xs: "none", sm: "block" },
-                  }}
-                >
-                  {user?.username}
-                </Typography>
-              )}
-              <Avatar
-                alt={user?.username}
-                src={user?.profile_picture || null}
+  // Generate tabs including dynamic tabs and hardcoded tabs
+  const getTabs = () => {
+    // First include all dynamic tabs
+    const allTabs = [...tabsData];
+
+    // Then add the hardcoded tabs (Cover Image, MP3 File, Instrumentation)
+    const lastDynamicTabId = allTabs.length > 0 ? Math.max(...allTabs.map(tab => tab.tabId)) : -1;
+    
+    allTabs.push(
+      { tabId: lastDynamicTabId + 1, name: "Cover Image", isHardcoded: true },
+      { tabId: lastDynamicTabId + 2, name: "MP3 File", isHardcoded: true },
+      { tabId: lastDynamicTabId + 3, name: "Instrumentation", isHardcoded: true }
+    );
+
+    return allTabs;
+  };
+
+  // Get the current tab content
+  const renderTabContent = () => {
+    const allTabs = getTabs();
+    const currentTab = allTabs.find((tab, index) => index === tabIndex);
+    
+    if (!currentTab) {
+      return <Typography>Tab content not found</Typography>;
+    }
+    
+    // Handle hardcoded tabs
+    if (currentTab.isHardcoded) {
+      switch (currentTab.name) {
+        case "Cover Image":
+          return (
+            <Grid item xs={12} sm={8}>
+              <Card
+                variant="outlined"
                 sx={{
-                  width: { xs: 32, sm: 40 },
-                  height: { xs: 32, sm: 40 },
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  p: 3,
+                  mt: 3,
+                  borderRadius: 2,
+                  borderColor: "#8BD3E6",
+                  boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
                 }}
               >
-                {user?.username?.charAt(0).toUpperCase()}
-              </Avatar>
-            </Box>
-          </Toolbar>
-        </AppBar>
-
-        {/* Permanent Drawer for Large Screens */}
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: "none", lg: "block" },
-            "& .MuiDrawer-paper": {
-              width: DRAWER_WIDTH,
-              boxSizing: "border-box",
-            },
-          }}
-        >
-          <ClerkSidebar active="catalogMetadata" />
-        </Drawer>
-
-        {/* Temporary Drawer for Mobile */}
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            display: { xs: "block", lg: "none" },
-            "& .MuiDrawer-paper": {
-              width: DRAWER_WIDTH,
-              boxSizing: "border-box",
-            },
-          }}
-        >
-          <ClerkSidebar active="catalogMetadata" />
-        </Drawer>
-
-        {/* Main Content */}
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            p: { xs: 2, sm: 3 },
-            mt: { xs: 8, lg: 2 },
-            ml: { lg: `${DRAWER_WIDTH}px` },
-          }}
-        >
-          {/* Desktop Header */}
-          {isLargeScreen && (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                mb: 3,
-              }}
-            >
-              <Typography
-                variant="h4"
-                sx={{
-                  fontFamily: "Montserrat",
-                  fontWeight: "bold",
-                  fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
-                }}
-              >
-                Catalog Metadata
-              </Typography>
-
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                {coverImageUrl ? (
+                  <img
+                    src={coverImageUrl}
+                    alt="Cover"
+                    style={{
+                      width: "180px",
+                      height: "auto",
+                      borderRadius: "12px",
+                      marginBottom: "15px",
+                      boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+                    }}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      width: 180,
+                      height: 180,
+                      bgcolor: "#E0E0E0",
+                      borderRadius: "12px",
+                      marginBottom: "15px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontFamily: "Montserrat",
+                        color: "#7D7D7D",
+                      }}
+                    >
+                      No Cover Image
+                    </Typography>
+                  </Box>
+                )}
                 <Typography
                   variant="body1"
                   sx={{
-                    display: { xs: "none", lg: "block" },
                     fontFamily: "Montserrat",
-                    color: "black",
+                    textAlign: "center",
+                    mb: 3,
                   }}
                 >
-                  {user?.username || "User"}
+                  {coverImageUrl
+                    ? "Current Cover Image"
+                    : "No cover image available"}
                 </Typography>
-                <Avatar
-                  alt={user?.username}
-                  src={user?.profile_picture || null}
+
+                <Button
+                  variant="contained"
+                  component="label"
+                  sx={buttonStyles}
+                >
+                  {coverImageUrl ? "Change Image" : "Upload Image"}
+                  <input
+                    type="file"
+                    accept=".jpg, .jpeg, .png"
+                    hidden
+                    onChange={handleCoverImageChange}
+                  />
+                </Button>
+              </Card>
+            </Grid>
+          );
+          
+        case "MP3 File":
+          return (
+            <Grid container spacing={4} justifyContent="center">
+              {/* MP3 Upload Card */}
+              <Grid item xs={12} sm={5} md={4}>
+                <Card
+                  variant="outlined"
                   sx={{
-                    width: { xs: 32, lg: 40 },
-                    height: { xs: 32, lg: 40 },
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    p: 3,
+                    mt: 3,
+                    borderRadius: 3,
+                    borderColor: "#8BD3E6",
+                    boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.1)",
+                    textAlign: "center",
+                    position: "relative",
                   }}
                 >
-                  {user?.username?.charAt(0).toUpperCase()}
-                </Avatar>
-              </Box>
-            </Box>
-          )}
-
-          {/* Divider */}
-          {isLargeScreen && <Divider sx={{ mb: 3 }} />}
-
-          <Tabs
-            value={tabIndex}
-            onChange={handleTabChange}
-            aria-label="catalog tabs"
-            sx={{
-              mb: 3,
-              fontFamily: "Montserrat",
-              overflowX: "auto",
-              width: "100%",
-              maxWidth: "100vw",
-              minHeight: { xs: "36px", sm: "48px" },
-              "& .MuiTab-root": {
-                textTransform: "none",
-                color: "#666",
-                padding: { xs: "6px 12px", sm: "12px 16px" },
-                minHeight: { xs: "36px", sm: "48px" },
-                minWidth: { xs: "50px", sm: "auto" },
-                fontSize: { xs: "0.75rem", sm: "0.875rem" },
-                textOverflow: "ellipsis",
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                "&:hover": {
-                  color: "#8BD3E6",
-                },
-              },
-              "& .Mui-selected": {
-                color: "#8BD3E6 !important",
-                fontWeight: "normal",
-              },
-              "& .MuiTabs-indicator": {
-                backgroundColor: "#8BD3E6",
-              },
-              "& .MuiTabs-scrollableX": {
-                "&::-webkit-scrollbar": {
-                  display: "none",
-                },
-                scrollbarWidth: "none",
-              },
-              "& .MuiTabs-flexContainer": {
-                justifyContent: { xs: "center", sm: "flex-start" },
-                padding: { xs: "0 12px", sm: "0" },
-              },
-            }}
-            variant="scrollable"
-            scrollButtons="auto"
-            allowScrollButtonsMobile
-          >
-            {tabLabels.map((label, index) => (
-              <Tab
-                key={index}
-                label={getTabLabel(label)}
-                sx={{
-                  display: isMobile && tabIndex !== index ? "none" : "block",
-                  whiteSpace: "nowrap",
-                }}
-              />
-            ))}
-          </Tabs>
-
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, pl: 4 }}>
-            <Grid
-              container
-              spacing={2}
-              direction={isMobile ? "column" : "row"} // Stacked for mobile
-            >
-              {" "}
-              {tabIndex === 0 && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="title"
-                      label="Title"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.title}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      required
-                      name="artist"
-                      label="Artist"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.artist}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      required
-                      name="composer"
-                      label="Composer"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.composer}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      required
-                      name="price"
-                      label="Price"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.price}
-                      onChange={handleInputChange}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment
-                            position="start"
-                            sx={{ fontFamily: "Montserrat" }}
-                          >
-                            RM
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="albums"
-                      label="Album"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.albums}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <FormControl
-                      variant="outlined"
-                      fullWidth
-                      sx={{
-                        ...formStyles,
-                        mb: 2,
-                        width: isMobile ? "90%" : "90%", // Adjust width based on isMobile
-                        "& .MuiInputBase-root": {
-                          fontFamily: "Montserrat", // Apply Montserrat font
-                          "& fieldset": {
-                            borderColor: "#8BD3E6", // Default border color
-                          },
-                          "&:hover fieldset": {
-                            borderColor: "#6FBCCF", // Border color on hover
-                          },
-                          "&.Mui-focused fieldset": {
-                            borderColor: "#6FBCCF", // Border color on focus
-                          },
-                        },
-                        "& .MuiInputLabel-root": {
-                          fontFamily: "Montserrat", // Apply Montserrat font to the label
-                        },
-                      }}
-                      required
-                    >
-                      <InputLabel id="collection-label">Collection</InputLabel>
-                      <Select
-                        labelId="collection-label"
-                        name="collection"
-                        value={catalogData.collection}
-                        onChange={handleInputChange}
-                        label="Collection"
-                        required
-                        sx={{
-                          fontFamily: "Montserrat", // Apply font family to select
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "#8BD3E6", // Default border color
-                          },
-                          "&:hover .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "#6FBCCF", // Border color on hover
-                          },
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "#6FBCCF", // Border color on focus
-                          },
-                          "& .MuiSvgIcon-root": {
-                            color: "#8BD3E6", // Dropdown arrow color
-                          },
-                          "&.Mui-focused .MuiSvgIcon-root": {
-                            color: "#6FBCCF", // Arrow color on focus
-                          },
-                        }}
+                  {catalogData.mp3FileUrl ? (
+                    <>
+                      <Typography
+                        variant="body1"
+                        sx={{ fontFamily: "Montserrat", mb: 2 }}
                       >
-                        <MenuItem
-                          value="Student"
-                          sx={{ fontFamily: "Montserrat" }}
-                        >
-                          Student
-                        </MenuItem>
-                        <MenuItem
-                          value="Lecturers"
-                          sx={{ fontFamily: "Montserrat" }}
-                        >
-                          Lecturers
-                        </MenuItem>
-                        <MenuItem
-                          value="Freelancers"
-                          sx={{ fontFamily: "Montserrat" }}
-                        >
-                          Freelancers
-                        </MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DatePicker
-                        label="Date Uploaded"
-                        value={
-                          catalogData.dateUploaded
-                            ? new Date(catalogData.dateUploaded)
-                            : null
-                        }
-                        onChange={(newValue) => {
-                          handleInputChange({
-                            target: {
-                              name: "dateUploaded",
-                              value: newValue ? newValue.toISOString() : "",
-                            },
-                          });
-                        }}
-                        format="dd/MM/yyyy" // Ensures the date is displayed in dd/MM/yyyy format
-                        slots={{ textField: TextField }}
-                        slotProps={{
-                          textField: {
-                            variant: "outlined",
-                            fullWidth: true,
-                            required: true, // Makes the field required
-                            sx: formStyles,
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
-                </>
-              )}
-              {tabIndex === 1 && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="identifier"
-                      label="Identifier"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.identifier}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="composerTimePeriod"
-                      label="Composer Time Period"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.composerTimePeriod}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="contributor"
-                      label="Contributor"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.contributor}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="creator"
-                      label="Creator"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.creator}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="editor"
-                      label="Editor"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.editor}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="librettist"
-                      label="Librettist"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.librettist}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="recordingPerson"
-                      label="Recording Person"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.recordingPerson}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="element"
-                      label="Element"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.element}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                </>
-              )}
-              {tabIndex === 2 && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DatePicker
-                        label="Date Accessioned"
-                        value={
-                          catalogData.dateAccessioned
-                            ? new Date(catalogData.dateAccessioned)
-                            : null
-                        }
-                        onChange={(newValue) => {
-                          handleInputChange({
-                            target: {
-                              name: "dateAccessioned",
-                              value: newValue.toISOString(),
-                            },
-                          });
-                        }}
-                        slots={{ textField: TextField }}
-                        slotProps={{
-                          textField: {
-                            variant: "outlined",
-                            fullWidth: true,
-                            sx: formStyles,
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DatePicker
-                        label="Date Available"
-                        value={
-                          catalogData.dateAvailable
-                            ? new Date(catalogData.dateAvailable)
-                            : null
-                        }
-                        onChange={(newValue) => {
-                          handleInputChange({
-                            target: {
-                              name: "dateAvailable",
-                              value: newValue.toISOString(),
-                            },
-                          });
-                        }}
-                        slots={{ textField: TextField }}
-                        slotProps={{
-                          textField: {
-                            variant: "outlined",
-                            fullWidth: true,
-                            sx: formStyles,
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DatePicker
-                        label="Date Issued"
-                        value={
-                          catalogData.dateIssued
-                            ? new Date(catalogData.dateIssued)
-                            : null
-                        }
-                        onChange={(newValue) => {
-                          handleInputChange({
-                            target: {
-                              name: "dateIssued",
-                              value: newValue.toISOString(),
-                            },
-                          });
-                        }}
-                        slots={{ textField: TextField }}
-                        slotProps={{
-                          textField: {
-                            variant: "outlined",
-                            fullWidth: true,
-                            sx: formStyles,
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DatePicker
-                        label="Date of Birth"
-                        value={
-                          catalogData.dateOfBirth
-                            ? new Date(catalogData.dateOfBirth)
-                            : null
-                        }
-                        onChange={(newValue) => {
-                          handleInputChange({
-                            target: {
-                              name: "dateOfBirth",
-                              value: newValue.toISOString(),
-                            },
-                          });
-                        }}
-                        slots={{ textField: TextField }}
-                        slotProps={{
-                          textField: {
-                            variant: "outlined",
-                            fullWidth: true,
-                            sx: formStyles,
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DatePicker
-                        label="Date of Composition"
-                        value={
-                          catalogData.dateOfComposition
-                            ? new Date(catalogData.dateOfComposition)
-                            : null
-                        }
-                        onChange={(newValue) => {
-                          handleInputChange({
-                            target: {
-                              name: "dateOfComposition",
-                              value: newValue.toISOString(),
-                            },
-                          });
-                        }}
-                        slots={{ textField: TextField }}
-                        slotProps={{
-                          textField: {
-                            variant: "outlined",
-                            fullWidth: true,
-                            sx: formStyles,
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DatePicker
-                        label="Date of Creation"
-                        value={
-                          catalogData.dateOfCreation
-                            ? new Date(catalogData.dateOfCreation)
-                            : null
-                        }
-                        onChange={(newValue) => {
-                          handleInputChange({
-                            target: {
-                              name: "dateOfCreation",
-                              value: newValue.toISOString(),
-                            },
-                          });
-                        }}
-                        slots={{ textField: TextField }}
-                        slotProps={{
-                          textField: {
-                            variant: "outlined",
-                            fullWidth: true,
-                            sx: formStyles,
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DatePicker
-                        label="Date of Recording"
-                        value={
-                          catalogData.dateOfRecording
-                            ? new Date(catalogData.dateOfRecording)
-                            : null
-                        }
-                        onChange={(newValue) => {
-                          handleInputChange({
-                            target: {
-                              name: "dateOfRecording",
-                              value: newValue.toISOString(),
-                            },
-                          });
-                        }}
-                        slots={{ textField: TextField }}
-                        slotProps={{
-                          textField: {
-                            variant: "outlined",
-                            fullWidth: true,
-                            sx: formStyles,
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DatePicker
-                        label="Last Modified"
-                        value={
-                          catalogData.lastModified
-                            ? new Date(catalogData.lastModified)
-                            : null
-                        }
-                        onChange={(newValue) => {
-                          handleInputChange({
-                            target: {
-                              name: "lastModified",
-                              value: newValue.toISOString(),
-                            },
-                          });
-                        }}
-                        slots={{ textField: TextField }}
-                        slotProps={{
-                          textField: {
-                            variant: "outlined",
-                            fullWidth: true,
-                            sx: formStyles,
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
-                </>
-              )}
-              {tabIndex === 3 && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="description"
-                      label="Description"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.description}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="lyrics"
-                      label="Lyrics"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.lyrics}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="subject"
-                      label="Subject"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.subject}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="historicalContext"
-                      label="Historical Context"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.historicalContext}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="backgroundResources"
-                      label="Background Resources"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.backgroundResources}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="methodOfImplementation"
-                      label="Method of Implementation"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.methodOfImplementation}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="miscNotes"
-                      label="Misc Notes"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.miscNotes}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="melodicClassification"
-                      label="Melodic Classification"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.melodicClassification}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="melodyDescriptions"
-                      label="Melody Descriptions"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.melodyDescriptions}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="movementsSections"
-                      label="Movements"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.movementsSections}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                </>
-              )}
-              {tabIndex === 4 && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="format"
-                      label="Format"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.format}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="edition"
-                      label="Edition"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.edition}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="length"
-                      label="Length"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.length}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="gamutScale"
-                      label="Gamut Scale"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.gamutScale}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="digitalCollection"
-                      label="Digital Collection"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.digitalCollection}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="notation"
-                      label="Notation"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.notation}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="cosmeticsAndProp"
-                      label="Cosmetics and Prop"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.cosmeticsAndProp}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="language"
-                      label="Language"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.language}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                </>
-              )}
-              {tabIndex === 5 && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="alternativeTitle"
-                      label="Alternative Title"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.alternativeTitle}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="copyright"
-                      label="Copyright"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.copyright}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="rights"
-                      label="Rights"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.rights}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="sponsor"
-                      label="Sponsor"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.sponsor}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="publisher"
-                      label="Publisher"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.publisher}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="firstPublication"
-                      label="First Publication"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.firstPublication}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="callNumber"
-                      label="Call Number"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.callNumber}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="numberInPublication"
-                      label="Number in Publication"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.numberInPublication}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                </>
-              )}
-              {tabIndex === 6 && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="placeOfBirth"
-                      label="Place of Birth"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.placeOfBirth}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="placeOfOrigin"
-                      label="Place of Origin"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.placeOfOrigin}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="placeOfResidence"
-                      label="Place of Residence"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.placeOfResidence}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="placeOfProsper"
-                      label="Place of Prosper"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.placeOfProsper}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="region"
-                      label="Region"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.region}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="country"
-                      label="Country"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.country}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="ethnicGroup"
-                      label="Ethnic Group"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.ethnicGroup}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="targetAudience"
-                      label="Target Audience"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.targetAudience}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                </>
-              )}
-              {tabIndex === 7 && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="performingSkills"
-                      label="Performing Skills"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.performingSkills}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="pieceStyle"
-                      label="Piece Style"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.pieceStyle}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="occasionOfPerforming"
-                      label="Occasion of Performing"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.occasionOfPerforming}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="stagePerformance"
-                      label="Stage Performance"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.stagePerformance}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="vocalStyle"
-                      label="Vocal Style"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.vocalStyle}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="trackFunction"
-                      label="Track Function"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.trackFunction}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="tracks"
-                      label="Tracks"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.tracks}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="objectCollections"
-                      label="Object Collections"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.objectCollections}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="key"
-                      label="Key"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.key}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="intonation"
-                      label="Intonation"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.intonation}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="sheetMusic"
-                      label="Sheet Music"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.sheetMusic}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="uri"
-                      label="URI"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.uri}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                </>
-              )}
-              {tabIndex === 8 && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="relatedArtists"
-                      label="Related Artists"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.relatedArtists}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="relatedWork"
-                      label="Related Work"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.relatedWork}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="workTitle"
-                      label="Work Title"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.workTitle}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="temperament"
-                      label="Temperament"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.temperament}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="westernParallel"
-                      label="Western Parallel"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.westernParallel}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="prevalence"
-                      label="Prevalence"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.prevalence}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="purposeOfCreation"
-                      label="Purpose of Creation"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.purposeOfCreation}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="position"
-                      label="Position"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.position}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="timeOfOrigin"
-                      label="Time of Origin"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.timeOfOrigin}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="timeOfProsper"
-                      label="Time of Prosper"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.timeOfProsper}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      name="permalink"
-                      label="Permalink"
-                      variant="outlined"
-                      fullWidth
-                      sx={formStyles}
-                      value={catalogData.permalink}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                </>
-              )}
-            </Grid>
-            {tabIndex === 9 && (
-              <>
-                <Grid item xs={12} sm={8}>
-                  <Card
-                    variant="outlined"
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      p: 3,
-                      mt: 3,
-                      borderRadius: 2,
-                      borderColor: "#8BD3E6",
-                      boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)", // Subtle shadow for depth
-                    }}
-                  >
-                    {coverImageUrl ? (
-                      <img
-                        src={coverImageUrl}
-                        alt="Cover"
+                        <strong>Uploaded MP3:</strong>
+                        <br />
+                        {catalogData.mp3FileName}
+                      </Typography>
+                      <audio
+                        controls
+                        src={catalogData.mp3FileUrl}
                         style={{
-                          width: "180px",
-                          height: "auto",
-                          borderRadius: "12px",
+                          width: "100%",
+                          borderRadius: "8px",
                           marginBottom: "15px",
-                          boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)", // Slight shadow for image
                         }}
                       />
-                    ) : (
-                      <Box
-                        sx={{
-                          width: 180,
-                          height: 180,
-                          bgcolor: "#E0E0E0",
-                          borderRadius: "12px",
-                          marginBottom: "15px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)", // Slight shadow for placeholder
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontFamily: "Montserrat",
-                            color: "#7D7D7D",
-                          }}
-                        >
-                          No Cover Image
-                        </Typography>
-                      </Box>
-                    )}
-                    <Typography
-                      variant="body1"
+                    </>
+                  ) : (
+                    <Box
                       sx={{
+                        width: "100%",
+                        height: 120,
+                        bgcolor: "#F3F3F3",
+                        borderRadius: "12px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        mt: 3,
+                        mb: 2,
+                        boxShadow: "inset 0px 4px 10px rgba(0, 0, 0, 0.1)",
                         fontFamily: "Montserrat",
+                        color: "#7D7D7D",
                         textAlign: "center",
-                        mb: 3,
                       }}
                     >
-                      {coverImageUrl
-                        ? "Current Cover Image"
-                        : "No cover image available"}
-                    </Typography>
+                      {loading ? (
+                        <Skeleton
+                          variant="rectangular"
+                          width="100%"
+                          height={120}
+                        />
+                      ) : (
+                        "No MP3 File Uploaded"
+                      )}
+                    </Box>
+                  )}
 
-                    <Button
-                      variant="contained"
-                      component="label"
-                      sx={{
-                        ...buttonStyles,
-                      }}
-                    >
-                      {coverImageUrl ? "Change Image" : "Upload Image"}
-                      <input
-                        type="file"
-                        accept=".jpg, .jpeg, .png" // Only allow JPG, JPEG, and PNG file types
-                        hidden
-                        onChange={handleCoverImageChange}
-                      />
-                    </Button>
-                  </Card>
-                </Grid>
-              </>
-            )}
-            {tabIndex === 10 && (
-              <Grid container spacing={4} justifyContent="center">
-                {/* MP3 Upload Card on the Left */}
-                <Grid item xs={12} sm={5} md={4}>
-                  <Card
-                    variant="outlined"
+                  <Button
+                    variant="contained"
+                    component="label"
+                    sx={buttonStyles}
+                  >
+                    {catalogData.mp3FileUrl ? "Change MP3" : "Upload MP3"}
+                    <input
+                      type="file"
+                      hidden
+                      accept="audio/mp3"
+                      onChange={handleMp3FileChange}
+                    />
+                  </Button>
+
+                  {/* Loading backdrop */}
+                  <Backdrop
+                    open={loading}
                     sx={{
+                      color: "#fff",
+                      zIndex: (theme) => theme.zIndex.drawer + 1,
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      bgcolor: "rgba(0, 0, 0, 0.6)",
                       display: "flex",
-                      flexDirection: "column",
+                      justifyContent: "center",
                       alignItems: "center",
-                      p: 3,
-                      mt: 3,
-                      borderRadius: 3,
-                      borderColor: "#8BD3E6",
-                      boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.1)",
-                      textAlign: "center",
-                      position: "relative", // Important for overlay positioning
+                      flexDirection: "column",
                     }}
                   >
-                    {catalogData.mp3FileUrl ? (
-                      <>
-                        <Typography
-                          variant="body1"
-                          sx={{ fontFamily: "Montserrat", mb: 2 }}
-                        >
-                          <strong>Uploaded MP3:</strong>
-                          <br />
-                          {catalogData.mp3FileName}
-                        </Typography>
-                        <audio
-                          controls
-                          src={catalogData.mp3FileUrl}
-                          style={{
-                            width: "100%",
-                            borderRadius: "8px",
-                            marginBottom: "15px",
-                          }}
-                        />
-                      </>
-                    ) : (
-                      <Box
-                        sx={{
-                          width: "100%",
-                          height: 120,
-                          bgcolor: "#F3F3F3",
-                          borderRadius: "12px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          mt: 3,
-                          mb: 2,
-                          boxShadow: "inset 0px 4px 10px rgba(0, 0, 0, 0.1)",
-                          fontFamily: "Montserrat",
-                          color: "#7D7D7D",
-                          textAlign: "center",
-                        }}
-                      >
-                        {loading ? (
-                          <Skeleton
-                            variant="rectangular"
-                            width="100%"
-                            height={120}
-                          />
-                        ) : (
-                          "No MP3 File Uploaded"
-                        )}
-                      </Box>
-                    )}
-
-                    <Button
-                      variant="contained"
-                      component="label"
-                      sx={{
-                        ...buttonStyles,
-                        boxShadow: "none",
-                      }}
-                    >
-                      {catalogData.mp3FileUrl ? "Change MP3" : "Upload MP3"}
-                      <input
-                        type="file"
-                        hidden
-                        accept="audio/mp3"
-                        onChange={handleMp3FileChange}
-                      />
-                    </Button>
-
-                    {/* Backdrop for loading spinner */}
-                    <Backdrop
-                      open={loading}
+                    <CircularProgress
+                      size={60}
+                      color="inherit"
+                      sx={{ mb: 2 }}
+                    />
+                    <Typography
+                      variant="h6"
                       sx={{
                         color: "#fff",
-                        zIndex: (theme) => theme.zIndex.drawer + 1,
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        height: "100%",
-                        bgcolor: "rgba(0, 0, 0, 0.6)", // Darker backdrop with opacity
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        flexDirection: "column",
+                        fontFamily: "Montserrat",
+                        fontWeight: "bold",
                       }}
                     >
-                      <CircularProgress
-                        size={60}
-                        color="inherit"
-                        sx={{ mb: 2 }}
-                      />
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          color: "#fff",
-                          fontFamily: "Montserrat",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        Getting the prediction...
-                      </Typography>
-                    </Backdrop>
-                  </Card>
-                </Grid>
+                      Getting the prediction...
+                    </Typography>
+                  </Backdrop>
+                </Card>
+              </Grid>
 
-                <Grid item xs={12} sm={7} md={4} sx={{ mt: 4 }}>
-                  <Grid container direction="column" spacing={2}>
-                    <Grid item xs={12}>
-                      <TextField
-                        required
-                        name="emotion"
-                        label="Emotion"
-                        variant="outlined"
-                        fullWidth
-                        sx={formStyles}
-                        value={catalogData.emotion || ""}
-                        onChange={handleInputChange}
-                      />
-                    </Grid>
+              {/* Prediction Results */}
+              <Grid item xs={12} sm={7} md={4} sx={{ mt: 4 }}>
+                <Grid container direction="column" spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      required
+                      name="emotion"
+                      label="Emotion"
+                      variant="outlined"
+                      fullWidth
+                      sx={formStyles}
+                      value={catalogData.emotion || ""}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
 
-                    <Grid item xs={12}>
-                      <TextField
-                        name="gender"
-                        label="Gender"
-                        variant="outlined"
-                        fullWidth
-                        sx={formStyles}
-                        value={catalogData.gender || ""}
-                        onChange={handleInputChange}
-                      />
-                    </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      name="gender"
+                      label="Gender"
+                      variant="outlined"
+                      fullWidth
+                      sx={formStyles}
+                      value={catalogData.gender || ""}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
 
-                    <Grid item xs={12}>
-                      <TextField
-                        required
-                        name="genre"
-                        label="Genre"
-                        variant="outlined"
-                        fullWidth
-                        sx={formStyles}
-                        value={catalogData.genre || ""}
-                        onChange={handleInputChange}
-                      />
-                    </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      required
+                      name="genre"
+                      label="Genre"
+                      variant="outlined"
+                      fullWidth
+                      sx={formStyles}
+                      value={catalogData.genre || ""}
+                      onChange={handleInputChange}
+                    />
                   </Grid>
                 </Grid>
               </Grid>
-            )}
-            {tabIndex === 11 && (
+            </Grid>
+          );
+          
+          case "Instrumentation":
+            return (
               <Grid container spacing={4} justifyContent="center">
                 <Grid item xs={12} sm={8} md={6}>
                   <Card
@@ -2348,7 +977,7 @@ export default function MusicEntryClerkCatalog() {
                       borderRadius: 3,
                       borderColor: "#8BD3E6",
                       boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.1)",
-                      position: "relative", // For backdrop positioning
+                      position: "relative",
                     }}
                   >
                     <Typography
@@ -2362,7 +991,7 @@ export default function MusicEntryClerkCatalog() {
                     >
                       Instrumentation Details
                     </Typography>
-
+  
                     <TextField
                       required
                       name="instrumentation"
@@ -2376,7 +1005,7 @@ export default function MusicEntryClerkCatalog() {
                       onChange={handleInputChange}
                       placeholder="Get instrumentation prediction or enter manually"
                     />
-
+  
                     <Box
                       sx={{ display: "flex", justifyContent: "center", mt: 3 }}
                     >
@@ -2386,17 +1015,14 @@ export default function MusicEntryClerkCatalog() {
                         disabled={
                           !catalogData.mp3FileUrl || instrumentationLoading
                         }
-                        sx={{
-                          ...buttonStyles,
-                          boxShadow: "none",
-                        }}
+                        sx={buttonStyles}
                       >
                         {instrumentationLoading
                           ? "Predicting..."
                           : "Get Instrumentation Prediction"}
                       </Button>
                     </Box>
-
+  
                     <Typography
                       variant="body2"
                       sx={{
@@ -2411,7 +1037,7 @@ export default function MusicEntryClerkCatalog() {
                       {!catalogData.mp3FileUrl &&
                         " Please upload an MP3 in the MP3 File tab first."}
                     </Typography>
-
+  
                     {/* Backdrop for loading spinner */}
                     <Backdrop
                       open={instrumentationLoading}
@@ -2462,98 +1088,349 @@ export default function MusicEntryClerkCatalog() {
                   </Card>
                 </Grid>
               </Grid>
-            )}
-            <Dialog
-              open={openDialog}
-              onClose={handleCloseDialog}
-              PaperProps={dialogStyles.dialog.PaperProps}
-              aria-labelledby={dialogStyles.dialog.aria.labelledby}
-              aria-describedby={dialogStyles.dialog.aria.describedby}
-            >
-              <DialogTitle id="alert-dialog-title" sx={dialogStyles.title.sx}>
-                {dialogTitle}
-              </DialogTitle>
-
-              <DialogContent sx={dialogStyles.content.sx}>
-                <DialogContentText
-                  id="alert-dialog-description"
-                  sx={dialogStyles.contentText.sx}
-                >
-                  {dialogMessage}
-                </DialogContentText>
-              </DialogContent>
-
-              <DialogActions sx={dialogStyles.actions.sx}>
-                {[
-                  "Prediction Complete",
-                  "Missing Required Fields",
-                  "Error",
-                  "Uploaded",
-                ].includes(dialogTitle) ? (
-                  <Button
-                    onClick={handleCloseDialog}
-                    variant="contained"
-                    sx={{
-                      ...dialogStyles.button.common,
-                      ...dialogStyles.button.close,
-                    }}
-                  >
-                    Close
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => navigate("/clerk-homepage")}
-                    variant="contained"
-                    sx={{
-                      ...dialogStyles.button.common,
-                      ...dialogStyles.button.close,
-                    }}
-                  >
-                    Go to Homepage
-                  </Button>
-                )}
-              </DialogActions>
-            </Dialog>
-
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                flexDirection: { xs: "column", sm: "row" }, // Stack vertically on mobile, horizontally on larger screens
-                alignItems: "flex-start", // Center buttons vertically when stacked
-                mt: 3,
-              }}
-            >
-              <Button
-                variant="outlined"
-                size="large"
-                type="submit"
+            );
+            
+          default:
+            return <Typography>Tab content not found</Typography>;
+        }
+      } else {
+        // This is a dynamic tab, render dynamic fields
+        return renderDynamicFields(currentTab.tabId);
+      }
+    };
+  
+    return (
+      <ThemeProvider theme={theme}>
+        <GlobalStyle />
+        <Box sx={styles.root}>
+          {/* Mobile AppBar */}
+          <AppBar position="fixed" sx={styles.appBar}>
+            <Toolbar>
+              <IconButton
+                color="inherit"
+                edge="start"
+                onClick={handleDrawerToggle}
+                sx={{ mr: 2, color: "#3B3183" }}
+              >
+                <MenuIcon />
+              </IconButton>
+  
+              {/* Title */}
+              <Typography
+                variant="h6"
                 sx={{
-                  ...buttonStyles,
-                  mb: { xs: 2, sm: 0 }, // Add margin-bottom on mobile for spacing
-                  width: { xs: "95%", sm: "auto" }, // Ensure consistent width on mobile
+                  color: "#3B3183",
+                  fontWeight: "bold",
+                  flexGrow: 1,
                 }}
               >
-                Save Metadata
-              </Button>
-              {tabIndex < 11 && (
+                Catalog Metadata
+              </Typography>
+  
+              {/* Avatar in App Bar */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                {!isMobile && (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "#3B3183",
+                      display: { xs: "none", sm: "block" },
+                    }}
+                  >
+                    {user?.username}
+                  </Typography>
+                )}
+                <Avatar
+                  alt={user?.username}
+                  src={user?.profile_picture || null}
+                  sx={{
+                    width: { xs: 32, sm: 40 },
+                    height: { xs: 32, sm: 40 },
+                  }}
+                >
+                  {user?.username?.charAt(0).toUpperCase()}
+                </Avatar>
+              </Box>
+            </Toolbar>
+          </AppBar>
+  
+          {/* Permanent Drawer for Large Screens */}
+          <Drawer
+            variant="permanent"
+            sx={{
+              display: { xs: "none", lg: "block" },
+              "& .MuiDrawer-paper": {
+                width: DRAWER_WIDTH,
+                boxSizing: "border-box",
+              },
+            }}
+          >
+            <ClerkSidebar active="catalogMetadata" />
+          </Drawer>
+  
+          {/* Temporary Drawer for Mobile */}
+          <Drawer
+            variant="temporary"
+            open={mobileOpen}
+            onClose={handleDrawerToggle}
+            ModalProps={{ keepMounted: true }}
+            sx={{
+              display: { xs: "block", lg: "none" },
+              "& .MuiDrawer-paper": {
+                width: DRAWER_WIDTH,
+                boxSizing: "border-box",
+              },
+            }}
+          >
+            <ClerkSidebar active="catalogMetadata" />
+          </Drawer>
+  
+          {/* Main Content */}
+          <Box
+            component="main"
+            sx={{
+              flexGrow: 1,
+              p: { xs: 2, sm: 3 },
+              mt: { xs: 8, lg: 2 },
+              ml: { lg: `${DRAWER_WIDTH}px` },
+              maxWidth: "100%",
+              overflowX: "hidden"
+            }}
+          >
+            {/* Desktop Header */}
+            {isLargeScreen && (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 3,
+                }}
+              >
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontFamily: "Montserrat",
+                    fontWeight: "bold",
+                    fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
+                  }}
+                >
+                  Catalog Metadata
+                </Typography>
+  
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      display: { xs: "none", lg: "block" },
+                      fontFamily: "Montserrat",
+                      color: "black",
+                    }}
+                  >
+                    {user?.username || "User"}
+                  </Typography>
+                  <Avatar
+                    alt={user?.username}
+                    src={user?.profile_picture || null}
+                    sx={{
+                      width: { xs: 32, lg: 40 },
+                      height: { xs: 32, lg: 40 },
+                    }}
+                  >
+                    {user?.username?.charAt(0).toUpperCase()}
+                  </Avatar>
+                </Box>
+              </Box>
+            )}
+  
+            {/* Divider */}
+            {isLargeScreen && <Divider sx={{ mb: 3 }} />}
+  
+            {/* Tab Navigation */}
+            <Tabs
+              value={tabIndex}
+              onChange={handleTabChange}
+              aria-label="catalog tabs"
+              sx={{
+                mb: 3,
+                fontFamily: "Montserrat",
+                overflowX: "auto",
+                width: "100%",
+                maxWidth: "100vw",
+                minHeight: { xs: "36px", sm: "48px" },
+                "& .MuiTab-root": {
+                  textTransform: "none",
+                  color: "#666",
+                  padding: { xs: "6px 12px", sm: "12px 16px" },
+                  minHeight: { xs: "36px", sm: "48px" },
+                  minWidth: { xs: "50px", sm: "auto" },
+                  fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                  textOverflow: "ellipsis",
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                  "&:hover": {
+                    color: "#8BD3E6",
+                  },
+                },
+                "& .Mui-selected": {
+                  color: "#8BD3E6 !important",
+                  fontWeight: "normal",
+                },
+                "& .MuiTabs-indicator": {
+                  backgroundColor: "#8BD3E6",
+                },
+                "& .MuiTabs-scrollableX": {
+                  "&::-webkit-scrollbar": {
+                    display: "none",
+                  },
+                  scrollbarWidth: "none",
+                },
+                "& .MuiTabs-flexContainer": {
+                  justifyContent: { xs: "center", sm: "flex-start" },
+                  padding: { xs: "0 12px", sm: "0" },
+                },
+              }}
+              variant="scrollable"
+              scrollButtons="auto"
+              allowScrollButtonsMobile
+            >
+              {loading ? (
+                // Show skeleton tabs while loading
+                Array(5).fill(0).map((_, i) => (
+                  <Tab 
+                    key={i}
+                    label={
+                      <Skeleton 
+                        variant="text" 
+                        width={60} 
+                        height={24} 
+                        sx={{ bgcolor: "#f0f0f0" }} 
+                      />
+                    } 
+                  />
+                ))
+              ) : (
+                // Show actual tabs when loaded
+                getTabs().map((tab) => (
+                  <Tab key={tab.tabId} label={getTabLabel(tab.name)} />
+                ))
+              )}
+            </Tabs>
+  
+            {/* Form and Tab Content */}
+            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, pl: { xs: 0, sm: 4 }, maxWidth: "100%" }}>
+              {/* Show skeleton while loading, actual content when loaded */}
+              {loading ? (
+                <Box sx={{ p: 2 }}>
+                  <Grid container spacing={2}>
+                    {Array(4).fill(0).map((_, i) => (
+                      <Grid item xs={12} sm={6} key={i}>
+                        <Skeleton 
+                          variant="rectangular" 
+                          height={56} 
+                          sx={{ borderRadius: 1, mb: 2 }} 
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Box>
+              ) : (
+                renderTabContent()
+              )}
+  
+              {/* Dialog for messages */}
+              <Dialog
+                open={openDialog}
+                onClose={handleCloseDialog}
+                PaperProps={dialogStyles.dialog.PaperProps}
+                aria-labelledby={dialogStyles.dialog.aria.labelledby}
+                aria-describedby={dialogStyles.dialog.aria.describedby}
+              >
+                <DialogTitle id="alert-dialog-title" sx={dialogStyles.title.sx}>
+                  {dialogTitle}
+                </DialogTitle>
+  
+                <DialogContent sx={dialogStyles.content.sx}>
+                  <DialogContentText
+                    id="alert-dialog-description"
+                    sx={dialogStyles.contentText.sx}
+                  >
+                    {dialogMessage}
+                  </DialogContentText>
+                </DialogContent>
+  
+                <DialogActions sx={dialogStyles.actions.sx}>
+                  {[
+                    "Prediction Complete",
+                    "Missing Required Fields",
+                    "Error",
+                    "Uploaded",
+                  ].includes(dialogTitle) ? (
+                    <Button
+                      onClick={handleCloseDialog}
+                      variant="contained"
+                      sx={{
+                        ...dialogStyles.button.common,
+                        ...dialogStyles.button.close,
+                      }}
+                    >
+                      Close
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => navigate("/clerk-homepage")}
+                      variant="contained"
+                      sx={{
+                        ...dialogStyles.button.common,
+                        ...dialogStyles.button.close,
+                      }}
+                    >
+                      Go to Homepage
+                    </Button>
+                  )}
+                </DialogActions>
+              </Dialog>
+  
+              {/* Form Action Buttons */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  flexDirection: { xs: "column", sm: "row" },
+                  alignItems: "center",
+                  mt: 3,
+                  mb: 2,
+                  gap: { xs: 2, sm: 3 }
+                }}
+              >
                 <Button
                   variant="outlined"
                   size="large"
-                  onClick={handleNext}
+                  type="submit"
                   sx={{
                     ...buttonStyles,
-                    ml: { xs: 0, sm: 2 }, // Remove margin-left on mobile
-                    width: { xs: "95%", sm: "auto" }, // Ensure consistent width on mobile
+                    width: { xs: "95%", sm: "auto" },
                   }}
                 >
-                  Next Tab
+                  Save Metadata
                 </Button>
-              )}
+                {!loading && tabIndex < getTabs().length - 1 && (
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    onClick={handleNext}
+                    sx={{
+                      ...buttonStyles,
+                      width: { xs: "95%", sm: "auto" },
+                    }}
+                  >
+                    Next Tab
+                  </Button>
+                )}
+              </Box>
             </Box>
           </Box>
         </Box>
-      </Box>
-    </ThemeProvider>
-  );
-}
+      </ThemeProvider>
+    );
+  }

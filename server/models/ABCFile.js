@@ -306,9 +306,11 @@ const ABCFileSchema = new mongoose.Schema({
       },
     ],
   },
+},
+
+  { strict: false });
   
 
-});
 
 const ABCFile = mongoose.model('ABCFile', ABCFileSchema);
 
