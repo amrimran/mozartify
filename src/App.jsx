@@ -34,13 +34,12 @@ import MusicEntryClerkHomepage from "./MusicEntryClerkHomepage";
 import MusicEntryClerkUpload from "./MusicEntryClerkUpload";
 import MusicEntryClerkPreview from "./MusicEntryClerkPreview";
 import MusicEntryClerkCatalog from "./MusicEntryClerkCatalog";
-import ScrollControlledVideo from "./ScrollControlledVideo";
 
 import MusicEntryClerkEdit from "./MusicEntryClerkEdit";
 import MusicEntryClerkProfile from "./MusicEntryClerkProfile";
 import FirstTimeLogin from './FirstTimeLogin';
 import FirstTimeLogin2 from './FirstTimeLogin2';
-import TestSession from "./TestSession";
+
 import MusicEntryClerkView from './MusicEntryClerkView';
 import AdminDashboard from './AdminDashboard';
 import AdminInbox from './AdminInbox';
@@ -50,7 +49,6 @@ import AdminProfile from './AdminProfile';
 import AdminManageUsers from './AdminManageUsers';
 import AdminEdit from "./AdminEdit";
 import AdminCatalog from "./AdminCatalog";
-import TestSearch from "./testSearch";
 import FileDownloaderPage from './FileDownloaderPage';
 import Success from "./Success";
 import Success2 from "./Success2";
@@ -139,7 +137,6 @@ function App() {
         <Route path="/admin-manage-users" element={<AdminManageUsers />} />
         <Route path="/admin-edit" element={<AdminEdit />} />
         <Route path="/admin-catalog" element={<AdminCatalog />} />
-        <Route path="/scroll-controlled-video" element={<ScrollControlledVideo />} />
         <Route path="/success" element={<Success />} />
         <Route path="/success-2" element={<Success2 />} />
         <Route path="/cancel" element={<Cancel />} />
