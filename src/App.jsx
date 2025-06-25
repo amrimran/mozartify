@@ -128,7 +128,6 @@ function App() {
         <Route path="/clerk-edit" element={<MusicEntryClerkEdit />} />
         <Route path="/clerk-profile" element={<MusicEntryClerkProfile />} />
         <Route path="/clerk-music-score-view/:scoreId" element={<MusicEntryClerkView />} />
-        <Route path="/test-session" element={<TestSession />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin-inbox" element={<AdminInbox />} />
         <Route path="/admin-manage-scores" element={<AdminManageScore />} />
@@ -140,8 +139,6 @@ function App() {
         <Route path="/success" element={<Success />} />
         <Route path="/success-2" element={<Success2 />} />
         <Route path="/cancel" element={<Cancel />} />
-        <Route path="/test-session" element={<TestSession />} />
-        <Route path="/test-search" element={<TestSearch />} />
         <Route path="/clerk-search" element={<MusicEntryClerkSearch />} />
         <Route path="/clerk-search/clerk-advanced-search" element={<MusicEntryClerkAdvSearch />} />
         <Route path="/verify-email" element={<EmailVerification />} />
