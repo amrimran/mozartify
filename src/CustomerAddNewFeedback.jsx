@@ -34,6 +34,8 @@ import { createGlobalStyle } from "styled-components";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebase";
 import CustomerSidebar from "./CustomerSidebar";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL_2 = import.meta.env.VITE_API_URL_2;
 
 axios.defaults.withCredentials = true;
 
@@ -60,7 +62,7 @@ export default function CustomerAddNewFeedback() {
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setCurrentUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -131,7 +133,7 @@ export default function CustomerAddNewFeedback() {
     }
 
     try {
-      await axios.post("http://localhost:3002/api/feedback", data);
+      await axios.post(`${API_BASE_URL_2}/api/feedback`, data);
       navigate("/customer-inbox");
     } catch (error) {
       console.error("There was an error submitting the feedback!", error);

@@ -37,6 +37,7 @@ import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export default function CustomerAdvancedSearch() {
   const [user, setUser] = useState(null); //store user's information
@@ -97,7 +98,7 @@ export default function CustomerAdvancedSearch() {
   useEffect(() => {
     const fetchRefineLists = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/refine-search");
+        const response = await axios.get(`${API_BASE_URL}/refine-search`);
         const { composers, genres, emotions, instrumentation } = response.data;
 
         setComposerList(composers);
@@ -336,7 +337,7 @@ export default function CustomerAdvancedSearch() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
         setFavorites(response.data.favorites);
       } catch (error) {
@@ -351,7 +352,7 @@ export default function CustomerAdvancedSearch() {
     const fetchPurchasedScores = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/user-purchases"
+          `${API_BASE_URL}/user-purchases`
         );
 
         const purchasedScoreIds = response.data.map(
@@ -370,7 +371,7 @@ export default function CustomerAdvancedSearch() {
   const fetchMusicScores = async (combinedQueries, selectedCollection) => {
     try {
       const response = await axios.post(
-        "http://localhost:3000/advanced-search",
+        `${API_BASE_URL}/advanced-search`,
         {
           combinedQueries,
           selectedCollection,
@@ -387,7 +388,7 @@ export default function CustomerAdvancedSearch() {
   useEffect(() => {
     const fetchAddedToCartScores = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/user-cart");
+        const response = await axios.get(`${API_BASE_URL}/user-cart`);
 
         if (response.data.length === 0) {
           setAddedToCartScores([]);
@@ -408,7 +409,7 @@ export default function CustomerAdvancedSearch() {
 
   const addToCart = async (scoreId) => {
     try {
-      await axios.post("http://localhost:3000/add-to-cart", {
+      await axios.post(`${API_BASE_URL}/add-to-cart`, {
         musicScoreId: scoreId,
       });
       setAddedToCartScores([...addedToCartScores, scoreId]);
@@ -426,7 +427,7 @@ export default function CustomerAdvancedSearch() {
     try {
       const isFavorite = user?.favorites?.includes(musicScoreId);
 
-      const response = await axios.post("http://localhost:3000/set-favorites", {
+      const response = await axios.post(`${API_BASE_URL}/set-favorites`, {
         musicScoreId,
         action: isFavorite ? "remove" : "add", // Explicitly specify the action
       });

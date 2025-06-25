@@ -23,7 +23,8 @@ import ImageIcon from "@mui/icons-material/Image";
 import SearchIcon from "@mui/icons-material/Search";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
-import TuneIcon from "@mui/icons-material/Tune"; // New icon for field manager
+import TuneIcon from "@mui/icons-material/Tune";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 
 const ArtsClerkSidebar = ({ active, disableActiveTab }) => {
@@ -35,7 +36,7 @@ const ArtsClerkSidebar = ({ active, disableActiveTab }) => {
     if (key === "logout") {
       try {
         // Call the backend logout endpoint
-        await axios.get("http://localhost:3000/logout", {
+        await axios.get(`${API_BASE_URL}/logout`, {
           withCredentials: true,
         });
 

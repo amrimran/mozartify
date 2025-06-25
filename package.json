@@ -62,7 +62,7 @@
     "stripe": "^17.5.0",
     "styled-components": "^6.1.11",
     "three": "^0.174.0",
-    "tone": "^15.0.4",
+    "tone": "^15.1.22",
     "unzipper": "^0.12.2",
     "vexflow": "^5.0.0",
     "webpack": "^5.93.0",

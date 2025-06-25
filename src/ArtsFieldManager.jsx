@@ -56,6 +56,8 @@ import { createGlobalStyle } from "styled-components";
 import { useNavigate } from "react-router-dom";
 import ClerkSidebar from "./ArtsClerkSidebar";
 import DynamicField from "./DynamicField";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL_1 = import.meta.env.VITE_API_URL_1;
 
 const DRAWER_WIDTH = 225;
 
@@ -233,7 +235,7 @@ export default function DynamicFieldManager() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -248,12 +250,12 @@ export default function DynamicFieldManager() {
     setLoading(true);
     try {
       // Fetch tabs first
-      const tabResponse = await axios.get("http://localhost:3001/arts-tabs");
+      const tabResponse = await axios.get(`${API_BASE_URL_1}/arts-tabs`);
       const fetchedTabs = tabResponse.data;
       setTabs(fetchedTabs);
 
       // Then fetch fields
-      const response = await axios.get("http://localhost:3001/dynamic-fields");
+      const response = await axios.get(`${API_BASE_URL_1}/dynamic-fields`);
       const fetchedFields = response.data;
       setFields(fetchedFields);
 
@@ -283,9 +285,9 @@ export default function DynamicFieldManager() {
     // Check if tabs exist, if not, initialize default tabs
     const initializeTabs = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/arts-tabs");
+        const response = await axios.get(`${API_BASE_URL_1}/arts-tabs`);
         if (response.data.length === 0) {
-          await axios.post("http://localhost:3001/arts-tabs/initialize");
+          await axios.post(`${API_BASE_URL_1}/arts-tabs/initialize`);
           showSnackbar("Default tabs initialized", "success");
           fetchFields(); // Refresh after initialization
         }
@@ -407,14 +409,14 @@ export default function DynamicFieldManager() {
       if (editingField) {
         // Update existing field
         response = await axios.put(
-          `http://localhost:3001/dynamic-fields/${editingField._id}`,
+          `${API_BASE_URL_1}/dynamic-fields/${editingField._id}`,
           fieldToSave
         );
         showSnackbar("Field updated successfully");
       } else {
         // Create new field
         response = await axios.post(
-          "http://localhost:3001/dynamic-fields",
+          `${API_BASE_URL_1}/dynamic-fields`,
           fieldToSave
         );
         showSnackbar("Field created successfully");
@@ -444,7 +446,7 @@ export default function DynamicFieldManager() {
       setLoading(true);
 
       // Create a new tab via API
-      const response = await axios.post("http://localhost:3001/arts-tabs", {
+      const response = await axios.post(`${API_BASE_URL_1}/arts-tabs`, {
         name: newTabName,
       });
 
@@ -475,7 +477,7 @@ export default function DynamicFieldManager() {
     try {
       setLoading(true);
 
-      await axios.put(`http://localhost:3001/arts-tabs/${editingTab.tabId}`, {
+      await axios.put(`${API_BASE_URL_1}/arts-tabs/${editingTab.tabId}`, {
         name: newTabName,
       });
 
@@ -504,7 +506,7 @@ export default function DynamicFieldManager() {
       setLoading(true);
 
       await axios.delete(
-        `http://localhost:3001/arts-tabs/${tabToDelete.tabId}`
+        `${API_BASE_URL_1}/arts-tabs/${tabToDelete.tabId}`
       );
 
       // Refresh tabs and fields
@@ -557,7 +559,7 @@ export default function DynamicFieldManager() {
       setLoading(true);
 
       // Update the display orders via API
-      await axios.put("http://localhost:3001/arts-tabs/reorder", {
+      await axios.put(`${API_BASE_URL_1}/arts-tabs/reorder`, {
         tabs: newTabs.map((tab, index) => ({
           tabId: tab.tabId,
           displayOrder: index,
@@ -602,12 +604,12 @@ export default function DynamicFieldManager() {
 
       // Update the two fields that changed positions
       await Promise.all([
-        axios.put(`http://localhost:3001/dynamic-fields/${field._id}`, {
+        axios.put(`${API_BASE_URL_1}/dynamic-fields/${field._id}`, {
           ...field,
           displayOrder: targetIndex,
         }),
         axios.put(
-          `http://localhost:3001/dynamic-fields/${newOrder[currentIndex]._id}`,
+          `${API_BASE_URL_1}/dynamic-fields/${newOrder[currentIndex]._id}`,
           {
             ...newOrder[currentIndex],
             displayOrder: currentIndex,
@@ -629,7 +631,7 @@ export default function DynamicFieldManager() {
   const handleToggleActive = async (field) => {
     try {
       setLoading(true);
-      await axios.put(`http://localhost:3001/dynamic-fields/${field._id}`, {
+      await axios.put(`${API_BASE_URL_1}/dynamic-fields/${field._id}`, {
         ...field,
         isActive: !field.isActive,
       });

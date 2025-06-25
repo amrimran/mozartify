@@ -17,6 +17,7 @@ import Visibility from "@mui/icons-material/VisibilityOff";
 import VisibilityOff from "@mui/icons-material/Visibility";
 import backgroundImage from "./assets/loginWP.png";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const buttonStyles = {
   px: { xs: 6, sm: 8, md: 10 }, // Reduced padding
@@ -192,7 +193,7 @@ export default function Login() {
   useEffect(() => {
     // Check if there's a session cookie by making a request to the login endpoint
     axios
-      .get("http://localhost:3000/login", { withCredentials: true })
+      .get(`${API_BASE_URL}/login`, { withCredentials: true })
       .then((response) => {
         const { message, role, music_first_timer,art_first_timer, approval } = response.data;
 
@@ -227,7 +228,7 @@ export default function Login() {
     setErrorMessage("");
 
     axios
-      .post("http://localhost:3000/login", { username_or_email, password })
+      .post(`${API_BASE_URL}/login`, { username_or_email, password })
       .then((result) => {
         const { message, role, first_timer, approval } = result.data;
 
@@ -323,7 +324,7 @@ export default function Login() {
           style={{
             animation: isMobile ? "none" : "rotateLogo 5s linear infinite",
           }}
-          onClick={() => window.location.replace("http://localhost:5173")}
+         onClick={() => navigate('/')} 
         />
 
         <FormContainer component="form" onSubmit={(e) => e.preventDefault()}>

@@ -43,6 +43,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL_3 = import.meta.env.VITE_API_URL_3;
 
 const DRAWER_WIDTH = 225;
 
@@ -258,7 +260,7 @@ const AdminManageUsers = () => {
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setCurrentUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -273,7 +275,7 @@ const AdminManageUsers = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get("http://localhost:3003/users");
+        const response = await axios.get(`${API_BASE_URL_3}/users`);
         setUsers(response.data);
         setLoading(false);
       } catch (error) {
@@ -302,7 +304,7 @@ const AdminManageUsers = () => {
   const handleUpdateApproval = async (id, status) => {
     try {
       const response = await axios.put(
-        `http://localhost:3003/users/${id}/approval`,
+        `${API_BASE_URL_3}/users/${id}/approval`,
         {
           approval: status,
         }
@@ -335,7 +337,7 @@ const AdminManageUsers = () => {
 
         // Directly call the delete endpoint
         const deleteResponse = await axios.delete(
-          `http://localhost:3003/users/${userToDelete._id}`
+          `${API_BASE_URL_3}/users/${userToDelete._id}`
         );
         console.log("User successfully deleted:", deleteResponse.data);
 
@@ -406,7 +408,7 @@ const AdminManageUsers = () => {
     // Proceed with adding the user
     try {
       const response = await axios.post(
-        "http://localhost:3003/users",
+        `${API_BASE_URL_3}/users`,
         userToAdd
       );
       setUsers([...users, response.data]); // Add the new user to the state
@@ -430,7 +432,7 @@ const AdminManageUsers = () => {
   const handleSaveEdit = async () => {
     try {
       const response = await axios.put(
-        `http://localhost:3003/users/${selectedUser._id}`,
+        `${API_BASE_URL_3}/users/${selectedUser._id}`,
         selectedUser
       );
 

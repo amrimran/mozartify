@@ -30,6 +30,8 @@ import ClerkSidebar from "./MusicEntryClerkSidebar";
 import { useNavigate } from "react-router-dom";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { createGlobalStyle } from "styled-components";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL_1 = import.meta.env.VITE_API_URL_1;
 
 const DRAWER_WIDTH = 225;
 
@@ -267,7 +269,7 @@ export default function MusicEntryClerkHomepage() {
       // Add setTimeout to create a 2-second delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const response = await axios.get("http://localhost:3001/abc-file");
+      const response = await axios.get(`${API_BASE_URL_1}/abc-file`);
       const transformedScores = response.data.map((score) => ({
         ...score,
         _id: score._id.$oid || score._id.toString() || score._id,
@@ -346,7 +348,7 @@ export default function MusicEntryClerkHomepage() {
       const fetchSearchedScores = async () => {
         try {
           const response = await axios.get(
-            "http://localhost:3000/search-music-scores",
+            `${API_BASE_URL}/search-music-scores`,
             {
               params: { query: searchQuery },
             }
@@ -368,7 +370,7 @@ export default function MusicEntryClerkHomepage() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -454,7 +456,7 @@ export default function MusicEntryClerkHomepage() {
         } else {
           // Apply filters to all scores
           const response = await axios.get(
-            "http://localhost:3000/filter-music-scores",
+            `${API_BASE_URL}/filter-music-scores`,
             {
               params: { genre, composer, instrumentation, emotion },
             }

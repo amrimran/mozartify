@@ -72,6 +72,9 @@ import { UnreadProvider } from "./UnreadContext";
 // import CompositionPage from './CompositionPage';
 import MusicFieldManager from "./MusicFieldManager";
 
+console.log('Vite env:', import.meta.env);
+console.log('API URL:', import.meta.env.VITE_API_URL);
+
 
 
 

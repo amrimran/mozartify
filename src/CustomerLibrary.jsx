@@ -3,6 +3,7 @@ import axios from "axios";
 import {
   Box,
   List,
+  Pagination,
   ListItemIcon,
   ListItemText,
   Avatar,
@@ -30,6 +31,7 @@ import { createGlobalStyle } from "styled-components";
 import CustomerSidebar from "./CustomerSidebar";
 
 axios.defaults.withCredentials = true;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export default function CustomerLibrary() {
   const theme = useTheme();
@@ -52,6 +54,26 @@ export default function CustomerLibrary() {
   const [emotion, setEmotion] = useState("");
 
   const [loading, setLoading] = useState(true);
+
+  // Calculate pagination
+  const [page, setPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+
+  const paginatedScores = currentScores.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(currentScores.length / itemsPerPage);
+
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  // const currentScores = searchedScores.slice(startIndex, endIndex);
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const navigate = useNavigate();
 
@@ -76,7 +98,7 @@ export default function CustomerLibrary() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
         setFavorites(response.data.favorites_music);
       } catch (error) {
@@ -91,7 +113,7 @@ export default function CustomerLibrary() {
     const fetchOwnedScores = async () => {
       try {
         const purchaseResponse = await axios.get(
-          "http://localhost:3000/user-purchases"
+          `${API_BASE_URL}/user-purchases`
         );
 
         const purchasedScoreIds = purchaseResponse.data.map(
@@ -99,12 +121,9 @@ export default function CustomerLibrary() {
         );
 
         if (purchasedScoreIds.length > 0) {
-          const response = await axios.get(
-            "http://localhost:3000/music-scores",
-            {
-              params: { scoreIds: purchasedScoreIds },
-            }
-          );
+          const response = await axios.get(`${API_BASE_URL}/music-scores`, {
+            params: { scoreIds: purchasedScoreIds },
+          });
 
           setUnfilteredScores(response.data);
           setCurrentScores(response.data);
@@ -135,8 +154,10 @@ export default function CustomerLibrary() {
       );
       setSearchedScores(searchResult);
       setCurrentScores(searchResult);
+      setPage(1);
     } else {
       setCurrentScores(unfilteredScores);
+      setPage(1);
     }
   }, [searchQuery]);
 
@@ -171,6 +192,7 @@ export default function CustomerLibrary() {
     setEmotion("");
     setInstrumentation("");
     setCurrentScores(unfilteredScores);
+    setPage(1);
   };
 
   const handleSnackbarClose = (event, reason) => {
@@ -193,9 +215,11 @@ export default function CustomerLibrary() {
         if (!searchQuery) {
           const filteredOnlySearchResults = applyFilters(unfilteredScores);
           setCurrentScores(filteredOnlySearchResults);
+          setPage(1);
         } else {
           const filteredSearchedSearchResults = applyFilters(searchedScores);
           setCurrentScores(filteredSearchedSearchResults);
+          setPage(1);
         }
       } catch (error) {
         console.error("Error fetching filtered scores:", error);
@@ -218,23 +242,20 @@ export default function CustomerLibrary() {
         }
       });
 
-      // Send the request to the server
-      const response = await axios.post("http://localhost:3000/set-favorites", {
+      const response = await axios.post(`${API_BASE_URL}/set-favourites`, {
         musicScoreId,
-        action: isFavorite ? "remove" : "add", // Explicitly specify the action
+        action: isFavorite ? "remove" : "add",
       });
 
-      // Update the favorites with the server response (ensures consistency)
       setFavorites(response.data.favorites_music);
 
-      // Show appropriate snackbar message
       setSnackbar({
         open: true,
         message: isFavorite
           ? "Removed from favorites successfully!"
           : "Added to favorites successfully!",
         type: isFavorite ? "unfavorite" : "favorite",
-        reload: true, // Add a flag to determine whether to reload after snackbar
+        reload: true,
       });
     } catch (error) {
       console.error("Error updating favorites:", error);
@@ -836,7 +857,7 @@ export default function CustomerLibrary() {
           {/* Scores List */}
           <Box sx={{ flexGrow: 1, overflow: "auto", p: { xs: 1, sm: 2 } }}>
             <List>
-              {currentScores.map((item) => (
+              {paginatedScores.map((item) => (
                 <ListItemButton
                   key={item._id}
                   onClick={() =>
@@ -930,6 +951,43 @@ export default function CustomerLibrary() {
                 </ListItemButton>
               ))}
             </List>
+            {totalPages > 1 && (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  padding: "20px",
+                  "& .MuiPagination-ul": {
+                    "& .MuiPaginationItem-root": {
+                      fontFamily: "Montserrat",
+                      "&.Mui-selected": {
+                        backgroundColor: "#8BD3E6",
+                        color: "white",
+                        "&:hover": {
+                          backgroundColor: "#6FBCCF",
+                        },
+                      },
+                    },
+                  },
+                }}
+              >
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                  color="primary"
+                  sx={{
+                    "& .MuiPaginationItem-root": {
+                      fontFamily: "Montserrat",
+                    },
+                    "& .Mui-selected": {
+                      backgroundColor: "#8BD3E6 !important",
+                      color: "#FFFFFF",
+                    },
+                  }}
+                />
+              </Box>
+            )}
           </Box>
         </Box>
       </Box>

@@ -34,6 +34,7 @@ import ClerkSidebar from "./MusicEntryClerkSidebar";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // Constants
 const DRAWER_WIDTH = 225;
@@ -133,7 +134,7 @@ export default function MusicEntryClerkSearch() {
   useEffect(() => {
     const fetchRefineLists = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/refine-search");
+        const response = await axios.get(`${API_BASE_URL}/refine-search`);
         const { composers, genres, emotions, instrumentation } = response.data;
 
         setComposerList(composers);
@@ -222,7 +223,7 @@ export default function MusicEntryClerkSearch() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
         setFavorites(response.data.favorites);
       } catch (error) {
@@ -237,7 +238,7 @@ export default function MusicEntryClerkSearch() {
     const fetchPurchasedScores = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/user-purchases"
+          `${API_BASE_URL}/user-purchases`
         );
 
         const purchasedScoreIds = response.data.map(
@@ -255,7 +256,7 @@ export default function MusicEntryClerkSearch() {
 
   const fetchMusicScores = async (combinedQueries, selectedCollection) => {
     try {
-      const response = await axios.post("http://localhost:3000/search", {
+      const response = await axios.post(`${API_BASE_URL}/search`, {
         combinedQueries,
         selectedCollection,
       });
@@ -270,7 +271,7 @@ export default function MusicEntryClerkSearch() {
   useEffect(() => {
     const fetchAddedToCartScores = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/user-cart");
+        const response = await axios.get(`${API_BASE_URL}/user-cart`);
 
         if (response.data.length === 0) {
           setAddedToCartScores([]);

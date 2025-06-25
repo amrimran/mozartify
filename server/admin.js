@@ -11,24 +11,40 @@ const Purchase = require("./models/Purchase");
 const bcrypt = require("bcryptjs");
 
 const app = express();
-
 // Middleware
 app.use(express.json());
 
-const allowedOrigins = ["http://localhost:3000", "http://localhost:5173"];
+// ================== ENVIRONMENT CONFIG ==================
+const isProduction = process.env.NODE_ENV === "production";
+const frontendUrl = isProduction
+  ? process.env.FRONTEND_PROD_URL
+  : process.env.FRONTEND_DEV_URL;
+const backendUrl = isProduction
+  ? process.env.BACKEND_PROD_URL
+  : process.env.BACKEND_DEV_URL;
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  })
-);
+const allowedOrigins = [
+  frontendUrl,
+  backendUrl,
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+].filter(Boolean); // Remove any undefined values
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 
 // MongoDB Connection
 mongoose
@@ -385,5 +401,8 @@ app.use((req, res) => {
 // Start the server
 const PORT = process.env.PORT || 3003;
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server running in ${isProduction ? 'production' : 'development'} mode`);
+  console.log(`Frontend URL: ${frontendUrl}`);
+  console.log(`Backend URL: ${backendUrl}`);
+  console.log(`Server is running on port ${PORT}`);
 });

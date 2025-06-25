@@ -26,6 +26,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import backgroundImage from "./assets/signupBG.png";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const dialogStyles = {
   dialogPaper: {
@@ -386,7 +387,7 @@ export default function Signup() {
     setErrorMessage("");
 
     axios
-      .post("http://localhost:3000/signup", { username, email, password, role })
+      .post(`${API_BASE_URL}/signup`, { username, email, password, role })
       .then((result) => {
         console.log(result);
         setIsDialogOpen(true);
@@ -460,7 +461,7 @@ export default function Signup() {
         <ResponsiveLogo
           src={SidebarMozartifyLogo}
           alt="MozartifyIcon"
-          onClick={() => window.location.replace("http://localhost:5173")}
+          onClick={() => navigate('/')} 
         />
         <FormContainer component="form" onSubmit={handleSubmit}>
           <Typography

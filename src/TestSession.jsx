@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 axios.defaults.withCredentials = true;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const TestSession = () => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -10,7 +11,7 @@ const TestSession = () => {
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setCurrentUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -24,7 +25,7 @@ const TestSession = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.get("http://localhost:3000/logout");
+      await axios.get(`${API_BASE_URL}/logout`);
       setCurrentUser(null);
       if ('caches' in window) {
         caches.keys().then((names) => {

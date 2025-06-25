@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const Success = () => {
   const navigate = useNavigate();
@@ -8,7 +9,7 @@ const Success = () => {
   useEffect(() => {
     const completePurchase = async () => {
       try {
-        const response = await axios.post('http://localhost:3000/complete-purchase');
+        const response = await axios.post(`${API_BASE_URL}/complete-purchase`);
         console.log('Purchase completion response:', response.data);
       } catch (error) {
         console.error('Error completing purchase:', error);

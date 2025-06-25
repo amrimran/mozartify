@@ -41,6 +41,8 @@ import {
 } from "chart.js";
 import { Bar, Line } from "react-chartjs-2";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL_3 = import.meta.env.VITE_API_URL_3;
 
 ChartJS.register(
   CategoryScale,
@@ -239,7 +241,7 @@ export default function AdminDashboard() {
     // Frontend component changes
     const fetchDashboardStats = async () => {
       try {
-        const response = await axios.get("http://localhost:3003/admin/stats");
+        const response = await axios.get(`${API_BASE_URL_3}/admin/stats`);
         const {
           uploadsByYear,
           purchasesByYear,
@@ -355,7 +357,7 @@ export default function AdminDashboard() {
 
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setTimeout(() => {
           setUser(response.data);
           setLoading(false);
@@ -374,7 +376,7 @@ export default function AdminDashboard() {
     const fetchFeedbacks = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3003/admin/feedbacks"
+          `${API_BASE_URL_3}/admin/feedbacks`
         );
 
         // Get both the feedbacks array and the total count

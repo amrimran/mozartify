@@ -45,6 +45,8 @@ import {
 } from "@mui/icons-material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { createGlobalStyle } from "styled-components";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL_1 = import.meta.env.VITE_API_URL_1;
 
 const DRAWER_WIDTH = 225;
 
@@ -336,7 +338,7 @@ export default function AdminMusicScoreView() {
   useEffect(() => {
     const fetchUserSession = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching the user session:", error);
@@ -346,7 +348,7 @@ export default function AdminMusicScoreView() {
     const fetchAbcFileAndMetadata = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3001/abc-file/${scoreId}`
+          `${API_BASE_URL_1}/abc-file/${scoreId}`
         );
         const abcContent = response.data.content;
 
@@ -577,7 +579,7 @@ export default function AdminMusicScoreView() {
   };
 
   const handleConfirmDelete = () => {
-    fetch("http://localhost:3001/delete-and-transfer-abc-file", {
+    fetch(`${API_BASE_URL_1}/delete-and-transfer-abc-file`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

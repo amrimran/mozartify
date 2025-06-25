@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
+  Pagination,
   Box,
   List,
   ListItemIcon,
@@ -31,6 +32,7 @@ import { createGlobalStyle } from "styled-components";
 import CustomerSidebar from "./CustomerSidebar";
 
 axios.defaults.withCredentials = true;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export default function CustomerFavorites() {
   const theme = useTheme();
@@ -54,6 +56,26 @@ export default function CustomerFavorites() {
   const [emotion, setEmotion] = useState("");
 
   const [loading, setLoading] = useState(true);
+
+  // Calculate pagination
+  const [page, setPage] = useState(1);
+  const [itemsPerPage] = useState(7);
+
+  const paginatedScores = currentScores.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(currentScores.length / itemsPerPage);
+
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  // const currentScores = searchedScores.slice(startIndex, endIndex);
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const navigate = useNavigate();
 
@@ -80,7 +102,7 @@ export default function CustomerFavorites() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
         setFavorites(response.data.favorites_music);
       } catch (error) {
@@ -95,7 +117,7 @@ export default function CustomerFavorites() {
     const fetchFavoriteScores = async () => {
       try {
         const likedScores = await axios.get(
-          "http://localhost:3000/user-liked-scores"
+          `${API_BASE_URL}/user-liked-scores`
         );
 
         if (likedScores.data.length > 0) {
@@ -115,9 +137,7 @@ export default function CustomerFavorites() {
   useEffect(() => {
     const fetchPurchasedScores = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:3000/user-purchases"
-        );
+        const response = await axios.get(`${API_BASE_URL}/user-purchases`);
 
         const purchasedScoreIds = response.data.map(
           (purchase) => purchase.score_id
@@ -135,7 +155,7 @@ export default function CustomerFavorites() {
   useEffect(() => {
     const fetchAddedToCartScores = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/user-cart");
+        const response = await axios.get(`${API_BASE_URL}/user-cart`);
 
         const AddedScoreIds = response.data.map((added) => added.score_id);
 
@@ -150,7 +170,7 @@ export default function CustomerFavorites() {
 
   const addToCart = async (scoreId) => {
     try {
-      await axios.post("http://localhost:3000/add-to-cart", {
+      await axios.post(`${API_BASE_URL}/add-to-cart`, {
         musicScoreId: scoreId,
       });
       setAddedToCartScores([...addedToCartScores, scoreId]);
@@ -259,7 +279,7 @@ export default function CustomerFavorites() {
       });
 
       // Send the request to the server
-      const response = await axios.post("http://localhost:3000/set-favorites", {
+      const response = await axios.post(`${API_BASE_URL}/set-favorites`, {
         musicScoreId,
         action: isFavorite ? "remove" : "add", // Explicitly specify the action
       });
@@ -865,7 +885,7 @@ export default function CustomerFavorites() {
 
           <Box sx={{ flexGrow: 1, overflow: "auto", p: { xs: 1, sm: 2 } }}>
             <List>
-              {currentScores.map((item) => (
+              {paginatedScores.map((item) => (
                 <ListItemButton
                   key={item._id}
                   onClick={() =>
@@ -974,6 +994,43 @@ export default function CustomerFavorites() {
                 </ListItemButton>
               ))}
             </List>
+            {totalPages > 1 && (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  padding: "20px",
+                  "& .MuiPagination-ul": {
+                    "& .MuiPaginationItem-root": {
+                      fontFamily: "Montserrat",
+                      "&.Mui-selected": {
+                        backgroundColor: "#8BD3E6",
+                        color: "white",
+                        "&:hover": {
+                          backgroundColor: "#6FBCCF",
+                        },
+                      },
+                    },
+                  },
+                }}
+              >
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                  color="primary"
+                  sx={{
+                    "& .MuiPaginationItem-root": {
+                      fontFamily: "Montserrat",
+                    },
+                    "& .Mui-selected": {
+                      backgroundColor: "#8BD3E6 !important",
+                      color: "#FFFFFF",
+                    },
+                  }}
+                />
+              </Box>
+            )}
           </Box>
         </Box>
         <Snackbar

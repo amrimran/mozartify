@@ -41,6 +41,7 @@ import CustomerSidebar from "./CustomerSidebar";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 axios.defaults.withCredentials = true;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const DRAWER_WIDTH = 230;
 
@@ -198,7 +199,7 @@ export default function CustomerProfile() {
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setCurrentUser(response.data);
         setUsername(response.data.username);
       } catch (error) {
@@ -224,7 +225,7 @@ export default function CustomerProfile() {
 
   const handleUpdateUsername = async () => {
     try {
-      await axios.put("http://localhost:3000/user/update-username", {
+      await axios.put(`${API_BASE_URL}/user/update-username`, {
         username,
       });
       setCurrentUser((prev) => ({ ...prev, username }));
@@ -256,7 +257,7 @@ export default function CustomerProfile() {
     }
 
     try {
-      await axios.put("http://localhost:3000/user/change-password", {
+      await axios.put(`${API_BASE_URL}/user/change-password`, {
         currentPassword,
         newPassword,
       });
@@ -292,7 +293,7 @@ export default function CustomerProfile() {
       await uploadBytes(storageRef, profilePictureFile);
       const profilePictureUrl = await getDownloadURL(storageRef);
 
-      await axios.put("http://localhost:3000/user/update-profile-picture", {
+      await axios.put(`${API_BASE_URL}/user/update-profile-picture`, {
         profile_picture_url: profilePictureUrl,
       });
 
@@ -319,7 +320,7 @@ export default function CustomerProfile() {
 
   const handleRemoveProfilePicture = async () => {
     try {
-      await axios.put("http://localhost:3000/user/update-profile-picture", {
+      await axios.put(`${API_BASE_URL}/user/update-profile-picture`, {
         profile_picture_url: null,
       });
 
@@ -349,7 +350,7 @@ export default function CustomerProfile() {
       cancelText: "CANCEL",
       confirmAction: async () => {
         try {
-          await axios.delete("http://localhost:3000/user/delete");
+          await axios.delete(`${API_BASE_URL}/user/delete`);
           showDialog({
             title: "Success",
             content: "Account deleted successfully.",

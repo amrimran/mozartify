@@ -43,6 +43,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import MenuIcon from "@mui/icons-material/Menu";
 
 axios.defaults.withCredentials = true;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export default function CustomerHomepage() {
   const theme = useTheme();
@@ -152,7 +153,7 @@ export default function CustomerHomepage() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
         setFavorites(response.data.favorites_music);
       } catch (error) {
@@ -166,9 +167,7 @@ export default function CustomerHomepage() {
   useEffect(() => {
     const fetchPurchasedScores = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:3000/user-purchases"
-        );
+        const response = await axios.get(`${API_BASE_URL}/user-purchases`);
 
         const purchasedScoreIds = response.data.map(
           (purchase) => purchase.score_id
@@ -186,7 +185,7 @@ export default function CustomerHomepage() {
   useEffect(() => {
     const fetchAddedToCartScores = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/user-cart");
+        const response = await axios.get(`${API_BASE_URL}/user-cart`);
 
         if (response.data.length === 0) {
           setAddedToCartScores([]);
@@ -207,7 +206,7 @@ export default function CustomerHomepage() {
 
   const addToCart = async (scoreId) => {
     try {
-      await axios.post("http://localhost:3000/add-to-cart", {
+      await axios.post(`${API_BASE_URL}/add-to-cart`, {
         musicScoreId: scoreId,
       });
       setAddedToCartScores([...addedToCartScores, scoreId]);
@@ -226,7 +225,7 @@ export default function CustomerHomepage() {
       const fetchSearchedScores = async () => {
         try {
           const response = await axios.get(
-            "http://localhost:3000/search-music-scores",
+            `${API_BASE_URL}/search-music-scores`,
             {
               params: { query: searchQuery },
             }
@@ -279,7 +278,7 @@ export default function CustomerHomepage() {
       try {
         if (!searchQuery) {
           const response = await axios.get(
-            "http://localhost:3000/filter-music-scores",
+            `${API_BASE_URL}/filter-music-scores`,
             {
               params: { genre, composer, instrumentation, emotion },
             }
@@ -305,7 +304,7 @@ export default function CustomerHomepage() {
   useEffect(() => {
     try {
       axios
-        .get("http://localhost:3000/popular-music-scores")
+        .get(`${API_BASE_URL}/popular-music-scores`)
         .then((response) => {
           setPopularScores(response.data);
         })
@@ -319,7 +318,7 @@ export default function CustomerHomepage() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3000/recommendations")
+      .get(`${API_BASE_URL}/recommendations`)
       .then((response) => {
         setRecommendations(response.data);
       })
@@ -356,7 +355,7 @@ export default function CustomerHomepage() {
       });
 
       // Send the request to the server
-      const response = await axios.post("http://localhost:3000/set-favorites", {
+      const response = await axios.post(`${API_BASE_URL}/set-favorites`, {
         musicScoreId,
         action: isFavorite ? "remove" : "add", // Explicitly specify the action
       });
@@ -1052,20 +1051,11 @@ export default function CustomerHomepage() {
                         color="primary"
                         sx={{
                           "& .MuiPaginationItem-root": {
-                            borderRadius: 2,
                             fontFamily: "Montserrat",
-                            backgroundColor: "primary",
-                            color: "#000",
-                            "&.Mui-selected": {
-                              backgroundColor: "#8BD3E6", // Blue for selected
-                              color: "#fff",
-                              "&:hover": {
-                                backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
-                              },
-                            },
-                            "&:hover": {
-                              backgroundColor: "#D3D3D3", // Neutral gray for unselected hover
-                            },
+                          },
+                          "& .Mui-selected": {
+                            backgroundColor: "#8BD3E6 !important",
+                            color: "#FFFFFF",
                           },
                         }}
                       />

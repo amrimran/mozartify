@@ -48,6 +48,8 @@ import { createGlobalStyle } from "styled-components";
 import { useUnread } from "./UnreadContext.jsx";
 
 axios.defaults.withCredentials = true;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL_2 = import.meta.env.VITE_API_URL_2;
 
 const DRAWER_WIDTH = 230;
 
@@ -467,7 +469,7 @@ const CustomerInbox2 = () => {
       };
 
       const response = await axios.post(
-        "http://localhost:3002/api/artwork-feedback",
+        `${API_BASE_URL_2}/api/artwork-feedback`,
         feedbackData
       );
 
@@ -489,7 +491,7 @@ const CustomerInbox2 = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:3002/api/artwork-feedback/delete/${id}`);
+      await axios.delete(`${API_BASE_URL_2}/api/artwork-feedback/delete/${id}`);
       setFeedbackData((prev) => prev.filter((feedback) => feedback._id !== id));
       showNotification("Feedback deleted successfully");
     } catch (error) {
@@ -502,7 +504,7 @@ const CustomerInbox2 = () => {
     try {
       // Mark the feedback as read in the database
       await axios.put(
-        `http://localhost:3002/api/artwork-feedback/${feedback._id}/mark-read-customer`
+        `${API_BASE_URL_2}/api/artwork-feedback/${feedback._id}/mark-read-customer`
       );
       setUnreadCount(unreadCount - 1);
 
@@ -568,7 +570,7 @@ const CustomerInbox2 = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -585,7 +587,7 @@ const CustomerInbox2 = () => {
 
     try {
       const response = await axios.get(
-        `http://localhost:3002/api/artwork-feedback?userId=${user._id}`
+        `${API_BASE_URL_2}/api/artwork-feedback?userId=${user._id}`
       );
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -610,7 +612,7 @@ const CustomerInbox2 = () => {
 
     try {
       const response = await axios.post(
-        `http://localhost:3002/api/artwork-feedback/reply/${selectedFeedback._id}`,
+        `${API_BASE_URL_2}/api/artwork-feedback/reply/${selectedFeedback._id}`,
         {
           message: newReply,
           sender: "customer",
@@ -808,9 +810,6 @@ const CustomerInbox2 = () => {
                       },
                 }}
               >
-                {isLoading ? (
-                  <TableHeadSkeleton />
-                ) : (
                   <TableHead sx={{ bgcolor: "#FF9F8F" }}>
                     <TableRow>
                       {[
@@ -869,7 +868,7 @@ const CustomerInbox2 = () => {
                       ))}
                     </TableRow>
                   </TableHead>
-                )}
+                
 
                 <TableBody>
                   {isLoading

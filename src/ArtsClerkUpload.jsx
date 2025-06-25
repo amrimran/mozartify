@@ -25,6 +25,8 @@ import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./ArtsClerkSidebar";
 import ImportIcon from "./assets/import-icon.png";
 import { storage, ref, uploadBytesResumable, getDownloadURL } from "./firebase";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL_1 = import.meta.env.VITE_API_URL_1;
 
 const DRAWER_WIDTH = 225;
 
@@ -168,7 +170,7 @@ export default function ArtsClerkUpload() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -247,7 +249,7 @@ export default function ArtsClerkUpload() {
   
         // Save artwork metadata to the backend
         try {
-          const response = await axios.post("http://localhost:3001/catalogArts", {
+          const response = await axios.post(`${API_BASE_URL_1}/catalogArts`, {
             imageUrl: downloadURL,
           });
   

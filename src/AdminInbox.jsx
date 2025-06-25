@@ -38,6 +38,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { createGlobalStyle } from "styled-components";
 import { useUnread } from "./UnreadContext.jsx";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL_2 = import.meta.env.VITE_API_URL_2;
 
 const DRAWER_WIDTH = 230;
 
@@ -401,7 +403,7 @@ const AdminInbox = () => {
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setCurrentUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -414,7 +416,7 @@ const AdminInbox = () => {
   const fetchFeedbackData = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get("http://localhost:3002/api/feedback");
+      const response = await axios.get(`${API_BASE_URL_2}/api/feedback`);
       // Artificial delay of 1 second for smooth loading animation
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setFeedbackData(response.data);
@@ -436,7 +438,7 @@ const AdminInbox = () => {
   // Update the existing handlers to show notifications
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:3002/api/feedback/delete/${id}`);
+      await axios.delete(`${API_BASE_URL_2}/api/feedback/delete/${id}`);
       setFeedbackData((prev) => prev.filter((feedback) => feedback._id !== id));
       showNotification("Feedback deleted successfully");
     } catch (error) {
@@ -492,7 +494,7 @@ const AdminInbox = () => {
     try {
       // Mark the feedback as read in the database
       await axios.put(
-        `http://localhost:3002/api/feedback/${feedback._id}/mark-read-admin`
+        `${API_BASE_URL_2}/api/feedback/${feedback._id}/mark-read-admin`
       );
       setUnreadCount(unreadCount - 1);
 
@@ -533,7 +535,7 @@ const AdminInbox = () => {
 
     try {
       const response = await axios.post(
-        `http://localhost:3002/api/feedback/reply/${selectedFeedback._id}`,
+        `${API_BASE_URL_2}/api/feedback/reply/${selectedFeedback._id}`,
         {
           message: newReply,
           sender: "admin",
@@ -568,7 +570,7 @@ const AdminInbox = () => {
   const handleMarkAsResolved = async (id) => {
     try {
       const response = await axios.patch(
-        `http://localhost:3002/api/feedback/status/${id}`,
+        `${API_BASE_URL_2}/api/feedback/status/${id}`,
         {
           status: "resolved",
         }

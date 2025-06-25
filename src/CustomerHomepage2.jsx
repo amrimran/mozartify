@@ -43,6 +43,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import MenuIcon from "@mui/icons-material/Menu";
 
 axios.defaults.withCredentials = true;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export default function CustomerHomepage2() {
   const theme = useTheme();
@@ -90,10 +91,29 @@ export default function CustomerHomepage2() {
   const currentArtworks = searchedArtworks.slice(startIndex, endIndex);
   const totalPages = Math.ceil(searchedArtworks.length / itemsPerPage);
 
+  //for dynamic filter options
+  const [dynamicFilters, setDynamicFilters] = useState({});
+  const [selectedFilters, setSelectedFilters] = useState({});
+
   const handlePageChange = (event, value) => {
     setPage(value);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  useEffect(() => {
+    const fetchDynamicFilterOptions = async () => {
+      try {
+        const response = await axios.get(
+         `${API_BASE_URL}/artwork-refine-search`
+        );
+        setDynamicFilters(response.data);
+      } catch (error) {
+        console.error("Error fetching refine search lists:", error);
+      }
+    };
+
+    fetchDynamicFilterOptions();
+  }, []);
 
   useEffect(() => {
     let scrollInterval;
@@ -154,7 +174,7 @@ export default function CustomerHomepage2() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
         setFavorites(response.data.favorites_art);
       } catch (error) {
@@ -169,7 +189,7 @@ export default function CustomerHomepage2() {
     const fetchPurchasedArtworks = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/user-artwork-purchases"
+        `${API_BASE_URL}/user-artwork-purchases`
         );
 
         const purchasedArtworkIds = response.data.map(
@@ -189,7 +209,7 @@ export default function CustomerHomepage2() {
     const fetchAddedToCartArtworks = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/user-artwork-cart"
+        `${API_BASE_URL}/user-artwork-cart`
         );
 
         if (response.data.length === 0) {
@@ -214,7 +234,7 @@ export default function CustomerHomepage2() {
       const fetchSearchedArtworks = async () => {
         try {
           const response = await axios.get(
-            "http://localhost:3000/search-artworks",
+            `${API_BASE_URL}/search-artworks`,
             {
               params: { query: searchQuery },
             }
@@ -233,46 +253,47 @@ export default function CustomerHomepage2() {
     }
   }, [searchQuery]);
 
-  const applyFilters = (artworks) => {
-    return artworks.filter((artwork) => {
-      return (
-        (!collection || artwork.collection === collection) &&
-        (!artist || artwork.artist.toLowerCase().includes(artist.toLowerCase()))
-      );
-    });
-  };
-
   const clearFilters = () => {
-    setCollection("");
-    setArtist("");
+    setSelectedFilters({});
     setIsFiltered(false);
     setSearchedArtworks(unfilteredSearchedArtworks);
   };
 
   const handleFilterRequest = async () => {
-    const hasFilter = collection || artist;
+    const isAnyFilterSelected = Object.values(selectedFilters).some(
+      (arr) => arr.length > 0
+    );
 
-    if (hasFilter) {
-      setIsFiltered(true);
-
-      try {
-        if (!searchQuery) {
-          const response = await axios.get(
-            "http://localhost:3000/filter-artworks",
-            {
-              params: { collection, artist },
-            }
-          );
-          setFilteredArtworks(response.data);
-        } else {
-          const filteredSearchResults = applyFilters(searchedArtworks);
-          setSearchedArtworks(filteredSearchResults);
-        }
-      } catch (error) {
-        console.error("Error fetching filtered artworks:", error);
-      }
-    } else {
+    if (!isAnyFilterSelected) {
       setIsFiltered(false);
+      setSearchedArtworks(unfilteredSearchedArtworks);
+      return;
+    }
+
+    setIsFiltered(true);
+
+    try {
+      if (!searchQuery) {
+        // Fetch from backend
+        const response = await axios.get(
+         `${API_BASE_URL}/filter-artworks`,
+          {
+            params: selectedFilters,
+          }
+        );
+        setFilteredArtworks(response.data);
+      } else {
+        // Filter client-side
+        const filtered = searchedArtworks.filter((item) =>
+          Object.entries(selectedFilters).every(([field, values]) => {
+            if (!values.length) return true;
+            return values.includes(item[field]);
+          })
+        );
+        setSearchedArtworks(filtered);
+      }
+    } catch (error) {
+      console.error("Error applying filters:", error);
     }
   };
 
@@ -284,7 +305,7 @@ export default function CustomerHomepage2() {
   useEffect(() => {
     try {
       axios
-        .get("http://localhost:3000/popular-artworks")
+        .get(`${API_BASE_URL}/popular-artworks`)
         .then((response) => {
           setPopularArtworks(response.data);
         })
@@ -298,7 +319,7 @@ export default function CustomerHomepage2() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3000/artwork-recommendations")
+      .get(`${API_BASE_URL}/artwork-recommendations`)
       .then((response) => {
         // Randomizing the order of the recommendations
         const shuffledRecommendations = response.data.sort(
@@ -327,7 +348,7 @@ export default function CustomerHomepage2() {
 
   const addToCart = async (artworkId) => {
     try {
-      await axios.post("http://localhost:3000/add-to-cart-artwork", {
+      await axios.post(`${API_BASE_URL}/add-to-cart-artwork`, {
         artworkId: artworkId,
       });
       setAddedToCartArtworks([...addedToCartArtworks, artworkId]);
@@ -358,7 +379,7 @@ export default function CustomerHomepage2() {
 
       // Send the request to the server
       const response = await axios.post(
-        "http://localhost:3000/set-favorites-artwork",
+       `${API_BASE_URL}/set-favorites-artwork`,
         {
           artworkId,
           action: isFavorite ? "remove" : "add", // Explicitly specify the action
@@ -691,76 +712,50 @@ export default function CustomerHomepage2() {
                     Art Filter Options
                   </Typography>
 
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel sx={{ fontFamily: "Montserrat" }}>
-                      Collection
-                    </InputLabel>
-                    <Select
-                      label="Collection"
-                      value={collection}
-                      onChange={(e) => setCollection(e.target.value)}
-                      sx={{
-                        fontFamily: "Montserrat",
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#FFB6A5", // Green outline on hover
-                        },
-                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#FFB6A5", // Green outline when focused
-                        },
-                      }}
-                    >
-                      {["Students", "Lecturers", "Freelancers"].map((item) => (
-                        <MenuItem
-                          key={item}
-                          value={item}
+                  {Object.entries(dynamicFilters).map(
+                    ([filterName, values]) => (
+                      <FormControl key={filterName} fullWidth sx={{ mb: 2 }}>
+                        <InputLabel
                           sx={{
                             fontFamily: "Montserrat",
+                            textTransform: "capitalize",
                           }}
                         >
-                          {item}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel sx={{ fontFamily: "Montserrat" }}>
-                      Artist
-                    </InputLabel>
-                    <Select
-                      label="Artist"
-                      value={artist}
-                      onChange={(e) => setArtist(e.target.value)}
-                      sx={{
-                        fontFamily: "Montserrat",
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#FFB6A5", // Green outline on hover
-                        },
-                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#FFB6A5", // Green outline when focused
-                        },
-                      }}
-                    >
-                      {[
-                        "Claude Monet",
-                        "Salvador Dali",
-                        "Da Vinci",
-                        "Michelangelo",
-                        "Raphael",
-                        "Rembrandt",
-                        "Van Gogh",
-                        "Pablo Picasso",
-                      ].map((artistName) => (
-                        <MenuItem
-                          key={artistName}
-                          value={artistName}
-                          sx={{ fontFamily: "Montserrat" }}
+                          {filterName}
+                        </InputLabel>
+                        <Select
+                          multiple
+                          value={selectedFilters[filterName] || []}
+                          onChange={(e) =>
+                            setSelectedFilters((prev) => ({
+                              ...prev,
+                              [filterName]: e.target.value,
+                            }))
+                          }
+                          renderValue={(selected) => selected.join(", ")}
+                          sx={{
+                            fontFamily: "Montserrat",
+                            "&:hover .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "#FFB6A5",
+                            },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "#FFB6A5",
+                            },
+                          }}
                         >
-                          {artistName}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                          {values.map((value) => (
+                            <MenuItem
+                              key={value}
+                              value={value}
+                              sx={{ fontFamily: "Montserrat" }}
+                            >
+                              {value}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    )
+                  )}
 
                   <Button
                     variant="outlined"
@@ -874,7 +869,13 @@ export default function CustomerHomepage2() {
                 component="span"
                 sx={{ fontWeight: "bold", color: "#FFB6A5" }}
               >
-                {searchedArtworks.length > 99 ? "99+" : searchedArtworks.length}
+                {searchQuery
+                  ? searchedArtworks.length > 99
+                    ? "99+"
+                    : searchedArtworks.length
+                  : filteredArtworks.length > 99
+                    ? "99+"
+                    : filteredArtworks.length}
               </Box>{" "}
               results
             </Typography>
@@ -1502,6 +1503,13 @@ export default function CustomerHomepage2() {
                                     justifyContent: "center",
                                   }}
                                 >
+                                  <Tooltip title={artwork.title} arrow>
+                                    <Box>
+                                      {/* Whatever you want to display that shows the tooltip when hovered */}
+                                      <Typography>{artwork.title}</Typography>
+                                    </Box>
+                                  </Tooltip>
+
                                   <Typography
                                     variant="h6"
                                     noWrap

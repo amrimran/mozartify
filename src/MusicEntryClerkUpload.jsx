@@ -25,6 +25,8 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
 import ImportIcon from "./assets/import-icon.png";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL_1 = import.meta.env.VITE_API_URL_1;
 
 const DRAWER_WIDTH = 225;
 
@@ -158,7 +160,7 @@ export default function MusicEntryClerkUpload() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -202,7 +204,7 @@ export default function MusicEntryClerkUpload() {
     const formData = new FormData();
     formData.append("file", selectedFile);
 
-    fetch("http://localhost:3001/upload", {
+    fetch(`${API_BASE_URL_1}/upload`, {
       method: "POST",
       body: formData,
     })

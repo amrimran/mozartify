@@ -41,6 +41,7 @@ import CustomerSidebar2 from "./CustomerSidebar2";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 axios.defaults.withCredentials = true;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const DRAWER_WIDTH = 230;
 
@@ -144,7 +145,7 @@ export default function CustomerProfile2() {
       mt: isLargeScreen ? 0 : 8,
     },
     menuButton: {
-      color: "#3B3183",
+      color: "#FFB6A5",
       mr: 2,
       display: isLargeScreen ? "none" : "block",
     },
@@ -198,7 +199,7 @@ export default function CustomerProfile2() {
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setCurrentUser(response.data);
         setUsername(response.data.username);
       } catch (error) {
@@ -224,7 +225,7 @@ export default function CustomerProfile2() {
 
   const handleUpdateUsername = async () => {
     try {
-      await axios.put("http://localhost:3000/user/update-username", {
+      await axios.put(`${API_BASE_URL}/user/update-username`, {
         username,
       });
       setCurrentUser((prev) => ({ ...prev, username }));
@@ -256,7 +257,7 @@ export default function CustomerProfile2() {
     }
 
     try {
-      await axios.put("http://localhost:3000/user/change-password", {
+      await axios.put(`${API_BASE_URL}/user/change-password`, {
         currentPassword,
         newPassword,
       });
@@ -292,7 +293,7 @@ export default function CustomerProfile2() {
       await uploadBytes(storageRef, profilePictureFile);
       const profilePictureUrl = await getDownloadURL(storageRef);
 
-      await axios.put("http://localhost:3000/user/update-profile-picture", {
+      await axios.put(`${API_BASE_URL}/user/update-profile-picture`, {
         profile_picture_url: profilePictureUrl,
       });
 
@@ -319,7 +320,7 @@ export default function CustomerProfile2() {
 
   const handleRemoveProfilePicture = async () => {
     try {
-      await axios.put("http://localhost:3000/user/update-profile-picture", {
+      await axios.put(`${API_BASE_URL}/user/update-profile-picture`, {
         profile_picture_url: null,
       });
 
@@ -349,7 +350,7 @@ export default function CustomerProfile2() {
       cancelText: "CANCEL",
       confirmAction: async () => {
         try {
-          await axios.delete("http://localhost:3000/user/delete");
+          await axios.delete(`${API_BASE_URL}/user/delete`);
           showDialog({
             title: "Success",
             content: "Account deleted successfully.",
@@ -390,7 +391,7 @@ export default function CustomerProfile2() {
               <Typography
                 variant="h6"
                 noWrap
-                sx={{ color: "#3B3183", fontWeight: "bold" }}
+                sx={{ color: "#FFB6A5", fontWeight: "bold" }}
               >
                 User Profile
               </Typography>
@@ -403,7 +404,7 @@ export default function CustomerProfile2() {
                   variant="body1"
                   sx={{
                     mr: 2,
-                    color: "#3B3183",
+                    color: "#FFB6A5",
                     display: { xs: "none", sm: "block" }, // Hide username on very small screens
                   }}
                 >
@@ -415,7 +416,7 @@ export default function CustomerProfile2() {
                   sx={{
                     width: 32,
                     height: 32,
-                    border: "2px solid #3B3183",
+                    border: "2px solid #FFB6A5",
                   }}
                 >
                   {username.charAt(0).toUpperCase()}

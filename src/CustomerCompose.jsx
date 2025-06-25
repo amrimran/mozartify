@@ -24,14 +24,15 @@ import {
   useMediaQuery,
   useTheme,
   Skeleton,
+  Pagination,
 } from "@mui/material";
 import { Favorite, FilterAlt, Menu as MenuIcon } from "@mui/icons-material";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import CustomerSidebar from "./CustomerSidebar";
 
 axios.defaults.withCredentials = true;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export default function CustomerCompose() {
   const theme = useTheme();
@@ -47,6 +48,7 @@ export default function CustomerCompose() {
 
   const [composedScoresIDs, setComposedScoresIDs] = useState([]);
   const [composedScores, setComposedScores] = useState([]);
+  const [filteredComposedScores, setFilteredComposedScores] = useState([]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState([]);
@@ -58,6 +60,10 @@ export default function CustomerCompose() {
   const [emotion, setEmotion] = useState("");
 
   const [loading, setLoading] = useState(true);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const navigate = useNavigate();
 
@@ -84,10 +90,10 @@ export default function CustomerCompose() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
         setComposedScoresIDs(response.data.composed_score_ids);
-        setFavorites(response.data.favorites);
+        setFavorites(response.data.favorites_music);
       } catch (error) {
         console.error("Error fetching current user:", error);
         navigate("/login");
@@ -100,7 +106,7 @@ export default function CustomerCompose() {
     const fetchFavoriteScores = async () => {
       try {
         const likedScores = await axios.get(
-          "http://localhost:3000/user-liked-scores"
+          `${API_BASE_URL}/user-liked-scores`
         );
 
         if (likedScores.data.length > 0) {
@@ -121,11 +127,12 @@ export default function CustomerCompose() {
     const fetchComposedScores = async () => {
       try {
         const composedScores = await axios.get(
-          "http://localhost:3000/user-composed-scores"
+          `${API_BASE_URL}/user-composed-scores`
         );
 
         if (composedScores.data.length > 0) {
           setComposedScores(composedScores.data);
+          setFilteredComposedScores(composedScores.data);
         }
       } catch (error) {
         console.error("Error fetching composed scores:", error);
@@ -139,7 +146,7 @@ export default function CustomerCompose() {
     const fetchPurchasedScores = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/user-purchases"
+          `${API_BASE_URL}/user-purchases`
         );
 
         const purchasedScoreIds = response.data.map(
@@ -158,7 +165,7 @@ export default function CustomerCompose() {
   useEffect(() => {
     const fetchAddedToCartScores = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/user-cart");
+        const response = await axios.get(`${API_BASE_URL}/user-cart`);
 
         const AddedScoreIds = response.data.map((added) => added.score_id);
 
@@ -173,7 +180,7 @@ export default function CustomerCompose() {
 
   const addToCart = async (scoreId) => {
     try {
-      await axios.post("http://localhost:3000/add-to-cart", {
+      await axios.post(`${API_BASE_URL}/add-to-cart`, {
         musicScoreId: scoreId,
       });
       setAddedToCartScores([...addedToCartScores, scoreId]);
@@ -184,7 +191,7 @@ export default function CustomerCompose() {
 
   useEffect(() => {
     if (searchQuery) {
-      const searchResult = unfilteredScores.filter((score) =>
+      const searchResult = composedScores.filter((score) =>
         [
           score.title,
           score.genre,
@@ -196,12 +203,12 @@ export default function CustomerCompose() {
           field.toLowerCase().includes(searchQuery.toLowerCase())
         )
       );
-      setSearchedScores(searchResult);
-      setCurrentScores(searchResult);
+      setFilteredComposedScores(searchResult);
+      setCurrentPage(1); // Reset to first page when search changes
     } else {
-      setCurrentScores(unfilteredScores);
+      setFilteredComposedScores(composedScores);
     }
-  }, [searchQuery]);
+  }, [searchQuery, composedScores]);
 
   useEffect(() => {
     // Simulate loading delay
@@ -234,6 +241,8 @@ export default function CustomerCompose() {
     setEmotion("");
     setInstrumentation("");
     setCurrentScores(unfilteredScores);
+    setFilteredComposedScores(composedScores);
+    setCurrentPage(1);
   };
 
   const handleSnackbarClose = (event, reason) => {
@@ -254,12 +263,13 @@ export default function CustomerCompose() {
     if (hasFilter) {
       try {
         if (!searchQuery) {
-          const filteredOnlySearchResults = applyFilters(unfilteredScores);
-          setCurrentScores(filteredOnlySearchResults);
+          const filteredOnlySearchResults = applyFilters(composedScores);
+          setFilteredComposedScores(filteredOnlySearchResults);
         } else {
-          const filteredSearchedSearchResults = applyFilters(searchedScores);
-          setCurrentScores(filteredSearchedSearchResults);
+          const filteredSearchedSearchResults = applyFilters(filteredComposedScores);
+          setFilteredComposedScores(filteredSearchedSearchResults);
         }
+        setCurrentPage(1); // Reset to first page when filters change
       } catch (error) {
         console.error("Error fetching filtered scores:", error);
       }
@@ -282,7 +292,7 @@ export default function CustomerCompose() {
       });
 
       // Send the request to the server
-      const response = await axios.post("http://localhost:3000/set-favorites", {
+      const response = await axios.post(`${API_BASE_URL}/set-favorites`, {
         musicScoreId,
         action: isFavorite ? "remove" : "add", // Explicitly specify the action
       });
@@ -411,6 +421,16 @@ export default function CustomerCompose() {
     },
   };
 
+  // Calculate pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredComposedScores.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredComposedScores.length / itemsPerPage);
+
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
+  };
+
   return (
     <>
       <GlobalStyle />
@@ -531,9 +551,6 @@ export default function CustomerCompose() {
               gap: 2, // Add consistent spacing between elements
             }}
           >
-            {/* Left spacing
-            <Box sx={{ flex: "1 1 0" }} /> */}
-
             {/* Search Bar Container */}
             <Box
               sx={{
@@ -919,7 +936,7 @@ export default function CustomerCompose() {
 
           <Box sx={{ flexGrow: 1, overflow: "auto", p: { xs: 1, sm: 2 } }}>
             <List>
-              {composedScores.map((item) => (
+              {currentItems.map((item) => (
                 <ListItemButton
                   key={item._id}
                   onClick={() =>
@@ -998,7 +1015,9 @@ export default function CustomerCompose() {
                       >
                         <Favorite
                           color={
-                            favorites.includes(item._id) ? "error" : "disabled"
+                            item && item._id && favorites.includes(item._id)
+                              ? "error"
+                              : "disabled"
                           }
                         />
                       </IconButton>
@@ -1007,6 +1026,23 @@ export default function CustomerCompose() {
                 </ListItemButton>
               ))}
             </List>
+
+            {/* Pagination */}
+            {filteredComposedScores.length > itemsPerPage && (
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                <Pagination
+                  count={totalPages}
+                  page={currentPage}
+                  onChange={handlePageChange}
+                  color="primary"
+                  sx={{
+                    "& .MuiPaginationItem-root": {
+                      fontFamily: "Montserrat",
+                    },
+                  }}
+                />
+              </Box>
+            )}
           </Box>
         </Box>
         <Snackbar

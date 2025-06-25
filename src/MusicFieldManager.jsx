@@ -60,6 +60,8 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
 import DynamicField from "./DynamicField";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL_1 = import.meta.env.VITE_API_URL_1;
 
 const DRAWER_WIDTH = 225;
 
@@ -249,7 +251,7 @@ export default function MusicDynamicFieldManager() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -264,7 +266,7 @@ export default function MusicDynamicFieldManager() {
     setLoading(true);
     try {
       const response = await axios.get(
-        "http://localhost:3001/music-dynamic-fields"
+        `${API_BASE_URL_1}/music-dynamic-fields`
       );
       const fetchedFields = response.data;
       setFields(fetchedFields);
@@ -403,14 +405,14 @@ export default function MusicDynamicFieldManager() {
       if (editingField) {
         // Update existing field
         response = await axios.put(
-          `http://localhost:3001/music-dynamic-fields/${editingField._id}`,
+          `${API_BASE_URL_1}/music-dynamic-fields/${editingField._id}`,
           fieldToSave
         );
         showSnackbar("Field updated successfully");
       } else {
         // Create new field
         response = await axios.post(
-          "http://localhost:3001/music-dynamic-fields",
+          `${API_BASE_URL_1}/music-dynamic-fields`,
           fieldToSave
         );
         showSnackbar("Field created successfully");
@@ -443,7 +445,7 @@ export default function MusicDynamicFieldManager() {
       const nextId = Math.max(...tabs.map((tab) => tab.id), -1) + 1;
 
       // In a real application, you would save this to the backend
-      // const response = await axios.post("http://localhost:3001/tabs", { name: newTabName });
+      // const response = await axios.post(`${API_BASE_URL_1}/tabs`, { name: newTabName });
 
       // Add new tab to local state
       const newTab = { id: nextId, name: newTabName };
@@ -474,7 +476,7 @@ export default function MusicDynamicFieldManager() {
       setLoading(true);
 
       // In a real application, you would save this to the backend
-      // await axios.put(`http://localhost:3001/tabs/${editingTab.id}`, { name: newTabName });
+      // await axios.put(`${API_BASE_URL_1}/tabs/${editingTab.id}`, { name: newTabName });
 
       // Update local state
       const updatedTabs = tabs.map((tab) =>
@@ -517,7 +519,7 @@ export default function MusicDynamicFieldManager() {
       }
 
       // In a real application, you would delete from the backend
-      // await axios.delete(`http://localhost:3001/tabs/${tabToDelete.id}`);
+      // await axios.delete(`${API_BASE_URL_1}/tabs/${tabToDelete.id}`);
 
       // Remove from local state
       const filteredTabs = tabs.filter((tab) => tab.id !== tabToDelete.id);
@@ -590,12 +592,12 @@ export default function MusicDynamicFieldManager() {
 
       // Update the two fields that changed positions
       await Promise.all([
-        axios.put(`http://localhost:3001/music-dynamic-fields/${field._id}`, {
+        axios.put(`${API_BASE_URL_1}/music-dynamic-fields/${field._id}`, {
           ...field,
           displayOrder: targetIndex,
         }),
         axios.put(
-          `http://localhost:3001/music-dynamic-fields/${newOrder[currentIndex]._id}`,
+          `${API_BASE_URL_1}/music-dynamic-fields/${newOrder[currentIndex]._id}`,
           {
             ...newOrder[currentIndex],
             displayOrder: currentIndex,
@@ -618,7 +620,7 @@ export default function MusicDynamicFieldManager() {
     try {
       setLoading(true);
       await axios.put(
-        `http://localhost:3001/music-dynamic-fields/${field._id}`,
+        `${API_BASE_URL_1}/music-dynamic-fields/${field._id}`,
         {
           ...field,
           isActive: !field.isActive,

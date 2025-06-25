@@ -14,6 +14,7 @@ import { createGlobalStyle } from "styled-components";
 import { Link } from "react-router-dom";
 import backgroundImage from "./assets/forgotPWBG.png";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const FormContainer = styled(Box)(({ theme }) => ({
   backgroundColor: "#FFFFFF",
@@ -264,7 +265,7 @@ export default function ForgotPassword() {
     setMessage("");
 
     axios
-      .post("http://localhost:3000/forgot-password", { email })
+      .post(`${API_BASE_URL}/forgot-password`, { email })
       .then((response) => {
         setMessage({
           text: "We have sent you an email to reset your password.",
@@ -329,7 +330,7 @@ export default function ForgotPassword() {
             animation: "rotateLogo 5s linear infinite",
             cursor: "pointer",
           }}
-          onClick={() => window.location.replace("http://localhost:5173")}
+          onClick={() => navigate('/')} 
         />
         <FormContainer component="form" onSubmit={handleSubmit}>
           <Typography

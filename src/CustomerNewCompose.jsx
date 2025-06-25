@@ -28,6 +28,7 @@ import CustomerSidebar from "./CustomerSidebar";
 import { Link } from "react-router-dom";
 import Vex from "vexflow";
 import * as Tone from "tone";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
@@ -100,7 +101,6 @@ export default function CustomerNewCompose() {
 
   const navigate = useNavigate();
 
-  // Map of y positions to note names and their corresponding frequencies
   const noteMap = {
     55: { note: "f/5", tone: "F5" }, // Space above top line
     60: { note: "e/5", tone: "E5" }, // Top line
@@ -118,10 +118,20 @@ export default function CustomerNewCompose() {
     120: { note: "g/3", tone: "G3" }, // Second ledger line below staff
   };
 
+  const [selectedInstrument, setSelectedInstrument] = useState("piano");
+  const instrumentOptions = [
+    { value: "piano", label: "Piano" },
+    { value: "synth", label: "Synth" },
+    { value: "violin", label: "Violin" },
+    { value: "cello", label: "Cello" },
+    { value: "flute", label: "Flute" },
+    { value: "guitar", label: "Guitar" },
+  ];
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -137,11 +147,10 @@ export default function CustomerNewCompose() {
     };
     fetchUser();
 
-    // Initialize Tone.js synth
+    // Initialize with default instrument (piano)
     synth.current = new Tone.PolySynth(Tone.Synth).toDestination();
 
     return () => {
-      // Clean up Tone.js resources
       if (synth.current) {
         synth.current.dispose();
       }
@@ -362,6 +371,81 @@ export default function CustomerNewCompose() {
       } catch (error) {
         console.error("Error rendering staff:", error);
       }
+    }
+  };
+
+  const handleInstrumentChange = (instrument) => {
+    setSelectedInstrument(instrument);
+
+    // Dispose of the old synth
+    if (synth.current) {
+      synth.current.dispose();
+    }
+
+    // Create new synth based on selection
+    switch (instrument) {
+      case "piano":
+        synth.current = new Tone.PolySynth(Tone.Synth).toDestination();
+        synth.current.volume.value = -8;
+        break;
+      case "synth":
+        synth.current = new Tone.PolySynth(Tone.FMSynth).toDestination();
+        synth.current.volume.value = -12;
+        break;
+      case "violin":
+        synth.current = new Tone.PolySynth(Tone.Synth, {
+          oscillator: {
+            type: "sine",
+          },
+          envelope: {
+            attack: 0.1,
+            decay: 0.1,
+            sustain: 0.5,
+            release: 1,
+          },
+        }).toDestination();
+        break;
+      case "cello":
+        synth.current = new Tone.PolySynth(Tone.Synth, {
+          oscillator: {
+            type: "sawtooth",
+          },
+          envelope: {
+            attack: 0.5,
+            decay: 0.1,
+            sustain: 0.3,
+            release: 1,
+          },
+        }).toDestination();
+        break;
+      case "flute":
+        synth.current = new Tone.PolySynth(Tone.Synth, {
+          oscillator: {
+            type: "sine",
+          },
+          envelope: {
+            attack: 0.1,
+            decay: 0.1,
+            sustain: 0.4,
+            release: 0.5,
+          },
+        }).toDestination();
+        break;
+      case "guitar":
+        synth.current = new Tone.PolySynth(Tone.Synth, {
+          oscillator: {
+            type: "pulse",
+          },
+          envelope: {
+            attack: 0.01,
+            decay: 0.1,
+            sustain: 0.1,
+            release: 0.1,
+          },
+        }).toDestination();
+        break;
+      default:
+        synth.current = new Tone.PolySynth(Tone.Synth).toDestination();
     }
   };
 
@@ -815,6 +899,30 @@ export default function CustomerNewCompose() {
                     Eighth
                   </Button>
                 </Box>
+                <Typography variant="h6" sx={{ mb: 1 }}>
+                  Instrument
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                  {instrumentOptions.map((instrument) => (
+                    <Button
+                      key={instrument.value}
+                      variant={
+                        selectedInstrument === instrument.value
+                          ? "contained"
+                          : "outlined"
+                      }
+                      onClick={() => handleInstrumentChange(instrument.value)}
+                      sx={{
+                        ...buttonStyles2,
+                        ...(selectedInstrument === instrument.value
+                          ? buttonStyles
+                          : {}),
+                      }}
+                    >
+                      {instrument.label}
+                    </Button>
+                  ))}
+                </Box>            
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Box

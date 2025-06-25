@@ -31,7 +31,9 @@ import { useNavigate } from "react-router-dom";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { createGlobalStyle } from "styled-components";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
-import { storage } from "./firebase"; // Ensure you have this import
+import { storage } from "./firebase";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL_1 = import.meta.env.VITE_API_URL_1;
 
 const DRAWER_WIDTH = 225;
 
@@ -265,7 +267,7 @@ export default function ArtsClerkHomepage() {
   useEffect(() => {
     const fetchDynamicFields = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/dynamic-fields');
+        const response = await axios.get(`${API_BASE_URL_1}/dynamic-fields`);
         setDynamicFields(response.data);
       } catch (error) {
         console.error('Error fetching dynamic fields:', error);
@@ -302,7 +304,7 @@ export default function ArtsClerkHomepage() {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Use your MongoDB API
-      const response = await axios.get("http://localhost:3001/catalogArts");
+      const response = await axios.get(`${API_BASE_URL_1}/catalogArts`);
 
       if (response.data) {
         const artworkData = response.data;
@@ -363,7 +365,7 @@ export default function ArtsClerkHomepage() {
       const fetchSearchedArtworks = async () => {
         try {
           // Fetch artworks from MongoDB API
-          const response = await axios.get("http://localhost:3001/catalogArts");
+          const response = await axios.get(`${API_BASE_URL_1}/catalogArts`);
 
           if (!response.data) {
             throw new Error("No data received from API");
@@ -415,7 +417,7 @@ export default function ArtsClerkHomepage() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
