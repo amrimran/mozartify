@@ -38,29 +38,32 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+    if (
+      !origin ||
+      allowedOrigins.some((allowed) => origin.startsWith(allowed))
+    ) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
 
 // ================== FASTAPI ENDPOINT CONFIG ==================
-const FASTAPI_BASE_URL = isProduction ? 
-  'https://api.nasir-um.com' : 
-  'http://127.0.0.1';
+const FASTAPI_BASE_URL = isProduction
+  ? "https://api.nasir-um.com"
+  : "http://127.0.0.1";
 
 const fastApiEndpoints = {
   emotion: `${FASTAPI_BASE_URL}:5173/predict-emotion`,
   gender: `${FASTAPI_BASE_URL}:9000/predict-gender`,
   genre: `${FASTAPI_BASE_URL}:8001/predict-genre`,
-  instrument: `${FASTAPI_BASE_URL}:8000/predict-instrument`
+  instrument: `${FASTAPI_BASE_URL}:8000/predict-instrument`,
 };
 
 // Static file serving for uploaded files
@@ -604,12 +607,10 @@ app.delete("/dynamic-fields/:id", async (req, res) => {
     res.status(200).json({ message: "Dynamic field deactivated successfully" });
   } catch (err) {
     console.error("Error deactivating dynamic field:", err);
-    res
-      .status(500)
-      .json({
-        message: "Error deactivating dynamic field",
-        error: err.message,
-      });
+    res.status(500).json({
+      message: "Error deactivating dynamic field",
+      error: err.message,
+    });
   }
 });
 
@@ -826,12 +827,10 @@ app.get("/music-dynamic-fields", async (req, res) => {
     res.status(200).json(fields);
   } catch (err) {
     console.error("Error fetching music dynamic fields:", err);
-    res
-      .status(500)
-      .json({
-        message: "Error fetching music dynamic fields",
-        error: err.message,
-      });
+    res.status(500).json({
+      message: "Error fetching music dynamic fields",
+      error: err.message,
+    });
   }
 });
 
@@ -899,12 +898,10 @@ app.delete("/music-dynamic-fields/:id", async (req, res) => {
     res.status(200).json({ message: "Dynamic field deactivated successfully" });
   } catch (err) {
     console.error("Error deactivating dynamic field:", err);
-    res
-      .status(500)
-      .json({
-        message: "Error deactivating dynamic field",
-        error: err.message,
-      });
+    res.status(500).json({
+      message: "Error deactivating dynamic field",
+      error: err.message,
+    });
   }
 });
 
@@ -1091,7 +1088,9 @@ app.post("/music-tabs/initialize", async (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`Server running in ${isProduction ? 'production' : 'development'} mode`);
+  console.log(
+    `Server running in ${isProduction ? "production" : "development"} mode`
+  );
   console.log(`Frontend URL: ${frontendUrl}`);
   console.log(`Backend URL: ${backendUrl}`);
   console.log(`FastAPI Base: ${FASTAPI_BASE_URL}`);

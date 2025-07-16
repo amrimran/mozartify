@@ -23,28 +23,44 @@ const DeletedUserModel = require("./models/DeletedUser");
 const ABCFileModel = require("./models/ABCFile");
 const ArtworkModel = require("./models/Arts");
 
-const app = express();
+const app = express()
 
 const corsOptions = {
-  origin:
-    process.env.NODE_ENV === "production"
-      ? `${process.env.FRONTEND_PROD_URL}`
-      : `${process.env.FRONTEND_DEV_URL}`,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      process.env.FRONTEND_PROD_URL,
+      process.env.FRONTEND_DEV_URL,
+      'https://mozartifynasirum.vercel.app', // Your frontend URL
+      'http://localhost:3000', // For local development
+      'http://localhost:5173', // For Vite dev server
+    ];
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  exposedHeaders: ["Set-Cookie"],
 };
 app.use(cors(corsOptions));
 
 app.options("*", cors(corsOptions));
 
 const store = new MongoDBStore({
-  uri: process.env.DB_URI,
-  collection: "sessions",
+  mongoUrl: process.env.DB_URI,
+  collectionName: "sessions",
+  touchAfter: 24 * 3600, // lazy session update
 });
 
 store.on("error", (error) => {
-  console.log(error);
+  console.log("Session store error:", error);
 });
 
 app.use(
@@ -55,14 +71,22 @@ app.use(
     store: store,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // 1 day
-      sameSite: "lax",
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Important for cross-origin
+      secure: process.env.NODE_ENV === 'production', // HTTPS in production
       httpOnly: true,
     },
+    name: 'sessionId', // Custom session name
   })
 );
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 mongoose.connect(process.env.DB_URI);
+
+app.get("/", (req, res) => {
+  res.json({ message: "Server is running", timestamp: new Date().toISOString() });
+});
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -73,10 +97,11 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendVerificationEmail = (email, username, token) => {
-    const frontendUrl = process.env.NODE_ENV === 'production' 
-    ? process.env.FRONTEND_PROD_URL 
-    : process.env.FRONTEND_DEV_URL;
-  
+  const frontendUrl =
+    process.env.NODE_ENV === "production"
+      ? process.env.FRONTEND_PROD_URL
+      : process.env.FRONTEND_DEV_URL;
+
   const url = `${frontendUrl}/verify-email?token=${token}`;
   const emailTemplate = `
   <div style="border: 2px solid #8BD3E6; border-radius: 10px; padding: 20px; font-family: 'Montserrat', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #F9FBFC;">
@@ -558,10 +583,11 @@ app.post("/forgot-password", async (req, res) => {
       expiresIn: "5m", // Set token expiration to 5 minutes
     });
 
-      const frontendUrl = process.env.NODE_ENV === 'production' 
-      ? process.env.FRONTEND_PROD_URL 
-      : process.env.FRONTEND_DEV_URL;
-    
+    const frontendUrl =
+      process.env.NODE_ENV === "production"
+        ? process.env.FRONTEND_PROD_URL
+        : process.env.FRONTEND_DEV_URL;
+
     const resetLink = `${frontendUrl}/reset-password?token=${token}`;
     const emailTemplate = `
   <div style="border: 2px solid #8BD3E6; border-radius: 10px; padding: 20px; font-family: 'Montserrat', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #F9FBFC;">
@@ -2164,9 +2190,10 @@ app.post("/create-checkout-session", async (req, res) => {
     quantity: 1,
   }));
 
-  const frontendUrl = process.env.NODE_ENV === 'production' 
-    ? process.env.FRONTEND_PROD_URL 
-    : process.env.FRONTEND_DEV_URL;
+  const frontendUrl =
+    process.env.NODE_ENV === "production"
+      ? process.env.FRONTEND_PROD_URL
+      : process.env.FRONTEND_DEV_URL;
 
   const paymentSession = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
@@ -2197,9 +2224,10 @@ app.post("/create-checkout-session-artwork", async (req, res) => {
     quantity: 1,
   }));
 
-  const frontendUrl = process.env.NODE_ENV === 'production' 
-    ? process.env.FRONTEND_PROD_URL 
-    : process.env.FRONTEND_DEV_URL;
+  const frontendUrl =
+    process.env.NODE_ENV === "production"
+      ? process.env.FRONTEND_PROD_URL
+      : process.env.FRONTEND_DEV_URL;
 
   const paymentSession = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
