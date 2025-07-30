@@ -7,6 +7,8 @@ const path = require("path");
 const { exec } = require("child_process");
 const fs = require("fs");
 const axios = require("axios");
+const session = require("express-session");
+const MongoDBStore = require("connect-mongodb-session")(session);
 const ABCFileModel = require("./models/ABCFile");
 const DeletedABCFile = require("./models/deletedABCFile");
 const Artwork = require("./models/Arts.js");
@@ -21,43 +23,56 @@ app.use(express.json());
 
 // ================== ENVIRONMENT CONFIG ==================
 const isProduction = process.env.NODE_ENV === "production";
-const frontendUrl = isProduction
-  ? process.env.FRONTEND_PROD_URL
-  : process.env.FRONTEND_DEV_URL;
-const backendUrl = isProduction
-  ? process.env.BACKEND_PROD_URL
-  : process.env.BACKEND_DEV_URL;
 
+// ================== CORS CONFIGURATION ==================
 const allowedOrigins = [
-  frontendUrl,
-  backendUrl,
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
+  // Frontend URLs
+  process.env.FRONTEND_PROD_URL,
+  process.env.FRONTEND_DEV_URL,
+  
+  // Backend URLs (for internal communication)
+  process.env.BACKEND_PROD_URL,
+  process.env.BACKEND_DEV_URL,
+  
+  // Development URLs
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:10000',
+  
+  // Add future Render URLs (you'll get these after deployment)
+  'https://mozartify-backend.onrender.com',
+  'https://mozartify-frontend.onrender.com',
+  
 ].filter(Boolean); // Remove any undefined values
 
 const corsOptions = {
   origin: function (origin, callback) {
-    if (
-      !origin ||
-      allowedOrigins.some((allowed) => origin.startsWith(allowed))
-    ) {
+    // Allow requests with no origin (like mobile apps, Postman, curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if the origin is in our allowed list
+    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
       callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS"));
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Set-Cookie'],
 };
 
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // Handle preflight requests
+
 
 // ================== FASTAPI ENDPOINT CONFIG ==================
 const FASTAPI_BASE_URL = isProduction
-  ? "https://api.nasir-um.com"
-  : "http://127.0.0.1";
+  ? process.env.FASTAPI_PROD_URL     // Base URL for production
+  : process.env.FASTAPI_DEV_URL;
 
 const fastApiEndpoints = {
   emotion: `${FASTAPI_BASE_URL}:5173/predict-emotion`,
@@ -65,6 +80,31 @@ const fastApiEndpoints = {
   genre: `${FASTAPI_BASE_URL}:8001/predict-genre`,
   instrument: `${FASTAPI_BASE_URL}:8000/predict-instrument`,
 };
+
+const store = new MongoDBStore({
+  mongoUrl: process.env.DB_URI,
+  collectionName: "sessions",
+  touchAfter: 24 * 3600, // lazy session update
+});
+
+store.on("error", (error) => {
+  console.log("Session store error:", error);
+});
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: store,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      sameSite: isProduction ? 'none' : 'lax', // IMPORTANT: 'none' for production cross-origin
+      secure: isProduction, // HTTPS only in production
+      httpOnly: true,
+    },
+  })
+);
 
 // Static file serving for uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -1091,8 +1131,6 @@ app.listen(PORT, () => {
   console.log(
     `Server running in ${isProduction ? "production" : "development"} mode`
   );
-  console.log(`Frontend URL: ${frontendUrl}`);
-  console.log(`Backend URL: ${backendUrl}`);
   console.log(`FastAPI Base: ${FASTAPI_BASE_URL}`);
   console.log(`Server is running on port ${PORT}`);
 });

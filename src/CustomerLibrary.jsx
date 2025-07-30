@@ -242,7 +242,7 @@ export default function CustomerLibrary() {
         }
       });
 
-      const response = await axios.post(`${API_BASE_URL}/set-favourites`, {
+      const response = await axios.post(`${API_BASE_URL}/set-favorites`, {
         musicScoreId,
         action: isFavorite ? "remove" : "add",
       });

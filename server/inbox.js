@@ -11,27 +11,63 @@ const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
 
 const app = express();
+app.use(express.json());
+
+// ================== ENVIRONMENT CONFIG ==================
+const isProduction = process.env.NODE_ENV === "production";
+
+// ================== CORS CONFIGURATION ==================
+const allowedOrigins = [
+  // Frontend URLs
+  process.env.FRONTEND_PROD_URL,
+  process.env.FRONTEND_DEV_URL,
+  
+  // Backend URLs (for internal communication)
+  process.env.BACKEND_PROD_URL,
+  process.env.BACKEND_DEV_URL,
+  
+  // Development URLs
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:10000',
+  
+  // Add future Render URLs (you'll get these after deployment)
+  'https://mozartify-backend.onrender.com',
+  'https://mozartify-frontend.onrender.com',
+  
+].filter(Boolean); // Remove any undefined values
 
 const corsOptions = {
-  origin:
-    process.env.NODE_ENV === "production"
-      ? `${process.env.FRONTEND_PROD_URL}`
-      : `${process.env.FRONTEND_DEV_URL}`,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if the origin is in our allowed list
+    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Set-Cookie'],
 };
-app.use(cors(corsOptions));
 
-app.options("*", cors(corsOptions));
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // Handle preflight requests
 
 const store = new MongoDBStore({
-  uri: process.env.DB_URI,
-  collection: "sessions",
+  mongoUrl: process.env.DB_URI,
+  collectionName: "sessions",
+  touchAfter: 24 * 3600, // lazy session update
 });
 
 store.on("error", (error) => {
-  console.log(error);
+  console.log("Session store error:", error);
 });
 
 app.use(
@@ -42,7 +78,8 @@ app.use(
     store: store,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // 1 day
-      sameSite: "lax",
+      sameSite: isProduction ? 'none' : 'lax', // IMPORTANT: 'none' for production cross-origin
+      secure: isProduction, // HTTPS only in production
       httpOnly: true,
     },
   })
