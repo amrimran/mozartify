@@ -45,7 +45,7 @@
     "python-shell": "^5.0.0",
     "stripe": "^16.8.0",
     "body-parser": "^1.20.2",
-    "xml2abc": "https://wim.vree.org/js/xml2abc.tgz"
+    "xml2abc": "^1.68.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
