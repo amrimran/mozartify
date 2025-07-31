@@ -46,7 +46,7 @@ const allowedOrigins = [
   'http://localhost:10000',
   
   // Add future Render URLs (you'll get these after deployment)
-  'https://mozartify-backend.onrender.com',
+  'https://mozartify.onrender.com',
   'https://mozartify-frontend.onrender.com',
   
 ].filter(Boolean); // Remove any undefined values
