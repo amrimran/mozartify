@@ -24,7 +24,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 import TuneIcon from "@mui/icons-material/Tune";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { API_BASE_URL} from './config/api.js';
 
 
 const ArtsClerkSidebar = ({ active, disableActiveTab }) => {

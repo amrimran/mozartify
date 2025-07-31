@@ -17,7 +17,7 @@ import {
   styled,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { API_BASE_URL} from './config/api.js';
 
 // Custom styled components
 const OptionButton = styled(Button)(({ theme }) => ({

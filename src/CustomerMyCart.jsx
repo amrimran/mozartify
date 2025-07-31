@@ -32,7 +32,7 @@ import { createGlobalStyle } from "styled-components";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
 
 axios.defaults.withCredentials = true;
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { API_BASE_URL} from './config/api.js';
 
 const DRAWER_WIDTH = 230;
 

@@ -34,7 +34,7 @@ import ClerkSidebar from "./MusicEntryClerkSidebar";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { API_BASE_URL} from './config/api.js';
 
 // Constants
 const DRAWER_WIDTH = 225;

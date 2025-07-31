@@ -14,7 +14,7 @@ import { createGlobalStyle } from "styled-components";
 import { Link } from "react-router-dom";
 import backgroundImage from "./assets/forgotPWBG.png";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { API_BASE_URL} from './config/api.js';
 
 const FormContainer = styled(Box)(({ theme }) => ({
   backgroundColor: "#FFFFFF",

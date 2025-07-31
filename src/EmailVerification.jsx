@@ -11,7 +11,7 @@ import {
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import verifiedBackground from "./assets/verified.jpg";
 import frustBackground from "./assets/frust.jpg";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { API_BASE_URL} from './config/api.js';
 
 const EmailVerification = () => {
   const [searchParams] = useSearchParams();

@@ -17,7 +17,7 @@ import Visibility from "@mui/icons-material/VisibilityOff";
 import VisibilityOff from "@mui/icons-material/Visibility";
 import backgroundImage from "./assets/loginWP.png";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { API_BASE_URL} from './config/api.js';
 
 const buttonStyles = {
   px: { xs: 6, sm: 8, md: 10 }, // Reduced padding

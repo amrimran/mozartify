@@ -28,7 +28,7 @@ import CustomerSidebar from "./CustomerSidebar";
 import { Link } from "react-router-dom";
 import Vex from "vexflow";
 import * as Tone from "tone";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { API_BASE_URL} from './config/api.js';
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 

@@ -23,8 +23,7 @@ import {
 } from "@mui/icons-material";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 import { useUnread } from "./UnreadContext.jsx";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-const API_BASE_URL_2 = import.meta.env.VITE_API_URL_2;
+import { API_BASE_URL, API_BASE_URL_2} from './config/api.js';
 
 axios.defaults.withCredentials = true;
 

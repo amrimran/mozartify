@@ -19,8 +19,7 @@ import SidebarMozartifyLogo from "./assets/mozartify.png";
 import SearchIcon from "@mui/icons-material/Search";
 import { useUnread } from "./UnreadContext.jsx";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-const API_BASE_URL_2 = import.meta.env.VITE_API_URL_2;
+import { API_BASE_URL, API_BASE_URL_2} from './config/api.js';
 axios.defaults.withCredentials = true;
 
 const AdminSidebar = ({ active }) => {

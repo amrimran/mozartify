@@ -30,7 +30,7 @@ import { createGlobalStyle } from "styled-components";
 import CustomerSidebar2 from "./CustomerSidebar2";
 
 axios.defaults.withCredentials = true;
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { API_BASE_URL} from './config/api.js';
 
 export default function CustomerLibrary2() {
   const theme = useTheme();

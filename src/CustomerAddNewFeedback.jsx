@@ -34,8 +34,7 @@ import { createGlobalStyle } from "styled-components";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebase";
 import CustomerSidebar from "./CustomerSidebar";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-const API_BASE_URL_2 = import.meta.env.VITE_API_URL_2;
+import { API_BASE_URL, API_BASE_URL_2} from './config/api.js';
 
 axios.defaults.withCredentials = true;
 

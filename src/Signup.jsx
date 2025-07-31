@@ -26,7 +26,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import backgroundImage from "./assets/signupBG.png";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { API_BASE_URL} from './config/api.js';
 
 const dialogStyles = {
   dialogPaper: {

@@ -38,8 +38,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import StopIcon from "@mui/icons-material/Stop";
 import StarIcon from "@mui/icons-material/Star";
 import Rating from "@mui/material/Rating";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-const API_BASE_URL_1 = import.meta.env.VITE_API_URL_1;
+import { API_BASE_URL, API_BASE_URL_1} from './config/api.js';
 
 export default function CustomerMusicScoreView() {
   const { id } = useParams();

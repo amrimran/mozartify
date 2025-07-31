@@ -35,7 +35,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { API_BASE_URL} from './config/api.js';
 
 axios.defaults.withCredentials = true;
 

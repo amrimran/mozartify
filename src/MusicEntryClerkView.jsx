@@ -45,8 +45,7 @@ import {
 } from "@mui/icons-material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { createGlobalStyle } from "styled-components";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-const API_BASE_URL_1 = import.meta.env.VITE_API_URL_1;
+import { API_BASE_URL, API_BASE_URL_1} from './config/api.js';
 
 const DRAWER_WIDTH = 225;
 

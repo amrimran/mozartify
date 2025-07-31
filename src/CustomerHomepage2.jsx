@@ -43,7 +43,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import MenuIcon from "@mui/icons-material/Menu";
 
 axios.defaults.withCredentials = true;
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { API_BASE_URL} from './config/api.js';
 
 export default function CustomerHomepage2() {
   const theme = useTheme();

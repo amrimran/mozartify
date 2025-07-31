@@ -27,8 +27,7 @@ import CustomerSidebar from "./CustomerSidebar";
 import ABCJS from "abcjs";
 import axios from "axios";
 import { Link } from "react-router-dom";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-const API_BASE_URL_1 = import.meta.env.VITE_API_URL_1;
+import { API_BASE_URL, API_BASE_URL_1} from './config/api.js';
 
 const DRAWER_WIDTH = 225;
 

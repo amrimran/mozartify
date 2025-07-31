@@ -38,8 +38,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { createGlobalStyle } from "styled-components";
 import { useUnread } from "./UnreadContext.jsx";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-const API_BASE_URL_2 = import.meta.env.VITE_API_URL_2;
+import { API_BASE_URL, API_BASE_URL_2} from './config/api.js';
 
 const DRAWER_WIDTH = 230;
 

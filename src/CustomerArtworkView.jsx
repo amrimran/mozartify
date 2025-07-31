@@ -25,7 +25,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { createGlobalStyle } from "styled-components";
 import CustomerSidebar2 from "./CustomerSidebar2";
 import Rating from "@mui/material/Rating";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { API_BASE_URL} from './config/api.js';
 
 const DRAWER_WIDTH = 225;
 

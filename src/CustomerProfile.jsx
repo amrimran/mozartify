@@ -41,7 +41,7 @@ import CustomerSidebar from "./CustomerSidebar";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 axios.defaults.withCredentials = true;
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { API_BASE_URL} from './config/api.js';
 
 const DRAWER_WIDTH = 230;
 

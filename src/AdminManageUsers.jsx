@@ -43,8 +43,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-const API_BASE_URL_3 = import.meta.env.VITE_API_URL_3;
+import { API_BASE_URL, API_BASE_URL_3} from './config/api.js';
 
 const DRAWER_WIDTH = 225;
 
