@@ -6,20 +6,20 @@ const isProduction = import.meta.env.PROD; // Vite's built-in production check
 export const API_CONFIG = {
   // Main API endpoints (combined backend)
   MAIN_API: isProduction
-    ? "https://mozartify.onrender.com" // Your deployed backend
+    ? "https://mozartify.onrender.com:3000" // Your deployed backend
     : "http://localhost:3000", // Local development
 
   // Secondary API (if you have separate services)
   SECONDARY_API: isProduction
-    ? "https://mozartify.onrender.com" // Same backend for now
+    ? "https://mozartify.onrender.com:3001" // Same backend for now
     : "http://localhost:3001", // Local development
 
   TERTIARY_API: isProduction
-    ? "https://mozartify.onrender.com" // Same backend for now
+    ? "https://mozartify.onrender.com:3002" // Same backend for now
     : "http://localhost:3002", // Local development
 
   QUATERNARY_API: isProduction
-    ? "https://mozartify.onrender.com" // Same backend for now
+    ? "https://mozartify.onrender.com:3003" // Same backend for now
     : "http://localhost:3003", // Local development
 
   // Timeout settings
