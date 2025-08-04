@@ -2,6 +2,8 @@
 require("dotenv").config();
 const { spawn } = require('child_process');
 const path = require('path');
+const express = require('express');
+const cors = require('cors');
 
 console.log('🚀 Starting Mozartify Backend Services...');
 console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
@@ -9,6 +11,7 @@ console.log(`🌐 Working Directory: ${process.cwd()}`);
 
 // Track all child processes
 const processes = [];
+const isProduction = process.env.NODE_ENV === "production";
 
 // Function to start a server
 function startServer(fileName, port, serviceName) {
@@ -16,8 +19,12 @@ function startServer(fileName, port, serviceName) {
   
   const serverPath = path.join(__dirname, fileName);
   const child = spawn('node', [serverPath], {
-    stdio: 'pipe',
-    env: { ...process.env, PORT: port }
+    stdio: ['pipe', 'pipe', 'pipe'],
+    env: { 
+      ...process.env, 
+      PORT: port,
+      SERVER_NAME: serviceName
+    }
   });
 
   // Handle stdout (normal output)
@@ -31,7 +38,7 @@ function startServer(fileName, port, serviceName) {
   // Handle stderr (error output)
   child.stderr.on('data', (data) => {
     const output = data.toString().trim();
-    if (output) {
+    if (output && !output.includes('DeprecationWarning')) {
       console.error(`[${serviceName}:${port}] ERROR: ${output}`);
     }
   });
@@ -40,6 +47,11 @@ function startServer(fileName, port, serviceName) {
   child.on('close', (code) => {
     if (code !== 0) {
       console.error(`❌ ${serviceName} (${fileName}) exited with code ${code}`);
+      // In production, try to restart the service
+      if (isProduction) {
+        console.log(`🔄 Attempting to restart ${serviceName}...`);
+        setTimeout(() => startServer(fileName, port, serviceName), 5000);
+      }
     } else {
       console.log(`✅ ${serviceName} (${fileName}) exited normally`);
     }
@@ -50,12 +62,12 @@ function startServer(fileName, port, serviceName) {
     console.error(`❌ Failed to start ${serviceName} (${fileName}):`, err.message);
   });
 
-  processes.push({ child, serviceName, port });
+  processes.push({ child, serviceName, port, fileName });
   return child;
 }
 
-// Start all 4 servers
-const servers = [
+// Define server configurations
+const serverConfigs = [
   { file: 'index.js', port: 3000, name: 'Main API' },
   { file: 'server.js', port: 3001, name: 'Music/Arts API' },
   { file: 'inbox.js', port: 3002, name: 'Feedback API' },
@@ -63,20 +75,15 @@ const servers = [
 ];
 
 // Start all servers
-servers.forEach(({ file, port, name }) => {
+serverConfigs.forEach(({ file, port, name }) => {
   startServer(file, port, name);
 });
 
-// Create a simple health check server on the main port for Render
-const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
-
+// Create a health check and proxy server on the main port for Render
 const app = express();
 const MAIN_PORT = process.env.PORT || 10000; // Render will use this
 
 // CORS configuration
-const isProduction = process.env.NODE_ENV === "production";
 const frontendUrl = isProduction
   ? process.env.FRONTEND_PROD_URL
   : process.env.FRONTEND_DEV_URL;
@@ -85,7 +92,6 @@ const allowedOrigins = [
   frontendUrl,
   process.env.FRONTEND_PROD_URL,
   process.env.FRONTEND_DEV_URL,
-  'https://mozartifynasirum.vercel.app',
   'http://localhost:3000',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
@@ -108,37 +114,33 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Health check endpoint
+// Health check endpoint for Render
 app.get('/', (req, res) => {
+  const baseUrl = isProduction ? `https://${req.get('host')}` : 'http://localhost';
+  
   res.json({
     message: '🎵 Mozartify Backend Services are running!',
     status: 'healthy',
     services: {
-      'Main API': 'http://localhost:3000',
-      'Music/Arts API': 'http://localhost:3001', 
-      'Feedback API': 'http://localhost:3002',
-      'Admin API': 'http://localhost:3003'
+      'Main API': `${baseUrl}:3000`,
+      'Music/Arts API': `${baseUrl}:3001`, 
+      'Feedback API': `${baseUrl}:3002`,
+      'Admin API': `${baseUrl}:3003`
     },
     environment: process.env.NODE_ENV || 'development',
+    processManager: 'mainserver.js',
+    activeProcesses: processes.length,
     timestamp: new Date().toISOString()
   });
 });
 
 // Health check for all services
 app.get('/health', async (req, res) => {
-  const serviceChecks = await Promise.allSettled([
-    axios.get('http://localhost:3000').catch(() => ({ status: 'down' })),
-    axios.get('http://localhost:3001').catch(() => ({ status: 'down' })),
-    axios.get('http://localhost:3002').catch(() => ({ status: 'down' })),
-    axios.get('http://localhost:3003').catch(() => ({ status: 'down' }))
-  ]);
-
-  const serviceStatus = {
-    'Main API (3000)': serviceChecks[0].status === 'fulfilled' ? 'up' : 'down',
-    'Music/Arts API (3001)': serviceChecks[1].status === 'fulfilled' ? 'up' : 'down',
-    'Feedback API (3002)': serviceChecks[2].status === 'fulfilled' ? 'up' : 'down',
-    'Admin API (3003)': serviceChecks[3].status === 'fulfilled' ? 'up' : 'down'
-  };
+  const serviceStatus = {};
+  
+  processes.forEach(({ serviceName, port, child }) => {
+    serviceStatus[`${serviceName} (${port})`] = child.killed ? 'down' : 'up';
+  });
 
   res.json({
     status: 'healthy',
@@ -148,34 +150,52 @@ app.get('/health', async (req, res) => {
   });
 });
 
-// Proxy requests to appropriate services based on path
-app.use('/api/main/*', (req, res) => {
-  const targetUrl = `http://localhost:3000${req.originalUrl.replace('/api/main', '')}`;
-  // Simple proxy - in production you might want to use http-proxy-middleware
-  res.redirect(307, targetUrl);
+// Simple proxy endpoints to route requests to appropriate services
+// Main API routes (index.js - port 3000)
+app.use(['/login', '/register', '/logout', '/set-favorites', '/add-to-cart', '/complete-purchase', '/recommendations', '/create-payment-intent'], (req, res) => {
+  res.status(200).json({
+    message: 'Route handled by Main API service on port 3000',
+    note: 'Your frontend should call port 3000 directly for these routes'
+  });
 });
 
-app.use('/api/music/*', (req, res) => {
-  const targetUrl = `http://localhost:3001${req.originalUrl.replace('/api/music', '')}`;
-  res.redirect(307, targetUrl);
+// Music/Arts API routes (server.js - port 3001)
+app.use(['/predictEmotion', '/predictGender', '/predictGenre', '/abc-file', '/arts-dynamic-fields', '/music-dynamic-fields'], (req, res) => {
+  res.status(200).json({
+    message: 'Route handled by Music/Arts API service on port 3001',
+    note: 'Your frontend should call port 3001 directly for these routes'
+  });
 });
 
-app.use('/api/feedback/*', (req, res) => {
-  const targetUrl = `http://localhost:3002${req.originalUrl.replace('/api/feedback', '')}`;
-  res.redirect(307, targetUrl);
+// Feedback API routes (inbox.js - port 3002)
+app.use(['/api/feedback', '/api/artwork-feedback'], (req, res) => {
+  res.status(200).json({
+    message: 'Route handled by Feedback API service on port 3002',
+    note: 'Your frontend should call port 3002 directly for these routes'
+  });
 });
 
-app.use('/api/admin/*', (req, res) => {
-  const targetUrl = `http://localhost:3003${req.originalUrl.replace('/api/admin', '')}`;
-  res.redirect(307, targetUrl);
+// Admin API routes (admin.js - port 3003)
+app.use(['/users', '/admin/stats', '/admin/feedbacks'], (req, res) => {
+  res.status(200).json({
+    message: 'Route handled by Admin API service on port 3003',
+    note: 'Your frontend should call port 3003 directly for these routes'
+  });
 });
 
 // Start the main health check server
 app.listen(MAIN_PORT, '0.0.0.0', () => {
-  console.log(`\n🎯 Main Health Check Server running on port ${MAIN_PORT}`);
+  console.log(`\n🎯 Main Process Manager running on port ${MAIN_PORT}`);
   console.log(`📊 Health check: http://localhost:${MAIN_PORT}/health`);
   console.log(`🌐 Frontend URL: ${frontendUrl}`);
-  console.log('\n✅ All Mozartify Backend Services are starting up...\n');
+  console.log('\n✅ All Mozartify Backend Services started!\n');
+  
+  // Log service endpoints
+  console.log('📡 Service Endpoints:');
+  serverConfigs.forEach(({ name, port }) => {
+    console.log(`   ${name}: http://localhost:${port}`);
+  });
+  console.log('');
 });
 
 // Graceful shutdown
@@ -183,29 +203,43 @@ process.on('SIGTERM', () => {
   console.log('\n🛑 SIGTERM received, shutting down all services...');
   processes.forEach(({ child, serviceName }) => {
     console.log(`🔄 Stopping ${serviceName}...`);
-    child.kill('SIGTERM');
+    if (!child.killed) {
+      child.kill('SIGTERM');
+    }
   });
-  process.exit(0);
+  setTimeout(() => process.exit(0), 5000); // Force exit after 5 seconds
 });
 
 process.on('SIGINT', () => {
   console.log('\n🛑 SIGINT received, shutting down all services...');
   processes.forEach(({ child, serviceName }) => {
     console.log(`🔄 Stopping ${serviceName}...`);
-    child.kill('SIGINT');
+    if (!child.killed) {
+      child.kill('SIGINT');
+    }
   });
-  process.exit(0);
+  setTimeout(() => process.exit(0), 5000); // Force exit after 5 seconds
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
   console.error('❌ Uncaught Exception:', err);
-  processes.forEach(({ child }) => child.kill());
+  processes.forEach(({ child }) => {
+    if (!child.killed) {
+      child.kill();
+    }
+  });
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
-  processes.forEach(({ child }) => child.kill());
+  processes.forEach(({ child }) => {
+    if (!child.killed) {
+      child.kill();
+    }
+  });
   process.exit(1);
 });
+
+console.log('🔥 Process Manager initialized. Waiting for services to start...');
