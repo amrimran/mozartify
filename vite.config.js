@@ -21,6 +21,16 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace(/^\/api/, ''),
         }
       }
-    }
+    },
+    // SPA fallback configuration
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: undefined,
+        }
+      }
+    },
+    // Ensure SPA behavior
+    appType: 'spa'
   };
 });
