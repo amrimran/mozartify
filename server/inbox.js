@@ -60,30 +60,47 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions)); // Handle preflight requests
 
-const store = new MongoDBStore({
-  mongoUrl: process.env.DB_URI,
-  collectionName: "sessions",
-  touchAfter: 24 * 3600, // lazy session update
-});
+const disableSessions = process.env.DISABLE_SESSIONS === 'true';
 
-store.on("error", (error) => {
-  console.log("Session store error:", error);
-});
+if (!disableSessions) {
+  const store = new MongoDBStore({
+    uri: process.env.DB_URI,
+    collection: "sessions",
+  });
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    store: store,
-    cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
-      sameSite: isProduction ? 'none' : 'lax', // IMPORTANT: 'none' for production cross-origin
-      secure: isProduction, // HTTPS only in production
-      httpOnly: true,
-    },
-  })
-);
+  store.on("error", (error) => {
+    console.log(error);
+  });
+
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      store: store,
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // 1 day
+        sameSite: "lax",
+        httpOnly: true,
+      },
+    })
+  );
+} else {
+  // Use memory store (sessions won't persist)
+  console.log("⚠️ Sessions disabled - using memory store");
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || 'fallback-secret',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // 1 day
+        sameSite: "lax",
+        httpOnly: true,
+      },
+    })
+  );
+}
 
 const upload = multer();
 
