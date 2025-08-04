@@ -45,7 +45,8 @@
     "python-shell": "^5.0.0",
     "stripe": "^16.8.0",
     "body-parser": "^1.20.2",
-    "xml2abc": "^1.68.3"
+    "xml2abc": "^1.68.3",
+    "http-proxy-middleware": "^2.0.6"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

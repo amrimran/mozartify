@@ -4,22 +4,22 @@
 const isProduction = import.meta.env.PROD; // Vite's built-in production check
 
 export const API_CONFIG = {
-  // Main API endpoints (combined backend)
+  // All APIs now route through the main server (no ports needed in production)
   MAIN_API: isProduction
-    ? "https://mozartify.onrender.com:3000" // Your deployed backend
-    : "http://localhost:3000", // Local development
+    ? "https://mozartify.onrender.com" // Single entry point - mainserver.js routes internally
+    : "http://localhost:3000", // Local development - direct to service
 
-  // Secondary API (if you have separate services)
+  // All services use the same base URL in production (mainserver.js handles routing)
   SECONDARY_API: isProduction
-    ? "https://mozartify.onrender.com:3001" // Same backend for now
+    ? "https://mozartify.onrender.com" // Routes to port 3001 internally
     : "http://localhost:3001", // Local development
 
   TERTIARY_API: isProduction
-    ? "https://mozartify.onrender.com:3002" // Same backend for now
+    ? "https://mozartify.onrender.com" // Routes to port 3002 internally
     : "http://localhost:3002", // Local development
 
   QUATERNARY_API: isProduction
-    ? "https://mozartify.onrender.com:3003" // Same backend for now
+    ? "https://mozartify.onrender.com" // Routes to port 3003 internally
     : "http://localhost:3003", // Local development
 
   // Timeout settings
@@ -37,7 +37,6 @@ export const API_BASE_URL_1 = API_CONFIG.SECONDARY_API;
 export const API_BASE_URL_2 = API_CONFIG.TERTIARY_API;
 export const API_BASE_URL_3 = API_CONFIG.QUATERNARY_API;
 
-
 // Axios configuration
 export const axiosConfig = {
   baseURL: API_CONFIG.MAIN_API,
@@ -50,4 +49,6 @@ console.log("🔗 API Configuration:", {
   environment: isProduction ? "production" : "development",
   mainAPI: API_CONFIG.MAIN_API,
   secondaryAPI: API_CONFIG.SECONDARY_API,
+  tertiaryAPI: API_CONFIG.TERTIARY_API,
+  quaternaryAPI: API_CONFIG.QUATERNARY_API,
 });
