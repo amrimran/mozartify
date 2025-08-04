@@ -24,41 +24,115 @@ const ABCFileModel = require("./models/ABCFile");
 const ArtworkModel = require("./models/Arts");
 
 const app = express();
+app.use(express.json());
 
-app.use(
-  cors({
-    origin: "http://localhost:5173", // Your frontend URL
-    credentials: true, // Important for cookies/sessions
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type"],
-  })
-);
+// ================== ENVIRONMENT CONFIG ==================
+const isProduction = process.env.NODE_ENV === "production";
 
-const store = new MongoDBStore({
-  uri: process.env.DB_URI,
-  collection: "sessions",
-});
+// ================== CORS CONFIGURATION ==================
+const allowedOrigins = [
+  // Frontend URLs
+  process.env.FRONTEND_PROD_URL,
+  process.env.FRONTEND_DEV_URL,
+  
+  // Backend URLs (for internal communication)
+  process.env.BACKEND_PROD_URL,
+  process.env.BACKEND_DEV_URL,
+  
+  // Development URLs
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:10000',
+  
+  // Add future Render URLs (you'll get these after deployment)
+  'https://mozartify.onrender.com',
+  'https://mozartify-frontend.onrender.com',
+  
+].filter(Boolean); // Remove any undefined values
 
-store.on("error", (error) => {
-  console.log(error);
-});
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if the origin is in our allowed list
+    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Set-Cookie'],
+};
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    store: store,
-    cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
-      sameSite: "lax",
-      httpOnly: true,
-    },
-  })
-);
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // Handle preflight requests
+
+
+const disableSessions = process.env.DISABLE_SESSIONS === 'true';
+
+if (!disableSessions) {
+  // Original session store setup
+  const store = new MongoDBStore({
+    mongoUrl: process.env.DB_URI,
+    collectionName: "sessions",
+    touchAfter: 24 * 3600, // lazy session update
+  });
+
+  store.on("error", (error) => {
+    console.log("Session store error:", error);
+  });
+
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      store: store,
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // 1 day
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+      },
+      name: 'sessionId',
+    })
+  );
+} else {
+  // Use memory store (sessions won't persist)
+  console.log("⚠️ Sessions disabled - using memory store");
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || 'fallback-secret',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // 1 day
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+      },
+      name: 'sessionId',
+    })
+  );
+}
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 mongoose.connect(process.env.DB_URI);
+
+app.get("/", (req, res) => {
+  res.json({
+    message: "Server is running",
+    timestamp: new Date().toISOString(),
+  });
+});
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -69,7 +143,12 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendVerificationEmail = (email, username, token) => {
-  const url = `http://localhost:5173/verify-email?token=${token}`;
+  const frontendUrl =
+    process.env.NODE_ENV === "production"
+      ? process.env.FRONTEND_PROD_URL
+      : process.env.FRONTEND_DEV_URL;
+
+  const url = `${frontendUrl}/verify-email?token=${token}`;
   const emailTemplate = `
   <div style="border: 2px solid #8BD3E6; border-radius: 10px; padding: 20px; font-family: 'Montserrat', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #F9FBFC;">
     <div style="text-align: center; margin-bottom: 20px;">
@@ -262,7 +341,7 @@ app.get("/login", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-  const { username_or_email, password} = req.body;
+  const { username_or_email, password } = req.body;
 
   try {
     const user = await UserModel.findOne({
@@ -378,7 +457,7 @@ app.get("/art-preferences-options", async (req, res) => {
     const artist = await ArtworkModel.distinct("artist");
     const collection = await ArtworkModel.distinct("collection");
 
-    res.status(200).json({ artist, collection});
+    res.status(200).json({ artist, collection });
   } catch (error) {
     console.error("Error fetching preferences:", error);
     res.status(500).json({ error: "Failed to fetch preferences." });
@@ -433,8 +512,7 @@ app.post("/preferences", async (req, res) => {
 });
 
 app.post("/art-preferences", async (req, res) => {
-  const { artist_preferences, colletion_preferences } =
-    req.body;
+  const { artist_preferences, colletion_preferences } = req.body;
   const userId = req.session.userId;
   let client;
   const dbName = "mozartify";
@@ -501,7 +579,18 @@ app.get("/artwork-refine-search", async (req, res) => {
     }
 
     // Fields to exclude
-    const excludeFields = ["_id", "__v", "downloads", "deleted","imageUrl", "dateUploaded", "createdAt", "updatedAt", "title"];
+    const excludeFields = [
+      "_id",
+      "__v",
+      "downloads",
+      "deleted",
+      "price",
+      "imageUrl",
+      "dateUploaded",
+      "createdAt",
+      "updatedAt",
+      "title",
+    ];
 
     // Extract filterable fields
     const fieldsToFilter = Object.keys(sample).filter(
@@ -520,7 +609,6 @@ app.get("/artwork-refine-search", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch preferences." });
   }
 });
-
 
 app.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
@@ -541,7 +629,12 @@ app.post("/forgot-password", async (req, res) => {
       expiresIn: "5m", // Set token expiration to 5 minutes
     });
 
-    const resetLink = `http://localhost:5173/reset-password?token=${token}`;
+    const frontendUrl =
+      process.env.NODE_ENV === "production"
+        ? process.env.FRONTEND_PROD_URL
+        : process.env.FRONTEND_DEV_URL;
+
+    const resetLink = `${frontendUrl}/reset-password?token=${token}`;
     const emailTemplate = `
   <div style="border: 2px solid #8BD3E6; border-radius: 10px; padding: 20px; font-family: 'Montserrat', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #F9FBFC;">
     <div style="text-align: center; margin-bottom: 20px;">
@@ -978,13 +1071,19 @@ app.post("/artwork-advanced-search", async (req, res) => {
     if (row.searchCategory && row.searchText) {
       switch (row.searchCategory) {
         case "Title":
-          searchConditions.push({ title: { $regex: row.searchText, $options: "i" } });
+          searchConditions.push({
+            title: { $regex: row.searchText, $options: "i" },
+          });
           break;
         case "Artist":
-          searchConditions.push({ artist: { $regex: row.searchText, $options: "i" } });
+          searchConditions.push({
+            artist: { $regex: row.searchText, $options: "i" },
+          });
           break;
         case "Collection":
-          searchConditions.push({ collection: { $regex: row.searchText, $options: "i" } });
+          searchConditions.push({
+            collection: { $regex: row.searchText, $options: "i" },
+          });
           break;
         case "All":
           searchConditions.push({
@@ -992,7 +1091,7 @@ app.post("/artwork-advanced-search", async (req, res) => {
               { title: { $regex: row.searchText, $options: "i" } },
               { artist: { $regex: row.searchText, $options: "i" } },
               { collection: { $regex: row.searchText, $options: "i" } },
-            ]
+            ],
           });
           break;
       }
@@ -1206,23 +1305,22 @@ app.get("/filter-music-scores", async (req, res) => {
 });
 
 app.get("/filter-artworks", async (req, res) => {
-  const { collection, artist} = req.query;
-
   try {
     const filter = {};
 
-    if (collection) {
-      filter.collection = collection;
-    }
-
-    if (artist) {
-      filter.artist = artist;
+    for (const [key, value] of Object.entries(req.query)) {
+      // Support multiple values (from checkboxes or multiselect dropdowns)
+      if (Array.isArray(value)) {
+        filter[key] = { $in: value };
+      } else {
+        filter[key] = { $in: [value] }; // Normalize single values to array
+      }
     }
 
     const filteredArtworks = await ArtworkModel.find(filter);
-
     res.json(filteredArtworks);
   } catch (err) {
+    console.error("Error filtering artworks:", err);
     res.status(500).json({ message: "Server error", error: err });
   }
 });
@@ -1335,7 +1433,9 @@ app.get("/user-artwork-cart", async (req, res) => {
       return res.json([]);
     }
 
-    const cartItems = cart.artwork_ids.map((artworkId) => ({ artwork_id: artworkId }));
+    const cartItems = cart.artwork_ids.map((artworkId) => ({
+      artwork_id: artworkId,
+    }));
 
     res.json(cartItems);
   } catch (error) {
@@ -1345,29 +1445,31 @@ app.get("/user-artwork-cart", async (req, res) => {
 });
 
 // Get artwork by ID
-app.get('/fetchArts/:id', async (req, res) => {
+app.get("/fetchArts/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     let artwork;
-    if (mongoose.Types.ObjectId.isValid(id)) { 
+    if (mongoose.Types.ObjectId.isValid(id)) {
       artwork = await ArtworkModel.findById(id);
     } else {
-      artwork = await ArtworkModel.findOne({ filename: id }); 
+      artwork = await ArtworkModel.findOne({ filename: id });
     }
 
     if (!artwork) {
-      return res.status(404).json({ message: 'Artwork not found' });
+      return res.status(404).json({ message: "Artwork not found" });
     }
 
     res.status(200).json(artwork);
   } catch (err) {
     console.error("Error fetching artwork:", err);
-    res.status(500).json({ message: 'Error fetching artwork', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching artwork", error: err.message });
   }
 });
 
-app.get('/check-purchase/:artwork_id', async (req, res) => {
+app.get("/check-purchase/:artwork_id", async (req, res) => {
   try {
     const { artwork_id } = req.params;
     const userId = req.session.userId;
@@ -1375,45 +1477,43 @@ app.get('/check-purchase/:artwork_id', async (req, res) => {
     // Find purchase in purchase2 collection
     const purchase = await Purchase2Model.findOne({
       user_id: userId,
-      artwork_id: artwork_id
+      artwork_id: artwork_id,
     });
 
-    res.status(200).json({ 
+    res.status(200).json({
       hasPurchased: !!purchase,
-      purchase
+      purchase,
     });
-
   } catch (err) {
     console.error("Error checking purchase:", err);
-    res.status(500).json({ 
-      message: 'Error checking purchase status', 
-      error: err.message 
+    res.status(500).json({
+      message: "Error checking purchase status",
+      error: err.message,
     });
   }
 });
 
-app.get('/download-artwork', async (req, res) => {
+app.get("/download-artwork", async (req, res) => {
   try {
     const { imageUrl } = req.query;
-    
+
     // Verify user has permission to download
     // (Add your authentication/authorization logic here)
-    
+
     const response = await axios.get(imageUrl, {
-      responseType: 'stream'
+      responseType: "stream",
     });
-    
+
     // Set appropriate headers
-    res.setHeader('Content-Disposition', `attachment; filename="artwork.jpg"`);
-    res.setHeader('Content-Type', response.headers['content-type']);
-    
+    res.setHeader("Content-Disposition", `attachment; filename="artwork.jpg"`);
+    res.setHeader("Content-Type", response.headers["content-type"]);
+
     response.data.pipe(res);
   } catch (error) {
-    console.error('Download error:', error);
-    res.status(500).send('Download failed');
+    console.error("Download error:", error);
+    res.status(500).send("Download failed");
   }
 });
-
 
 app.post("/add-to-cart", async (req, res) => {
   try {
@@ -1901,95 +2001,95 @@ const calculateRecommendations = async (userId) => {
       };
     });
 
-        // Sort by score and get top recommendations
-        const sortedRecommendations = scoredMusic
-        .sort((a, b) => b.score - a.score)
-        .filter((item) => item.score > 0) // Only include items with matches
-        .map((item) => item.musicData);
-  
-      // Limit to 10 recommendations but ensure variety
-      const recommendations = [];
-      const usedGenres = new Set();
-      let index = 0;
-  
-      while (
-        recommendations.length < 10 &&
-        index < sortedRecommendations.length
-      ) {
-        const currentScore = sortedRecommendations[index];
-  
-        // Ensure genre diversity in recommendations
-        if (!usedGenres.has(currentScore.genre) || usedGenres.size >= 5) {
-          recommendations.push(currentScore);
-          usedGenres.add(currentScore.genre);
-        }
-  
-        index++;
-      }
-  
-      // If we have fewer than 10 recommendations, fill with popular items
-      if (recommendations.length < 10) {
-        const popularMusicScores = await ABCFileModel.find({
-          _id: {
-            $nin: [...recommendations.map((r) => r._id), ...user.favorites_music],
-          },
-        })
-          .sort({ downloads: -1 })
-          .limit(10 - recommendations.length);
-  
-        recommendations.push(...popularMusicScores);
-      }
-  
-      return recommendations;
-    } catch (error) {
-      console.error("Error generating recommendations:", error);
-      throw error;
-    }
-  };
+    // Sort by score and get top recommendations
+    const sortedRecommendations = scoredMusic
+      .sort((a, b) => b.score - a.score)
+      .filter((item) => item.score > 0) // Only include items with matches
+      .map((item) => item.musicData);
 
-    const calculateArtworkRecommendations = async (userId) => {
-      try {
-        // Get user and their preferences
-        const user = await UserModel.findById(userId);
-        if (!user) {
-          throw new Error("User not found");
-        }
-    
-        // Get all available scores
-        let allArtworks = await ArtworkModel.find({});
-    
-        // Calculate scores for each music piece based on user preferences
-        const scoredArtwork = allArtworks.map((artwork) => {
-          let score = 0;
-          let matchCount = 0;
-    
-          // Check composer preference match (highest weight: 0.4)
-          if (user.collection_preferences.includes(artwork.collection)) {
-            score += 0.4;
-            matchCount++;
-          }
-    
-          // Check genre preference match (weight: 0.35)
-          if (user.artist_preferences.includes(artwork.artist)) {
-            score += 0.35;
-            matchCount++;
-          }
-    
-          // Bonus points for multiple matches
-          if (matchCount > 1) {
-            score += 0.1 * matchCount;
-          }
-    
-          // Avoid recommending music that's already in favorites
-          if (user.favorites_art.includes(artwork._id)) {
-            score = 0;
-          }
-    
-          return {
-            score,
-            artworkData: artwork,
-          };
-        });
+    // Limit to 10 recommendations but ensure variety
+    const recommendations = [];
+    const usedGenres = new Set();
+    let index = 0;
+
+    while (
+      recommendations.length < 10 &&
+      index < sortedRecommendations.length
+    ) {
+      const currentScore = sortedRecommendations[index];
+
+      // Ensure genre diversity in recommendations
+      if (!usedGenres.has(currentScore.genre) || usedGenres.size >= 5) {
+        recommendations.push(currentScore);
+        usedGenres.add(currentScore.genre);
+      }
+
+      index++;
+    }
+
+    // If we have fewer than 10 recommendations, fill with popular items
+    if (recommendations.length < 10) {
+      const popularMusicScores = await ABCFileModel.find({
+        _id: {
+          $nin: [...recommendations.map((r) => r._id), ...user.favorites_music],
+        },
+      })
+        .sort({ downloads: -1 })
+        .limit(10 - recommendations.length);
+
+      recommendations.push(...popularMusicScores);
+    }
+
+    return recommendations;
+  } catch (error) {
+    console.error("Error generating recommendations:", error);
+    throw error;
+  }
+};
+
+const calculateArtworkRecommendations = async (userId) => {
+  try {
+    // Get user and their preferences
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Get all available scores
+    let allArtworks = await ArtworkModel.find({});
+
+    // Calculate scores for each music piece based on user preferences
+    const scoredArtwork = allArtworks.map((artwork) => {
+      let score = 0;
+      let matchCount = 0;
+
+      // Check composer preference match (highest weight: 0.4)
+      if (user.collection_preferences.includes(artwork.collection)) {
+        score += 0.4;
+        matchCount++;
+      }
+
+      // Check genre preference match (weight: 0.35)
+      if (user.artist_preferences.includes(artwork.artist)) {
+        score += 0.35;
+        matchCount++;
+      }
+
+      // Bonus points for multiple matches
+      if (matchCount > 1) {
+        score += 0.1 * matchCount;
+      }
+
+      // Avoid recommending music that's already in favorites
+      if (user.favorites_art.includes(artwork._id)) {
+        score = 0;
+      }
+
+      return {
+        score,
+        artworkData: artwork,
+      };
+    });
 
     // Sort by score and get top recommendations
     const sortedRecommendations = scoredArtwork
@@ -2057,7 +2157,9 @@ app.get("/artwork-recommendations", async (req, res) => {
       return res.status(401).json({ error: "User not logged in" });
     }
 
-    const recommendations = await calculateArtworkRecommendations(req.session.userId);
+    const recommendations = await calculateArtworkRecommendations(
+      req.session.userId
+    );
     res.json(recommendations);
   } catch (error) {
     console.error("Error in recommendations endpoint:", error);
@@ -2134,12 +2236,17 @@ app.post("/create-checkout-session", async (req, res) => {
     quantity: 1,
   }));
 
+  const frontendUrl =
+    process.env.NODE_ENV === "production"
+      ? process.env.FRONTEND_PROD_URL
+      : process.env.FRONTEND_DEV_URL;
+
   const paymentSession = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     line_items: lineItems,
     mode: "payment",
-    success_url: `http://localhost:5173/success`,
-    cancel_url: `http://localhost:5173/cancel`,
+    success_url: `${frontendUrl}/success`,
+    cancel_url: `${frontendUrl}/cancel`,
     client_reference_id: userId,
   });
 
@@ -2163,12 +2270,17 @@ app.post("/create-checkout-session-artwork", async (req, res) => {
     quantity: 1,
   }));
 
+  const frontendUrl =
+    process.env.NODE_ENV === "production"
+      ? process.env.FRONTEND_PROD_URL
+      : process.env.FRONTEND_DEV_URL;
+
   const paymentSession = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     line_items: lineItems,
     mode: "payment",
-    success_url: `http://localhost:5173/success-2`,
-    cancel_url: `http://localhost:5173/cancel`,
+    success_url: `${frontendUrl}/success-2`,
+    cancel_url: `${frontendUrl}/cancel`,
     client_reference_id: userId,
   });
 

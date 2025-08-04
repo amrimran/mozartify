@@ -12,36 +12,95 @@ const MongoDBStore = require("connect-mongodb-session")(session);
 
 const app = express();
 app.use(express.json());
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  })
-);
-app.use(bodyParser.json());
 
-const store = new MongoDBStore({
-  uri: process.env.DB_URI,
-  collection: "sessions",
-});
+// ================== ENVIRONMENT CONFIG ==================
+const isProduction = process.env.NODE_ENV === "production";
 
-store.on("error", (error) => {
-  console.log(error);
-});
+// ================== CORS CONFIGURATION ==================
+const allowedOrigins = [
+  // Frontend URLs
+  process.env.FRONTEND_PROD_URL,
+  process.env.FRONTEND_DEV_URL,
+  
+  // Backend URLs (for internal communication)
+  process.env.BACKEND_PROD_URL,
+  process.env.BACKEND_DEV_URL,
+  
+  // Development URLs
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:10000',
+  
+  // Add future Render URLs (you'll get these after deployment)
+  'https://mozartify-backend.onrender.com',
+  'https://mozartify-frontend.onrender.com',
+  
+].filter(Boolean); // Remove any undefined values
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    store: store,
-    cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
-      sameSite: "lax",
-      httpOnly: true,
-    },
-  })
-);
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if the origin is in our allowed list
+    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Set-Cookie'],
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // Handle preflight requests
+
+const disableSessions = process.env.DISABLE_SESSIONS === 'true';
+
+if (!disableSessions) {
+  const store = new MongoDBStore({
+    uri: process.env.DB_URI,
+    collection: "sessions",
+  });
+
+  store.on("error", (error) => {
+    console.log(error);
+  });
+
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      store: store,
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // 1 day
+        sameSite: "lax",
+        httpOnly: true,
+      },
+    })
+  );
+} else {
+  // Use memory store (sessions won't persist)
+  console.log("⚠️ Sessions disabled - using memory store");
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || 'fallback-secret',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // 1 day
+        sameSite: "lax",
+        httpOnly: true,
+      },
+    })
+  );
+}
 
 const upload = multer();
 

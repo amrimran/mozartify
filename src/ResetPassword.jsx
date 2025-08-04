@@ -17,6 +17,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import BgImage from "./assets/drummer.jpg";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
+import { API_BASE_URL} from './config/api.js';
 
 const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
@@ -225,7 +226,7 @@ const ResetPassword = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3000/reset-password",
+        `${API_BASE_URL}/reset-password`,
         {
           token,
           newPassword: password,
@@ -259,7 +260,7 @@ const ResetPassword = () => {
         <Logo
           src={SidebarMozartifyLogo}
           alt="MozartifyIcon"
-          onClick={() => window.location.replace("http://localhost:5173")}
+          onClick={() => navigate('/')} 
         />
         <FormContainer>
           <Typography

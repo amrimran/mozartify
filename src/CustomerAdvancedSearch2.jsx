@@ -37,6 +37,8 @@ import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
+import { API_BASE_URL} from './config/api.js';
+
 
 export default function CustomerAdvancedSearch2() {
   const [user, setUser] = useState(null); //store user's information
@@ -93,7 +95,7 @@ export default function CustomerAdvancedSearch2() {
     const fetchRefineLists = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/artwork-refine-search"
+          `${API_BASE_URL}/artwork-refine-search`
         );
         setRefineFilters(response.data);
       } catch (error) {
@@ -108,27 +110,28 @@ export default function CustomerAdvancedSearch2() {
     px: 5,
     fontFamily: "Montserrat",
     fontWeight: "bold",
-    color: "#8BD3E6",
+    color: "#FFB6A5",
     backgroundColor: "#FFFFFF",
-    border: "1px solid #8BD3E6",
-    borderColor: "#8BD3E6",
+    border: "1px solid #FFB6A5",
+    borderColor: "#FFB6A5",
     boxShadow: "none",
     "&:hover": {
       boxShadow: "none",
-      backgroundColor: "#E6F8FB", // Subtle light blue hover effect
-      color: "#7AB9C4", // Slightly darker shade of the text
-      borderColor: "#7AB9C4", // Matches the text color for consistency
+      backgroundColor: "#FFEDEE", // Very light pink background on hover
+      color: "#FF8B9A",            // Soft, medium pink text color
+      borderColor: "#FF8B9A",      // Same as text for visual consistency
     },
   };
+  
 
   const buttonStyles = {
     px: 10,
     fontFamily: "Montserrat",
     fontWeight: "bold",
     color: "#FFFFFF",
-    backgroundColor: "#8BD3E6",
-    border: "1px solid #8BD3E6",
-    borderColor: "#8BD3E6",
+    backgroundColor: "#FFB6A5",
+    border: "1px solid #FFB6A5",
+    borderColor: "#FFB6A5",
     boxShadow: "none",
     "&:hover": {
       boxShadow: "none",
@@ -238,7 +241,7 @@ export default function CustomerAdvancedSearch2() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
         setFavorites(response.data.favorites_art);
       } catch (error) {
@@ -253,7 +256,7 @@ export default function CustomerAdvancedSearch2() {
     const fetchPurchasedArtworks = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/user-artwork-purchases"
+          `${API_BASE_URL}/user-artwork-purchases`
         );
 
         const purchasedArtworkIds = response.data.map(
@@ -272,7 +275,7 @@ export default function CustomerAdvancedSearch2() {
   const fetchArtworks = async (combinedQueries, selectedCollection) => {
     try {
       const response = await axios.post(
-        "http://localhost:3000/artwork-advanced-search",
+        `${API_BASE_URL}/artwork-advanced-search`,
         {
           combinedQueries,
           selectedCollection,
@@ -290,7 +293,7 @@ export default function CustomerAdvancedSearch2() {
     const fetchAddedToCartArtworks = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/user-artwork-cart"
+          `${API_BASE_URL}/user-artwork-cart`
         );
 
         if (response.data.length === 0) {
@@ -312,7 +315,7 @@ export default function CustomerAdvancedSearch2() {
 
   const addToCart = async (artworkId) => {
     try {
-      await axios.post("http://localhost:3000/add-to-cart-artwork", {
+      await axios.post(`${API_BASE_URL}/add-to-cart-artwork`, {
         artworkId: artworkId,
       });
       setAddedToCartArtworks([...addedToCartArtworks, artworkId]);
@@ -331,7 +334,7 @@ export default function CustomerAdvancedSearch2() {
       const isFavorite = user?.favorites_art?.includes(artworkId);
 
       const response = await axios.post(
-        "http://localhost:3000/set-favorites-artwork",
+        `${API_BASE_URL}/set-favorites-artwork`,
         {
           artworkId,
           action: isFavorite ? "remove" : "add", // Explicitly specify the action
@@ -563,7 +566,7 @@ export default function CustomerAdvancedSearch2() {
             "& .MuiDrawer-paper": {
               width: 230, // Sidebar2 width
               boxSizing: "border-box",
-              backgroundColor: "#8BD3E6", // Set the background color
+              backgroundColor: "#FFB6A5", // Set the background color
             },
           }}
         >
@@ -695,7 +698,7 @@ export default function CustomerAdvancedSearch2() {
                     <Box
                       sx={{
                         border: "1px solid",
-                        borderColor: "#8bd3e6",
+                        borderColor: "#FFB6A5",
                         padding: 2,
                         display: "inline-block",
                         borderRadius: 3,
@@ -732,10 +735,10 @@ export default function CustomerAdvancedSearch2() {
                             display: "none",
                           },
                           "&:hover:not(.Mui-disabled):before": {
-                            borderBottom: "2px solid #8BD3E6",
+                            borderBottom: "2px solid #FFB6A5",
                           },
                           "&:focus-within:before": {
-                            borderBottom: "2px solid #8BD3E6",
+                            borderBottom: "2px solid #FFB6A5",
                           },
                         }}
                       >
@@ -795,13 +798,13 @@ export default function CustomerAdvancedSearch2() {
                             fontWeight: "bold",
                             borderRadius: 3, // Set border radius here
                             "& .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "#8BD3E6", // Default border color
+                              borderColor: "#FFB6A5", // Default border color
                             },
                             "&:hover .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "#67ADC1", // Border color on hover
+                              borderColor: "#FF9F8F", // Border color on hover
                             },
                             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "#67ADC1", // Border color when focused
+                              borderColor: "#FF9F8F", // Border color when focused
                             },
                           }}
                         >
@@ -842,13 +845,13 @@ export default function CustomerAdvancedSearch2() {
                               fontFamily: "Montserrat",
                               borderRadius: 3, // Set border radius here
                               "& fieldset": {
-                                borderColor: "#8BD3E6",
+                                borderColor: "#FFB6A5",
                               },
                               "&:hover fieldset": {
-                                borderColor: "#67ADC1",
+                                borderColor: "#FF9F8F",
                               },
                               "&.Mui-focused fieldset": {
-                                borderColor: "#67ADC1",
+                                borderColor: "#FF9F8F",
                               },
                             },
                             "& .MuiInputLabel-root": {
@@ -867,13 +870,13 @@ export default function CustomerAdvancedSearch2() {
                             fontWeight: "bold",
                             borderRadius: 3, // Set border radius here
                             "& .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "#8BD3E6", // Default border color
+                              borderColor: "#FFB6A5", // Default border color
                             },
                             "&:hover .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "#67ADC1", // Border color on hover
+                              borderColor: "#FF9F8F", // Border color on hover
                             },
                             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "#67ADC1", // Border color when focused
+                              borderColor: "#FF9F8F", // Border color when focused
                             },
                           }}
                         >
@@ -905,11 +908,11 @@ export default function CustomerAdvancedSearch2() {
                             paddingTop: 2,
                             paddingBottom: 2,
                             color: "white",
-                            backgroundColor: "#78BBCC",
+                            backgroundColor: "#FF9F8F",
                             fontFamily: "Montserrat, sans-serif",
                             boxShadow: "none",
                             "&:hover": {
-                              backgroundColor: "#67ADC1",
+                              backgroundColor: "#FF9F8F",
                               boxShadow: "none",
                             },
                           }}
@@ -948,14 +951,14 @@ export default function CustomerAdvancedSearch2() {
                               fontWeight: "bold",
                               borderRadius: 3,
                               "& .MuiOutlinedInput-notchedOutline": {
-                                borderColor: "#8BD3E6",
+                                borderColor: "#FFB6A5",
                               },
                               "&:hover .MuiOutlinedInput-notchedOutline": {
-                                borderColor: "#67ADC1",
+                                borderColor: "#FF9F8F",
                               },
                               "&.Mui-focused .MuiOutlinedInput-notchedOutline":
                                 {
-                                  borderColor: "#67ADC1",
+                                  borderColor: "#FF9F8F",
                                 },
                             }}
                           >
@@ -996,13 +999,13 @@ export default function CustomerAdvancedSearch2() {
                                 fontFamily: "Montserrat",
                                 borderRadius: 3,
                                 "& fieldset": {
-                                  borderColor: "#8BD3E6",
+                                  borderColor: "#FFB6A5",
                                 },
                                 "&:hover fieldset": {
-                                  borderColor: "#67ADC1",
+                                  borderColor: "#FF9F8F",
                                 },
                                 "&.Mui-focused fieldset": {
-                                  borderColor: "#67ADC1",
+                                  borderColor: "#FF9F8F",
                                 },
                               },
                               "& .MuiInputLabel-root": {
@@ -1030,14 +1033,14 @@ export default function CustomerAdvancedSearch2() {
                               fontWeight: "bold",
                               borderRadius: 3,
                               "& .MuiOutlinedInput-notchedOutline": {
-                                borderColor: "#8BD3E6",
+                                borderColor: "#FFB6A5",
                               },
                               "&:hover .MuiOutlinedInput-notchedOutline": {
-                                borderColor: "#67ADC1",
+                                borderColor: "#FF9F8F",
                               },
                               "&.Mui-focused .MuiOutlinedInput-notchedOutline":
                                 {
-                                  borderColor: "#67ADC1",
+                                  borderColor: "#FF9F8F",
                                 },
                             }}
                           >
@@ -1073,7 +1076,7 @@ export default function CustomerAdvancedSearch2() {
                               fontFamily: "Montserrat, sans-serif",
                               boxShadow: "none",
                               "&:hover": {
-                                backgroundColor: "#67ADC1",
+                                backgroundColor: "#FF9F8F",
                                 boxShadow: "none",
                               },
                             }}
@@ -1105,7 +1108,7 @@ export default function CustomerAdvancedSearch2() {
                           </Typography>
                           <Box
                             sx={{
-                              borderBottom: "0.5px solid #67ADC1",
+                              borderBottom: "1.5px solid #FF9F8F",
                               width: "100%",
                               mt: 0.5,
                               mb: 2,
@@ -1125,13 +1128,13 @@ export default function CustomerAdvancedSearch2() {
                                 fontFamily: "Montserrat",
                                 borderRadius: 3, // Set border radius here
                                 "& fieldset": {
-                                  borderColor: "#8BD3E6",
+                                  borderColor: "#FFB6A5",
                                 },
                                 "&:hover fieldset": {
-                                  borderColor: "#67ADC1",
+                                  borderColor: "#FF9F8F",
                                 },
                                 "&.Mui-focused fieldset": {
-                                  borderColor: "#67ADC1",
+                                  borderColor: "#FF9F8F",
                                 },
                               },
                               "& .MuiInputLabel-root": {
@@ -1641,10 +1644,10 @@ export default function CustomerAdvancedSearch2() {
                                 backgroundColor: "primary",
                                 color: "#000",
                                 "&.Mui-selected": {
-                                  backgroundColor: "#8BD3E6", // Blue for selected
+                                  backgroundColor: "#FFB6A5", // Blue for selected
                                   color: "#fff",
                                   "&:hover": {
-                                    backgroundColor: "#8BD3E6", // Keep blue when hovered if selected
+                                    backgroundColor: "#FFB6A5", // Keep blue when hovered if selected
                                   },
                                 },
                                 "&:hover": {

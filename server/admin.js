@@ -2,33 +2,111 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path");
 const ABCFile = require("./models/ABCFile");
 const Feedback = require("./models/Feedback");
 const User = require("./models/User");
 const DeletedUser = require("./models/DeletedUser");
 const Purchase = require("./models/Purchase");
+const session = require("express-session");
+const MongoDBStore = require("connect-mongodb-session")(session);
+const { MongoClient, ObjectId } = require("mongodb");
+const bodyParser = require("body-parser");
 
 const bcrypt = require("bcryptjs");
 
-const app = express();
-
 // Middleware
+const app = express();
 app.use(express.json());
 
-const allowedOrigins = ["http://localhost:3000", "http://localhost:5173"];
+// ================== ENVIRONMENT CONFIG ==================
+const isProduction = process.env.NODE_ENV === "production";
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  })
-);
+// ================== CORS CONFIGURATION ==================
+const allowedOrigins = [
+  // Frontend URLs
+  process.env.FRONTEND_PROD_URL,
+  process.env.FRONTEND_DEV_URL,
+  
+  // Backend URLs (for internal communication)
+  process.env.BACKEND_PROD_URL,
+  process.env.BACKEND_DEV_URL,
+  
+  // Development URLs
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:10000',
+  
+  // Add future Render URLs (you'll get these after deployment)
+  'https://mozartify.onrender.com',
+  'https://mozartify-frontend.onrender.com',
+  
+].filter(Boolean); // Remove any undefined values
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if the origin is in our allowed list
+    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Set-Cookie'],
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // Handle preflight requests
+
+const disableSessions = process.env.DISABLE_SESSIONS === 'true';
+
+if (!disableSessions) {
+  const store = new MongoDBStore({
+    uri: process.env.DB_URI,
+    collection: "sessions",
+  });
+
+  store.on("error", (error) => {
+    console.log(error);
+  });
+
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      store: store,
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // 1 day
+        sameSite: "lax",
+        httpOnly: true,
+      },
+    })
+  );
+} else {
+  // Use memory store (sessions won't persist)
+  console.log("⚠️ Sessions disabled - using memory store");
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || 'fallback-secret',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // 1 day
+        sameSite: "lax",
+        httpOnly: true,
+      },
+    })
+  );
+}
 
 // MongoDB Connection
 mongoose
@@ -88,8 +166,7 @@ app.post("/users", async (req, res) => {
     }
 
     // Determine the default approval status based on the role
-    const defaultApproval =
-      role === "customer" ? "approved" : "pending";
+    const defaultApproval = role === "customer" ? "approved" : "pending";
 
     // Hash the password before saving the user
     const salt = await bcrypt.genSalt(10); // Generate salt
@@ -122,7 +199,6 @@ app.post("/users", async (req, res) => {
     }
   }
 });
-
 
 app.put("/users/:id", async (req, res) => {
   try {
@@ -291,7 +367,8 @@ app.get("/admin/stats", async (req, res) => {
     const totalPurchases = await Purchase.aggregate([
       { $group: { _id: null, total: { $sum: 1 } } },
     ]);
-    const purchaseCount = totalPurchases.length > 0 ? totalPurchases[0].total : 0;
+    const purchaseCount =
+      totalPurchases.length > 0 ? totalPurchases[0].total : 0;
 
     // Aggregate uploads by year and month
     const uploadsByMonth = await ABCFile.aggregate([
@@ -299,7 +376,7 @@ app.get("/admin/stats", async (req, res) => {
         $group: {
           _id: {
             year: { $year: "$dateUploaded" },
-            month: { $month: "$dateUploaded" }
+            month: { $month: "$dateUploaded" },
           },
           count: { $sum: 1 },
         },
@@ -315,7 +392,7 @@ app.get("/admin/stats", async (req, res) => {
         $group: {
           _id: {
             year: { $year: "$purchase_date" },
-            month: { $month: "$purchase_date" }
+            month: { $month: "$purchase_date" },
           },
           count: { $sum: 1 },
         },
@@ -360,7 +437,6 @@ app.get("/admin/stats", async (req, res) => {
   }
 });
 
-
 app.get("/admin/feedbacks", async (req, res) => {
   try {
     // Fetch all feedbacks with status "pending"
@@ -368,14 +444,17 @@ app.get("/admin/feedbacks", async (req, res) => {
     const totalPendingFeedbacks = pendingFeedbacks.length;
 
     // Respond with both the count and the feedbacks
-    res.status(200).json({ feedbacks: pendingFeedbacks, totalFeedbacks: totalPendingFeedbacks });
+    res
+      .status(200)
+      .json({
+        feedbacks: pendingFeedbacks,
+        totalFeedbacks: totalPendingFeedbacks,
+      });
   } catch (error) {
     console.error("Error fetching feedbacks:", error);
     res.status(500).json({ error: "Failed to fetch feedbacks" });
   }
 });
-
-
 
 // Handle invalid routes
 app.use((req, res) => {
@@ -385,5 +464,8 @@ app.use((req, res) => {
 // Start the server
 const PORT = process.env.PORT || 3003;
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(
+    `Server running in ${isProduction ? "production" : "development"} mode`
+  );
+  console.log(`Server is running on port ${PORT}`);
 });

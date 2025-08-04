@@ -17,6 +17,7 @@ import {
   styled,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { API_BASE_URL} from './config/api.js';
 
 // Custom styled components
 const OptionButton = styled(Button)(({ theme }) => ({
@@ -121,7 +122,7 @@ const FirstTimeLogin2 = () => {
     const fetchPreferencesOptions = async () => {
       try {
         const response = await fetch(
-          "http://localhost:3000/art-preferences-options"
+          `${API_BASE_URL}/art-preferences-options`
         );
         const data = await response.json();
         const sortedArtist = data.artist.filter(Boolean).sort();
@@ -190,7 +191,7 @@ const FirstTimeLogin2 = () => {
 
   const handleSubmit = async () => {
     try {
-      await fetch("http://localhost:3000/art-preferences", {
+      await fetch(`${API_BASE_URL}/art-preferences`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // Add this line

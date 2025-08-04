@@ -37,6 +37,7 @@ import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { API_BASE_URL} from './config/api.js';
 
 // Constants
 const DRAWER_WIDTH = 225;
@@ -129,12 +130,12 @@ export default function CustomerSearch2() {
   const [refineFilters, setRefineFilters] = useState({});
   const [selectedFilters, setSelectedFilters] = useState({});
 
-  // done
+  
   useEffect(() => {
     const fetchRefineLists = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/artwork-refine-search"
+          `${API_BASE_URL}/artwork-refine-search`
         );
         setRefineFilters(response.data);
       } catch (error) {
@@ -198,7 +199,7 @@ export default function CustomerSearch2() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
         setFavorites(response.data.favorites_art);
       } catch (error) {
@@ -213,7 +214,7 @@ export default function CustomerSearch2() {
     const fetchPurchasedArtworks = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/user-artwork-purchases"
+          `${API_BASE_URL}/user-artwork-purchases`
         );
 
         const purchasedArtworkIds = response.data.map(
@@ -232,7 +233,7 @@ export default function CustomerSearch2() {
   const fetchArtworks = async (combinedQueries, selectedCollection) => {
     try {
       const response = await axios.post(
-        "http://localhost:3000/artwork-search",
+        `${API_BASE_URL}/artwork-search`,
         {
           combinedQueries,
           selectedCollection,
@@ -250,7 +251,7 @@ export default function CustomerSearch2() {
     const fetchAddedToCartArtworks = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/user-artwork-cart"
+          `${API_BASE_URL}/user-artwork-cart`
         );
 
         if (response.data.length === 0) {
@@ -281,7 +282,7 @@ export default function CustomerSearch2() {
 
   const addToCart = async (artworkId) => {
     try {
-      await axios.post("http://localhost:3000/add-to-cart-artwork", {
+      await axios.post(`${API_BASE_URL}/add-to-cart-artwork`, {
         artworkId: artworkId,
       });
       setAddedToCartArtworks([...addedToCartArtworks, artworkId]);
@@ -297,9 +298,9 @@ export default function CustomerSearch2() {
 
   const toggleFavorite = async (artworkId) => {
     try {
-      const isFavorite = user?.favorites?.includes(artworkId);
+      const isFavorite = user?.favorites_art?.includes(artworkId);
 
-      const response = await axios.post("http://localhost:3000/set-favorites", {
+      const response = await axios.post(`${API_BASE_URL}/set-favorites`, {
         artworkId,
         action: isFavorite ? "remove" : "add", // Explicitly specify the action
       });

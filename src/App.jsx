@@ -34,13 +34,12 @@ import MusicEntryClerkHomepage from "./MusicEntryClerkHomepage";
 import MusicEntryClerkUpload from "./MusicEntryClerkUpload";
 import MusicEntryClerkPreview from "./MusicEntryClerkPreview";
 import MusicEntryClerkCatalog from "./MusicEntryClerkCatalog";
-import ScrollControlledVideo from "./ScrollControlledVideo";
 
 import MusicEntryClerkEdit from "./MusicEntryClerkEdit";
 import MusicEntryClerkProfile from "./MusicEntryClerkProfile";
 import FirstTimeLogin from './FirstTimeLogin';
 import FirstTimeLogin2 from './FirstTimeLogin2';
-import TestSession from "./TestSession";
+
 import MusicEntryClerkView from './MusicEntryClerkView';
 import AdminDashboard from './AdminDashboard';
 import AdminInbox from './AdminInbox';
@@ -50,7 +49,6 @@ import AdminProfile from './AdminProfile';
 import AdminManageUsers from './AdminManageUsers';
 import AdminEdit from "./AdminEdit";
 import AdminCatalog from "./AdminCatalog";
-import TestSearch from "./testSearch";
 import FileDownloaderPage from './FileDownloaderPage';
 import Success from "./Success";
 import Success2 from "./Success2";
@@ -71,6 +69,9 @@ import ArtsFieldManager from "./ArtsFieldManager";
 import { UnreadProvider } from "./UnreadContext";
 // import CompositionPage from './CompositionPage';
 import MusicFieldManager from "./MusicFieldManager";
+
+console.log('Vite env:', import.meta.env);
+console.log('API URL:', import.meta.env.VITE_API_URL);
 
 
 
@@ -127,7 +128,6 @@ function App() {
         <Route path="/clerk-edit" element={<MusicEntryClerkEdit />} />
         <Route path="/clerk-profile" element={<MusicEntryClerkProfile />} />
         <Route path="/clerk-music-score-view/:scoreId" element={<MusicEntryClerkView />} />
-        <Route path="/test-session" element={<TestSession />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin-inbox" element={<AdminInbox />} />
         <Route path="/admin-manage-scores" element={<AdminManageScore />} />
@@ -136,12 +136,9 @@ function App() {
         <Route path="/admin-manage-users" element={<AdminManageUsers />} />
         <Route path="/admin-edit" element={<AdminEdit />} />
         <Route path="/admin-catalog" element={<AdminCatalog />} />
-        <Route path="/scroll-controlled-video" element={<ScrollControlledVideo />} />
         <Route path="/success" element={<Success />} />
         <Route path="/success-2" element={<Success2 />} />
         <Route path="/cancel" element={<Cancel />} />
-        <Route path="/test-session" element={<TestSession />} />
-        <Route path="/test-search" element={<TestSearch />} />
         <Route path="/clerk-search" element={<MusicEntryClerkSearch />} />
         <Route path="/clerk-search/clerk-advanced-search" element={<MusicEntryClerkAdvSearch />} />
         <Route path="/verify-email" element={<EmailVerification />} />

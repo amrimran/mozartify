@@ -18,7 +18,6 @@ import {
   Paper,
   ThemeProvider,
   createTheme,
-  Skeleton,
   useMediaQuery,
   AppBar,
   Toolbar,
@@ -33,6 +32,7 @@ import { createGlobalStyle } from "styled-components";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
 
 axios.defaults.withCredentials = true;
+import { API_BASE_URL} from './config/api.js';
 
 const DRAWER_WIDTH = 230;
 
@@ -218,7 +218,7 @@ export default function CustomerMyCart2() {
       setLoading(true);
       setFadeIn(false);
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setTimeout(() => {
           setUser(response.data);
           setLoading(false);
@@ -238,7 +238,7 @@ export default function CustomerMyCart2() {
   const fetchCartItemIDs = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:3000/user-artwork-cart"
+        `${API_BASE_URL}/user-artwork-cart`
       );
       if (response.data.length === 0) {
         setCartItemIDs([]);
@@ -260,7 +260,7 @@ export default function CustomerMyCart2() {
     try {
       if (cartItemIDs.length > 0) {
         const detailsPromises = cartItemIDs.map((artworkId) =>
-          axios.get(`http://localhost:3000/artwork/${artworkId}`)
+          axios.get(`${API_BASE_URL}/artwork/${artworkId}`)
         );
         const detailsResponses = await Promise.all(detailsPromises);
         const cartArtworks = detailsResponses.map((response) => response.data);
@@ -294,7 +294,7 @@ export default function CustomerMyCart2() {
   const handleRemoveItem = async (id) => {
     try {
       await axios.delete(
-        `http://localhost:3000/remove-artwork-from-cart/${id}`
+        `${API_BASE_URL}/remove-artwork-from-cart/${id}`
       );
       await fetchCartItemIDs();
     } catch (error) {
@@ -382,7 +382,7 @@ export default function CustomerMyCart2() {
     }
 
     const response = await axios.post(
-      "http://localhost:3000/create-checkout-session-artwork",
+      `${API_BASE_URL}/create-checkout-session-artwork`,
       {
         cartItems,
       }

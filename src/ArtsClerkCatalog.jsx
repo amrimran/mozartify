@@ -36,6 +36,8 @@ import { Menu as MenuIcon } from "@mui/icons-material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import DynamicField from "./DynamicField"; 
 
+import { API_BASE_URL, API_BASE_URL_1} from './config/api.js';
+
 const DRAWER_WIDTH = 225;
 
 const theme = createTheme({
@@ -239,7 +241,7 @@ export default function ArtsClerkCatalog() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -256,7 +258,7 @@ export default function ArtsClerkCatalog() {
       const fetchCatalogData = async () => {
         try {
           const response = await axios.get(
-            `http://localhost:3001/catalogArts/${artworkId}`
+            `${API_BASE_URL_1}/catalogArts/${artworkId}`
           );
           if (response.data) {
             setCatalogData(response.data);
@@ -287,7 +289,7 @@ export default function ArtsClerkCatalog() {
         setLoading(true);
         
         // Fetch tabs
-        const tabsResponse = await axios.get("http://localhost:3001/arts-tabs");
+        const tabsResponse = await axios.get(`${API_BASE_URL_1}/arts-tabs`);
         const fetchedTabs = tabsResponse.data;
         
         // Sort tabs by display order
@@ -295,7 +297,7 @@ export default function ArtsClerkCatalog() {
         setTabsData(fetchedTabs);
         
         // Fetch fields
-        const fieldsResponse = await axios.get("http://localhost:3001/dynamic-fields");
+        const fieldsResponse = await axios.get(`${API_BASE_URL_1}/dynamic-fields`);
         const fetchedFields = fieldsResponse.data;
         setDynamicFields(fetchedFields);
 
@@ -409,7 +411,7 @@ export default function ArtsClerkCatalog() {
         _id: artworkId, // Use the ID from the URL
       };
 
-      const response = await fetch("http://localhost:3001/catalogArts", {
+      const response = await fetch(`${API_BASE_URL_1}/catalogArts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

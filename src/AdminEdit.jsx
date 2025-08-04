@@ -26,6 +26,8 @@ import { createGlobalStyle } from "styled-components";
 import AdminSidebar from "./AdminSidebar";
 import ABCJS from "abcjs";
 import axios from "axios";
+import { API_BASE_URL, API_BASE_URL_3} from './config/api.js';
+
 
 const DRAWER_WIDTH = 225;
 
@@ -203,7 +205,7 @@ const AdminEdit = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -220,7 +222,7 @@ const AdminEdit = () => {
       const fetchABCFileContent = async () => {
         try {
           const response = await fetch(
-            `http://localhost:3001/abc-file/${fileName}`
+            `${API_BASE_URL_1}/abc-file/${fileName}`
           );
           if (!response.ok) {
             throw new Error("Network response was not ok");
@@ -379,7 +381,7 @@ const AdminEdit = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/abc-file/${fileName}/content`,
+        `${API_BASE_URL_1}/abc-file/${fileName}/content`,
         {
           method: "PUT",
           headers: {

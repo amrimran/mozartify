@@ -1,14 +1,27 @@
 {
-  "name": "server",
+  "name": "mozartify-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Mozartify MERN Stack Backend API",
+  "main": "mainserver.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js"
+    "start": "node mainserver.js",
+    "dev": "node mainserver.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+    "keywords": [
+    "nodejs",
+    "express",
+    "mongodb",
+    "react",
+    "mern",
+    "api"
+  ],
+  "author": "mirdansyar",
+  "license": "MIT",
   "dependencies": {
     "@stripe/react-stripe-js": "^2.8.0",
     "@stripe/stripe-js": "^4.3.0",
@@ -31,11 +44,12 @@
     "nodemailer": "^6.9.13",
     "python-shell": "^5.0.0",
     "stripe": "^16.8.0",
-    "xml2abc": "https://wim.vree.org/js/xml2abc.tgz"
+    "body-parser": "^1.20.2",
+    "xml2abc": "^1.68.3",
+    "http-proxy-middleware": "^2.0.6"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "nodemon": "^3.1.4"
-  },
-  "description": ""
+  }
 }

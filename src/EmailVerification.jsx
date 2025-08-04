@@ -11,6 +11,7 @@ import {
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import verifiedBackground from "./assets/verified.jpg";
 import frustBackground from "./assets/frust.jpg";
+import { API_BASE_URL} from './config/api.js';
 
 const EmailVerification = () => {
   const [searchParams] = useSearchParams();
@@ -47,7 +48,7 @@ const EmailVerification = () => {
         }
 
         const response = await fetch(
-          `http://localhost:3000/verify-email?token=${token}`,
+          `${API_BASE_URL}/verify-email?token=${token}`,
           {
             method: "GET",
             headers: {

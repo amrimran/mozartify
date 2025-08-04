@@ -35,6 +35,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import AdminSidebar from "./AdminSidebar";
+import { API_BASE_URL} from './config/api.js';
 
 axios.defaults.withCredentials = true;
 
@@ -194,7 +195,7 @@ export default function AdminProfile() {
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setCurrentUser(response.data);
         setUsername(response.data.username);
       } catch (error) {
@@ -220,7 +221,7 @@ export default function AdminProfile() {
 
   const handleUpdateUsername = async () => {
     try {
-      await axios.put("http://localhost:3000/user/update-username", {
+      await axios.put(`${API_BASE_URL}/user/update-username`, {
         username,
       });
       setCurrentUser((prev) => ({ ...prev, username }));
@@ -252,7 +253,7 @@ export default function AdminProfile() {
     }
 
     try {
-      await axios.put("http://localhost:3000/user/change-password", {
+      await axios.put(`${API_BASE_URL}/user/change-password`, {
         currentPassword,
         newPassword,
       });
@@ -288,7 +289,7 @@ export default function AdminProfile() {
       await uploadBytes(storageRef, profilePictureFile);
       const profilePictureUrl = await getDownloadURL(storageRef);
 
-      await axios.put("http://localhost:3000/user/update-profile-picture", {
+      await axios.put(`${API_BASE_URL}/user/update-profile-picture`, {
         profile_picture_url: profilePictureUrl,
       });
 
@@ -315,7 +316,7 @@ export default function AdminProfile() {
 
   const handleRemoveProfilePicture = async () => {
     try {
-      await axios.put("http://localhost:3000/user/update-profile-picture", {
+      await axios.put(`${API_BASE_URL}/user/update-profile-picture`, {
         profile_picture_url: null,
       });
 
@@ -345,7 +346,7 @@ export default function AdminProfile() {
       cancelText: "CANCEL",
       confirmAction: async () => {
         try {
-          await axios.delete("http://localhost:3000/user/delete");
+          await axios.delete(`${API_BASE_URL}/user/delete`);
           showDialog({
             title: "Success",
             content: "Account deleted successfully.",

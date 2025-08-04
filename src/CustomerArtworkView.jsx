@@ -25,6 +25,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { createGlobalStyle } from "styled-components";
 import CustomerSidebar2 from "./CustomerSidebar2";
 import Rating from "@mui/material/Rating";
+import { API_BASE_URL} from './config/api.js';
 
 const DRAWER_WIDTH = 225;
 
@@ -191,7 +192,7 @@ export default function CustomerArtworkView() {
   const [artwork, setArtwork] = useState(null);
   const [error, setError] = useState(null);
   const [favorites, setFavorites] = useState([]);
-  const [purchaseExists, setPurchaseExists] = useState(false);
+  const [purchaseExists, setPurchaseExists] = useState(true);
 
   const [isRated, setIsRated] = useState(false);
   const [ratingGiven, setRatingGiven] = useState(null);
@@ -327,7 +328,7 @@ export default function CustomerArtworkView() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
         setFavorites(response.data.favorites_art);
       } catch (error) {
@@ -343,7 +344,7 @@ export default function CustomerArtworkView() {
     const fetchArtwork = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3000/fetchArts/${artworkId}`
+          `${API_BASE_URL}/fetchArts/${artworkId}`
         );
         if (response.data) {
           const processedArtwork = {
@@ -368,7 +369,7 @@ export default function CustomerArtworkView() {
     const checkPurchase = async () => {
       try {
         const response = await axios.post(
-          "http://localhost:3000/check-artwork-purchase",
+          `${API_BASE_URL}/check-artwork-purchase`,
           {
             artwork_id: artworkId,
             user_id: user?._id,
@@ -408,7 +409,7 @@ export default function CustomerArtworkView() {
     const fetchAddedToCartScores = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/user-artwork-cart"
+          `${API_BASE_URL}/user-artwork-cart`
         );
 
         if (response.data.length === 0) {
@@ -436,7 +437,7 @@ export default function CustomerArtworkView() {
 
   const addToCart = async (artworkId) => {
     try {
-      await axios.post("http://localhost:3000/add-to-cart-artwork", {
+      await axios.post(`${API_BASE_URL}/add-to-cart-artwork`, {
         artworkId: artworkId,
       });
       navigate("/customer-mycart-2");
@@ -474,7 +475,7 @@ export default function CustomerArtworkView() {
 
       // Send the request to the server
       const response = await axios.post(
-        "http://localhost:3000/set-favorites-artwork",
+        `${API_BASE_URL}/set-favorites-artwork`,
         {
           artworkId,
           action: isFavorite ? "remove" : "add", // Explicitly specify the action
@@ -542,7 +543,7 @@ export default function CustomerArtworkView() {
     if (ratingGiven > 0) {
       try {
    
-        await axios.post("http://localhost:3000/submit-artwork-rating", {
+        await axios.post(`${API_BASE_URL}/submit-artwork-rating`, {
           rating: ratingGiven,
           artworkId: artworkId,
           userId: user?._id,

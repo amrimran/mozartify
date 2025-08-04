@@ -23,6 +23,7 @@ import {
 } from "@mui/icons-material";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 import { useUnread } from "./UnreadContext.jsx";
+import { API_BASE_URL, API_BASE_URL_2} from './config/api.js';
 
 axios.defaults.withCredentials = true;
 
@@ -34,7 +35,7 @@ const CustomerSidebar2 = ({ active }) => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -50,7 +51,7 @@ const CustomerSidebar2 = ({ active }) => {
 
       try {
         const response = await axios.get(
-          `http://localhost:3002/api/feedback?userId=${user._id}`
+          `${API_BASE_URL_2}/api/feedback?userId=${user._id}`
         );
 
         const unreadMessages = response.data.filter(
@@ -72,7 +73,7 @@ const CustomerSidebar2 = ({ active }) => {
     if (key === "logout") {
       try {
         // Call the backend logout endpoint
-        await axios.get("http://localhost:3000/logout", {
+        await axios.get(`${API_BASE_URL}/logout`, {
           withCredentials: true,
         });
 

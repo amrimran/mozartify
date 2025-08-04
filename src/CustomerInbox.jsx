@@ -31,7 +31,6 @@ import {
   AppBar,
   Toolbar,
   Drawer,
-  useTheme,
   createTheme,
   ThemeProvider,
   Badge,
@@ -48,6 +47,7 @@ import { createGlobalStyle } from "styled-components";
 import { useUnread } from "./UnreadContext.jsx";
 
 axios.defaults.withCredentials = true;
+import { API_BASE_URL, API_BASE_URL_2} from './config/api.js';
 
 const DRAWER_WIDTH = 230;
 
@@ -467,7 +467,7 @@ const CustomerInbox = () => {
       };
 
       const response = await axios.post(
-        "http://localhost:3002/api/feedback",
+        `${API_BASE_URL_2}/api/feedback`,
         feedbackData
       );
 
@@ -489,7 +489,7 @@ const CustomerInbox = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:3002/api/feedback/delete/${id}`);
+      await axios.delete(`${API_BASE_URL_2}/api/feedback/delete/${id}`);
       setFeedbackData((prev) => prev.filter((feedback) => feedback._id !== id));
       showNotification("Feedback deleted successfully");
     } catch (error) {
@@ -502,7 +502,7 @@ const CustomerInbox = () => {
     try {
       // Mark the feedback as read in the database
       await axios.put(
-        `http://localhost:3002/api/feedback/${feedback._id}/mark-read-customer`
+        `${API_BASE_URL_2}/api/feedback/${feedback._id}/mark-read-customer`
       );
       setUnreadCount(unreadCount - 1);
 
@@ -568,7 +568,7 @@ const CustomerInbox = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -585,7 +585,7 @@ const CustomerInbox = () => {
 
     try {
       const response = await axios.get(
-        `http://localhost:3002/api/feedback?userId=${user._id}`
+        `${API_BASE_URL_2}/api/feedback?userId=${user._id}`
       );
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -610,7 +610,7 @@ const CustomerInbox = () => {
 
     try {
       const response = await axios.post(
-        `http://localhost:3002/api/feedback/reply/${selectedFeedback._id}`,
+        `${API_BASE_URL_2}/api/feedback/reply/${selectedFeedback._id}`,
         {
           message: newReply,
           sender: "customer",
@@ -808,68 +808,64 @@ const CustomerInbox = () => {
                       },
                 }}
               >
-                {isLoading ? (
-                  <TableHeadSkeleton />
-                ) : (
-                  <TableHead sx={{ bgcolor: "#8BD3E6" }}>
-                    <TableRow>
-                      {[
-                        { label: "Title", key: "title", width: "35%" },
-                        { label: "Last Updated", key: "date", width: "20%" },
-                        { label: "Status", key: "status", width: "20%" },
-                        { label: "Actions", key: null, width: "25%" },
-                      ].map((header, index) => (
-                        <TableCell
-                          key={index}
-                          onClick={() => header.key && handleSort(header.key)}
+                <TableHead sx={{ bgcolor: "#8BD3E6" }}>
+                  <TableRow>
+                    {[
+                      { label: "Title", key: "title", width: "35%" },
+                      { label: "Last Updated", key: "date", width: "20%" },
+                      { label: "Status", key: "status", width: "20%" },
+                      { label: "Actions", key: null, width: "25%" },
+                    ].map((header, index) => (
+                      <TableCell
+                        key={index}
+                        onClick={() => header.key && handleSort(header.key)}
+                        sx={{
+                          color: "white",
+                          fontFamily: "'Montserrat', sans-serif",
+                          textTransform: "uppercase",
+                          fontWeight: "bold",
+                          fontSize: "16px",
+                          padding: "20px 16px",
+                          borderBottom: "1px solid #8BD3E6",
+                          cursor: header.key ? "pointer" : "default",
+                          width: header.width,
+                        }}
+                      >
+                        <Box
                           sx={{
-                            color: "white",
-                            fontFamily: "'Montserrat', sans-serif",
-                            textTransform: "uppercase",
-                            fontWeight: "bold",
-                            fontSize: "16px",
-                            padding: "20px 16px",
-                            borderBottom: "1px solid #8BD3E6",
-                            cursor: header.key ? "pointer" : "default",
-                            width: header.width,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
                           }}
                         >
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                            }}
-                          >
-                            {header.label}
-                            {header.key && (
-                              <Typography
-                                component="span"
-                                sx={{
-                                  fontSize: "12px",
-                                  color:
-                                    sortConfig.key === header.key
-                                      ? "white"
-                                      : "rgba(255, 255, 255, 0.7)",
-                                  fontWeight:
-                                    sortConfig.key === header.key
-                                      ? "bold"
-                                      : "normal",
-                                }}
-                              >
-                                {sortConfig.key === header.key
-                                  ? sortConfig.direction === "asc"
-                                    ? "▲"
-                                    : "▼"
-                                  : "▲ ▼"}
-                              </Typography>
-                            )}
-                          </Box>
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                )}
+                          {header.label}
+                          {header.key && (
+                            <Typography
+                              component="span"
+                              sx={{
+                                fontSize: "12px",
+                                color:
+                                  sortConfig.key === header.key
+                                    ? "white"
+                                    : "rgba(255, 255, 255, 0.7)",
+                                fontWeight:
+                                  sortConfig.key === header.key
+                                    ? "bold"
+                                    : "normal",
+                              }}
+                            >
+                              {sortConfig.key === header.key
+                                ? sortConfig.direction === "asc"
+                                  ? "▲"
+                                  : "▼"
+                                : "▲ ▼"}
+                            </Typography>
+                          )}
+                        </Box>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
 
                 <TableBody>
                   {isLoading

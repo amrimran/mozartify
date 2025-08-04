@@ -17,6 +17,7 @@ import {
   styled,
 } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { API_BASE_URL} from './config/api.js';
 
 // Custom styled components
 const OptionButton = styled(Button)(({ theme }) => ({
@@ -122,7 +123,7 @@ const FirstTimeLogin = () => {
   useEffect(() => {
     const fetchPreferencesOptions = async () => {
       try {
-        const response = await fetch('http://localhost:3000/preferences-options');
+        const response = await fetch(`${API_BASE_URL}/preferences-options`);
         const data = await response.json();
         setOptions({
           composers: data.composers.filter(Boolean),
@@ -192,7 +193,7 @@ const FirstTimeLogin = () => {
 
   const handleSubmit = async () => {
     try {
-      await fetch('http://localhost:3000/preferences', {
+      await fetch(`${API_BASE_URL}/preferences`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',  // Add this line

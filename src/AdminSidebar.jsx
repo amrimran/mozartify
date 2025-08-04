@@ -17,8 +17,9 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 import SearchIcon from "@mui/icons-material/Search";
-
 import { useUnread } from "./UnreadContext.jsx";
+
+import { API_BASE_URL, API_BASE_URL_2} from './config/api.js';
 axios.defaults.withCredentials = true;
 
 const AdminSidebar = ({ active }) => {
@@ -29,7 +30,7 @@ const AdminSidebar = ({ active }) => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -45,7 +46,7 @@ const AdminSidebar = ({ active }) => {
 
       try {
         const response = await axios.get(
-          `http://localhost:3002/api/feedback/all`
+          `${API_BASE_URL_2}/api/feedback/all`
         );
 
         const unreadMessages = response.data.filter(
@@ -67,7 +68,7 @@ const AdminSidebar = ({ active }) => {
     if (key === "logout") {
       try {
         // Call the backend logout endpoint
-        await axios.get("http://localhost:3000/logout", {
+        await axios.get(`${API_BASE_URL}/logout`, {
           withCredentials: true,
         });
 

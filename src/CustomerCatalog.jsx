@@ -41,6 +41,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
 import { Menu as MenuIcon } from "@mui/icons-material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { API_BASE_URL, API_BASE_URL_1} from './config/api.js';
 
 const DRAWER_WIDTH = 225;
 
@@ -326,7 +327,7 @@ export default function CustomerCatalog() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -617,7 +618,7 @@ export default function CustomerCatalog() {
     }
   
     try {
-      const response = await fetch("http://localhost:3001/catalog/new", {
+      const response = await fetch(`${API_BASE_URL_1}/catalog/new`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

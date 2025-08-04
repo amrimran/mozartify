@@ -38,6 +38,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import StopIcon from "@mui/icons-material/Stop";
 import StarIcon from "@mui/icons-material/Star";
 import Rating from "@mui/material/Rating";
+import { API_BASE_URL, API_BASE_URL_1} from './config/api.js';
 
 export default function CustomerMusicScoreView() {
   const { id } = useParams();
@@ -246,7 +247,7 @@ export default function CustomerMusicScoreView() {
     if (ratingGiven > 0) {
       try {
         // Send the rating to the backend
-        await axios.post("http://localhost:3000/submit-rating", {
+        await axios.post(`${API_BASE_URL}/submit-rating`, {
           rating: ratingGiven,
           scoreId: id, // Assuming you have `id` for the music score
           userId: user?._id, // Assuming you have `user._id` available
@@ -322,7 +323,7 @@ export default function CustomerMusicScoreView() {
   useEffect(() => {
     const fetchUserSession = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching the user session:", error);
@@ -332,7 +333,7 @@ export default function CustomerMusicScoreView() {
     const fetchAbcFileAndMetadata = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3001/abc-file/${id}`
+          `${API_BASE_URL_1}/abc-file/${id}`
         );
         const abcContent = response.data.content;
 
@@ -362,7 +363,7 @@ export default function CustomerMusicScoreView() {
   const checkPurchase = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:3000/check-purchase",
+        `${API_BASE_URL}/check-purchase`,
         {
           score_id: id,
           user_id: user?._id,
@@ -609,7 +610,7 @@ export default function CustomerMusicScoreView() {
   useEffect(() => {
     const fetchAddedToCartScores = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/user-cart");
+        const response = await axios.get(`${API_BASE_URL}/user-cart`);
 
         if (response.data.length === 0) {
           setAddedToCartScores([]);
@@ -630,7 +631,7 @@ export default function CustomerMusicScoreView() {
 
   const addToCart = async (id) => {
     try {
-      await axios.post("http://localhost:3000/add-to-cart", {
+      await axios.post(`${API_BASE_URL}/add-to-cart`, {
         musicScoreId: id,
       });
       setAddedToCartScores([...addedToCartScores, id]);
@@ -660,7 +661,7 @@ export default function CustomerMusicScoreView() {
       });
 
       // Send the request to the server
-      const response = await axios.post("http://localhost:3000/set-favorites", {
+      const response = await axios.post(`${API_BASE_URL}/set-favorites`, {
         musicScoreId,
         action: isFavorite ? "remove" : "add", // Explicitly specify the action
       });

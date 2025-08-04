@@ -30,6 +30,7 @@ import { createGlobalStyle } from "styled-components";
 import CustomerSidebar2 from "./CustomerSidebar2";
 
 axios.defaults.withCredentials = true;
+import { API_BASE_URL} from './config/api.js';
 
 export default function CustomerLibrary2() {
   const theme = useTheme();
@@ -46,8 +47,12 @@ export default function CustomerLibrary2() {
   const [favorites, setFavorites] = useState([]);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [collection, setCollection] = useState("");
-  const [artist, setArtist] = useState("");
+
+  //for dynamic filter options
+  const [dynamicFilters, setDynamicFilters] = useState({});
+  const [selectedFilters, setSelectedFilters] = useState({});
+  const [isFiltered, setIsFiltered] = useState(false);
+
 
   const [loading, setLoading] = useState(true);
 
@@ -74,7 +79,7 @@ export default function CustomerLibrary2() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setUser(response.data);
         setFavorites(response.data.favorites_art);
       } catch (error) {
@@ -86,10 +91,25 @@ export default function CustomerLibrary2() {
   }, [favorites]);
 
   useEffect(() => {
+    const fetchDynamicFilterOptions = async () => {
+      try {
+        const response = await axios.get(
+          `${API_BASE_URL}/artwork-refine-search`
+        );
+        setDynamicFilters(response.data);
+      } catch (error) {
+        console.error("Error fetching refine search lists:", error);
+      }
+    };
+
+    fetchDynamicFilterOptions();
+  }, []);
+
+  useEffect(() => {
     const fetchOwnedArtworks = async () => {
       try {
         const purchaseResponse = await axios.get(
-          "http://localhost:3000/user-artwork-purchases"
+          `${API_BASE_URL}/user-artwork-purchases`
         );
 
         const purchasedScoreIds = purchaseResponse.data.map(
@@ -97,12 +117,9 @@ export default function CustomerLibrary2() {
         );
 
         if (purchasedScoreIds.length > 0) {
-          const response = await axios.get(
-            "http://localhost:3000/artworks",
-            {
-              params: { artworkIds: purchasedScoreIds },
-            }
-          );
+          const response = await axios.get(`${API_BASE_URL}/artworks`, {
+            params: { artworkIds: purchasedScoreIds },
+          });
 
           setUnfilteredArtworks(response.data);
           setCurrentArtworks(response.data);
@@ -119,21 +136,39 @@ export default function CustomerLibrary2() {
 
   useEffect(() => {
     if (searchQuery) {
-      const searchResult = unfilteredArtworks.filter((artwork) =>
-        [
-          artwork.title,
-          artwork.collection,
-          artwork.artist,
-        ].some((field) =>
-          field.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      );
+      const loweredQuery = searchQuery.toLowerCase();
+  
+      const searchResult = unfilteredArtworks.filter((artwork) => {
+        return Object.entries(artwork).some(([key, value]) => {
+          // Skip unwanted fields
+          const exclude = [
+            "_id",
+            "__v",
+            "downloads",
+            "deleted",
+            "imageUrl",
+            "price",
+            "dateUploaded",
+            "createdAt",
+            "updatedAt"
+          ];
+  
+          // Only check string fields not in the excluded list
+          return (
+            !exclude.includes(key) &&
+            typeof value === "string" &&
+            value.toLowerCase().includes(loweredQuery)
+          );
+        });
+      });
+  
       setSearchedArtworks(searchResult);
       setCurrentArtworks(searchResult);
     } else {
       setCurrentArtworks(unfilteredArtworks);
     }
-  }, [searchQuery]);
+  }, [searchQuery, unfilteredArtworks]);
+  
 
   useEffect(() => {
     // Simulate loading delay
@@ -144,20 +179,10 @@ export default function CustomerLibrary2() {
     return () => clearTimeout(timer);
   }, []);
 
-  const applyFilters = (artworks) => {
-    return artworks.filter((artwork) => {
-      return (
-        (!collection || artwork.collection === collection) &&
-        (!artist ||
-          artwork.artist.toLowerCase().includes(artist.toLowerCase()))
-      );
-    });
-  };
-
   const clearFilters = () => {
-    setCollection("");
-    setArtist("");
-    setCurrentArtworks(unfilteredArtworks);
+    setSelectedFilters({});
+    setIsFiltered(false);
+    setSearchedArtworks(unfilteredSearchedArtworks);
   };
 
   const handleSnackbarClose = (event, reason) => {
@@ -173,20 +198,29 @@ export default function CustomerLibrary2() {
   };
 
   const handleFilterRequest = async () => {
-    const hasFilter = collection || artist;
+    const isAnyFilterSelected = Object.values(selectedFilters).some(
+      (arr) => arr.length > 0
+    );
 
-    if (hasFilter) {
-      try {
-        if (!searchQuery) {
-          const filteredOnlySearchResults = applyFilters(unfilteredArtworks);
-          setCurrentArtworks(filteredOnlySearchResults);
-        } else {
-          const filteredSearchedSearchResults = applyFilters(searchedArtworks);
-          setCurrentArtworks(filteredSearchedSearchResults);
-        }
-      } catch (error) {
-        console.error("Error fetching filtered artworks:", error);
-      }
+    if (!isAnyFilterSelected) {
+      setIsFiltered(false);
+      setSearchedArtworks(currentArtworks);
+      return;
+    }
+
+    setIsFiltered(true);
+
+    try {
+      // Filter client-side
+      const filtered = currentArtworks.filter((item) =>
+        Object.entries(selectedFilters).every(([field, values]) => {
+          if (!values.length) return true;
+          return values.includes(item[field]);
+        })
+      );
+      setCurrentArtworks(filtered);
+    } catch (error) {
+      console.error("Error applying filters:", error);
     }
   };
 
@@ -206,10 +240,13 @@ export default function CustomerLibrary2() {
       });
 
       // Send the request to the server
-      const response = await axios.post("http://localhost:3000/set-favorites-artwork", {
-        artworkId,
-        action: isFavorite ? "remove" : "add", // Explicitly specify the action
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/set-favorites-artwork`,
+        {
+          artworkId,
+          action: isFavorite ? "remove" : "add", // Explicitly specify the action
+        }
+      );
 
       // Update the favorites with the server response (ensures consistency)
       setFavorites(response.data.favorites_art);
@@ -537,80 +574,50 @@ export default function CustomerLibrary2() {
                     Filter Options
                   </Typography>
 
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel sx={{ fontFamily: "Montserrat" }}>
-                      Collection
-                    </InputLabel>
-                    <Select
-                      label="Collection"
-                      value={collection}
-                      onChange={(e) => setCollection(e.target.value)}
-                      sx={{
-                        fontFamily: "Montserrat",
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#FFB6A5", // Green outline on hover
-                        },
-                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#FFB6A5", // Green outline when focused
-                        },
-                      }}
-                    >
-                      {[
-                        "Lecturers",
-                        "Students",
-                        "Freelancer",
-                      ].map((item) => (
-                        <MenuItem
-                          key={item}
-                          value={item}
+                  {Object.entries(dynamicFilters).map(
+                    ([filterName, values]) => (
+                      <FormControl key={filterName} fullWidth sx={{ mb: 2 }}>
+                        <InputLabel
                           sx={{
                             fontFamily: "Montserrat",
+                            textTransform: "capitalize",
                           }}
                         >
-                          {item}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel sx={{ fontFamily: "Montserrat" }}>
-                      Artist
-                    </InputLabel>
-                    <Select
-                      label="Artist"
-                      value={artist}
-                      onChange={(e) => setArtist(e.target.value)}
-                      sx={{
-                        fontFamily: "Montserrat",
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#FFB6A5", // Green outline on hover
-                        },
-                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#FFB6A5", // Green outline when focused
-                        },
-                      }}
-                    >
-                      {[
-                         "Claude Monet",
-                         "Salvador Dali",
-                         "Da Vinci",
-                         "Michelangelo",
-                         "Raphael",
-                         "Rembrandt",
-                         "Van Gogh",
-                         "Pablo Picasso",
-                      ].map((artistName) => (
-                        <MenuItem
-                          key={artistName}
-                          value={artistName}
-                          sx={{ fontFamily: "Montserrat" }}
+                          {filterName}
+                        </InputLabel>
+                        <Select
+                          multiple
+                          value={selectedFilters[filterName] || []}
+                          onChange={(e) =>
+                            setSelectedFilters((prev) => ({
+                              ...prev,
+                              [filterName]: e.target.value,
+                            }))
+                          }
+                          renderValue={(selected) => selected.join(", ")}
+                          sx={{
+                            fontFamily: "Montserrat",
+                            "&:hover .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "#FFB6A5",
+                            },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "#FFB6A5",
+                            },
+                          }}
                         >
-                          {artistName}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                          {values.map((value) => (
+                            <MenuItem
+                              key={value}
+                              value={value}
+                              sx={{ fontFamily: "Montserrat" }}
+                            >
+                              {value}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    )
+                  )}
 
                   <Button
                     variant="outlined"

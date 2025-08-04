@@ -18,7 +18,6 @@ import {
   Paper,
   ThemeProvider,
   createTheme,
-  Skeleton,
   useMediaQuery,
   AppBar,
   Toolbar,
@@ -33,6 +32,7 @@ import { createGlobalStyle } from "styled-components";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
 
 axios.defaults.withCredentials = true;
+import { API_BASE_URL} from './config/api.js';
 
 const DRAWER_WIDTH = 230;
 
@@ -218,7 +218,7 @@ export default function CustomerMyCart() {
       setLoading(true);
       setFadeIn(false);
       try {
-        const response = await axios.get("http://localhost:3000/current-user");
+        const response = await axios.get(`${API_BASE_URL}/current-user`);
         setTimeout(() => {
           setUser(response.data);
           setLoading(false);
@@ -238,7 +238,7 @@ export default function CustomerMyCart() {
 
   const fetchCartItemIDs = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/user-cart");
+      const response = await axios.get(`${API_BASE_URL}/user-cart`);
       if (response.data.length === 0) {
         setCartItemIDs([]);
         return;
@@ -257,9 +257,10 @@ export default function CustomerMyCart() {
 
   const fetchCartItems = async () => {
     try {
+      console.log("Cart Items: " + cartItemIDs.length);
       if (cartItemIDs.length > 0) {
         const detailsPromises = cartItemIDs.map((scoreId) =>
-          axios.get(`http://localhost:3000/music-score/${scoreId}`)
+          axios.get(`${API_BASE_URL}/music-score/${scoreId}`)
         );
         const detailsResponses = await Promise.all(detailsPromises);
         const cartScores = detailsResponses.map((response) => response.data);
@@ -284,7 +285,7 @@ export default function CustomerMyCart() {
 
   const handleRemoveItem = async (id) => {
     try {
-      await axios.delete(`http://localhost:3000/remove-item-from-cart/${id}`);
+      await axios.delete(`${API_BASE_URL}/remove-item-from-cart/${id}`);
       await fetchCartItemIDs();
     } catch (error) {
       console.error("Error removing item from cart:", error);
@@ -371,7 +372,7 @@ export default function CustomerMyCart() {
     }
 
     const response = await axios.post(
-      "http://localhost:3000/create-checkout-session",
+      `${API_BASE_URL}/create-checkout-session`,
       {
         cartItems,
       }
