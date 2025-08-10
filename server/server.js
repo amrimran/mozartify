@@ -29,49 +29,47 @@ const allowedOrigins = [
   // Frontend URLs
   process.env.FRONTEND_PROD_URL,
   process.env.FRONTEND_DEV_URL,
-  
+
   // Backend URLs (for internal communication)
   process.env.BACKEND_PROD_URL,
   process.env.BACKEND_DEV_URL,
-  
+
   // Development URLs
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:10000',
-  
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:10000",
+
   // Add future Render URLs (you'll get these after deployment)
-  'https://mozartify-backend.onrender.com',
-  'https://mozartify-frontend.onrender.com',
-  
+  "https://mozartify-backend.onrender.com",
+  "https://mozartify-frontend.onrender.com",
 ].filter(Boolean); // Remove any undefined values
 
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps, Postman, curl requests)
     if (!origin) return callback(null, true);
-    
+
     // Check if the origin is in our allowed list
-    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+    if (allowedOrigins.some((allowed) => origin.startsWith(allowed))) {
       callback(null, true);
     } else {
       console.warn(`CORS blocked origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Set-Cookie'],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  exposedHeaders: ["Set-Cookie"],
 };
 
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions)); // Handle preflight requests
 
-
 // ================== FASTAPI ENDPOINT CONFIG ==================
 const FASTAPI_BASE_URL = isProduction
-  ? process.env.FASTAPI_PROD_URL     // Base URL for production
+  ? process.env.FASTAPI_PROD_URL // Base URL for production
   : process.env.FASTAPI_DEV_URL;
 
 const fastApiEndpoints = {
@@ -81,7 +79,7 @@ const fastApiEndpoints = {
   instrument: `${FASTAPI_BASE_URL}:8000/predict-instrument`,
 };
 
-const disableSessions = process.env.DISABLE_SESSIONS === 'true';
+const disableSessions = process.env.DISABLE_SESSIONS === "true";
 
 if (!disableSessions) {
   const store = new MongoDBStore({
@@ -111,7 +109,7 @@ if (!disableSessions) {
   console.log("⚠️ Sessions disabled - using memory store");
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || 'fallback-secret',
+      secret: process.env.SESSION_SECRET || "fallback-secret",
       resave: false,
       saveUninitialized: false,
       cookie: {
@@ -1143,11 +1141,5 @@ app.post("/music-tabs/initialize", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(
-    `Server running in ${isProduction ? "production" : "development"} mode`
-  );
-  console.log(`FastAPI Base: ${FASTAPI_BASE_URL}`);
-  console.log(`Server is running on port ${PORT}`);
-});
+module.exports = app;
+
