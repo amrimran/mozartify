@@ -12,7 +12,7 @@ const path = require("path");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
-const SALT_ROUNDS = 10; // Number of hashing rounds
+const SALT_ROUNDS = 10
 
 const UserModel = require("./models/User");
 const PurchaseModel = require("./models/Purchase");
@@ -24,7 +24,6 @@ const ABCFileModel = require("./models/ABCFile");
 const ArtworkModel = require("./models/Arts");
 
 const app = express();
-app.use(express.json());
 
 // ================== ENVIRONMENT CONFIG ==================
 const isProduction = process.env.NODE_ENV === "production";
@@ -45,11 +44,11 @@ const allowedOrigins = [
   'http://127.0.0.1:5173',
   'http://localhost:10000',
   
-  // Add future Render URLs (you'll get these after deployment)
+  // Render URLs
   'https://mozartify.onrender.com',
   'https://mozartify-frontend.onrender.com',
   
-].filter(Boolean); // Remove any undefined values
+].filter(Boolean);
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -71,17 +70,15 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // Handle preflight requests
-
+app.options("*", cors(corsOptions));
 
 const disableSessions = process.env.DISABLE_SESSIONS === 'true';
 
 if (!disableSessions) {
-  // Original session store setup
   const store = new MongoDBStore({
     mongoUrl: process.env.DB_URI,
     collectionName: "sessions",
-    touchAfter: 24 * 3600, // lazy session update
+    touchAfter: 24 * 3600,
   });
 
   store.on("error", (error) => {
@@ -96,15 +93,14 @@ if (!disableSessions) {
       store: store,
       cookie: {
         maxAge: 1000 * 60 * 60 * 24, // 1 day
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: isProduction ? 'none' : 'lax',
+        secure: isProduction,
         httpOnly: true,
       },
       name: 'sessionId',
     })
   );
 } else {
-  // Use memory store (sessions won't persist)
   console.log("⚠️ Sessions disabled - using memory store");
   app.use(
     session({
@@ -112,9 +108,9 @@ if (!disableSessions) {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        maxAge: 1000 * 60 * 60 * 24, // 1 day
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        secure: process.env.NODE_ENV === 'production',
+        maxAge: 1000 * 60 * 60 * 24,
+        sameSite: isProduction ? 'none' : 'lax',
+        secure: isProduction,
         httpOnly: true,
       },
       name: 'sessionId',
@@ -125,11 +121,21 @@ if (!disableSessions) {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-mongoose.connect(process.env.DB_URI);
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(process.env.DB_URI)
+    .then(() => {
+      console.log('📊 MongoDB connected successfully');
+    })
+    .catch((err) => {
+      console.error('❌ MongoDB connection error:', err);
+    });
+} else {
+  console.log('📊 MongoDB already connected');
+}
 
 app.get("/", (req, res) => {
   res.json({
-    message: "Server is running",
+    message: "Main API Server is running",
     timestamp: new Date().toISOString(),
   });
 });
@@ -143,10 +149,9 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendVerificationEmail = (email, username, token) => {
-  const frontendUrl =
-    process.env.NODE_ENV === "production"
-      ? process.env.FRONTEND_PROD_URL
-      : process.env.FRONTEND_DEV_URL;
+  const frontendUrl = isProduction
+    ? process.env.FRONTEND_PROD_URL
+    : process.env.FRONTEND_DEV_URL;
 
   const url = `${frontendUrl}/verify-email?token=${token}`;
   const emailTemplate = `
@@ -2400,5 +2405,12 @@ app.post("/complete-purchase-artwork", async (req, res) => {
     res.status(500).json({ message: "Failed to complete purchase" });
   }
 });
+
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🎵 Main API Server running on port ${PORT}`);
+  });
+}
 
 module.exports = app;

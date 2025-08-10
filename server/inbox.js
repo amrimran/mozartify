@@ -104,11 +104,17 @@ if (!disableSessions) {
 
 const upload = multer();
 
-mongoose.connect(process.env.DB_URI);
-
-const db = mongoose.connection;
-db.on("error", console.error.bind(console, "connection error:"));
-db.once("open", () => {});
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(process.env.DB_URI)
+    .then(() => {
+      console.log('📊 MongoDB connected successfully');
+    })
+    .catch((err) => {
+      console.error('❌ MongoDB connection error:', err);
+    });
+} else {
+  console.log('📊 MongoDB already connected');
+}
 
 // Submit Feedback endpoint for customer
 app.post("/api/feedback", upload.none(), async (req, res) => {
@@ -388,6 +394,13 @@ app.put("/api/artwork-feedback/:id/mark-read-admin", async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 });
+
+if (require.main === module) {
+  const PORT = process.env.PORT || 3002; // Use different ports for each
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🎵 Server running on port ${PORT}`);
+  });
+}
 
 module.exports = app;
 

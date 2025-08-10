@@ -1,4 +1,4 @@
-// mainserver.js - Complete server that handles both backend APIs and serves frontend (if needed)
+// mainserver.js - Improved version for Render deployment
 require("dotenv").config();
 const express = require("express");
 const path = require("path");
@@ -17,8 +17,8 @@ console.log(`🌐 Working Directory: ${process.cwd()}`);
 // ================== CORS CONFIGURATION ==================
 const allowedOrigins = [
   // Your actual Render domains
-  "https://mozartify-frontend.onrender.com", // Frontend domain
-  "https://mozartify.onrender.com", // Backend domain
+  "https://mozartify-frontend.onrender.com",
+  "https://mozartify.onrender.com",
 
   // Environment variables (backup)
   process.env.FRONTEND_PROD_URL,
@@ -58,25 +58,6 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ================== SERVE STATIC FILES (Optional - since you have separate frontend) ==================
-// This is optional since your frontend is on mozartify-frontend.onrender.com
-// But keeping it for local development or fallback
-if (isProduction) {
-  // Only serve static files if dist folder exists
-  const distPath = path.join(__dirname, "dist");
-  try {
-    if (require("fs").existsSync(distPath)) {
-      app.use("/assets", express.static(path.join(distPath, "assets")));
-      app.use(express.static(distPath));
-      console.log("📦 Serving static files from:", distPath);
-    } else {
-      console.log("ℹ️ No dist folder found - frontend served separately");
-    }
-  } catch (err) {
-    console.log("ℹ️ Static file serving disabled - frontend served separately");
-  }
-}
-
 // ================== LOAD BACKEND SERVICES ==================
 try {
   console.log("🔄 Loading backend services...");
@@ -88,9 +69,16 @@ try {
   delete require.cache[require.resolve("./inbox.js")];
 
   // Load all your backend services as modules
+  console.log("📦 Loading index.js (Main API)...");
   const mainApp = require("./index.js");
+  
+  console.log("📦 Loading admin.js (Admin API)...");
   const adminApp = require("./admin.js");
+  
+  console.log("📦 Loading server.js (Music/Arts API)...");
   const serverApp = require("./server.js");
+  
+  console.log("📦 Loading inbox.js (Feedback API)...");
   const inboxApp = require("./inbox.js");
 
   // Mount API routes WITHOUT prefixes (keeping your existing route structure)
@@ -98,7 +86,7 @@ try {
   app.use("/", mainApp); // Main routes: /login, /signup, /logout, etc.
   app.use("/", adminApp); // Admin routes: /users, /admin/stats, etc.
   app.use("/", serverApp); // Server routes: /upload, /catalog, etc.
-  app.use("/api", inboxApp); // Inbox routes: /api/feedback, etc.
+  app.use("/", inboxApp); // Inbox routes: /api/feedback, etc.
 
   console.log("✅ All backend services loaded and mounted successfully");
 } catch (error) {
@@ -108,6 +96,14 @@ try {
   console.log("   - admin.js should end with: module.exports = app;");
   console.log("   - server.js should end with: module.exports = app;");
   console.log("   - inbox.js should end with: module.exports = app;");
+  
+  // Continue without crashing - add a fallback route
+  app.get("*", (req, res) => {
+    res.status(500).json({
+      error: "Backend services failed to load",
+      message: "Please check server logs for details"
+    });
+  });
 }
 
 // ================== HEALTH CHECK ROUTES ==================
@@ -124,10 +120,14 @@ app.get("/health", (req, res) => {
     ],
     frontend: "https://mozartify-frontend.onrender.com",
     backend: "https://mozartify.onrender.com",
+    cors: {
+      allowedOrigins: allowedOrigins,
+      credentials: true
+    }
   });
 });
 
-// Root endpoint for backend API
+// Test endpoint for debugging
 app.get("/api/status", (req, res) => {
   res.json({
     message: "🎵 Mozartify Backend API is running!",
@@ -142,72 +142,15 @@ app.get("/api/status", (req, res) => {
   });
 });
 
-// ================== SPA ROUTING - CRITICAL FIX ==================
-// This handles the 404 issue when refreshing pages
-if (isProduction) {
-  // Catch all handler for non-API routes
-  app.get("*", (req, res) => {
-    console.log("🔍 Catch-all route hit:", req.path);
-
-    // List of API routes that should return 404 instead of serving HTML
-    const apiRoutes = [
-      "/api/",
-      "/login",
-      "/signup",
-      "/logout",
-      "/users",
-      "/upload",
-      "/catalog",
-      "/admin/",
-      "/verify-email",
-      "/forgot-password",
-      "/reset-password",
-      "/preferences",
-      "/search",
-      "/download",
-      "/predictEmotion",
-      "/predictGender",
-      "/predictGenre",
-      "/abc-file",
-      "/api/feedback",
-
-    ];
-
-    // If it's an API route, return 404
-    if (apiRoutes.some((route) => req.path.startsWith(route))) {
-      console.log("❌ API endpoint not found:", req.path);
-      return res.status(404).json({
-        error: "API endpoint not found",
-        path: req.path,
-        message: "This endpoint does not exist on the backend API",
-      });
-    }
-
-    // For frontend routes, redirect to frontend domain
-    const frontendUrl = `https://mozartify-frontend.onrender.com${req.path}`;
-    console.log("🔄 Redirecting to frontend:", frontendUrl);
-
-    res.redirect(301, frontendUrl);
+// Test login endpoint specifically
+app.get("/test-login", (req, res) => {
+  res.json({
+    message: "Login endpoint is accessible",
+    method: "POST /login",
+    testUrl: `${req.protocol}://${req.get('host')}/login`,
+    timestamp: new Date().toISOString()
   });
-} else {
-  // Development fallback
-  app.get("*", (req, res) => {
-    if (
-      req.path.startsWith("/api/") ||
-      req.path.startsWith("/login") ||
-      req.path.startsWith("/signup")
-    ) {
-      return res.status(404).json({ error: "API endpoint not found" });
-    }
-
-    res.json({
-      message: "🎵 Mozartify Backend API - Development Mode",
-      note: "Frontend should be running on http://localhost:5173",
-      requestedPath: req.path,
-      suggestion: "This looks like a frontend route",
-    });
-  });
-}
+});
 
 // ================== ERROR HANDLING ==================
 app.use((err, req, res, next) => {
@@ -217,6 +160,7 @@ app.use((err, req, res, next) => {
     return res.status(403).json({
       error: "CORS policy violation",
       message: "Origin not allowed",
+      origin: req.get('origin'),
       allowedOrigins: allowedOrigins.filter(Boolean),
     });
   }
@@ -237,8 +181,9 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`🌐 Backend URL: https://mozartify.onrender.com`);
   console.log(`🎨 Frontend URL: https://mozartify-frontend.onrender.com`);
   console.log(`🔗 CORS Origins: ${allowedOrigins.length} configured`);
-  console.log(`   ${allowedOrigins.join("\n   ")}`);
+  allowedOrigins.forEach(origin => console.log(`   ✓ ${origin}`));
   console.log(`📡 Health Check: https://mozartify.onrender.com/health`);
+  console.log(`🔍 Test Login: https://mozartify.onrender.com/test-login`);
   console.log("🚀 =================================\n");
 });
 
@@ -253,7 +198,6 @@ process.on("SIGINT", () => {
   process.exit(0);
 });
 
-// Handle uncaught exceptions
 process.on("uncaughtException", (err) => {
   console.error("❌ Uncaught Exception:", err);
   process.exit(1);

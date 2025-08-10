@@ -125,10 +125,17 @@ if (!disableSessions) {
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // MongoDB connection
-mongoose
-  .connect(process.env.DB_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(process.env.DB_URI)
+    .then(() => {
+      console.log('📊 MongoDB connected successfully');
+    })
+    .catch((err) => {
+      console.error('❌ MongoDB connection error:', err);
+    });
+} else {
+  console.log('📊 MongoDB already connected');
+}
 
 // Configure file storage for uploads
 const storage = multer.diskStorage({
@@ -1140,6 +1147,13 @@ app.post("/music-tabs/initialize", async (req, res) => {
       .json({ message: "Error initializing tabs", error: err.message });
   }
 });
+
+if (require.main === module) {
+  const PORT = process.env.PORT || 3001; // Use different ports for each
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🎵 Server running on port ${PORT}`);
+  });
+}
 
 module.exports = app;
 
