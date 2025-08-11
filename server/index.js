@@ -98,11 +98,6 @@ if (!disableSessions) {
   const store = new MongoDBStore({
     uri: process.env.DB_URI,
     collection: "sessions",
-    connectionOptions: {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 10000,
-    }
   });
 
   store.on("error", (error) => {
@@ -117,35 +112,35 @@ if (!disableSessions) {
     session({
       secret: process.env.SESSION_SECRET,
       resave: false,
-      saveUninitialized: false,
+      saveUninitialized: true,        // CHANGE: Allow uninitialized sessions
       store: store,
       cookie: {
-        maxAge: 1000 * 60 * 60 * 24, // 1 day
-        sameSite: 'none',           // CRITICAL: Allow cross-site cookies
-        secure: true,               // CRITICAL: HTTPS only
+        maxAge: 1000 * 60 * 60 * 24,   // 1 day
+        sameSite: 'none',              
+        secure: true,                  
         httpOnly: true,
-        domain: undefined,          // CRITICAL: Don't restrict domain
       },
       name: 'sessionId',
+      rolling: true,                   // ADD: Refresh cookie on each request
     })
   );
   
-  console.log("✅ Session middleware configured for cross-domain");
+  console.log("✅ Session middleware configured");
 } else {
   console.log("⚠️ Sessions disabled - using memory store");
   app.use(
     session({
       secret: process.env.SESSION_SECRET || 'fallback-secret',
       resave: false,
-      saveUninitialized: false,
+      saveUninitialized: true,
       cookie: {
         maxAge: 1000 * 60 * 60 * 24,
         sameSite: 'none',
         secure: true,
         httpOnly: true,
-        domain: undefined,
       },
       name: 'sessionId',
+      rolling: true,
     })
   );
 }
