@@ -99,16 +99,16 @@ console.log("🔄 Setting up sessions (DEBUG MODE)...");
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "mozartify-secret-key",
+    secret: process.env.SESSION_SECRET || 'mozartify-secret-key',
     resave: false,
-    saveUninitialized: true, // Force session creation
+    saveUninitialized: true,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // 1 day
-      sameSite: "lax", // CHANGED: Try 'lax' instead of 'none'
-      secure: false, // CHANGED: Disable secure for testing
-      httpOnly: false, // CHANGED: Disable httpOnly for testing
+      sameSite: 'none',             // CRITICAL: Change from 'lax' to 'none' for cross-domain
+      secure: true,                 // CRITICAL: Must be true when sameSite='none'
+      httpOnly: false,              // Keep false for debugging
     },
-    name: "sessionId",
+    name: 'sessionId',
   })
 );
 
