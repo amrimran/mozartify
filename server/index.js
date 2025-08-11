@@ -178,6 +178,18 @@ app.get("/health", (req, res) => {
   });
 });
 
+// Add this debug route to your server/index.js:
+app.get("/debug-session", (req, res) => {
+  res.json({
+    sessionId: req.session.id,
+    userId: req.session.userId,
+    sessionData: req.session,
+    cookies: req.headers.cookie,
+    origin: req.get('origin'),
+    userAgent: req.get('user-agent')
+  });
+});
+
 // ================== EMAIL CONFIGURATION ==================
 const transporter = nodemailer.createTransport({
   service: "gmail",
