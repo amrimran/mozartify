@@ -99,16 +99,16 @@ console.log("🔄 Setting up sessions (DEBUG MODE)...");
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'mozartify-secret-key',
+    secret: process.env.SESSION_SECRET || "mozartify-secret-key",
     resave: false,
-    saveUninitialized: true,  // Force session creation
+    saveUninitialized: true, // Force session creation
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // 1 day
-      sameSite: 'lax',              // CHANGED: Try 'lax' instead of 'none'
-      secure: false,                // CHANGED: Disable secure for testing
-      httpOnly: false,              // CHANGED: Disable httpOnly for testing
+      sameSite: "lax", // CHANGED: Try 'lax' instead of 'none'
+      secure: false, // CHANGED: Disable secure for testing
+      httpOnly: false, // CHANGED: Disable httpOnly for testing
     },
-    name: 'sessionId',
+    name: "sessionId",
   })
 );
 
@@ -117,28 +117,28 @@ console.log("✅ Session middleware configured (DEBUG MODE)");
 // Add explicit cookie setting test
 app.get("/test-cookie-manual", (req, res) => {
   console.log("🍪 Manual cookie test requested");
-  
+
   // Manually set a cookie to test
-  res.cookie('testcookie', 'testvalue123', {
+  res.cookie("testcookie", "testvalue123", {
     maxAge: 1000 * 60 * 60 * 24,
-    sameSite: 'lax',
+    sameSite: "lax",
     secure: false,
-    httpOnly: false
+    httpOnly: false,
   });
-  
+
   // Also set session data
   req.session.test = "Manual test session";
   req.session.timestamp = new Date().toISOString();
-  
+
   console.log("🍪 Setting cookies and session:");
   console.log("   Session ID:", req.session.id);
   console.log("   Session data:", req.session);
-  
+
   res.json({
     message: "Manual cookie and session test",
     sessionId: req.session.id,
     sessionData: req.session,
-    note: "Check for Set-Cookie headers"
+    note: "Check for Set-Cookie headers",
   });
 });
 
@@ -146,17 +146,17 @@ app.get("/test-cookie-manual", (req, res) => {
 app.use((req, res, next) => {
   const originalSend = res.send;
   const originalJson = res.json;
-  
-  res.send = function(data) {
+
+  res.send = function (data) {
     console.log("📤 Final response headers:", this.getHeaders());
     return originalSend.call(this, data);
   };
-  
-  res.json = function(data) {
+
+  res.json = function (data) {
     console.log("📤 Final response headers (JSON):", this.getHeaders());
     return originalJson.call(this, data);
   };
-  
+
   next();
 });
 
@@ -165,21 +165,20 @@ app.get("/test-session-creation", (req, res) => {
   console.log("🧪 Session creation test:");
   console.log("   Before - Session ID:", req.session.id);
   console.log("   Before - Session data:", req.session);
-  
+
   req.session.test = "Hello World";
   req.session.timestamp = new Date().toISOString();
-  
+
   console.log("   After - Session ID:", req.session.id);
   console.log("   After - Session data:", req.session);
-  
+
   res.json({
     message: "Session created",
     sessionId: req.session.id,
     testData: req.session.test,
-    timestamp: req.session.timestamp
+    timestamp: req.session.timestamp,
   });
 });
-
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -364,27 +363,27 @@ const isAuthenticated = (req, res, next) => {
   console.log("   Session keys:", Object.keys(req.session || {}));
   console.log("   Full session object:", req.session);
   console.log("   Cookies from request:", req.headers.cookie);
-  
+
   if (req.session && req.session.userId) {
     console.log("✅ User authenticated with userId:", req.session.userId);
     return next();
   }
-  
+
   console.log("❌ User not authenticated:");
   console.log("   Reason: No session or no userId in session");
   console.log("   Session exists:", !!req.session);
   console.log("   Session ID:", req.session?.id);
   console.log("   UserId in session:", req.session?.userId);
-  
-  res.status(401).json({ 
+
+  res.status(401).json({
     message: "Unauthorized",
     debug: {
       hasSession: !!req.session,
       sessionId: req.session?.id,
       hasUserId: !!req.session?.userId,
       sessionKeys: Object.keys(req.session || {}),
-      cookies: req.headers.cookie
-    }
+      cookies: req.headers.cookie,
+    },
   });
 };
 
@@ -493,16 +492,15 @@ app.get("/login", async (req, res) => {
 
 // Replace your login route with this enhanced debug version:
 
+// Replace your login route with this version that forces session save:
+
 app.post("/login", async (req, res) => {
   console.log("🔐 LOGIN DEBUG START:");
-  console.log("   Request body:", req.body);
   console.log("   Session ID before:", req.session.id);
-  console.log("   Session before:", req.session);
-  
+
   const { username_or_email, password } = req.body;
 
   if (!username_or_email || !password) {
-    console.log("❌ Missing credentials");
     return res.status(400).json({ message: "Missing credentials" });
   }
 
@@ -512,78 +510,80 @@ app.post("/login", async (req, res) => {
     });
 
     if (!user) {
-      console.log("❌ User not found");
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      console.log("❌ Invalid password");
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     console.log("✅ User authenticated:", user.username);
-    console.log("   User ID:", user._id);
-    console.log("   Current user sessionId in DB:", user.sessionId);
 
     // Clear failed attempts
     user.failedLoginAttempts = 0;
     user.lockUntil = null;
 
-    // Check for existing session conflict
-    if (user.sessionId && user.sessionId !== req.session.id) {
-      console.log("⚠️ User has different session ID in DB:");
-      console.log("   DB sessionId:", user.sessionId);
-      console.log("   Current sessionId:", req.session.id);
-      // Allow login anyway for debugging
-    }
-
-    // Set session data
+    // CRITICAL: Set session data
     req.session.userId = user._id.toString();
     req.session.username = user.username;
     req.session.loginTime = new Date().toISOString();
-    
-    console.log("💾 Session data set:");
-    console.log("   Session ID:", req.session.id);
-    console.log("   User ID in session:", req.session.userId);
-    console.log("   Username in session:", req.session.username);
-    console.log("   Full session object:", req.session);
 
-    // Update user with new session ID
+    console.log("💾 Setting session data:");
+    console.log("   Session ID:", req.session.id);
+    console.log("   User ID:", req.session.userId);
+    console.log("   Session object:", req.session);
+
+    // Update user record
     user.sessionId = req.session.id;
-    
-    try {
-      await user.save();
-      console.log("✅ User document updated with sessionId:", req.session.id);
-      
-      // Verify the save worked
-      const updatedUser = await UserModel.findById(user._id);
-      console.log("🔍 Verification - User sessionId in DB after save:", updatedUser.sessionId);
-      
-    } catch (saveError) {
-      console.error("❌ Error saving user sessionId:", saveError);
-    }
-    
-    res.json({
-      message: "Success",
-      userId: user._id,
-      role: user.role,
-      music_first_timer: user.music_first_timer,
-      art_first_timer: user.art_first_timer,
-      approval: user.approval,
-      sessionId: req.session.id,
-      debug: {
-        sessionSet: !!req.session.userId,
-        userSessionId: user.sessionId,
-        loginTime: req.session.loginTime
+
+    // CRITICAL: Use req.session.save() to force persistence
+    req.session.save(async (sessionSaveErr) => {
+      if (sessionSaveErr) {
+        console.error("❌ Session save error:", sessionSaveErr);
+        return res.status(500).json({ message: "Session save failed" });
+      }
+
+      console.log("✅ Session saved successfully");
+      console.log("   Session after save:", req.session);
+
+      try {
+        // Save user document
+        await user.save();
+        console.log("✅ User document saved with sessionId:", user.sessionId);
+
+        // Send response
+        res.json({
+          message: "Success",
+          userId: user._id,
+          role: user.role,
+          music_first_timer: user.music_first_timer,
+          art_first_timer: user.art_first_timer,
+          approval: user.approval,
+          sessionId: req.session.id,
+          debug: {
+            userIdInSession: req.session.userId,
+            sessionKeys: Object.keys(req.session),
+          },
+        });
+
+        console.log("✅ Login response sent");
+      } catch (userSaveErr) {
+        console.error("❌ User save error:", userSaveErr);
+        res.json({
+          message: "Success",
+          userId: user._id,
+          role: user.role,
+          music_first_timer: user.music_first_timer,
+          art_first_timer: user.art_first_timer,
+          approval: user.approval,
+          sessionId: req.session.id,
+        });
       }
     });
-    
-    console.log("✅ Login response sent with debug info");
-
   } catch (err) {
     console.error("❌ Login error:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
