@@ -1,6 +1,10 @@
 // src/config/api.js - Simple, working version
 const isProduction = import.meta.env.PROD;
 
+import axios from 'axios';
+
+axios.defaults.withCredentials = true;
+
 export const API_CONFIG = {
 
   BASE_URL: isProduction
@@ -36,12 +40,12 @@ export const API_BASE_URL_2 = API_CONFIG.INBOX_API;
 export const API_BASE_URL_3 = API_CONFIG.ADMIN_API;
 
 // Axios configuration
-export const axiosConfig = {
+export const apiClient = axios.create({
   baseURL: API_CONFIG.BASE_URL,
-  timeout: API_CONFIG.TIMEOUT,
   withCredentials: true,
+  timeout: API_CONFIG.TIMEOUT,
   headers: API_CONFIG.DEFAULT_HEADERS,
-};
+});
 
 console.log("🔗 API Configuration:", {
   environment: isProduction ? "production" : "development",

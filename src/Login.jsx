@@ -228,7 +228,7 @@ export default function Login() {
     setErrorMessage("");
 
     axios
-      .post(`${API_BASE_URL}/login`, { username_or_email, password })
+      .post(`${API_BASE_URL}/login`, { withCredentials: true }, { username_or_email, password })
       .then((result) => {
         const { message, role, first_timer, approval } = result.data;
 
