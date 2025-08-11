@@ -17,7 +17,7 @@ import Visibility from "@mui/icons-material/VisibilityOff";
 import VisibilityOff from "@mui/icons-material/Visibility";
 import backgroundImage from "./assets/loginWP.png";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
-import { API_BASE_URL} from './config/api.js';
+import { API_BASE_URL } from "./config/api.js";
 
 const buttonStyles = {
   px: { xs: 6, sm: 8, md: 10 }, // Reduced padding
@@ -195,7 +195,8 @@ export default function Login() {
     axios
       .get(`${API_BASE_URL}/login`)
       .then((response) => {
-        const { message, role, music_first_timer,art_first_timer, approval } = response.data;
+        const { message, role, music_first_timer, art_first_timer, approval } =
+          response.data;
 
         //need to adjust to cater the art one
         if (message === "Success") {
@@ -221,26 +222,34 @@ export default function Login() {
       });
   }, []);
 
+  // Update your Login.jsx handleLogin function:
+
   const handleLogin = (e, type) => {
     e.preventDefault();
 
     // Clear any previous error message
     setErrorMessage("");
 
+    // FIXED: Simple axios call with automatic credentials
     axios
-      .post(`${API_BASE_URL}/login`, { username_or_email, password }, { withCredentials: true })
+      .post("/login", { username_or_email, password }) // No need for full URL since baseURL is set
       .then((result) => {
-        const { message, role, first_timer, approval } = result.data;
+        const { message, role, music_first_timer, art_first_timer, approval } =
+          result.data;
 
         if (message === "Success") {
-          // Determine redirection based on type parameter instead of loginType state
+          console.log(
+            "✅ Login successful, cookie should be set automatically"
+          );
+
+          // Determine redirection based on type parameter
           if (type === "music") {
             // Original music login redirections
             if (role === "music_entry_clerk" && approval === "pending") {
               setErrorMessage(
                 "Your account is awaiting approval. Please contact the admin."
               );
-            } else if (first_timer && role === "customer") {
+            } else if (music_first_timer && role === "customer") {
               navigate("/first-time-login");
             } else if (role === "customer") {
               navigate("/customer-homepage");
@@ -257,14 +266,14 @@ export default function Login() {
               setErrorMessage(
                 "Your account is awaiting approval. Please contact the admin."
               );
-            } else if (first_timer && role === "customer") {
+            } else if (art_first_timer && role === "customer") {
               navigate("/arts-first-time-login");
             } else if (role === "customer") {
               navigate("/customer-homepage-2");
             } else if (role === "music_entry_clerk") {
               navigate("/arts-clerk-homepage");
             } else if (role === "admin") {
-              navigate("/admin-dashboard"); // Assuming admin dashboard is the same
+              navigate("/admin-dashboard");
             } else {
               navigate("/login");
             }
@@ -276,7 +285,7 @@ export default function Login() {
       .catch((err) => {
         console.error("Login error:", err);
         if (err.response && err.response.status === 403) {
-          setErrorMessage(err.response.data.message); // Display the backend error message
+          setErrorMessage(err.response.data.message);
         } else if (err.response && err.response.status === 400) {
           setErrorMessage("Invalid username/email or password");
         } else {
@@ -324,7 +333,7 @@ export default function Login() {
           style={{
             animation: isMobile ? "none" : "rotateLogo 5s linear infinite",
           }}
-         onClick={() => navigate('/')} 
+          onClick={() => navigate("/")}
         />
 
         <FormContainer component="form" onSubmit={(e) => e.preventDefault()}>
