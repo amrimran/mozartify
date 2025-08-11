@@ -12,7 +12,7 @@ const path = require("path");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
-const SALT_ROUNDS = 10
+const SALT_ROUNDS = 10;
 
 const UserModel = require("./models/User");
 const PurchaseModel = require("./models/Purchase");
@@ -28,75 +28,89 @@ const app = express();
 // ================== ENVIRONMENT CONFIG ==================
 const isProduction = process.env.NODE_ENV === "production";
 
+console.log("🚀 Starting Mozartify Main API Server...");
+console.log(`📍 Environment: ${isProduction ? "production" : "development"}`);
+
 // ================== CORS CONFIGURATION ==================
 const allowedOrigins = [
   // Frontend URLs
   process.env.FRONTEND_PROD_URL,
   process.env.FRONTEND_DEV_URL,
-  
+
   // Backend URLs (for internal communication)
   process.env.BACKEND_PROD_URL,
   process.env.BACKEND_DEV_URL,
-  
+
   // Development URLs
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:10000',
-  
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:10000",
+
   // Render URLs
-  'https://mozartify.onrender.com',
-  'https://mozartify-frontend.onrender.com',
-  
+  "https://mozartify.onrender.com",
+  "https://mozartify-frontend.onrender.com",
 ].filter(Boolean);
 
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps, Postman, curl requests)
     if (!origin) return callback(null, true);
-    
+
     // Check if the origin is in our allowed list
-    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+    if (allowedOrigins.some((allowed) => origin.startsWith(allowed))) {
       callback(null, true);
     } else {
       console.warn(`CORS blocked origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Set-Cookie'],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  exposedHeaders: ["Set-Cookie"],
 };
 
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
+// ================== MONGODB CONNECTION ==================
+
 console.log("🔄 Connecting to MongoDB...");
 
 if (mongoose.connection.readyState === 0) {
-  mongoose.connect(process.env.DB_URI)
+  mongoose
+    .connect(process.env.DB_URI)
     .then(() => {
-      console.log('📊 MongoDB connected successfully');
+      console.log("📊 MongoDB connected successfully");
     })
     .catch((err) => {
-      console.error('❌ MongoDB connection error:', err);
+      console.error("❌ MongoDB connection error:", err);
     });
 } else {
-  console.log('📊 MongoDB already connected');
+  console.log("📊 MongoDB already connected");
 }
 
-const disableSessions = process.env.DISABLE_SESSIONS === 'true';
+// ================== SESSION CONFIGURATION ==================
+const disableSessions = process.env.DISABLE_SESSIONS === "true";
 
 if (!disableSessions) {
   const store = new MongoDBStore({
-    mongoUrl: process.env.DB_URI,
-    collectionName: "sessions",
-    touchAfter: 24 * 3600,
+    uri: process.env.DB_URI,
+    collection: "sessions",
+    connectionOptions: {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 10000,
+    },
   });
 
   store.on("error", (error) => {
     console.log("Session store error:", error);
+  });
+
+  store.on("connected", () => {
+    console.log("✅ Session store connected");
   });
 
   app.use(
@@ -107,27 +121,30 @@ if (!disableSessions) {
       store: store,
       cookie: {
         maxAge: 1000 * 60 * 60 * 24, // 1 day
-        sameSite: isProduction ? 'none' : 'lax',
+        sameSite: isProduction ? "none" : "lax",
         secure: isProduction,
         httpOnly: true,
       },
-      name: 'sessionId',
+      name: "sessionId",
     })
   );
+
+  console.log("✅ Session middleware configured");
 } else {
+
   console.log("⚠️ Sessions disabled - using memory store");
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || 'fallback-secret',
+      secret: process.env.SESSION_SECRET || "fallback-secret",
       resave: false,
       saveUninitialized: false,
       cookie: {
         maxAge: 1000 * 60 * 60 * 24,
-        sameSite: isProduction ? 'none' : 'lax',
+        sameSite: isProduction ? "none" : "lax",
         secure: isProduction,
         httpOnly: true,
       },
-      name: 'sessionId',
+      name: "sessionId",
     })
   );
 }
@@ -135,13 +152,32 @@ if (!disableSessions) {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ================== HEALTH CHECK ROUTES ==================
 app.get("/", (req, res) => {
   res.json({
-    message: "Main API Server is running",
+    message: "🎵 Mozartify Main API Server is running!",
     timestamp: new Date().toISOString(),
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    environment: process.env.NODE_ENV || 'development',
   });
 });
 
+app.get("/health", (req, res) => {
+  res.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    services: {
+      mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+      server: 'running',
+      sessions: disableSessions ? 'disabled' : 'enabled'
+    },
+    frontend: "https://mozartify-frontend.onrender.com",
+    backend: "https://mozartify.onrender.com",
+  });
+});
+
+// ================== EMAIL CONFIGURATION ==================
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -155,7 +191,7 @@ const sendVerificationEmail = (email, username, token) => {
     ? process.env.FRONTEND_PROD_URL
     : process.env.FRONTEND_DEV_URL;
 
-  const url = `${frontendUrl}/verify-email?token=${token}`;
+  const verificationUrl = `${frontendUrl}/email-verification?token=${token}`;
   const emailTemplate = `
   <div style="border: 2px solid #8BD3E6; border-radius: 10px; padding: 20px; font-family: 'Montserrat', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #F9FBFC;">
     <div style="text-align: center; margin-bottom: 20px;">
@@ -172,7 +208,7 @@ const sendVerificationEmail = (email, username, token) => {
         Click the button below to verify your email address:
       </p>
       <div style="text-align: center; margin: 20px 0;">
-        <a href="${url}" style="display: inline-block; padding: 12px 25px; font-size: 14px; font-weight: bold; color: #FFFFFF; background-color: #8BD3E6; border-radius: 5px; text-decoration: none;">
+        <a href="${verificationUrl}" style="display: inline-block; padding: 12px 25px; font-size: 14px; font-weight: bold; color: #FFFFFF; background-color: #8BD3E6; border-radius: 5px; text-decoration: none;">
           VERIFY EMAIL
         </a>
       </div>
@@ -2408,14 +2444,38 @@ app.post("/complete-purchase-artwork", async (req, res) => {
   }
 });
 
-if (require.main === module) {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🎵 Main API Server running on port ${PORT}`);
-    console.log(`📊 MongoDB state: ${mongoose.connection.readyState}`);
-    console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
-  });
-}
+// ================== START SERVER ==================
+const PORT = process.env.PORT || 10000;
 
+app.listen(PORT, '0.0.0.0', () => {
+  console.log("\n🚀 =================================");
+  console.log(`   Mozartify Main API Server`);
+  console.log("🚀 =================================");
+  console.log(`📍 Port: ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
+  console.log(`🌐 Backend URL: https://mozartify.onrender.com`);
+  console.log(`🎨 Frontend URL: https://mozartify-frontend.onrender.com`);
+  console.log(`📡 Health Check: https://mozartify.onrender.com/health`);
+  console.log("🚀 =================================\n");
+});
 
-module.exports = app;
+// ================== GRACEFUL SHUTDOWN ==================
+process.on("SIGTERM", () => {
+  console.log("🛑 SIGTERM received. Shutting down gracefully...");
+  process.exit(0);
+});
+
+process.on("SIGINT", () => {
+  console.log("🛑 SIGINT received. Shutting down gracefully...");
+  process.exit(0);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("❌ Uncaught Exception:", err);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
+  process.exit(1);
+});
