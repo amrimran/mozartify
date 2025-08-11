@@ -94,41 +94,92 @@ if (mongoose.connection.readyState === 0) {
 // ================== SESSION CONFIGURATION ==================
 const disableSessions = process.env.DISABLE_SESSIONS === "true";
 
-// ================== SESSION CONFIGURATION ==================
-console.log("🔄 Setting up sessions...");
+// ================== SESSION CONFIGURATION (DEBUG VERSION) ==================
+console.log("🔄 Setting up sessions (DEBUG MODE)...");
 
-if (!disableSessions) {
-  // Use MemoryStore for now to test (simpler than MongoDB store)
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || "mozartify-secret-key",
-      resave: false,
-      saveUninitialized: true, // Create session even if nothing stored
-      cookie: {
-        maxAge: 1000 * 60 * 60 * 24, // 1 day
-        sameSite: "none",
-        secure: true,
-        httpOnly: true,
-      },
-      name: "sessionId",
-    })
-  );
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'mozartify-secret-key',
+    resave: false,
+    saveUninitialized: true,  // Force session creation
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      sameSite: 'lax',              // CHANGED: Try 'lax' instead of 'none'
+      secure: false,                // CHANGED: Disable secure for testing
+      httpOnly: false,              // CHANGED: Disable httpOnly for testing
+    },
+    name: 'sessionId',
+  })
+);
 
-  console.log("✅ Memory session store configured");
-} else {
-  console.log("⚠️ Sessions disabled");
-}
+console.log("✅ Session middleware configured (DEBUG MODE)");
 
-// Test session creation
+// Add explicit cookie setting test
+app.get("/test-cookie-manual", (req, res) => {
+  console.log("🍪 Manual cookie test requested");
+  
+  // Manually set a cookie to test
+  res.cookie('testcookie', 'testvalue123', {
+    maxAge: 1000 * 60 * 60 * 24,
+    sameSite: 'lax',
+    secure: false,
+    httpOnly: false
+  });
+  
+  // Also set session data
+  req.session.test = "Manual test session";
+  req.session.timestamp = new Date().toISOString();
+  
+  console.log("🍪 Setting cookies and session:");
+  console.log("   Session ID:", req.session.id);
+  console.log("   Session data:", req.session);
+  
+  res.json({
+    message: "Manual cookie and session test",
+    sessionId: req.session.id,
+    sessionData: req.session,
+    note: "Check for Set-Cookie headers"
+  });
+});
+
+// Add response header debugging middleware
+app.use((req, res, next) => {
+  const originalSend = res.send;
+  const originalJson = res.json;
+  
+  res.send = function(data) {
+    console.log("📤 Final response headers:", this.getHeaders());
+    return originalSend.call(this, data);
+  };
+  
+  res.json = function(data) {
+    console.log("📤 Final response headers (JSON):", this.getHeaders());
+    return originalJson.call(this, data);
+  };
+  
+  next();
+});
+
+// Update your existing session test
 app.get("/test-session-creation", (req, res) => {
+  console.log("🧪 Session creation test:");
+  console.log("   Before - Session ID:", req.session.id);
+  console.log("   Before - Session data:", req.session);
+  
   req.session.test = "Hello World";
-  console.log("🧪 Test session created:", req.session.id);
+  req.session.timestamp = new Date().toISOString();
+  
+  console.log("   After - Session ID:", req.session.id);
+  console.log("   After - Session data:", req.session);
+  
   res.json({
     message: "Session created",
     sessionId: req.session.id,
     testData: req.session.test,
+    timestamp: req.session.timestamp
   });
 });
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -427,12 +478,15 @@ app.get("/login", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-  console.log("🔐 LOGIN START");
-  console.log("Session ID before:", req.session.id);
-
+  console.log("🔐 LOGIN DEBUG:");
+  console.log("   Request body:", req.body);
+  console.log("   Session ID before:", req.session.id);
+  console.log("   Session before:", req.session);
+  
   const { username_or_email, password } = req.body;
 
   if (!username_or_email || !password) {
+    console.log("❌ Missing credentials");
     return res.status(400).json({ message: "Missing credentials" });
   }
 
@@ -442,23 +496,29 @@ app.post("/login", async (req, res) => {
     });
 
     if (!user) {
+      console.log("❌ User not found");
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
+      console.log("❌ Invalid password");
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Simple session assignment
+    console.log("✅ User authenticated:", user.username);
+
+    // Set session data
     req.session.userId = user._id.toString();
     req.session.username = user.username;
-
+    req.session.loginTime = new Date().toISOString();
+    
     console.log("💾 Session data set:");
     console.log("   Session ID:", req.session.id);
     console.log("   User ID:", req.session.userId);
-
-    // Respond immediately (session should auto-save)
+    console.log("   Username:", req.session.username);
+    console.log("   Full session:", req.session);
+    
     res.json({
       message: "Success",
       userId: user._id,
@@ -466,10 +526,12 @@ app.post("/login", async (req, res) => {
       music_first_timer: user.music_first_timer,
       art_first_timer: user.art_first_timer,
       approval: user.approval,
-      sessionId: req.session.id, // Add this for debugging
+      sessionId: req.session.id,
+      debug: "Check logs for session details"
     });
-
+    
     console.log("✅ Login response sent");
+
   } catch (err) {
     console.error("❌ Login error:", err);
     res.status(500).json({ message: "Server error" });
