@@ -193,7 +193,7 @@ export default function Login() {
   useEffect(() => {
     // Check if there's a session cookie by making a request to the login endpoint
     axios
-      .get(`${API_BASE_URL}/login`, { withCredentials: true })
+      .get(`${API_BASE_URL}/login`)
       .then((response) => {
         const { message, role, music_first_timer,art_first_timer, approval } = response.data;
 

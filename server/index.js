@@ -102,11 +102,11 @@ if (!disableSessions) {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       serverSelectionTimeoutMS: 10000,
-    },
+    }
   });
 
   store.on("error", (error) => {
-    console.log("Session store error:", error);
+    console.error("❌ Session store error:", error);
   });
 
   store.on("connected", () => {
@@ -121,30 +121,31 @@ if (!disableSessions) {
       store: store,
       cookie: {
         maxAge: 1000 * 60 * 60 * 24, // 1 day
-        sameSite: isProduction ? "none" : "lax",
-        secure: isProduction,
+        sameSite: 'none',           // CRITICAL: Allow cross-site cookies
+        secure: true,               // CRITICAL: HTTPS only
         httpOnly: true,
+        domain: undefined,          // CRITICAL: Don't restrict domain
       },
-      name: "sessionId",
+      name: 'sessionId',
     })
   );
-
-  console.log("✅ Session middleware configured");
+  
+  console.log("✅ Session middleware configured for cross-domain");
 } else {
-
   console.log("⚠️ Sessions disabled - using memory store");
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || "fallback-secret",
+      secret: process.env.SESSION_SECRET || 'fallback-secret',
       resave: false,
       saveUninitialized: false,
       cookie: {
         maxAge: 1000 * 60 * 60 * 24,
-        sameSite: isProduction ? "none" : "lax",
-        secure: isProduction,
+        sameSite: 'none',
+        secure: true,
         httpOnly: true,
+        domain: undefined,
       },
-      name: "sessionId",
+      name: 'sessionId',
     })
   );
 }
