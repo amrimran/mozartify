@@ -353,24 +353,38 @@ app.use((req, res, next) => {
 });
 
 // Update your isAuthenticated middleware to be more descriptive:
-const isAuthenticated = (req, res, next) => {
-  console.log(
-    `🔐 Auth check - Session ID: ${req.session?.id}, User ID: ${req.session?.userId}`
-  );
+// Update your isAuthenticated middleware with more debugging:
 
-  if (req.session.userId) {
-    console.log("✅ User authenticated");
+const isAuthenticated = (req, res, next) => {
+  console.log("🔍 AUTH CHECK DETAILED:");
+  console.log("   Request path:", req.path);
+  console.log("   Session exists:", !!req.session);
+  console.log("   Session ID:", req.session?.id);
+  console.log("   User ID in session:", req.session?.userId);
+  console.log("   Session keys:", Object.keys(req.session || {}));
+  console.log("   Full session object:", req.session);
+  console.log("   Cookies from request:", req.headers.cookie);
+  
+  if (req.session && req.session.userId) {
+    console.log("✅ User authenticated with userId:", req.session.userId);
     return next();
   }
-
-  console.log("❌ User not authenticated - no userId in session");
-  res.status(401).json({
+  
+  console.log("❌ User not authenticated:");
+  console.log("   Reason: No session or no userId in session");
+  console.log("   Session exists:", !!req.session);
+  console.log("   Session ID:", req.session?.id);
+  console.log("   UserId in session:", req.session?.userId);
+  
+  res.status(401).json({ 
     message: "Unauthorized",
     debug: {
+      hasSession: !!req.session,
       sessionId: req.session?.id,
       hasUserId: !!req.session?.userId,
-      sessionData: req.session,
-    },
+      sessionKeys: Object.keys(req.session || {}),
+      cookies: req.headers.cookie
+    }
   });
 };
 
@@ -477,8 +491,10 @@ app.get("/login", async (req, res) => {
   }
 });
 
+// Replace your login route with this enhanced debug version:
+
 app.post("/login", async (req, res) => {
-  console.log("🔐 LOGIN DEBUG:");
+  console.log("🔐 LOGIN DEBUG START:");
   console.log("   Request body:", req.body);
   console.log("   Session ID before:", req.session.id);
   console.log("   Session before:", req.session);
@@ -507,6 +523,20 @@ app.post("/login", async (req, res) => {
     }
 
     console.log("✅ User authenticated:", user.username);
+    console.log("   User ID:", user._id);
+    console.log("   Current user sessionId in DB:", user.sessionId);
+
+    // Clear failed attempts
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
+
+    // Check for existing session conflict
+    if (user.sessionId && user.sessionId !== req.session.id) {
+      console.log("⚠️ User has different session ID in DB:");
+      console.log("   DB sessionId:", user.sessionId);
+      console.log("   Current sessionId:", req.session.id);
+      // Allow login anyway for debugging
+    }
 
     // Set session data
     req.session.userId = user._id.toString();
@@ -515,9 +545,24 @@ app.post("/login", async (req, res) => {
     
     console.log("💾 Session data set:");
     console.log("   Session ID:", req.session.id);
-    console.log("   User ID:", req.session.userId);
-    console.log("   Username:", req.session.username);
-    console.log("   Full session:", req.session);
+    console.log("   User ID in session:", req.session.userId);
+    console.log("   Username in session:", req.session.username);
+    console.log("   Full session object:", req.session);
+
+    // Update user with new session ID
+    user.sessionId = req.session.id;
+    
+    try {
+      await user.save();
+      console.log("✅ User document updated with sessionId:", req.session.id);
+      
+      // Verify the save worked
+      const updatedUser = await UserModel.findById(user._id);
+      console.log("🔍 Verification - User sessionId in DB after save:", updatedUser.sessionId);
+      
+    } catch (saveError) {
+      console.error("❌ Error saving user sessionId:", saveError);
+    }
     
     res.json({
       message: "Success",
@@ -527,14 +572,18 @@ app.post("/login", async (req, res) => {
       art_first_timer: user.art_first_timer,
       approval: user.approval,
       sessionId: req.session.id,
-      debug: "Check logs for session details"
+      debug: {
+        sessionSet: !!req.session.userId,
+        userSessionId: user.sessionId,
+        loginTime: req.session.loginTime
+      }
     });
     
-    console.log("✅ Login response sent");
+    console.log("✅ Login response sent with debug info");
 
   } catch (err) {
     console.error("❌ Login error:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
