@@ -190,6 +190,20 @@ app.get("/debug-session", (req, res) => {
   });
 });
 
+app.post("/test-session", (req, res) => {
+  req.session.testData = "Hello World";
+  req.session.save((err) => {
+    if (err) {
+      return res.status(500).json({ error: "Session save failed", details: err });
+    }
+    res.json({ 
+      message: "Session saved successfully",
+      sessionId: req.session.id,
+      testData: req.session.testData 
+    });
+  });
+});
+
 // ================== EMAIL CONFIGURATION ==================
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -286,11 +300,38 @@ const sendAdminApprovalEmail = (adminEmail, username, email) => {
   );
 };
 
+// Add this debug middleware BEFORE your routes in server/index.js:
+
+app.use((req, res, next) => {
+  // Only log for specific routes that are failing
+  if (req.path.includes('/current-user') || req.path.includes('/recommendations')) {
+    console.log(`🔍 ${req.method} ${req.path}`);
+    console.log(`   Session ID: ${req.session?.id}`);
+    console.log(`   User ID in session: ${req.session?.userId}`);
+    console.log(`   Session data:`, req.session);
+    console.log(`   Cookies:`, req.headers.cookie);
+  }
+  next();
+});
+
+// Update your isAuthenticated middleware to be more descriptive:
 const isAuthenticated = (req, res, next) => {
+  console.log(`🔐 Auth check - Session ID: ${req.session?.id}, User ID: ${req.session?.userId}`);
+  
   if (req.session.userId) {
+    console.log("✅ User authenticated");
     return next();
   }
-  res.status(401).json({ message: "Unauthorized" });
+  
+  console.log("❌ User not authenticated - no userId in session");
+  res.status(401).json({ 
+    message: "Unauthorized",
+    debug: {
+      sessionId: req.session?.id,
+      hasUserId: !!req.session?.userId,
+      sessionData: req.session
+    }
+  });
 };
 
 app.post("/signup", async (req, res) => {
@@ -396,6 +437,8 @@ app.get("/login", async (req, res) => {
   }
 });
 
+// In your server/index.js, make sure your POST /login route looks like this:
+
 app.post("/login", async (req, res) => {
   const { username_or_email, password } = req.body;
 
@@ -405,12 +448,9 @@ app.post("/login", async (req, res) => {
     });
 
     if (!user) {
-      return res
-        .status(400)
-        .json({ message: "Invalid username/email or password" });
+      return res.status(400).json({ message: "Invalid username/email or password" });
     }
 
-    // Check if the account is locked
     if (user.lockUntil && user.lockUntil > Date.now()) {
       return res.status(403).json({
         message: `Account locked. Please try again after ${Math.ceil(
@@ -419,49 +459,51 @@ app.post("/login", async (req, res) => {
       });
     }
 
-    // Compare the hashed password
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       user.failedLoginAttempts += 1;
-
-      // Lock account after 10 failed attempts
       if (user.failedLoginAttempts >= 10) {
-        user.lockUntil = new Date(Date.now() + 60 * 60 * 1000); // Lock for 1 hour
+        user.lockUntil = new Date(Date.now() + 60 * 60 * 1000);
       }
-
       await user.save();
-      return res
-        .status(400)
-        .json({ message: "Invalid username/email or password" });
+      return res.status(400).json({ message: "Invalid username/email or password" });
     }
 
-    // Reset failed login attempts after a successful login
     user.failedLoginAttempts = 0;
     user.lockUntil = null;
 
-    // Check if the user is already logged in on another device
     if (user.sessionId && user.sessionId !== req.session.id) {
       return res.status(403).json({
-        message:
-          "You are already logged in on another device/browser. Please log out first.",
+        message: "You are already logged in on another device/browser. Please log out first.",
       });
     }
 
-    // Save session ID to prevent multiple device logins
     user.sessionId = req.session.id;
     await user.save();
 
+    // CRITICAL: Save userId to session
     req.session.userId = user._id;
-
-    res.json({
-      message: "Success",
-      userId: user._id,
-      role: user.role,
-      music_first_timer: user.music_first_timer,
-      art_first_timer: user.art_first_timer,
-      approval: user.approval,
+    
+    // CRITICAL: Ensure session is saved before responding
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error:", err);
+        return res.status(500).json({ message: "Session save failed" });
+      }
+      
+      console.log("✅ Session saved with userId:", user._id);
+      
+      res.json({
+        message: "Success",
+        userId: user._id,
+        role: user.role,
+        music_first_timer: user.music_first_timer,
+        art_first_timer: user.art_first_timer,
+        approval: user.approval,
+      });
     });
+
   } catch (err) {
     console.error("Server error:", err);
     res.status(500).json({ message: "Internal server error" });
