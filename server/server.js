@@ -79,6 +79,19 @@ const fastApiEndpoints = {
   instrument: `${FASTAPI_BASE_URL}:8000/predict-instrument`,
 };
 
+// MongoDB connection
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(process.env.DB_URI)
+    .then(() => {
+      console.log('📊 MongoDB connected successfully');
+    })
+    .catch((err) => {
+      console.error('❌ MongoDB connection error:', err);
+    });
+} else {
+  console.log('📊 MongoDB already connected');
+}
+
 const disableSessions = process.env.DISABLE_SESSIONS === "true";
 
 if (!disableSessions) {
@@ -123,19 +136,6 @@ if (!disableSessions) {
 
 // Static file serving for uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// MongoDB connection
-if (mongoose.connection.readyState === 0) {
-  mongoose.connect(process.env.DB_URI)
-    .then(() => {
-      console.log('📊 MongoDB connected successfully');
-    })
-    .catch((err) => {
-      console.error('❌ MongoDB connection error:', err);
-    });
-} else {
-  console.log('📊 MongoDB already connected');
-}
 
 // Configure file storage for uploads
 const storage = multer.diskStorage({

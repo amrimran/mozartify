@@ -58,7 +58,19 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // Handle preflight requests
+app.options("*", cors(corsOptions));
+
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(process.env.DB_URI)
+    .then(() => {
+      console.log('📊 MongoDB connected successfully');
+    })
+    .catch((err) => {
+      console.error('❌ MongoDB connection error:', err);
+    });
+} else {
+  console.log('📊 MongoDB already connected');
+}
 
 const disableSessions = process.env.DISABLE_SESSIONS === 'true';
 
@@ -104,17 +116,7 @@ if (!disableSessions) {
 
 const upload = multer();
 
-if (mongoose.connection.readyState === 0) {
-  mongoose.connect(process.env.DB_URI)
-    .then(() => {
-      console.log('📊 MongoDB connected successfully');
-    })
-    .catch((err) => {
-      console.error('❌ MongoDB connection error:', err);
-    });
-} else {
-  console.log('📊 MongoDB already connected');
-}
+
 
 // Submit Feedback endpoint for customer
 app.post("/api/feedback", upload.none(), async (req, res) => {

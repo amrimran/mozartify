@@ -72,6 +72,20 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
+console.log("🔄 Connecting to MongoDB...");
+
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(process.env.DB_URI)
+    .then(() => {
+      console.log('📊 MongoDB connected successfully');
+    })
+    .catch((err) => {
+      console.error('❌ MongoDB connection error:', err);
+    });
+} else {
+  console.log('📊 MongoDB already connected');
+}
+
 const disableSessions = process.env.DISABLE_SESSIONS === 'true';
 
 if (!disableSessions) {
@@ -120,18 +134,6 @@ if (!disableSessions) {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-if (mongoose.connection.readyState === 0) {
-  mongoose.connect(process.env.DB_URI)
-    .then(() => {
-      console.log('📊 MongoDB connected successfully');
-    })
-    .catch((err) => {
-      console.error('❌ MongoDB connection error:', err);
-    });
-} else {
-  console.log('📊 MongoDB already connected');
-}
 
 app.get("/", (req, res) => {
   res.json({
@@ -2410,7 +2412,10 @@ if (require.main === module) {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`🎵 Main API Server running on port ${PORT}`);
+    console.log(`📊 MongoDB state: ${mongoose.connection.readyState}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
   });
 }
+
 
 module.exports = app;
