@@ -94,56 +94,41 @@ if (mongoose.connection.readyState === 0) {
 // ================== SESSION CONFIGURATION ==================
 const disableSessions = process.env.DISABLE_SESSIONS === "true";
 
+// ================== SESSION CONFIGURATION ==================
+console.log("🔄 Setting up sessions...");
+
 if (!disableSessions) {
-  const store = new MongoDBStore({
-    uri: process.env.DB_URI,
-    collection: "sessions",
-  });
-
-  store.on("error", (error) => {
-    console.error("❌ Session store error:", error);
-  });
-
-  store.on("connected", () => {
-    console.log("✅ Session store connected");
-  });
-
+  // Use MemoryStore for now to test (simpler than MongoDB store)
   app.use(
     session({
-      secret: process.env.SESSION_SECRET,
+      secret: process.env.SESSION_SECRET || "mozartify-secret-key",
       resave: false,
-      saveUninitialized: true,        // CHANGE: Allow uninitialized sessions
-      store: store,
+      saveUninitialized: true, // Create session even if nothing stored
       cookie: {
-        maxAge: 1000 * 60 * 60 * 24,   // 1 day
-        sameSite: 'none',              
-        secure: true,                  
-        httpOnly: true,
-      },
-      name: 'sessionId',
-      rolling: true,                   // ADD: Refresh cookie on each request
-    })
-  );
-  
-  console.log("✅ Session middleware configured");
-} else {
-  console.log("⚠️ Sessions disabled - using memory store");
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || 'fallback-secret',
-      resave: false,
-      saveUninitialized: true,
-      cookie: {
-        maxAge: 1000 * 60 * 60 * 24,
-        sameSite: 'none',
+        maxAge: 1000 * 60 * 60 * 24, // 1 day
+        sameSite: "none",
         secure: true,
         httpOnly: true,
       },
-      name: 'sessionId',
-      rolling: true,
+      name: "sessionId",
     })
   );
+
+  console.log("✅ Memory session store configured");
+} else {
+  console.log("⚠️ Sessions disabled");
 }
+
+// Test session creation
+app.get("/test-session-creation", (req, res) => {
+  req.session.test = "Hello World";
+  console.log("🧪 Test session created:", req.session.id);
+  res.json({
+    message: "Session created",
+    sessionId: req.session.id,
+    testData: req.session.test,
+  });
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -153,8 +138,9 @@ app.get("/", (req, res) => {
   res.json({
     message: "🎵 Mozartify Main API Server is running!",
     timestamp: new Date().toISOString(),
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-    environment: process.env.NODE_ENV || 'development',
+    mongodb:
+      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+    environment: process.env.NODE_ENV || "development",
   });
 });
 
@@ -162,11 +148,12 @@ app.get("/health", (req, res) => {
   res.json({
     status: "healthy",
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
+    environment: process.env.NODE_ENV || "development",
     services: {
-      mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-      server: 'running',
-      sessions: disableSessions ? 'disabled' : 'enabled'
+      mongodb:
+        mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+      server: "running",
+      sessions: disableSessions ? "disabled" : "enabled",
     },
     frontend: "https://mozartify-frontend.onrender.com",
     backend: "https://mozartify.onrender.com",
@@ -180,8 +167,8 @@ app.get("/debug-session", (req, res) => {
     userId: req.session.userId,
     sessionData: req.session,
     cookies: req.headers.cookie,
-    origin: req.get('origin'),
-    userAgent: req.get('user-agent')
+    origin: req.get("origin"),
+    userAgent: req.get("user-agent"),
   });
 });
 
@@ -189,12 +176,14 @@ app.post("/test-session", (req, res) => {
   req.session.testData = "Hello World";
   req.session.save((err) => {
     if (err) {
-      return res.status(500).json({ error: "Session save failed", details: err });
+      return res
+        .status(500)
+        .json({ error: "Session save failed", details: err });
     }
-    res.json({ 
+    res.json({
       message: "Session saved successfully",
       sessionId: req.session.id,
-      testData: req.session.testData 
+      testData: req.session.testData,
     });
   });
 });
@@ -299,7 +288,10 @@ const sendAdminApprovalEmail = (adminEmail, username, email) => {
 
 app.use((req, res, next) => {
   // Only log for specific routes that are failing
-  if (req.path.includes('/current-user') || req.path.includes('/recommendations')) {
+  if (
+    req.path.includes("/current-user") ||
+    req.path.includes("/recommendations")
+  ) {
     console.log(`🔍 ${req.method} ${req.path}`);
     console.log(`   Session ID: ${req.session?.id}`);
     console.log(`   User ID in session: ${req.session?.userId}`);
@@ -311,21 +303,23 @@ app.use((req, res, next) => {
 
 // Update your isAuthenticated middleware to be more descriptive:
 const isAuthenticated = (req, res, next) => {
-  console.log(`🔐 Auth check - Session ID: ${req.session?.id}, User ID: ${req.session?.userId}`);
-  
+  console.log(
+    `🔐 Auth check - Session ID: ${req.session?.id}, User ID: ${req.session?.userId}`
+  );
+
   if (req.session.userId) {
     console.log("✅ User authenticated");
     return next();
   }
-  
+
   console.log("❌ User not authenticated - no userId in session");
-  res.status(401).json({ 
+  res.status(401).json({
     message: "Unauthorized",
     debug: {
       sessionId: req.session?.id,
       hasUserId: !!req.session?.userId,
-      sessionData: req.session
-    }
+      sessionData: req.session,
+    },
   });
 };
 
@@ -433,7 +427,14 @@ app.get("/login", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
+  console.log("🔐 LOGIN START");
+  console.log("Session ID before:", req.session.id);
+
   const { username_or_email, password } = req.body;
+
+  if (!username_or_email || !password) {
+    return res.status(400).json({ message: "Missing credentials" });
+  }
 
   try {
     const user = await UserModel.findOne({
@@ -441,65 +442,37 @@ app.post("/login", async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid username/email or password" });
-    }
-
-    if (user.lockUntil && user.lockUntil > Date.now()) {
-      return res.status(403).json({
-        message: `Account locked. Please try again after ${Math.ceil(
-          (user.lockUntil - Date.now()) / 60000
-        )} minutes.`,
-      });
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
     if (!isPasswordValid) {
-      user.failedLoginAttempts += 1;
-      if (user.failedLoginAttempts >= 10) {
-        user.lockUntil = new Date(Date.now() + 60 * 60 * 1000);
-      }
-      await user.save();
-      return res.status(400).json({ message: "Invalid username/email or password" });
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    user.failedLoginAttempts = 0;
-    user.lockUntil = null;
+    // Simple session assignment
+    req.session.userId = user._id.toString();
+    req.session.username = user.username;
 
-    if (user.sessionId && user.sessionId !== req.session.id) {
-      return res.status(403).json({
-        message: "You are already logged in on another device/browser. Please log out first.",
-      });
-    }
+    console.log("💾 Session data set:");
+    console.log("   Session ID:", req.session.id);
+    console.log("   User ID:", req.session.userId);
 
-    user.sessionId = req.session.id;
-    await user.save();
-
-    // CRITICAL: Save userId to session
-    req.session.userId = user._id;
-    
-    // CRITICAL: Ensure session is saved before responding
-    req.session.save((err) => {
-      if (err) {
-        console.error("Session save error:", err);
-        return res.status(500).json({ message: "Session save failed" });
-      }
-      
-      console.log("✅ Session saved with userId:", user._id);
-      
-      res.json({
-        message: "Success",
-        userId: user._id,
-        role: user.role,
-        music_first_timer: user.music_first_timer,
-        art_first_timer: user.art_first_timer,
-        approval: user.approval,
-      });
+    // Respond immediately (session should auto-save)
+    res.json({
+      message: "Success",
+      userId: user._id,
+      role: user.role,
+      music_first_timer: user.music_first_timer,
+      art_first_timer: user.art_first_timer,
+      approval: user.approval,
+      sessionId: req.session.id, // Add this for debugging
     });
 
+    console.log("✅ Login response sent");
   } catch (err) {
-    console.error("Server error:", err);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("❌ Login error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -2495,7 +2468,7 @@ app.post("/complete-purchase-artwork", async (req, res) => {
 // ================== START SERVER ==================
 const PORT = process.env.PORT || 10000;
 
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log("\n🚀 =================================");
   console.log(`   Mozartify Main API Server`);
   console.log("🚀 =================================");
