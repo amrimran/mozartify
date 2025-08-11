@@ -40,12 +40,12 @@ export const API_BASE_URL_2 = API_CONFIG.INBOX_API;
 export const API_BASE_URL_3 = API_CONFIG.ADMIN_API;
 
 // Axios configuration
-export const apiClient = axios.create({
+export const axiosConfig = {
   baseURL: API_CONFIG.BASE_URL,
-  withCredentials: true,
   timeout: API_CONFIG.TIMEOUT,
+  withCredentials: true,
   headers: API_CONFIG.DEFAULT_HEADERS,
-});
+};
 
 console.log("🔗 API Configuration:", {
   environment: isProduction ? "production" : "development",

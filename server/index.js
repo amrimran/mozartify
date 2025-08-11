@@ -437,8 +437,6 @@ app.get("/login", async (req, res) => {
   }
 });
 
-// In your server/index.js, make sure your POST /login route looks like this:
-
 app.post("/login", async (req, res) => {
   const { username_or_email, password } = req.body;
 
