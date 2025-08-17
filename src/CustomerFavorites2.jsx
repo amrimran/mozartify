@@ -46,8 +46,7 @@ export default function CustomerFavorites2() {
   const [searchedArtworks, setSearchedArtworks] = useState([]);
 
   const [searchQuery, setSearchQuery] = useState("");
- 
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+    const [debouncedQuery, setDebouncedQuery] = useState("");
   const [favorites, setFavorites] = useState([]);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
