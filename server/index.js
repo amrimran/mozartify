@@ -50,7 +50,7 @@ const allowedOrigins = [
 
   // Render URLs
   "https://mozartify.onrender.com",
-  "https://mozartify-frontend.onrender.com",
+  "https://mozartify.nasir.onrender.com",
 ].filter(Boolean);
 
 const corsOptions = {
@@ -1501,6 +1501,7 @@ app.get("/filter-artworks", async (req, res) => {
     res.status(500).json({ message: "Server error", error: err });
   }
 });
+
 
 app.post("/check-purchase", async (req, res) => {
   try {

@@ -95,6 +95,7 @@ export default function CustomerHomepage2() {
   const [dynamicFilters, setDynamicFilters] = useState({});
   const [selectedFilters, setSelectedFilters] = useState({});
 
+
   const handlePageChange = (event, value) => {
     setPage(value);
     window.scrollTo({ top: 0, behavior: "smooth" });

@@ -46,6 +46,7 @@ export default function CustomerFavorites2() {
   const [searchedArtworks, setSearchedArtworks] = useState([]);
 
   const [searchQuery, setSearchQuery] = useState("");
+ 
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [favorites, setFavorites] = useState([]);
 
@@ -84,6 +85,7 @@ export default function CustomerFavorites2() {
     const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
 
   useEffect(() => {
     const fetchUser = async () => {
