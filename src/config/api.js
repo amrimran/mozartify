@@ -1,54 +1,50 @@
-// src/config/api.js
-// Centralized API configuration for your frontend
+// Update your src/config/api.js:
 
-const isProduction = import.meta.env.PROD; // Vite's built-in production check
+import axios from 'axios';
+
+const isProduction = import.meta.env.PROD;
 
 export const API_CONFIG = {
-  // All APIs now route through the main server (no ports needed in production)
+  BASE_URL: isProduction
+    ? "https://mozartify.onrender.com"
+    : "http://localhost:10000",
+
   MAIN_API: isProduction
-    ? "https://mozartify.onrender.com" // Single entry point - mainserver.js routes internally
-    : "http://localhost:3000", // Local development - direct to service
+    ? "https://mozartify.onrender.com"
+    : "http://localhost:10000",
 
-  // All services use the same base URL in production (mainserver.js handles routing)
-  SECONDARY_API: isProduction
-    ? "https://mozartify.onrender.com" // Routes to port 3001 internally
-    : "http://localhost:3001", // Local development
+  MUSIC_API: isProduction
+    ? "https://mozartify.onrender.com"
+    : "http://localhost:10000",
 
-  TERTIARY_API: isProduction
-    ? "https://mozartify.onrender.com" // Routes to port 3002 internally
-    : "http://localhost:3002", // Local development
+  ADMIN_API: isProduction
+    ? "https://mozartify.onrender.com"
+    : "http://localhost:10000",
 
-  QUATERNARY_API: isProduction
-    ? "https://mozartify.onrender.com" // Routes to port 3003 internally
-    : "http://localhost:3003", // Local development
+  INBOX_API: isProduction
+    ? "https://mozartify.onrender.com"
+    : "http://localhost:10000",
 
-  // Timeout settings
-  TIMEOUT: 30000, // 30 seconds
-
-  // Headers
+  TIMEOUT: 30000,
   DEFAULT_HEADERS: {
     "Content-Type": "application/json",
   },
 };
 
-// Export individual URLs for backward compatibility
-export const API_BASE_URL = API_CONFIG.MAIN_API;
-export const API_BASE_URL_1 = API_CONFIG.SECONDARY_API;
-export const API_BASE_URL_2 = API_CONFIG.TERTIARY_API;
-export const API_BASE_URL_3 = API_CONFIG.QUATERNARY_API;
+// CRITICAL: Set withCredentials globally for all requests
+axios.defaults.withCredentials = true;
 
-// Axios configuration
-export const axiosConfig = {
-  baseURL: API_CONFIG.MAIN_API,
-  timeout: API_CONFIG.TIMEOUT,
-  withCredentials: true,
-  headers: API_CONFIG.DEFAULT_HEADERS,
-};
+// CRITICAL: Set base URL globally
+axios.defaults.baseURL = API_CONFIG.BASE_URL;
 
-console.log("🔗 API Configuration:", {
+// Export for backward compatibility
+export const API_BASE_URL = API_CONFIG.BASE_URL;
+export const API_BASE_URL_1 = API_CONFIG.MUSIC_API;
+export const API_BASE_URL_2 = API_CONFIG.INBOX_API;
+export const API_BASE_URL_3 = API_CONFIG.ADMIN_API;
+
+console.log("🔗 API Configuration (Cookie-based):", {
   environment: isProduction ? "production" : "development",
-  mainAPI: API_CONFIG.MAIN_API,
-  secondaryAPI: API_CONFIG.SECONDARY_API,
-  tertiaryAPI: API_CONFIG.TERTIARY_API,
-  quaternaryAPI: API_CONFIG.QUATERNARY_API,
+  baseURL: API_CONFIG.BASE_URL,
+  withCredentials: true,
 });

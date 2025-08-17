@@ -64,7 +64,20 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // Handle preflight requests
+app.options("*", cors(corsOptions));
+
+// MongoDB Connection
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(process.env.DB_URI)
+    .then(() => {
+      console.log('📊 MongoDB connected successfully');
+    })
+    .catch((err) => {
+      console.error('❌ MongoDB connection error:', err);
+    });
+} else {
+  console.log('📊 MongoDB already connected');
+}
 
 const disableSessions = process.env.DISABLE_SESSIONS === 'true';
 
@@ -107,15 +120,6 @@ if (!disableSessions) {
     })
   );
 }
-
-// MongoDB Connection
-mongoose
-  .connect(process.env.DB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("MongoDB connected successfully"))
-  .catch((err) => console.error("MongoDB connection error:", err));
 
 // Routes
 app.get("/", (req, res) => {
@@ -461,11 +465,11 @@ app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
+if (require.main === module) {
+  const PORT = process.env.PORT || 3003; // Use different ports for each
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🎵 Server running on port ${PORT}`);
+  });
+}
 // Start the server
-const PORT = process.env.PORT || 3003;
-app.listen(PORT, () => {
-  console.log(
-    `Server running in ${isProduction ? "production" : "development"} mode`
-  );
-  console.log(`Server is running on port ${PORT}`);
-});
+module.exports = app;

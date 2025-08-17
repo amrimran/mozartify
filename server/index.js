@@ -12,7 +12,7 @@ const path = require("path");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
-const SALT_ROUNDS = 10; // Number of hashing rounds
+const SALT_ROUNDS = 10;
 
 const UserModel = require("./models/User");
 const PurchaseModel = require("./models/Purchase");
@@ -29,111 +29,218 @@ app.use(express.json());
 // ================== ENVIRONMENT CONFIG ==================
 const isProduction = process.env.NODE_ENV === "production";
 
+console.log("🚀 Starting Mozartify Main API Server...");
+console.log(`📍 Environment: ${isProduction ? "production" : "development"}`);
+
 // ================== CORS CONFIGURATION ==================
 const allowedOrigins = [
   // Frontend URLs
   process.env.FRONTEND_PROD_URL,
   process.env.FRONTEND_DEV_URL,
-  
+
   // Backend URLs (for internal communication)
   process.env.BACKEND_PROD_URL,
   process.env.BACKEND_DEV_URL,
-  
+
   // Development URLs
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:10000',
-  
-  // Add future Render URLs (you'll get these after deployment)
-  'https://mozartify.onrender.com',
-  'https://mozartify-frontend.onrender.com',
-  
-].filter(Boolean); // Remove any undefined values
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:10000",
+
+  // Render URLs
+  "https://mozartify.onrender.com",
+  "https://mozartify-frontend.onrender.com",
+].filter(Boolean);
 
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps, Postman, curl requests)
     if (!origin) return callback(null, true);
-    
+
     // Check if the origin is in our allowed list
-    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+    if (allowedOrigins.some((allowed) => origin.startsWith(allowed))) {
       callback(null, true);
     } else {
       console.warn(`CORS blocked origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Set-Cookie'],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  exposedHeaders: ["Set-Cookie"],
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // Handle preflight requests
+app.options("*", cors(corsOptions));
 
+// ================== MONGODB CONNECTION ==================
 
-const disableSessions = process.env.DISABLE_SESSIONS === 'true';
+console.log("🔄 Connecting to MongoDB...");
 
-if (!disableSessions) {
-  // Original session store setup
-  const store = new MongoDBStore({
-    mongoUrl: process.env.DB_URI,
-    collectionName: "sessions",
-    touchAfter: 24 * 3600, // lazy session update
-  });
-
-  store.on("error", (error) => {
-    console.log("Session store error:", error);
-  });
-
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET,
-      resave: false,
-      saveUninitialized: false,
-      store: store,
-      cookie: {
-        maxAge: 1000 * 60 * 60 * 24, // 1 day
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-      },
-      name: 'sessionId',
+if (mongoose.connection.readyState === 0) {
+  mongoose
+    .connect(process.env.DB_URI)
+    .then(() => {
+      console.log("📊 MongoDB connected successfully");
     })
-  );
+    .catch((err) => {
+      console.error("❌ MongoDB connection error:", err);
+    });
 } else {
-  // Use memory store (sessions won't persist)
-  console.log("⚠️ Sessions disabled - using memory store");
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || 'fallback-secret',
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        maxAge: 1000 * 60 * 60 * 24, // 1 day
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-      },
-      name: 'sessionId',
-    })
-  );
+  console.log("📊 MongoDB already connected");
 }
+
+// ================== SESSION CONFIGURATION ==================
+const disableSessions = process.env.DISABLE_SESSIONS === "true";
+
+// ================== SESSION CONFIGURATION (DEBUG VERSION) ==================
+console.log("🔄 Setting up sessions (DEBUG MODE)...");
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'mozartify-secret-key',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      sameSite: 'none',             // CRITICAL: Change from 'lax' to 'none' for cross-domain
+      secure: true,                 // CRITICAL: Must be true when sameSite='none'
+      httpOnly: false,              // Keep false for debugging
+      domain: isProduction? ".onrender.com" : 'none',
+    },
+    name: 'sessionId',
+  })
+);
+
+console.log("✅ Session middleware configured (DEBUG MODE)");
+
+// Add explicit cookie setting test
+app.get("/test-cookie-manual", (req, res) => {
+  console.log("🍪 Manual cookie test requested");
+
+  // Manually set a cookie to test
+  res.cookie("testcookie", "testvalue123", {
+    maxAge: 1000 * 60 * 60 * 24,
+    sameSite: "lax",
+    secure: false,
+    httpOnly: false,
+  });
+
+  // Also set session data
+  req.session.test = "Manual test session";
+  req.session.timestamp = new Date().toISOString();
+
+  console.log("🍪 Setting cookies and session:");
+  console.log("   Session ID:", req.session.id);
+  console.log("   Session data:", req.session);
+
+  res.json({
+    message: "Manual cookie and session test",
+    sessionId: req.session.id,
+    sessionData: req.session,
+    note: "Check for Set-Cookie headers",
+  });
+});
+
+// Add response header debugging middleware
+app.use((req, res, next) => {
+  const originalSend = res.send;
+  const originalJson = res.json;
+
+  res.send = function (data) {
+    console.log("📤 Final response headers:", this.getHeaders());
+    return originalSend.call(this, data);
+  };
+
+  res.json = function (data) {
+    console.log("📤 Final response headers (JSON):", this.getHeaders());
+    return originalJson.call(this, data);
+  };
+
+  next();
+});
+
+// Update your existing session test
+app.get("/test-session-creation", (req, res) => {
+  console.log("🧪 Session creation test:");
+  console.log("   Before - Session ID:", req.session.id);
+  console.log("   Before - Session data:", req.session);
+
+  req.session.test = "Hello World";
+  req.session.timestamp = new Date().toISOString();
+
+  console.log("   After - Session ID:", req.session.id);
+  console.log("   After - Session data:", req.session);
+
+  res.json({
+    message: "Session created",
+    sessionId: req.session.id,
+    testData: req.session.test,
+    timestamp: req.session.timestamp,
+  });
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-mongoose.connect(process.env.DB_URI);
-
+// ================== HEALTH CHECK ROUTES ==================
 app.get("/", (req, res) => {
   res.json({
-    message: "Server is running",
+    message: "🎵 Mozartify Main API Server is running!",
     timestamp: new Date().toISOString(),
+    mongodb:
+      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+    environment: process.env.NODE_ENV || "development",
   });
 });
 
+app.get("/health", (req, res) => {
+  res.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || "development",
+    services: {
+      mongodb:
+        mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+      server: "running",
+      sessions: disableSessions ? "disabled" : "enabled",
+    },
+    frontend: "https://mozartify-frontend.onrender.com",
+    backend: "https://mozartify.onrender.com",
+  });
+});
+
+// Add this debug route to your server/index.js:
+app.get("/debug-session", (req, res) => {
+  res.json({
+    sessionId: req.session.id,
+    userId: req.session.userId,
+    sessionData: req.session,
+    cookies: req.headers.cookie,
+    origin: req.get("origin"),
+    userAgent: req.get("user-agent"),
+  });
+});
+
+app.post("/test-session", (req, res) => {
+  req.session.testData = "Hello World";
+  req.session.save((err) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ error: "Session save failed", details: err });
+    }
+    res.json({
+      message: "Session saved successfully",
+      sessionId: req.session.id,
+      testData: req.session.testData,
+    });
+  });
+});
+
+// ================== EMAIL CONFIGURATION ==================
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -143,12 +250,11 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendVerificationEmail = (email, username, token) => {
-  const frontendUrl =
-    process.env.NODE_ENV === "production"
-      ? process.env.FRONTEND_PROD_URL
-      : process.env.FRONTEND_DEV_URL;
+  const frontendUrl = isProduction
+    ? process.env.FRONTEND_PROD_URL
+    : process.env.FRONTEND_DEV_URL;
 
-  const url = `${frontendUrl}/verify-email?token=${token}`;
+  const verificationUrl = `${frontendUrl}/email-verification?token=${token}`;
   const emailTemplate = `
   <div style="border: 2px solid #8BD3E6; border-radius: 10px; padding: 20px; font-family: 'Montserrat', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #F9FBFC;">
     <div style="text-align: center; margin-bottom: 20px;">
@@ -165,7 +271,7 @@ const sendVerificationEmail = (email, username, token) => {
         Click the button below to verify your email address:
       </p>
       <div style="text-align: center; margin: 20px 0;">
-        <a href="${url}" style="display: inline-block; padding: 12px 25px; font-size: 14px; font-weight: bold; color: #FFFFFF; background-color: #8BD3E6; border-radius: 5px; text-decoration: none;">
+        <a href="${verificationUrl}" style="display: inline-block; padding: 12px 25px; font-size: 14px; font-weight: bold; color: #FFFFFF; background-color: #8BD3E6; border-radius: 5px; text-decoration: none;">
           VERIFY EMAIL
         </a>
       </div>
@@ -230,11 +336,57 @@ const sendAdminApprovalEmail = (adminEmail, username, email) => {
   );
 };
 
+// Add this debug middleware BEFORE your routes in server/index.js:
+
+app.use((req, res, next) => {
+  // Only log for specific routes that are failing
+  if (
+    req.path.includes("/current-user") ||
+    req.path.includes("/recommendations")
+  ) {
+    console.log(`🔍 ${req.method} ${req.path}`);
+    console.log(`   Session ID: ${req.session?.id}`);
+    console.log(`   User ID in session: ${req.session?.userId}`);
+    console.log(`   Session data:`, req.session);
+    console.log(`   Cookies:`, req.headers.cookie);
+  }
+  next();
+});
+
+// Update your isAuthenticated middleware to be more descriptive:
+// Update your isAuthenticated middleware with more debugging:
+
 const isAuthenticated = (req, res, next) => {
-  if (req.session.userId) {
+  console.log("🔍 AUTH CHECK DETAILED:");
+  console.log("   Request path:", req.path);
+  console.log("   Session exists:", !!req.session);
+  console.log("   Session ID:", req.session?.id);
+  console.log("   User ID in session:", req.session?.userId);
+  console.log("   Session keys:", Object.keys(req.session || {}));
+  console.log("   Full session object:", req.session);
+  console.log("   Cookies from request:", req.headers.cookie);
+
+  if (req.session && req.session.userId) {
+    console.log("✅ User authenticated with userId:", req.session.userId);
     return next();
   }
-  res.status(401).json({ message: "Unauthorized" });
+
+  console.log("❌ User not authenticated:");
+  console.log("   Reason: No session or no userId in session");
+  console.log("   Session exists:", !!req.session);
+  console.log("   Session ID:", req.session?.id);
+  console.log("   UserId in session:", req.session?.userId);
+
+  res.status(401).json({
+    message: "Unauthorized",
+    debug: {
+      hasSession: !!req.session,
+      sessionId: req.session?.id,
+      hasUserId: !!req.session?.userId,
+      sessionKeys: Object.keys(req.session || {}),
+      cookies: req.headers.cookie,
+    },
+  });
 };
 
 app.post("/signup", async (req, res) => {
@@ -340,8 +492,19 @@ app.get("/login", async (req, res) => {
   }
 });
 
+// Replace your login route with this enhanced debug version:
+
+// Replace your login route with this version that forces session save:
+
 app.post("/login", async (req, res) => {
+  console.log("🔐 LOGIN DEBUG START:");
+  console.log("   Session ID before:", req.session.id);
+
   const { username_or_email, password } = req.body;
+
+  if (!username_or_email || !password) {
+    return res.status(400).json({ message: "Missing credentials" });
+  }
 
   try {
     const user = await UserModel.findOne({
@@ -349,66 +512,80 @@ app.post("/login", async (req, res) => {
     });
 
     if (!user) {
-      return res
-        .status(400)
-        .json({ message: "Invalid username/email or password" });
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Check if the account is locked
-    if (user.lockUntil && user.lockUntil > Date.now()) {
-      return res.status(403).json({
-        message: `Account locked. Please try again after ${Math.ceil(
-          (user.lockUntil - Date.now()) / 60000
-        )} minutes.`,
-      });
-    }
-
-    // Compare the hashed password
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
     if (!isPasswordValid) {
-      user.failedLoginAttempts += 1;
-
-      // Lock account after 10 failed attempts
-      if (user.failedLoginAttempts >= 10) {
-        user.lockUntil = new Date(Date.now() + 60 * 60 * 1000); // Lock for 1 hour
-      }
-
-      await user.save();
-      return res
-        .status(400)
-        .json({ message: "Invalid username/email or password" });
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Reset failed login attempts after a successful login
+    console.log("✅ User authenticated:", user.username);
+
+    // Clear failed attempts
     user.failedLoginAttempts = 0;
     user.lockUntil = null;
 
-    // Check if the user is already logged in on another device
-    if (user.sessionId && user.sessionId !== req.session.id) {
-      return res.status(403).json({
-        message:
-          "You are already logged in on another device/browser. Please log out first.",
-      });
-    }
+    // CRITICAL: Set session data
+    req.session.userId = user._id.toString();
+    req.session.username = user.username;
+    req.session.loginTime = new Date().toISOString();
 
-    // Save session ID to prevent multiple device logins
+    console.log("💾 Setting session data:");
+    console.log("   Session ID:", req.session.id);
+    console.log("   User ID:", req.session.userId);
+    console.log("   Session object:", req.session);
+
+    // Update user record
     user.sessionId = req.session.id;
-    await user.save();
 
-    req.session.userId = user._id;
+    // CRITICAL: Use req.session.save() to force persistence
+    req.session.save(async (sessionSaveErr) => {
+      if (sessionSaveErr) {
+        console.error("❌ Session save error:", sessionSaveErr);
+        return res.status(500).json({ message: "Session save failed" });
+      }
 
-    res.json({
-      message: "Success",
-      userId: user._id,
-      role: user.role,
-      music_first_timer: user.music_first_timer,
-      art_first_timer: user.art_first_timer,
-      approval: user.approval,
+      console.log("✅ Session saved successfully");
+      console.log("   Session after save:", req.session);
+
+      try {
+        // Save user document
+        await user.save();
+        console.log("✅ User document saved with sessionId:", user.sessionId);
+
+        // Send response
+        res.json({
+          message: "Success",
+          userId: user._id,
+          role: user.role,
+          music_first_timer: user.music_first_timer,
+          art_first_timer: user.art_first_timer,
+          approval: user.approval,
+          sessionId: req.session.id,
+          debug: {
+            userIdInSession: req.session.userId,
+            sessionKeys: Object.keys(req.session),
+          },
+        });
+
+        console.log("✅ Login response sent");
+      } catch (userSaveErr) {
+        console.error("❌ User save error:", userSaveErr);
+        res.json({
+          message: "Success",
+          userId: user._id,
+          role: user.role,
+          music_first_timer: user.music_first_timer,
+          art_first_timer: user.art_first_timer,
+          approval: user.approval,
+          sessionId: req.session.id,
+        });
+      }
     });
   } catch (err) {
-    console.error("Server error:", err);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("❌ Login error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -2401,6 +2578,38 @@ app.post("/complete-purchase-artwork", async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+// ================== START SERVER ==================
+const PORT = process.env.PORT || 10000;
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log("\n🚀 =================================");
+  console.log(`   Mozartify Main API Server`);
+  console.log("🚀 =================================");
+  console.log(`📍 Port: ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
+  console.log(`🌐 Backend URL: https://mozartify.onrender.com`);
+  console.log(`🎨 Frontend URL: https://mozartify-frontend.onrender.com`);
+  console.log(`📡 Health Check: https://mozartify.onrender.com/health`);
+  console.log("🚀 =================================\n");
+});
+
+// ================== GRACEFUL SHUTDOWN ==================
+process.on("SIGTERM", () => {
+  console.log("🛑 SIGTERM received. Shutting down gracefully...");
+  process.exit(0);
+});
+
+process.on("SIGINT", () => {
+  console.log("🛑 SIGINT received. Shutting down gracefully...");
+  process.exit(0);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("❌ Uncaught Exception:", err);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
+  process.exit(1);
 });
