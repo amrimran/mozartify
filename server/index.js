@@ -24,6 +24,7 @@ const ABCFileModel = require("./models/ABCFile");
 const ArtworkModel = require("./models/Arts");
 
 const app = express();
+app.use(express.json());
 
 // ================== ENVIRONMENT CONFIG ==================
 const isProduction = process.env.NODE_ENV === "production";
@@ -107,6 +108,7 @@ app.use(
       sameSite: 'none',             // CRITICAL: Change from 'lax' to 'none' for cross-domain
       secure: true,                 // CRITICAL: Must be true when sameSite='none'
       httpOnly: false,              // Keep false for debugging
+      domain: isProduction? ".onrender.com" : 'none',
     },
     name: 'sessionId',
   })
