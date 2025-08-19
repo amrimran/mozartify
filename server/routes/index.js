@@ -275,8 +275,6 @@ router.get("/login", async (req, res) => {
 
 // POST LOGIN REQUEST
 router.post("/login", async (req, res) => {
-  console.log("🔐 LOGIN DEBUG START:");
-  console.log("   Session ID before:", req.session.id);
 
   const { username_or_email, password } = req.body;
 

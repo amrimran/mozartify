@@ -80,7 +80,7 @@ app.use(
     store: store,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24,
-      sameSite: isProduction ? "none" : "lax",
+      sameSite:"lax",
       httpOnly: true,
       secure: isProduction,
     },
@@ -89,9 +89,9 @@ app.use(
 
 console.log("✅ Session middleware configured");
 
-// ================== DEBUG MIDDLEWARE (ADD THIS) ==================
+// ================== DEBUG MIDDLEWARE  ==================
 app.use((req, res, next) => {
-  console.log('\n🔍 === REQUEST DEBUG ===');
+  console.log('\n🔍 === REQUEST DEBUG(from mainserver.js) ===');
   console.log('📍 URL:', req.method, req.url);
   console.log('🌐 Origin:', req.headers.origin);
   console.log('🍪 Cookie Header:', req.headers.cookie);
