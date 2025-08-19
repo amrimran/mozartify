@@ -79,10 +79,10 @@ app.use(
     store: store,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // 1 day
-      sameSite: isProduction ? "none" : "lax",
+      sameSite: "lax",
       httpOnly: true,
       secure: isProduction,
-      domain: isProduction ? undefined : undefined, // ✅ ADD THIS
+      // domain: isProduction ? undefined : undefined, // ✅ ADD THIS
     },
   })
 );
