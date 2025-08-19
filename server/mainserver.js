@@ -82,6 +82,7 @@ app.use(
       sameSite: isProduction ? "none" : "lax",
       httpOnly: true,
       secure: isProduction,
+      domain: isProduction ? undefined : undefined, // ✅ ADD THIS
     },
   })
 );
