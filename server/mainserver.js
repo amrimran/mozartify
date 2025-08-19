@@ -25,7 +25,7 @@ const allowedOrigins = [
   "http://127.0.0.1:5173",
   "http://localhost:10000",
   "https://mozartify.onrender.com",
-  "https://mozartify.nasir.onrender.com",
+  "https://mozartify-nasir.onrender.com",
 ].filter(Boolean);
 
 const corsOptions = {
@@ -168,7 +168,7 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`📍 Port: ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(`🌐 Backend URL: https://mozartify.onrender.com`);
-  console.log(`🎨 Frontend URL: https://mozartify.nasir.onrender.com`);
+  console.log(`🎨 Frontend URL: https://mozartify-nasir.onrender.com`);
   console.log("🚀 =================================\n");
 });
 
