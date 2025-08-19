@@ -1,71 +1,22 @@
 require("dotenv").config();
-const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
 const { exec } = require("child_process");
 const fs = require("fs");
 const axios = require("axios");
-const session = require("express-session");
-const MongoDBStore = require("connect-mongodb-session")(session);
-const ABCFileModel = require("./models/ABCFile");
-const DeletedABCFile = require("./models/deletedABCFile");
-const Artwork = require("./models/Arts.js");
-const DeletedArtwork = require("./models/DeletedArts");
-const ArtsDynamicField = require("./models/ArtsDynamicField");
-const ArtsTab = require("./models/ArtsTab");
-const MusicDynamicField = require("./models/MusicDynamicField");
-const MusicTab = require("./models/MusicTab");
+const ABCFileModel = require("../models/ABCFile.js");
+const DeletedABCFile = require("../models/deletedABCFile.js");
+const Artwork = require("../models/Arts.js");
+const DeletedArtwork = require("../models/DeletedArts.js");
+const ArtsDynamicField = require("../models/ArtsDynamicField.js");
+const ArtsTab = require("../models/ArtsTab.js");
+const MusicDynamicField = require("../models/MusicDynamicField.js");
+const MusicTab = require("../models/MusicTab.js");
+const express = require("express"); 
 
-const app = express();
-app.use(express.json());
-
-// ================== ENVIRONMENT CONFIG ==================
 const isProduction = process.env.NODE_ENV === "production";
-
-// ================== CORS CONFIGURATION ==================
-const allowedOrigins = [
-  // Frontend URLs
-  process.env.FRONTEND_PROD_URL,
-  process.env.FRONTEND_DEV_URL,
-
-  // Backend URLs (for internal communication)
-  process.env.BACKEND_PROD_URL,
-  process.env.BACKEND_DEV_URL,
-
-  // Development URLs
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://localhost:10000",
-
-  // Add future Render URLs (you'll get these after deployment)
-  "https://mozartify-backend.onrender.com",
-  "https://mozartify-frontend.onrender.com",
-].filter(Boolean); // Remove any undefined values
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, Postman, curl requests)
-    if (!origin) return callback(null, true);
-
-    // Check if the origin is in our allowed list
-    if (allowedOrigins.some((allowed) => origin.startsWith(allowed))) {
-      callback(null, true);
-    } else {
-      console.warn(`CORS blocked origin: ${origin}`);
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  exposedHeaders: ["Set-Cookie"],
-};
-
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // Handle preflight requests
+const router = express.Router();
 
 // ================== FASTAPI ENDPOINT CONFIG ==================
 const FASTAPI_BASE_URL = isProduction
@@ -78,64 +29,6 @@ const fastApiEndpoints = {
   genre: `${FASTAPI_BASE_URL}:8001/predict-genre`,
   instrument: `${FASTAPI_BASE_URL}:8000/predict-instrument`,
 };
-
-// MongoDB connection
-if (mongoose.connection.readyState === 0) {
-  mongoose.connect(process.env.DB_URI)
-    .then(() => {
-      console.log('📊 MongoDB connected successfully');
-    })
-    .catch((err) => {
-      console.error('❌ MongoDB connection error:', err);
-    });
-} else {
-  console.log('📊 MongoDB already connected');
-}
-
-const disableSessions = process.env.DISABLE_SESSIONS === "true";
-
-if (!disableSessions) {
-  const store = new MongoDBStore({
-    uri: process.env.DB_URI,
-    collection: "sessions",
-  });
-
-  store.on("error", (error) => {
-    console.log(error);
-  });
-
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET,
-      resave: false,
-      saveUninitialized: false,
-      store: store,
-      cookie: {
-        maxAge: 1000 * 60 * 60 * 24, // 1 day
-        sameSite: "lax",
-        httpOnly: true,
-      },
-    })
-  );
-} else {
-  // Use memory store (sessions won't persist)
-  console.log("⚠️ Sessions disabled - using memory store");
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || "fallback-secret",
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        maxAge: 1000 * 60 * 60 * 24, // 1 day
-        sameSite: "lax",
-        httpOnly: true,
-      },
-    })
-  );
-}
-
-// Static file serving for uploaded files
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Configure file storage for uploads
 const storage = multer.diskStorage({
@@ -169,7 +62,7 @@ const upload = multer({
 });
 
 // Endpoint to upload file, transcribe, convert, and save to MongoDB
-app.post("/upload", upload.single("file"), (req, res) => {
+router.post("/upload", upload.single("file"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "No file uploaded" });
   }
@@ -254,7 +147,7 @@ app.post("/upload", upload.single("file"), (req, res) => {
 });
 
 // Endpoint to handle emotion prediction request based on Firebase URL
-app.post("/predictEmotion", async (req, res) => {
+router.post("/predictEmotion", async (req, res) => {
   const { fileUrl } = req.body;
   if (!fileUrl) {
     return res.status(400).send("No file URL provided.");
@@ -270,7 +163,7 @@ app.post("/predictEmotion", async (req, res) => {
 });
 
 // Gender prediction
-app.post("/predictGender", async (req, res) => {
+router.post("/predictGender", async (req, res) => {
   const { fileUrl } = req.body;
   if (!fileUrl) {
     return res.status(400).send("No file URL provided.");
@@ -286,7 +179,7 @@ app.post("/predictGender", async (req, res) => {
 });
 
 // Endpoint to handle genre prediction request based on Firebase URL
-app.post("/predictGenre", async (req, res) => {
+router.post("/predictGenre", async (req, res) => {
   const { fileUrl } = req.body;
   if (!fileUrl) {
     return res.status(400).send("No file URL provided.");
@@ -302,7 +195,7 @@ app.post("/predictGenre", async (req, res) => {
 });
 
 // // Endpoint for instrument prediction from URL
-// app.post('/predictInstrument', async (req, res) => {
+// router.post('/predictInstrument', async (req, res) => {
 //   const { fileUrl } = req.body;
 //   if (!fileUrl) {
 //     return res.status(400).json({ message: 'No file URL provided.' });
@@ -324,7 +217,7 @@ app.post("/predictGenre", async (req, res) => {
 // });
 
 // Additional endpoints
-app.get("/abc-file", async (req, res) => {
+router.get("/abc-file", async (req, res) => {
   try {
     const { sortOrder = "desc", sortBy = "_id" } = req.query;
     const mongoSortOrder = sortOrder === "asc" ? 1 : -1;
@@ -341,7 +234,7 @@ app.get("/abc-file", async (req, res) => {
   }
 });
 
-app.get("/abc-file/:identifier", async (req, res) => {
+router.get("/abc-file/:identifier", async (req, res) => {
   try {
     const { identifier } = req.params;
     let abcFile;
@@ -364,7 +257,7 @@ app.get("/abc-file/:identifier", async (req, res) => {
   }
 });
 
-app.put("/abc-file/:filename/content", async (req, res) => {
+router.put("/abc-file/:filename/content", async (req, res) => {
   try {
     const { filename } = req.params;
     const { content } = req.body;
@@ -390,7 +283,7 @@ app.put("/abc-file/:filename/content", async (req, res) => {
 });
 
 // Endpoint to get catalog data by filename
-app.get("/catalog/:fileName", async (req, res) => {
+router.get("/catalog/:fileName", async (req, res) => {
   try {
     const catalogData = await ABCFileModel.findOne({
       filename: req.params.fileName,
@@ -407,7 +300,7 @@ app.get("/catalog/:fileName", async (req, res) => {
 });
 
 // Save catalog metadata with strict:false approach
-app.post("/catalog", async (req, res) => {
+router.post("/catalog", async (req, res) => {
   try {
     // Get the filename from the request body
     const { filename } = req.body;
@@ -436,7 +329,7 @@ app.post("/catalog", async (req, res) => {
   }
 });
 
-app.post("/delete-and-transfer-abc-file", async (req, res) => {
+router.post("/delete-and-transfer-abc-file", async (req, res) => {
   try {
     const { filename } = req.body;
 
@@ -478,7 +371,7 @@ app.post("/delete-and-transfer-abc-file", async (req, res) => {
 //ARTS ENDPOINTS
 
 // Create a new artwork or update existing one
-app.post("/catalogArts", async (req, res) => {
+router.post("/catalogArts", async (req, res) => {
   try {
     // Extract basic and dynamic fields from request body
     const { _id, imageUrl, ...allFields } = req.body;
@@ -521,7 +414,7 @@ app.post("/catalogArts", async (req, res) => {
 });
 
 // Get artwork by ID
-app.get("/catalogArts/:id", async (req, res) => {
+router.get("/catalogArts/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -547,7 +440,7 @@ app.get("/catalogArts/:id", async (req, res) => {
 });
 
 // Get all artworks
-app.get("/catalogArts", async (req, res) => {
+router.get("/catalogArts", async (req, res) => {
   try {
     const artworks = await Artwork.find({ deleted: { $ne: true } });
     res.status(200).json(artworks);
@@ -560,7 +453,7 @@ app.get("/catalogArts", async (req, res) => {
 });
 
 // Delete artwork
-app.delete("/catalogArts/:id", async (req, res) => {
+router.delete("/catalogArts/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -591,7 +484,7 @@ app.delete("/catalogArts/:id", async (req, res) => {
 // ARTS DYNAMIC FIELD ENDPOINTS
 
 // GET all dynamic fields
-app.get("/dynamic-fields", async (req, res) => {
+router.get("/dynamic-fields", async (req, res) => {
   try {
     const fields = await ArtsDynamicField.find({ isActive: true }).sort({
       displayOrder: 1,
@@ -606,7 +499,7 @@ app.get("/dynamic-fields", async (req, res) => {
 });
 
 // GET a specific dynamic field by ID
-app.get("/dynamic-fields/:id", async (req, res) => {
+router.get("/dynamic-fields/:id", async (req, res) => {
   try {
     const field = await ArtsDynamicField.findById(req.params.id);
     if (!field) {
@@ -622,7 +515,7 @@ app.get("/dynamic-fields/:id", async (req, res) => {
 });
 
 // CREATE a new dynamic field
-app.post("/dynamic-fields", async (req, res) => {
+router.post("/dynamic-fields", async (req, res) => {
   try {
     const newField = new ArtsDynamicField(req.body);
     const savedField = await newField.save();
@@ -636,7 +529,7 @@ app.post("/dynamic-fields", async (req, res) => {
 });
 
 // UPDATE a dynamic field
-app.put("/dynamic-fields/:id", async (req, res) => {
+router.put("/dynamic-fields/:id", async (req, res) => {
   try {
     const updatedField = await ArtsDynamicField.findByIdAndUpdate(
       req.params.id,
@@ -656,7 +549,7 @@ app.put("/dynamic-fields/:id", async (req, res) => {
 });
 
 // DELETE a dynamic field (soft delete by setting isActive to false)
-app.delete("/dynamic-fields/:id", async (req, res) => {
+router.delete("/dynamic-fields/:id", async (req, res) => {
   try {
     const field = await ArtsDynamicField.findByIdAndUpdate(
       req.params.id,
@@ -677,7 +570,7 @@ app.delete("/dynamic-fields/:id", async (req, res) => {
 });
 
 // GET all dynamic fields organized by tab
-app.get("/dynamic-fields/by-tab", async (req, res) => {
+router.get("/dynamic-fields/by-tab", async (req, res) => {
   try {
     const fields = await ArtsDynamicField.find({ isActive: true }).sort({
       tabId: 1,
@@ -706,7 +599,7 @@ app.get("/dynamic-fields/by-tab", async (req, res) => {
 // ========== ARTS TAB ENDPOINTS ==========
 
 // Get all tabs
-app.get("/arts-tabs", async (req, res) => {
+router.get("/arts-tabs", async (req, res) => {
   try {
     const tabs = await ArtsTab.find({}).sort({ displayOrder: 1 });
     res.status(200).json(tabs);
@@ -719,7 +612,7 @@ app.get("/arts-tabs", async (req, res) => {
 });
 
 // Get a specific tab by ID
-app.get("/arts-tabs/:id", async (req, res) => {
+router.get("/arts-tabs/:id", async (req, res) => {
   try {
     const tab = await ArtsTab.findOne({ tabId: req.params.id });
     if (!tab) {
@@ -733,7 +626,7 @@ app.get("/arts-tabs/:id", async (req, res) => {
 });
 
 // Create a new tab
-app.post("/arts-tabs", async (req, res) => {
+router.post("/arts-tabs", async (req, res) => {
   try {
     // Find the highest tabId to ensure uniqueness
     const highestTab = await ArtsTab.findOne().sort("-tabId");
@@ -758,7 +651,7 @@ app.post("/arts-tabs", async (req, res) => {
 });
 
 // Update a tab
-app.put("/arts-tabs/:id", async (req, res) => {
+router.put("/arts-tabs/:id", async (req, res) => {
   try {
     const updatedTab = await ArtsTab.findOneAndUpdate(
       { tabId: req.params.id },
@@ -776,7 +669,7 @@ app.put("/arts-tabs/:id", async (req, res) => {
 });
 
 // Delete a tab (only if it has no fields)
-app.delete("/arts-tabs/:id", async (req, res) => {
+router.delete("/arts-tabs/:id", async (req, res) => {
   try {
     // Check if there are any fields in this tab
     const fieldsInTab = await ArtsDynamicField.countDocuments({
@@ -804,7 +697,7 @@ app.delete("/arts-tabs/:id", async (req, res) => {
 });
 
 // Update tab order - batch update
-app.put("/arts-tabs/reorder", async (req, res) => {
+router.put("/arts-tabs/reorder", async (req, res) => {
   try {
     const { tabs } = req.body;
 
@@ -834,7 +727,7 @@ app.put("/arts-tabs/reorder", async (req, res) => {
 });
 
 // Initialize default tabs if none exist
-app.post("/arts-tabs/initialize", async (req, res) => {
+router.post("/arts-tabs/initialize", async (req, res) => {
   try {
     const existingTabs = await ArtsTab.countDocuments();
 
@@ -861,7 +754,7 @@ app.post("/arts-tabs/initialize", async (req, res) => {
 });
 
 // Update dynamic-fields endpoints to use tabId instead of category
-app.get("/dynamic-fields/by-tab/:tabId", async (req, res) => {
+router.get("/dynamic-fields/by-tab/:tabId", async (req, res) => {
   try {
     const fields = await ArtsDynamicField.find({
       tabId: parseInt(req.params.tabId),
@@ -880,7 +773,7 @@ app.get("/dynamic-fields/by-tab/:tabId", async (req, res) => {
 // ========== MUSIC DYNAMIC FIELD ENDPOINTS ==========
 
 // Get all dynamic fields
-app.get("/music-dynamic-fields", async (req, res) => {
+router.get("/music-dynamic-fields", async (req, res) => {
   try {
     const fields = await MusicDynamicField.find({}).sort({
       tabId: 1,
@@ -897,7 +790,7 @@ app.get("/music-dynamic-fields", async (req, res) => {
 });
 
 // Get a specific dynamic field by ID
-app.get("/music-dynamic-fields/:id", async (req, res) => {
+router.get("/music-dynamic-fields/:id", async (req, res) => {
   try {
     const field = await MusicDynamicField.findById(req.params.id);
     if (!field) {
@@ -913,7 +806,7 @@ app.get("/music-dynamic-fields/:id", async (req, res) => {
 });
 
 // Create a new dynamic field
-app.post("/music-dynamic-fields", async (req, res) => {
+router.post("/music-dynamic-fields", async (req, res) => {
   try {
     const newField = new MusicDynamicField(req.body);
     const savedField = await newField.save();
@@ -927,7 +820,7 @@ app.post("/music-dynamic-fields", async (req, res) => {
 });
 
 // Update a dynamic field
-app.put("/music-dynamic-fields/:id", async (req, res) => {
+router.put("/music-dynamic-fields/:id", async (req, res) => {
   try {
     const updatedField = await MusicDynamicField.findByIdAndUpdate(
       req.params.id,
@@ -947,7 +840,7 @@ app.put("/music-dynamic-fields/:id", async (req, res) => {
 });
 
 // Deactivate a dynamic field (soft delete)
-app.delete("/music-dynamic-fields/:id", async (req, res) => {
+router.delete("/music-dynamic-fields/:id", async (req, res) => {
   try {
     const field = await MusicDynamicField.findByIdAndUpdate(
       req.params.id,
@@ -968,7 +861,7 @@ app.delete("/music-dynamic-fields/:id", async (req, res) => {
 });
 
 // Get all dynamic fields by tabId
-app.get("/music-dynamic-fields/by-tab/:tabId", async (req, res) => {
+router.get("/music-dynamic-fields/by-tab/:tabId", async (req, res) => {
   try {
     const fields = await MusicDynamicField.find({
       tabId: req.params.tabId,
@@ -987,7 +880,7 @@ app.get("/music-dynamic-fields/by-tab/:tabId", async (req, res) => {
 // ========== MUSIC TAB ENDPOINTS ==========
 
 // Get all tabs
-app.get("/music-tabs", async (req, res) => {
+router.get("/music-tabs", async (req, res) => {
   try {
     const tabs = await MusicTab.find({}).sort({ displayOrder: 1 });
     res.status(200).json(tabs);
@@ -1000,7 +893,7 @@ app.get("/music-tabs", async (req, res) => {
 });
 
 // Get a specific tab by ID
-app.get("/music-tabs/:id", async (req, res) => {
+router.get("/music-tabs/:id", async (req, res) => {
   try {
     const tab = await MusicTab.findOne({ tabId: req.params.id });
     if (!tab) {
@@ -1014,7 +907,7 @@ app.get("/music-tabs/:id", async (req, res) => {
 });
 
 // Create a new tab
-app.post("/music-tabs", async (req, res) => {
+router.post("/music-tabs", async (req, res) => {
   try {
     // Find the highest tabId to ensure uniqueness
     const highestTab = await MusicTab.findOne().sort("-tabId");
@@ -1039,7 +932,7 @@ app.post("/music-tabs", async (req, res) => {
 });
 
 // Update a tab
-app.put("/music-tabs/:id", async (req, res) => {
+router.put("/music-tabs/:id", async (req, res) => {
   try {
     const updatedTab = await MusicTab.findOneAndUpdate(
       { tabId: req.params.id },
@@ -1057,7 +950,7 @@ app.put("/music-tabs/:id", async (req, res) => {
 });
 
 // Delete a tab (only if it has no fields)
-app.delete("/music-tabs/:id", async (req, res) => {
+router.delete("/music-tabs/:id", async (req, res) => {
   try {
     // Check if there are any fields in this tab
     const fieldsInTab = await MusicDynamicField.countDocuments({
@@ -1087,7 +980,7 @@ app.delete("/music-tabs/:id", async (req, res) => {
 });
 
 // Update tab order - batch update
-app.put("/music-tabs/reorder", async (req, res) => {
+router.put("/music-tabs/reorder", async (req, res) => {
   try {
     const { tabs } = req.body;
 
@@ -1117,7 +1010,7 @@ app.put("/music-tabs/reorder", async (req, res) => {
 });
 
 // Initialize default tabs if none exist
-app.post("/music-tabs/initialize", async (req, res) => {
+router.post("/music-tabs/initialize", async (req, res) => {
   try {
     const existingTabs = await MusicTab.countDocuments();
 
@@ -1148,12 +1041,4 @@ app.post("/music-tabs/initialize", async (req, res) => {
   }
 });
 
-if (require.main === module) {
-  const PORT = process.env.PORT || 3001; // Use different ports for each
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🎵 Server running on port ${PORT}`);
-  });
-}
-
-module.exports = app;
-
+module.exports = router;

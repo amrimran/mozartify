@@ -191,56 +191,13 @@ export default function Login() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if there's a session cookie by making a request to the login endpoint
     axios
-      .get(`${API_BASE_URL}/login`)
+      .get(`${API_BASE_URL}/login`,{ withCredentials: true })
       .then((response) => {
         const { message, role, music_first_timer, art_first_timer, approval } =
           response.data;
 
-        //need to adjust to cater the art one
-        if (message === "Success") {
-          // Handle navigation based on role and approval status
-          if (role === "music_entry_clerk" && approval === "pending") {
-            setErrorMessage(
-              "Your account is awaiting approval. Please contact the admin."
-            );
-          } else if (music_first_timer && role === "customer") {
-            navigate("/first-time-login");
-          } else if (role === "customer") {
-            navigate("/customer-homepage");
-          } else if (role === "music_entry_clerk") {
-            navigate("/clerk-homepage");
-          } else if (role === "admin") {
-            navigate("/admin-dashboard");
-          }
-        }
-      })
-      .catch((error) => {
-        // If there's an error or no active session, stay on login page
-        console.log("No active session found");
-      });
-  }, []);
-
-  // Update your Login.jsx handleLogin function:
-
-  const handleLogin = (e, type) => {
-    e.preventDefault();
-
-    // Clear any previous error message
-    setErrorMessage("");
-
-    // FIXED: Simple axios call with automatic credentials
-    axios
-      .post("/login", { username_or_email, password }) // No need for full URL since baseURL is set
-      .then((result) => {
-        const { message, role, music_first_timer, art_first_timer, approval } =
-          result.data;
-
-        if (message === "Success") {
-          console.log(
-            "✅ Login successful, cookie should be set automatically"
-          );
+         if (message === "Success") {
 
           // Determine redirection based on type parameter
           if (type === "music") {
@@ -267,7 +224,66 @@ export default function Login() {
                 "Your account is awaiting approval. Please contact the admin."
               );
             } else if (art_first_timer && role === "customer") {
-              navigate("/arts-first-time-login");
+              navigate("/first-time-login-2");
+            } else if (role === "customer") {
+              navigate("/customer-homepage-2");
+            } else if (role === "music_entry_clerk") {
+              navigate("/arts-clerk-homepage");
+            } else if (role === "admin") {
+              navigate("/admin-dashboard");
+            } else {
+              navigate("/login");
+            }
+          }
+        } else {
+          setErrorMessage("Login failed. Please try again.");
+        }
+      })
+      .catch((error) => {
+        // If there's an error or no active session, stay on login page
+        console.log("No active session found");
+      });
+  }, []);
+
+  // Update your Login.jsx handleLogin function:
+
+  const handleLogin = (e, type) => {
+    e.preventDefault();
+    setErrorMessage("");
+    axios
+      .post(`${API_BASE_URL}/login`, { username_or_email, password })
+      .then((result) => {
+        const { message, role, music_first_timer, art_first_timer, approval } =
+          result.data;
+
+        if (message === "Success") {
+
+          // Determine redirection based on type parameter
+          if (type === "music") {
+            // Original music login redirections
+            if (role === "music_entry_clerk" && approval === "pending") {
+              setErrorMessage(
+                "Your account is awaiting approval. Please contact the admin."
+              );
+            } else if (music_first_timer && role === "customer") {
+              navigate("/first-time-login");
+            } else if (role === "customer") {
+              navigate("/customer-homepage");
+            } else if (role === "music_entry_clerk") {
+              navigate("/clerk-homepage");
+            } else if (role === "admin") {
+              navigate("/admin-dashboard");
+            } else {
+              navigate("/login");
+            }
+          } else if (type === "arts") {
+            // Arts login redirections
+            if (role === "music_entry_clerk" && approval === "pending") {
+              setErrorMessage(
+                "Your account is awaiting approval. Please contact the admin."
+              );
+            } else if (art_first_timer && role === "customer") {
+              navigate("/first-time-login-2");
             } else if (role === "customer") {
               navigate("/customer-homepage-2");
             } else if (role === "music_entry_clerk") {

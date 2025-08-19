@@ -1,133 +1,16 @@
 require("dotenv").config();
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const path = require("path");
-const ABCFile = require("./models/ABCFile");
-const Feedback = require("./models/Feedback");
-const User = require("./models/User");
-const DeletedUser = require("./models/DeletedUser");
-const Purchase = require("./models/Purchase");
-const session = require("express-session");
-const MongoDBStore = require("connect-mongodb-session")(session);
-const { MongoClient, ObjectId } = require("mongodb");
-const bodyParser = require("body-parser");
-
+const ABCFile = require("../models/ABCFile");
+const Feedback = require("../models/Feedback");
+const User = require("../models/User");
+const DeletedUser = require("../models/DeletedUser");
+const Purchase = require("../models/Purchase");
 const bcrypt = require("bcryptjs");
+const express = require("express"); 
 
-// Middleware
-const app = express();
-app.use(express.json());
-
-// ================== ENVIRONMENT CONFIG ==================
-const isProduction = process.env.NODE_ENV === "production";
-
-// ================== CORS CONFIGURATION ==================
-const allowedOrigins = [
-  // Frontend URLs
-  process.env.FRONTEND_PROD_URL,
-  process.env.FRONTEND_DEV_URL,
-  
-  // Backend URLs (for internal communication)
-  process.env.BACKEND_PROD_URL,
-  process.env.BACKEND_DEV_URL,
-  
-  // Development URLs
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:10000',
-  
-  // Add future Render URLs (you'll get these after deployment)
-  'https://mozartify.onrender.com',
-  'https://mozartify-frontend.onrender.com',
-  
-].filter(Boolean); // Remove any undefined values
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, Postman, curl requests)
-    if (!origin) return callback(null, true);
-    
-    // Check if the origin is in our allowed list
-    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
-      callback(null, true);
-    } else {
-      console.warn(`CORS blocked origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Set-Cookie'],
-};
-
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
-
-// MongoDB Connection
-if (mongoose.connection.readyState === 0) {
-  mongoose.connect(process.env.DB_URI)
-    .then(() => {
-      console.log('📊 MongoDB connected successfully');
-    })
-    .catch((err) => {
-      console.error('❌ MongoDB connection error:', err);
-    });
-} else {
-  console.log('📊 MongoDB already connected');
-}
-
-const disableSessions = process.env.DISABLE_SESSIONS === 'true';
-
-if (!disableSessions) {
-  const store = new MongoDBStore({
-    uri: process.env.DB_URI,
-    collection: "sessions",
-  });
-
-  store.on("error", (error) => {
-    console.log(error);
-  });
-
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET,
-      resave: false,
-      saveUninitialized: false,
-      store: store,
-      cookie: {
-        maxAge: 1000 * 60 * 60 * 24, // 1 day
-        sameSite: "lax",
-        httpOnly: true,
-      },
-    })
-  );
-} else {
-  // Use memory store (sessions won't persist)
-  console.log("⚠️ Sessions disabled - using memory store");
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || 'fallback-secret',
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        maxAge: 1000 * 60 * 60 * 24, // 1 day
-        sameSite: "lax",
-        httpOnly: true,
-      },
-    })
-  );
-}
-
-// Routes
-app.get("/", (req, res) => {
-  res.send("Admin API is running");
-});
+const router = express.Router();
 
 // Fetch all users
-app.get("/users", async (req, res) => {
+router.get("/users", async (req, res) => {
   try {
     const users = await User.find();
     res.json(users);
@@ -138,7 +21,7 @@ app.get("/users", async (req, res) => {
 });
 
 // Fetch user by ID
-app.get("/users/:id", async (req, res) => {
+router.get("/users/:id", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -149,7 +32,7 @@ app.get("/users/:id", async (req, res) => {
   }
 });
 
-app.post("/users", async (req, res) => {
+router.post("/users", async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
 
@@ -204,7 +87,7 @@ app.post("/users", async (req, res) => {
   }
 });
 
-app.put("/users/:id", async (req, res) => {
+router.put("/users/:id", async (req, res) => {
   try {
     const { username, email, role, approval } = req.body;
 
@@ -238,7 +121,7 @@ app.put("/users/:id", async (req, res) => {
   }
 });
 
-app.post("/api/feedback/reply/:id", async (req, res) => {
+router.post("/api/feedback/reply/:id", async (req, res) => {
   const { id } = req.params;
   const { replyMessage } = req.body;
 
@@ -268,7 +151,7 @@ app.post("/api/feedback/reply/:id", async (req, res) => {
 });
 
 // Add user to deletedusers
-app.post("/deletedusers", async (req, res) => {
+router.post("/deletedusers", async (req, res) => {
   try {
     const { username, email, password, role, approval, deletedAt } = req.body;
 
@@ -301,7 +184,7 @@ app.post("/deletedusers", async (req, res) => {
 });
 
 // Update user details
-app.put("/users/:id", async (req, res) => {
+router.put("/users/:id", async (req, res) => {
   try {
     const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -315,7 +198,7 @@ app.put("/users/:id", async (req, res) => {
   }
 });
 
-app.put("/users/:id/approval", async (req, res) => {
+router.put("/users/:id/approval", async (req, res) => {
   try {
     const { approval } = req.body;
     if (!["approved", "pending", "denied"].includes(approval)) {
@@ -337,7 +220,7 @@ app.put("/users/:id/approval", async (req, res) => {
 });
 
 // Delete a user by ID
-app.delete("/users/:id", async (req, res) => {
+router.delete("/users/:id", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -363,7 +246,7 @@ app.delete("/users/:id", async (req, res) => {
 });
 
 // Backend endpoint
-app.get("/admin/stats", async (req, res) => {
+router.get("/admin/stats", async (req, res) => {
   try {
     const totalUsers = await User.countDocuments({ role: "customer" });
     const totalUploads = await ABCFile.countDocuments();
@@ -441,19 +324,17 @@ app.get("/admin/stats", async (req, res) => {
   }
 });
 
-app.get("/admin/feedbacks", async (req, res) => {
+router.get("/admin/feedbacks", async (req, res) => {
   try {
     // Fetch all feedbacks with status "pending"
     const pendingFeedbacks = await Feedback.find({ status: "pending" });
     const totalPendingFeedbacks = pendingFeedbacks.length;
 
     // Respond with both the count and the feedbacks
-    res
-      .status(200)
-      .json({
-        feedbacks: pendingFeedbacks,
-        totalFeedbacks: totalPendingFeedbacks,
-      });
+    res.status(200).json({
+      feedbacks: pendingFeedbacks,
+      totalFeedbacks: totalPendingFeedbacks,
+    });
   } catch (error) {
     console.error("Error fetching feedbacks:", error);
     res.status(500).json({ error: "Failed to fetch feedbacks" });
@@ -461,15 +342,8 @@ app.get("/admin/feedbacks", async (req, res) => {
 });
 
 // Handle invalid routes
-app.use((req, res) => {
+router.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
-if (require.main === module) {
-  const PORT = process.env.PORT || 3003; // Use different ports for each
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🎵 Server running on port ${PORT}`);
-  });
-}
-// Start the server
-module.exports = app;
+module.exports = router;

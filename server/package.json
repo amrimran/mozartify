@@ -4,8 +4,8 @@
   "description": "Mozartify MERN Stack Backend API",
   "main": "mainserver.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node index.js",
+    "start": "node mainserver.js",
+    "dev": "node mainserver.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "engines": {

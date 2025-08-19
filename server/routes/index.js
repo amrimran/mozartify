@@ -1,244 +1,25 @@
 require("dotenv").config();
-const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
-const session = require("express-session");
-const MongoDBStore = require("connect-mongodb-session")(session);
 const { MongoClient, ObjectId } = require("mongodb");
-const { PythonShell } = require("python-shell");
-const path = require("path");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const SALT_ROUNDS = 10;
+const express = require("express"); 
 
-const UserModel = require("./models/User");
-const PurchaseModel = require("./models/Purchase");
-const Purchase2Model = require("./models/Purchase2");
-const CartModel = require("./models/Cart");
-const Cart2Model = require("./models/Cart2");
-const DeletedUserModel = require("./models/DeletedUser");
-const ABCFileModel = require("./models/ABCFile");
-const ArtworkModel = require("./models/Arts");
+const UserModel = require("../models/User");
+const PurchaseModel = require("../models/Purchase");
+const Purchase2Model = require("../models/Purchase2");
+const CartModel = require("../models/Cart");
+const Cart2Model = require("../models/Cart2");
+const DeletedUserModel = require("../models/DeletedUser");
+const ABCFileModel = require("../models/ABCFile");
+const ArtworkModel = require("../models/Arts");
 
-const app = express();
-app.use(express.json());
-
-// ================== ENVIRONMENT CONFIG ==================
 const isProduction = process.env.NODE_ENV === "production";
-
-console.log("🚀 Starting Mozartify Main API Server...");
-console.log(`📍 Environment: ${isProduction ? "production" : "development"}`);
-
-// ================== CORS CONFIGURATION ==================
-const allowedOrigins = [
-  // Frontend URLs
-  process.env.FRONTEND_PROD_URL,
-  process.env.FRONTEND_DEV_URL,
-
-  // Backend URLs (for internal communication)
-  process.env.BACKEND_PROD_URL,
-  process.env.BACKEND_DEV_URL,
-
-  // Development URLs
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://localhost:10000",
-
-  // Render URLs
-  "https://mozartify.onrender.com",
-  "https://mozartify.nasir.onrender.com",
-].filter(Boolean);
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, Postman, curl requests)
-    if (!origin) return callback(null, true);
-
-    // Check if the origin is in our allowed list
-    if (allowedOrigins.some((allowed) => origin.startsWith(allowed))) {
-      callback(null, true);
-    } else {
-      console.warn(`CORS blocked origin: ${origin}`);
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  exposedHeaders: ["Set-Cookie"],
-};
-
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
-
-// ================== MONGODB CONNECTION ==================
-
-console.log("🔄 Connecting to MongoDB...");
-
-if (mongoose.connection.readyState === 0) {
-  mongoose
-    .connect(process.env.DB_URI)
-    .then(() => {
-      console.log("📊 MongoDB connected successfully");
-    })
-    .catch((err) => {
-      console.error("❌ MongoDB connection error:", err);
-    });
-} else {
-  console.log("📊 MongoDB already connected");
-}
-
-// ================== SESSION CONFIGURATION ==================
-const disableSessions = process.env.DISABLE_SESSIONS === "true";
-
-// ================== SESSION CONFIGURATION (DEBUG VERSION) ==================
-console.log("🔄 Setting up sessions (DEBUG MODE)...");
-
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'mozartify-secret-key',
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
-      sameSite: 'none',             // CRITICAL: Change from 'lax' to 'none' for cross-domain
-      secure: true,                 // CRITICAL: Must be true when sameSite='none'
-      httpOnly: false,              // Keep false for debugging
-      domain: isProduction? ".onrender.com" : 'none',
-    },
-    name: 'sessionId',
-  })
-);
-
-console.log("✅ Session middleware configured (DEBUG MODE)");
-
-// Add explicit cookie setting test
-app.get("/test-cookie-manual", (req, res) => {
-  console.log("🍪 Manual cookie test requested");
-
-  // Manually set a cookie to test
-  res.cookie("testcookie", "testvalue123", {
-    maxAge: 1000 * 60 * 60 * 24,
-    sameSite: "lax",
-    secure: false,
-    httpOnly: false,
-  });
-
-  // Also set session data
-  req.session.test = "Manual test session";
-  req.session.timestamp = new Date().toISOString();
-
-  console.log("🍪 Setting cookies and session:");
-  console.log("   Session ID:", req.session.id);
-  console.log("   Session data:", req.session);
-
-  res.json({
-    message: "Manual cookie and session test",
-    sessionId: req.session.id,
-    sessionData: req.session,
-    note: "Check for Set-Cookie headers",
-  });
-});
-
-// Add response header debugging middleware
-app.use((req, res, next) => {
-  const originalSend = res.send;
-  const originalJson = res.json;
-
-  res.send = function (data) {
-    console.log("📤 Final response headers:", this.getHeaders());
-    return originalSend.call(this, data);
-  };
-
-  res.json = function (data) {
-    console.log("📤 Final response headers (JSON):", this.getHeaders());
-    return originalJson.call(this, data);
-  };
-
-  next();
-});
-
-// Update your existing session test
-app.get("/test-session-creation", (req, res) => {
-  console.log("🧪 Session creation test:");
-  console.log("   Before - Session ID:", req.session.id);
-  console.log("   Before - Session data:", req.session);
-
-  req.session.test = "Hello World";
-  req.session.timestamp = new Date().toISOString();
-
-  console.log("   After - Session ID:", req.session.id);
-  console.log("   After - Session data:", req.session);
-
-  res.json({
-    message: "Session created",
-    sessionId: req.session.id,
-    testData: req.session.test,
-    timestamp: req.session.timestamp,
-  });
-});
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// ================== HEALTH CHECK ROUTES ==================
-app.get("/", (req, res) => {
-  res.json({
-    message: "🎵 Mozartify Main API Server is running!",
-    timestamp: new Date().toISOString(),
-    mongodb:
-      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
-    environment: process.env.NODE_ENV || "development",
-  });
-});
-
-app.get("/health", (req, res) => {
-  res.json({
-    status: "healthy",
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || "development",
-    services: {
-      mongodb:
-        mongoose.connection.readyState === 1 ? "connected" : "disconnected",
-      server: "running",
-      sessions: disableSessions ? "disabled" : "enabled",
-    },
-    frontend: "https://mozartify-frontend.onrender.com",
-    backend: "https://mozartify.onrender.com",
-  });
-});
-
-// Add this debug route to your server/index.js:
-app.get("/debug-session", (req, res) => {
-  res.json({
-    sessionId: req.session.id,
-    userId: req.session.userId,
-    sessionData: req.session,
-    cookies: req.headers.cookie,
-    origin: req.get("origin"),
-    userAgent: req.get("user-agent"),
-  });
-});
-
-app.post("/test-session", (req, res) => {
-  req.session.testData = "Hello World";
-  req.session.save((err) => {
-    if (err) {
-      return res
-        .status(500)
-        .json({ error: "Session save failed", details: err });
-    }
-    res.json({
-      message: "Session saved successfully",
-      sessionId: req.session.id,
-      testData: req.session.testData,
-    });
-  });
-});
+const router = express.Router();
 
 // ================== EMAIL CONFIGURATION ==================
 const transporter = nodemailer.createTransport({
@@ -336,9 +117,7 @@ const sendAdminApprovalEmail = (adminEmail, username, email) => {
   );
 };
 
-// Add this debug middleware BEFORE your routes in server/index.js:
-
-app.use((req, res, next) => {
+router.use((req, res, next) => {
   // Only log for specific routes that are failing
   if (
     req.path.includes("/current-user") ||
@@ -389,7 +168,8 @@ const isAuthenticated = (req, res, next) => {
   });
 };
 
-app.post("/signup", async (req, res) => {
+// POST REGISTER REQUEST
+router.post("/signup", async (req, res) => {
   const { username, email, password, role } = req.body;
 
   try {
@@ -440,7 +220,7 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-app.get("/verify-email", async (req, res) => {
+router.get("/verify-email", async (req, res) => {
   const { token } = req.query;
 
   try {
@@ -464,7 +244,8 @@ app.get("/verify-email", async (req, res) => {
   }
 });
 
-app.get("/login", async (req, res) => {
+// FETCH LOGIN SESSION
+router.get("/login", async (req, res) => {
   try {
     // Check if there's an active session
     if (!req.session.userId) {
@@ -492,11 +273,8 @@ app.get("/login", async (req, res) => {
   }
 });
 
-// Replace your login route with this enhanced debug version:
-
-// Replace your login route with this version that forces session save:
-
-app.post("/login", async (req, res) => {
+// POST LOGIN REQUEST
+router.post("/login", async (req, res) => {
   console.log("🔐 LOGIN DEBUG START:");
   console.log("   Session ID before:", req.session.id);
 
@@ -590,7 +368,7 @@ app.post("/login", async (req, res) => {
 });
 
 // Endpoint to handle logout and clear session ID
-app.get("/logout", async (req, res) => {
+router.get("/logout", async (req, res) => {
   try {
     const userId = req.session.userId; // Retrieve the logged-in user's ID from the session
 
@@ -616,7 +394,7 @@ app.get("/logout", async (req, res) => {
   }
 });
 
-app.get("/preferences-options", async (req, res) => {
+router.get("/preferences-options", async (req, res) => {
   try {
     const composers = await ABCFileModel.distinct("composer");
     const genres = await ABCFileModel.distinct("genre");
@@ -629,7 +407,7 @@ app.get("/preferences-options", async (req, res) => {
   }
 });
 
-app.get("/art-preferences-options", async (req, res) => {
+router.get("/art-preferences-options", async (req, res) => {
   try {
     const artist = await ArtworkModel.distinct("artist");
     const collection = await ArtworkModel.distinct("collection");
@@ -641,7 +419,7 @@ app.get("/art-preferences-options", async (req, res) => {
   }
 });
 
-app.post("/preferences", async (req, res) => {
+router.post("/preferences", async (req, res) => {
   const { composer_preferences, genre_preferences, emotion_preferences } =
     req.body;
   const userId = req.session.userId;
@@ -688,7 +466,7 @@ app.post("/preferences", async (req, res) => {
   }
 });
 
-app.post("/art-preferences", async (req, res) => {
+router.post("/art-preferences", async (req, res) => {
   const { artist_preferences, colletion_preferences } = req.body;
   const userId = req.session.userId;
   let client;
@@ -733,7 +511,7 @@ app.post("/art-preferences", async (req, res) => {
   }
 });
 
-app.get("/refine-search", async (req, res) => {
+router.get("/refine-search", async (req, res) => {
   try {
     const composers = await ABCFileModel.distinct("composer");
     const genres = await ABCFileModel.distinct("genre");
@@ -747,7 +525,7 @@ app.get("/refine-search", async (req, res) => {
   }
 });
 
-app.get("/artwork-refine-search", async (req, res) => {
+router.get("/artwork-refine-search", async (req, res) => {
   try {
     // Get one sample doc to inspect fields
     const sample = await ArtworkModel.findOne().lean();
@@ -787,7 +565,7 @@ app.get("/artwork-refine-search", async (req, res) => {
   }
 });
 
-app.post("/forgot-password", async (req, res) => {
+router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
 
   // Validate email format using regex
@@ -847,7 +625,7 @@ app.post("/forgot-password", async (req, res) => {
   }
 });
 
-app.post("/reset-password", async (req, res) => {
+router.post("/reset-password", async (req, res) => {
   const { token, newPassword } = req.body;
 
   try {
@@ -894,7 +672,7 @@ app.post("/reset-password", async (req, res) => {
   }
 });
 
-app.delete("/user/delete", async (req, res) => {
+router.delete("/user/delete", async (req, res) => {
   const userId = req.session.userId;
 
   try {
@@ -929,7 +707,7 @@ app.delete("/user/delete", async (req, res) => {
   }
 });
 
-app.get("/clearSession", (req, res) => {
+router.get("/clearSession", (req, res) => {
   if (req.session) {
     req.session.destroy((err) => {
       if (err) {
@@ -945,7 +723,7 @@ app.get("/clearSession", (req, res) => {
 });
 
 // Update username only
-app.put("/user/update-username", async (req, res) => {
+router.put("/user/update-username", async (req, res) => {
   const { username } = req.body;
 
   try {
@@ -986,7 +764,7 @@ app.put("/user/update-username", async (req, res) => {
 });
 
 // Update password endpoint
-app.put("/user/change-password", async (req, res) => {
+router.put("/user/change-password", async (req, res) => {
   const { currentPassword, newPassword } = req.body;
 
   try {
@@ -1034,7 +812,7 @@ app.put("/user/change-password", async (req, res) => {
 });
 
 // Update profile picture only
-app.put("/user/update-profile-picture", async (req, res) => {
+router.put("/user/update-profile-picture", async (req, res) => {
   const { profile_picture_url } = req.body;
 
   try {
@@ -1065,7 +843,7 @@ app.put("/user/update-profile-picture", async (req, res) => {
   }
 });
 
-app.get("/current-user", isAuthenticated, (req, res) => {
+router.get("/current-user", isAuthenticated, (req, res) => {
   UserModel.findById(req.session.userId)
     .then((user) => {
       if (!user) {
@@ -1078,7 +856,7 @@ app.get("/current-user", isAuthenticated, (req, res) => {
     });
 });
 
-// app.delete("/user/delete", async (req, res) => {
+// router.delete("/user/delete", async (req, res) => {
 //   const userId = req.session.userId;
 
 //   try {
@@ -1097,7 +875,7 @@ app.get("/current-user", isAuthenticated, (req, res) => {
 //   }
 // });
 
-app.get("/search-music-scores", async (req, res) => {
+router.get("/search-music-scores", async (req, res) => {
   const { query } = req.query;
 
   try {
@@ -1122,7 +900,7 @@ app.get("/search-music-scores", async (req, res) => {
   }
 });
 
-app.get("/search-artworks", async (req, res) => {
+router.get("/search-artworks", async (req, res) => {
   const { query } = req.query;
 
   try {
@@ -1144,7 +922,7 @@ app.get("/search-artworks", async (req, res) => {
   }
 });
 
-app.post("/advanced-search", async (req, res) => {
+router.post("/advanced-search", async (req, res) => {
   const { combinedQueries, selectedCollection } = req.body;
 
   console.log("Received combinedQueries:", combinedQueries);
@@ -1229,7 +1007,7 @@ app.post("/advanced-search", async (req, res) => {
   }
 });
 
-app.post("/artwork-advanced-search", async (req, res) => {
+router.post("/artwork-advanced-search", async (req, res) => {
   const { combinedQueries, selectedCollection } = req.body;
 
   console.log("Received combinedQueries:", combinedQueries);
@@ -1305,7 +1083,7 @@ app.post("/artwork-advanced-search", async (req, res) => {
   }
 });
 
-app.post("/search", async (req, res) => {
+router.post("/search", async (req, res) => {
   const { combinedQueries, selectedCollection } = req.body;
 
   let searchConditions = [];
@@ -1378,7 +1156,7 @@ app.post("/search", async (req, res) => {
   }
 });
 
-app.post("/artwork-search", async (req, res) => {
+router.post("/artwork-search", async (req, res) => {
   const { combinedQueries, selectedCollection } = req.body;
 
   let searchConditions = [];
@@ -1451,7 +1229,7 @@ app.post("/artwork-search", async (req, res) => {
   }
 });
 
-app.get("/filter-music-scores", async (req, res) => {
+router.get("/filter-music-scores", async (req, res) => {
   const { genre, composer, emotion, instrumentation } = req.query;
 
   try {
@@ -1481,7 +1259,7 @@ app.get("/filter-music-scores", async (req, res) => {
   }
 });
 
-app.get("/filter-artworks", async (req, res) => {
+router.get("/filter-artworks", async (req, res) => {
   try {
     const filter = {};
 
@@ -1502,8 +1280,7 @@ app.get("/filter-artworks", async (req, res) => {
   }
 });
 
-
-app.post("/check-purchase", async (req, res) => {
+router.post("/check-purchase", async (req, res) => {
   try {
     const { score_id, user_id } = req.body;
 
@@ -1528,7 +1305,7 @@ app.post("/check-purchase", async (req, res) => {
   }
 });
 
-app.post("/check-artwork-purchase", async (req, res) => {
+router.post("/check-artwork-purchase", async (req, res) => {
   try {
     const { artwork_id, user_id } = req.body;
 
@@ -1552,7 +1329,7 @@ app.post("/check-artwork-purchase", async (req, res) => {
   }
 });
 
-app.get("/user-purchases", async (req, res) => {
+router.get("/user-purchases", async (req, res) => {
   try {
     const userId = req.session.userId;
 
@@ -1567,7 +1344,7 @@ app.get("/user-purchases", async (req, res) => {
   }
 });
 
-app.get("/user-artwork-purchases", async (req, res) => {
+router.get("/user-artwork-purchases", async (req, res) => {
   try {
     const userId = req.session.userId;
 
@@ -1582,7 +1359,7 @@ app.get("/user-artwork-purchases", async (req, res) => {
   }
 });
 
-app.get("/user-cart", async (req, res) => {
+router.get("/user-cart", async (req, res) => {
   try {
     const userId = req.session.userId;
 
@@ -1601,7 +1378,7 @@ app.get("/user-cart", async (req, res) => {
   }
 });
 
-app.get("/user-artwork-cart", async (req, res) => {
+router.get("/user-artwork-cart", async (req, res) => {
   try {
     const userId = req.session.userId;
 
@@ -1623,7 +1400,7 @@ app.get("/user-artwork-cart", async (req, res) => {
 });
 
 // Get artwork by ID
-app.get("/fetchArts/:id", async (req, res) => {
+router.get("/fetchArts/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1647,7 +1424,7 @@ app.get("/fetchArts/:id", async (req, res) => {
   }
 });
 
-app.get("/check-purchase/:artwork_id", async (req, res) => {
+router.get("/check-purchase/:artwork_id", async (req, res) => {
   try {
     const { artwork_id } = req.params;
     const userId = req.session.userId;
@@ -1671,7 +1448,7 @@ app.get("/check-purchase/:artwork_id", async (req, res) => {
   }
 });
 
-app.get("/download-artwork", async (req, res) => {
+router.get("/download-artwork", async (req, res) => {
   try {
     const { imageUrl } = req.query;
 
@@ -1693,7 +1470,7 @@ app.get("/download-artwork", async (req, res) => {
   }
 });
 
-app.post("/add-to-cart", async (req, res) => {
+router.post("/add-to-cart", async (req, res) => {
   try {
     const userId = req.session.userId;
     const { musicScoreId } = req.body;
@@ -1717,7 +1494,7 @@ app.post("/add-to-cart", async (req, res) => {
   }
 });
 
-app.post("/add-to-cart-artwork", async (req, res) => {
+router.post("/add-to-cart-artwork", async (req, res) => {
   try {
     const userId = req.session.userId;
     const { artworkId } = req.body;
@@ -1741,7 +1518,7 @@ app.post("/add-to-cart-artwork", async (req, res) => {
   }
 });
 
-app.post("/submit-rating", async (req, res) => {
+router.post("/submit-rating", async (req, res) => {
   const { rating, scoreId, userId } = req.body;
 
   try {
@@ -1759,7 +1536,7 @@ app.post("/submit-rating", async (req, res) => {
   }
 });
 
-app.post("/submit-artwork-rating", async (req, res) => {
+router.post("/submit-artwork-rating", async (req, res) => {
   const { rating, artworkId, userId } = req.body;
 
   try {
@@ -1776,7 +1553,7 @@ app.post("/submit-artwork-rating", async (req, res) => {
   }
 });
 
-app.delete("/remove-item-from-cart/:id", async (req, res) => {
+router.delete("/remove-item-from-cart/:id", async (req, res) => {
   try {
     const userId = req.session.userId;
     const scoreId = req.params.id;
@@ -1799,7 +1576,7 @@ app.delete("/remove-item-from-cart/:id", async (req, res) => {
   }
 });
 
-app.delete("/remove-artwork-from-cart/:id", async (req, res) => {
+router.delete("/remove-artwork-from-cart/:id", async (req, res) => {
   try {
     const userId = req.session.userId;
     const artworkId = req.params.id;
@@ -1822,7 +1599,7 @@ app.delete("/remove-artwork-from-cart/:id", async (req, res) => {
   }
 });
 
-app.get("/music-score/:id", async (req, res) => {
+router.get("/music-score/:id", async (req, res) => {
   try {
     const scoreId = req.params.id;
 
@@ -1839,7 +1616,7 @@ app.get("/music-score/:id", async (req, res) => {
   }
 });
 
-app.get("/artwork/:id", async (req, res) => {
+router.get("/artwork/:id", async (req, res) => {
   try {
     const artworkId = req.params.id;
 
@@ -1856,7 +1633,7 @@ app.get("/artwork/:id", async (req, res) => {
   }
 });
 
-app.get("/music-scores", async (req, res) => {
+router.get("/music-scores", async (req, res) => {
   try {
     const scoreIds = req.query.scoreIds;
 
@@ -1889,7 +1666,7 @@ app.get("/music-scores", async (req, res) => {
   }
 });
 
-app.get("/artworks", async (req, res) => {
+router.get("/artworks", async (req, res) => {
   try {
     const artworkIds = req.query.artworkIds;
 
@@ -1922,7 +1699,7 @@ app.get("/artworks", async (req, res) => {
   }
 });
 
-app.get("/popular-music-scores", async (req, res) => {
+router.get("/popular-music-scores", async (req, res) => {
   try {
     const popularScores = await ABCFileModel.find()
       .sort({ downloads: -1 })
@@ -1934,7 +1711,7 @@ app.get("/popular-music-scores", async (req, res) => {
   }
 });
 
-app.get("/popular-artworks", async (req, res) => {
+router.get("/popular-artworks", async (req, res) => {
   try {
     const popularArtworks = await ArtworkModel.find()
       .sort({ downloads: -1 })
@@ -1946,7 +1723,7 @@ app.get("/popular-artworks", async (req, res) => {
   }
 });
 
-app.get("/user-liked-scores", async (req, res) => {
+router.get("/user-liked-scores", async (req, res) => {
   try {
     const userId = req.session.userId;
 
@@ -1967,7 +1744,7 @@ app.get("/user-liked-scores", async (req, res) => {
   }
 });
 
-app.get("/user-liked-artworks", async (req, res) => {
+router.get("/user-liked-artworks", async (req, res) => {
   try {
     const userId = req.session.userId;
 
@@ -1988,7 +1765,7 @@ app.get("/user-liked-artworks", async (req, res) => {
   }
 });
 
-app.get("/user-composed-scores", async (req, res) => {
+router.get("/user-composed-scores", async (req, res) => {
   try {
     const userId = req.session.userId;
 
@@ -2013,7 +1790,7 @@ app.get("/user-composed-scores", async (req, res) => {
   }
 });
 
-app.post("/set-favorites", async (req, res) => {
+router.post("/set-favorites", async (req, res) => {
   const userId = req.session.userId;
   const { musicScoreId, action } = req.body;
 
@@ -2050,7 +1827,7 @@ app.post("/set-favorites", async (req, res) => {
   }
 });
 
-app.post("/set-favorites-artwork", async (req, res) => {
+router.post("/set-favorites-artwork", async (req, res) => {
   const userId = req.session.userId;
   const { artworkId, action } = req.body;
 
@@ -2087,7 +1864,7 @@ app.post("/set-favorites-artwork", async (req, res) => {
   }
 });
 
-app.get("/customer-music-score-view/:id", async (req, res) => {
+router.get("/customer-music-score-view/:id", async (req, res) => {
   try {
     const musicScore = await ABCFileModel.findById(req.params.id);
     if (!musicScore) {
@@ -2099,7 +1876,7 @@ app.get("/customer-music-score-view/:id", async (req, res) => {
   }
 });
 
-app.get("/customer-artwork-view/:id", async (req, res) => {
+router.get("/customer-artwork-view/:id", async (req, res) => {
   try {
     const artwork = await ArtworkModel.findById(req.params.id);
     if (!artwork) {
@@ -2111,7 +1888,7 @@ app.get("/customer-artwork-view/:id", async (req, res) => {
   }
 });
 
-app.get("/api/image-path", async (req, res) => {
+router.get("/api/image-path", async (req, res) => {
   try {
     const score = await ABCFileModel.findOne();
     res.json({ path: score.coverImageUrl });
@@ -2120,7 +1897,7 @@ app.get("/api/image-path", async (req, res) => {
   }
 });
 
-app.get("/api/image-path-artwork", async (req, res) => {
+router.get("/api/image-path-artwork", async (req, res) => {
   try {
     const artwork = await ArtworkModel.findOne();
     res.json({ path: artwork.imageUrl });
@@ -2315,7 +2092,7 @@ const calculateArtworkRecommendations = async (userId) => {
   }
 };
 
-app.get("/recommendations", async (req, res) => {
+router.get("/recommendations", async (req, res) => {
   try {
     if (!req.session.userId) {
       return res.status(401).json({ error: "User not logged in" });
@@ -2329,7 +2106,7 @@ app.get("/recommendations", async (req, res) => {
   }
 });
 
-app.get("/artwork-recommendations", async (req, res) => {
+router.get("/artwork-recommendations", async (req, res) => {
   try {
     if (!req.session.userId) {
       return res.status(401).json({ error: "User not logged in" });
@@ -2367,7 +2144,7 @@ const fulfillOrder = async (session) => {
   );
 };
 
-app.post(
+router.post(
   "/webhook",
   bodyParser.raw({ type: "application/json" }),
   async (req, res) => {
@@ -2397,7 +2174,7 @@ app.post(
   }
 );
 
-app.post("/create-checkout-session", async (req, res) => {
+router.post("/create-checkout-session", async (req, res) => {
   let userId = req.session.userId;
   userId = userId.toString();
 
@@ -2431,7 +2208,7 @@ app.post("/create-checkout-session", async (req, res) => {
   res.json({ id: paymentSession.id });
 });
 
-app.post("/create-checkout-session-artwork", async (req, res) => {
+router.post("/create-checkout-session-artwork", async (req, res) => {
   let userId = req.session.userId;
   userId = userId.toString();
 
@@ -2465,7 +2242,7 @@ app.post("/create-checkout-session-artwork", async (req, res) => {
   res.json({ id: paymentSession.id });
 });
 
-app.post("/complete-purchase", async (req, res) => {
+router.post("/complete-purchase", async (req, res) => {
   const userId = req.session.userId;
 
   try {
@@ -2522,7 +2299,7 @@ app.post("/complete-purchase", async (req, res) => {
   }
 });
 
-app.post("/complete-purchase-artwork", async (req, res) => {
+router.post("/complete-purchase-artwork", async (req, res) => {
   const userId = req.session.userId;
 
   try {
@@ -2579,38 +2356,6 @@ app.post("/complete-purchase-artwork", async (req, res) => {
   }
 });
 
-// ================== START SERVER ==================
-const PORT = process.env.PORT || 10000;
+module.exports = router;
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log("\n🚀 =================================");
-  console.log(`   Mozartify Main API Server`);
-  console.log("🚀 =================================");
-  console.log(`📍 Port: ${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`🌐 Backend URL: https://mozartify.onrender.com`);
-  console.log(`🎨 Frontend URL: https://mozartify-frontend.onrender.com`);
-  console.log(`📡 Health Check: https://mozartify.onrender.com/health`);
-  console.log("🚀 =================================\n");
-});
 
-// ================== GRACEFUL SHUTDOWN ==================
-process.on("SIGTERM", () => {
-  console.log("🛑 SIGTERM received. Shutting down gracefully...");
-  process.exit(0);
-});
-
-process.on("SIGINT", () => {
-  console.log("🛑 SIGINT received. Shutting down gracefully...");
-  process.exit(0);
-});
-
-process.on("uncaughtException", (err) => {
-  console.error("❌ Uncaught Exception:", err);
-  process.exit(1);
-});
-
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
-  process.exit(1);
-});

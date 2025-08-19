@@ -1,125 +1,13 @@
-// server.js
 require("dotenv").config();
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const bodyParser = require("body-parser");
 const multer = require("multer");
-const Feedback = require("./models/Feedback");
-const Feedback2 = require("./models/Feedback2");
-const session = require("express-session");
-const MongoDBStore = require("connect-mongodb-session")(session);
+const express = require("express"); 
+const Feedback = require("../models/Feedback");
+const Feedback2 = require("../models/Feedback2");
 
-const app = express();
-app.use(express.json());
-
-// ================== ENVIRONMENT CONFIG ==================
-const isProduction = process.env.NODE_ENV === "production";
-
-// ================== CORS CONFIGURATION ==================
-const allowedOrigins = [
-  // Frontend URLs
-  process.env.FRONTEND_PROD_URL,
-  process.env.FRONTEND_DEV_URL,
-  
-  // Backend URLs (for internal communication)
-  process.env.BACKEND_PROD_URL,
-  process.env.BACKEND_DEV_URL,
-  
-  // Development URLs
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:10000',
-  
-  // Add future Render URLs (you'll get these after deployment)
-  'https://mozartify-backend.onrender.com',
-  'https://mozartify-frontend.onrender.com',
-  
-].filter(Boolean); // Remove any undefined values
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, Postman, curl requests)
-    if (!origin) return callback(null, true);
-    
-    // Check if the origin is in our allowed list
-    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
-      callback(null, true);
-    } else {
-      console.warn(`CORS blocked origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Set-Cookie'],
-};
-
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
-
-if (mongoose.connection.readyState === 0) {
-  mongoose.connect(process.env.DB_URI)
-    .then(() => {
-      console.log('📊 MongoDB connected successfully');
-    })
-    .catch((err) => {
-      console.error('❌ MongoDB connection error:', err);
-    });
-} else {
-  console.log('📊 MongoDB already connected');
-}
-
-const disableSessions = process.env.DISABLE_SESSIONS === 'true';
-
-if (!disableSessions) {
-  const store = new MongoDBStore({
-    uri: process.env.DB_URI,
-    collection: "sessions",
-  });
-
-  store.on("error", (error) => {
-    console.log(error);
-  });
-
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET,
-      resave: false,
-      saveUninitialized: false,
-      store: store,
-      cookie: {
-        maxAge: 1000 * 60 * 60 * 24, // 1 day
-        sameSite: "lax",
-        httpOnly: true,
-      },
-    })
-  );
-} else {
-  // Use memory store (sessions won't persist)
-  console.log("⚠️ Sessions disabled - using memory store");
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || 'fallback-secret',
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        maxAge: 1000 * 60 * 60 * 24, // 1 day
-        sameSite: "lax",
-        httpOnly: true,
-      },
-    })
-  );
-}
-
+const router = express.Router();
 const upload = multer();
 
-
-
-// Submit Feedback endpoint for customer
-app.post("/api/feedback", upload.none(), async (req, res) => {
+router.post("/api/feedback", upload.none(), async (req, res) => {
   const { username, title, detail, user_id, attachment_url } = req.body;
 
   const feedback = new Feedback({
@@ -139,7 +27,7 @@ app.post("/api/feedback", upload.none(), async (req, res) => {
   }
 });
 
-app.post("/api/artwork-feedback", upload.none(), async (req, res) => {
+router.post("/api/artwork-feedback", upload.none(), async (req, res) => {
   const { username, title, detail, user_id, attachment_url } = req.body;
 
   const feedback2 = new Feedback2({
@@ -159,8 +47,8 @@ app.post("/api/artwork-feedback", upload.none(), async (req, res) => {
   }
 });
 
-// Get user id-based feedbacks endpoint for customer
-app.get("/api/feedback", async (req, res) => {
+// Get userID-based feedbacks endpoint for customer
+router.get("/api/feedback", async (req, res) => {
   const { userId } = req.query;
 
   try {
@@ -176,7 +64,7 @@ app.get("/api/feedback", async (req, res) => {
   }
 });
 
-app.get("/api/artwork-feedback", async (req, res) => {
+router.get("/api/artwork-feedback", async (req, res) => {
   const { userId } = req.query;
 
   try {
@@ -193,7 +81,7 @@ app.get("/api/artwork-feedback", async (req, res) => {
 });
 
 // Get all feedbacks endpoint for admin
-app.get("/api/feedback/all", async (req, res) => {
+router.get("/api/feedback/all", async (req, res) => {
   try {
     const feedbacks = await Feedback.find(); // Fetch all feedbacks
     res.json(feedbacks);
@@ -203,7 +91,7 @@ app.get("/api/feedback/all", async (req, res) => {
 });
 
 // Delete feedback endpoint
-app.delete("/api/feedback/delete/:id", async (req, res) => {
+router.delete("/api/feedback/delete/:id", async (req, res) => {
   try {
     const { id } = req.params;
     await Feedback.findByIdAndDelete(id);
@@ -213,7 +101,7 @@ app.delete("/api/feedback/delete/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/artwork-feedback/delete/:id", async (req, res) => {
+router.delete("/api/artwork-feedback/delete/:id", async (req, res) => {
   try {
     const { id } = req.params;
     await Feedback2.findByIdAndDelete(id);
@@ -224,7 +112,7 @@ app.delete("/api/artwork-feedback/delete/:id", async (req, res) => {
 });
 
 // Update reply endpoint
-app.post("/api/feedback/reply/:id", async (req, res) => {
+router.post("/api/feedback/reply/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { message, sender } = req.body;
@@ -266,7 +154,7 @@ app.post("/api/feedback/reply/:id", async (req, res) => {
   }
 });
 
-app.post("/api/artwork-feedback/reply/:id", async (req, res) => {
+router.post("/api/artwork-feedback/reply/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { message, sender } = req.body;
@@ -292,10 +180,14 @@ app.post("/api/artwork-feedback/reply/:id", async (req, res) => {
       updateFields.$set = { isReadCustomer: false };
     }
 
-    const updatedFeedback = await Feedback2.findByIdAndUpdate(id, updateFields, {
-      new: true,
-      runValidators: true,
-    });
+    const updatedFeedback = await Feedback2.findByIdAndUpdate(
+      id,
+      updateFields,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     if (!updatedFeedback) {
       return res.status(404).json({ message: "Feedback not found" });
@@ -309,7 +201,7 @@ app.post("/api/artwork-feedback/reply/:id", async (req, res) => {
 });
 
 // New endpoint to update feedback status (admin only)
-app.patch("/api/feedback/status/:id", async (req, res) => {
+router.patch("/api/feedback/status/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -335,7 +227,7 @@ app.patch("/api/feedback/status/:id", async (req, res) => {
   }
 });
 
-app.patch("/api/artwork-feedback/status/:id", async (req, res) => {
+router.patch("/api/artwork-feedback/status/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -361,7 +253,7 @@ app.patch("/api/artwork-feedback/status/:id", async (req, res) => {
   }
 });
 
-app.put("/api/feedback/:id/mark-read-customer", async (req, res) => {
+router.put("/api/feedback/:id/mark-read-customer", async (req, res) => {
   try {
     await Feedback.findByIdAndUpdate(req.params.id, { isReadCustomer: true });
     res.json({ message: "Feedback marked as read by customer" });
@@ -370,7 +262,7 @@ app.put("/api/feedback/:id/mark-read-customer", async (req, res) => {
   }
 });
 
-app.put("/api/artwork-feedback/:id/mark-read-customer", async (req, res) => {
+router.put("/api/artwork-feedback/:id/mark-read-customer", async (req, res) => {
   try {
     await Feedback2.findByIdAndUpdate(req.params.id, { isReadCustomer: true });
     res.json({ message: "Feedback marked as read by customer" });
@@ -379,7 +271,7 @@ app.put("/api/artwork-feedback/:id/mark-read-customer", async (req, res) => {
   }
 });
 
-app.put("/api/feedback/:id/mark-read-admin", async (req, res) => {
+router.put("/api/feedback/:id/mark-read-admin", async (req, res) => {
   try {
     await Feedback.findByIdAndUpdate(req.params.id, { isReadAdmin: true });
     res.json({ message: "Feedback marked as read by admin" });
@@ -388,7 +280,7 @@ app.put("/api/feedback/:id/mark-read-admin", async (req, res) => {
   }
 });
 
-app.put("/api/artwork-feedback/:id/mark-read-admin", async (req, res) => {
+router.put("/api/artwork-feedback/:id/mark-read-admin", async (req, res) => {
   try {
     await Feedback2.findByIdAndUpdate(req.params.id, { isReadAdmin: true });
     res.json({ message: "Feedback marked as read by admin" });
@@ -397,12 +289,4 @@ app.put("/api/artwork-feedback/:id/mark-read-admin", async (req, res) => {
   }
 });
 
-if (require.main === module) {
-  const PORT = process.env.PORT || 3002; // Use different ports for each
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🎵 Server running on port ${PORT}`);
-  });
-}
-
-module.exports = app;
-
+module.exports = router;

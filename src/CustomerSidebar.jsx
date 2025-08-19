@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   Box,
@@ -23,7 +24,7 @@ import {
 } from "@mui/icons-material";
 import SidebarMozartifyLogo from "./assets/mozartify.png";
 import { useUnread } from "./UnreadContext.jsx";
-import { API_BASE_URL, API_BASE_URL_2} from './config/api.js';
+import { API_BASE_URL, API_BASE_URL_2 } from "./config/api.js";
 
 axios.defaults.withCredentials = true;
 
@@ -31,6 +32,7 @@ const CustomerSidebar = ({ active }) => {
   const currentPath = window.location.pathname;
   const [user, setUser] = useState(null);
   const { unreadCount, setUnreadCount } = useUnread();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUser = async () => {
