@@ -25,7 +25,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
 import ImportIcon from "./assets/import-icon.png";
-import { API_BASE_URL, API_BASE_URL_1} from './config/api.js';
+import { API_BASE_URL} from './config/api.js';
 
 const DRAWER_WIDTH = 225;
 
@@ -203,7 +203,7 @@ export default function MusicEntryClerkUpload() {
     const formData = new FormData();
     formData.append("file", selectedFile);
 
-    fetch(`${API_BASE_URL_1}/upload`, {
+    fetch(`${API_BASE_URL}/upload`, {
       method: "POST",
       body: formData,
     })

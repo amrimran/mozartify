@@ -25,7 +25,7 @@ import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./ArtsClerkSidebar";
 import ImportIcon from "./assets/import-icon.png";
 import { storage, ref, uploadBytesResumable, getDownloadURL } from "./firebase";
-import { API_BASE_URL, API_BASE_URL_1} from './config/api.js';
+import { API_BASE_URL} from './config/api.js';
 
 const DRAWER_WIDTH = 225;
 
@@ -248,7 +248,7 @@ export default function ArtsClerkUpload() {
   
         // Save artwork metadata to the backend
         try {
-          const response = await axios.post(`${API_BASE_URL_1}/catalogArts`, {
+          const response = await axios.post(`${API_BASE_URL}/catalogArts`, {
             imageUrl: downloadURL,
           });
   

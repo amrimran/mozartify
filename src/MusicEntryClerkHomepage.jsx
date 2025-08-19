@@ -30,7 +30,7 @@ import ClerkSidebar from "./MusicEntryClerkSidebar";
 import { useNavigate } from "react-router-dom";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { createGlobalStyle } from "styled-components";
-import { API_BASE_URL, API_BASE_URL_1} from './config/api.js';
+import { API_BASE_URL} from './config/api.js';
 
 const DRAWER_WIDTH = 225;
 
@@ -268,7 +268,7 @@ export default function MusicEntryClerkHomepage() {
       // Add setTimeout to create a 2-second delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const response = await axios.get(`${API_BASE_URL_1}/abc-file`);
+      const response = await axios.get(`${API_BASE_URL}/abc-file`);
       const transformedScores = response.data.map((score) => ({
         ...score,
         _id: score._id.$oid || score._id.toString() || score._id,

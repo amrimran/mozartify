@@ -47,7 +47,7 @@ import { createGlobalStyle } from "styled-components";
 import { useUnread } from "./UnreadContext.jsx";
 
 axios.defaults.withCredentials = true;
-import { API_BASE_URL, API_BASE_URL_2} from './config/api.js';
+import { API_BASE_URL} from './config/api.js';
 
 const DRAWER_WIDTH = 230;
 
@@ -467,7 +467,7 @@ const CustomerInbox = () => {
       };
 
       const response = await axios.post(
-        `${API_BASE_URL_2}/api/feedback`,
+        `${API_BASE_URL}/api/feedback`,
         feedbackData
       );
 
@@ -489,7 +489,7 @@ const CustomerInbox = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${API_BASE_URL_2}/api/feedback/delete/${id}`);
+      await axios.delete(`${API_BASE_URL}/api/feedback/delete/${id}`);
       setFeedbackData((prev) => prev.filter((feedback) => feedback._id !== id));
       showNotification("Feedback deleted successfully");
     } catch (error) {
@@ -502,7 +502,7 @@ const CustomerInbox = () => {
     try {
       // Mark the feedback as read in the database
       await axios.put(
-        `${API_BASE_URL_2}/api/feedback/${feedback._id}/mark-read-customer`
+        `${API_BASE_URL}/api/feedback/${feedback._id}/mark-read-customer`
       );
       setUnreadCount(unreadCount - 1);
 
@@ -585,7 +585,7 @@ const CustomerInbox = () => {
 
     try {
       const response = await axios.get(
-        `${API_BASE_URL_2}/api/feedback?userId=${user._id}`
+        `${API_BASE_URL}/api/feedback?userId=${user._id}`
       );
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -610,7 +610,7 @@ const CustomerInbox = () => {
 
     try {
       const response = await axios.post(
-        `${API_BASE_URL_2}/api/feedback/reply/${selectedFeedback._id}`,
+        `${API_BASE_URL}/api/feedback/reply/${selectedFeedback._id}`,
         {
           message: newReply,
           sender: "customer",

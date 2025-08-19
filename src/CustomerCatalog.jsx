@@ -41,7 +41,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
 import { Menu as MenuIcon } from "@mui/icons-material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { API_BASE_URL, API_BASE_URL_1} from './config/api.js';
+import { API_BASE_URL} from './config/api.js';
 
 const DRAWER_WIDTH = 225;
 
@@ -618,7 +618,7 @@ export default function CustomerCatalog() {
     }
   
     try {
-      const response = await fetch(`${API_BASE_URL_1}/catalog/new`, {
+      const response = await fetch(`${API_BASE_URL}/catalog/new`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -26,7 +26,7 @@ import { createGlobalStyle } from "styled-components";
 import AdminSidebar from "./AdminSidebar";
 import ABCJS from "abcjs";
 import axios from "axios";
-import { API_BASE_URL, API_BASE_URL_3} from './config/api.js';
+import { API_BASE_URL} from './config/api.js';
 
 
 const DRAWER_WIDTH = 225;
@@ -222,7 +222,7 @@ const AdminEdit = () => {
       const fetchABCFileContent = async () => {
         try {
           const response = await fetch(
-            `${API_BASE_URL_1}/abc-file/${fileName}`
+            `${API_BASE_URL}/abc-file/${fileName}`
           );
           if (!response.ok) {
             throw new Error("Network response was not ok");
@@ -381,7 +381,7 @@ const AdminEdit = () => {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL_1}/abc-file/${fileName}/content`,
+        `${API_BASE_URL}/abc-file/${fileName}/content`,
         {
           method: "PUT",
           headers: {

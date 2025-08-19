@@ -38,7 +38,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import StopIcon from "@mui/icons-material/Stop";
 import StarIcon from "@mui/icons-material/Star";
 import Rating from "@mui/material/Rating";
-import { API_BASE_URL, API_BASE_URL_1} from './config/api.js';
+import { API_BASE_URL} from './config/api.js';
 
 export default function CustomerMusicScoreView() {
   const { id } = useParams();
@@ -333,7 +333,7 @@ export default function CustomerMusicScoreView() {
     const fetchAbcFileAndMetadata = async () => {
       try {
         const response = await axios.get(
-          `${API_BASE_URL_1}/abc-file/${id}`
+          `${API_BASE_URL}/abc-file/${id}`
         );
         const abcContent = response.data.content;
 

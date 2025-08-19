@@ -19,7 +19,7 @@ import SidebarMozartifyLogo from "./assets/mozartify.png";
 import SearchIcon from "@mui/icons-material/Search";
 import { useUnread } from "./UnreadContext.jsx";
 
-import { API_BASE_URL, API_BASE_URL_2} from './config/api.js';
+import { API_BASE_URL} from './config/api.js';
 axios.defaults.withCredentials = true;
 
 const AdminSidebar = ({ active }) => {
@@ -46,7 +46,7 @@ const AdminSidebar = ({ active }) => {
 
       try {
         const response = await axios.get(
-          `${API_BASE_URL_2}/api/feedback/all`
+          `${API_BASE_URL}/api/feedback/all`
         );
 
         const unreadMessages = response.data.filter(

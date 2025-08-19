@@ -27,7 +27,7 @@ import CustomerSidebar from "./CustomerSidebar";
 import ABCJS from "abcjs";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import { API_BASE_URL, API_BASE_URL_1} from './config/api.js';
+import { API_BASE_URL} from './config/api.js';
 
 const DRAWER_WIDTH = 225;
 
@@ -243,7 +243,7 @@ const CustomerEdit = () => {
   //     const fetchABCFileContent = async () => {
   //       try {
   //         const response = await fetch(
-  //           `${API_BASE_URL_1}/abc-file/${fileName}`
+  //           `${API_BASE_URL}/abc-file/${fileName}`
   //         );
   //         if (!response.ok) {
   //           throw new Error("Network response was not ok");
