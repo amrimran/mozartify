@@ -10,6 +10,7 @@ const app = express();
 
 // ================== ENVIRONMENT CONFIG ==================
 const isProduction = process.env.NODE_ENV === "production";
+
 const PORT = process.env.PORT || 10000;
 
 console.log("🚀 Starting Mozartify Backend Services...");
@@ -82,12 +83,23 @@ app.use(
       sameSite: isProduction ? "none" : "lax",
       httpOnly: true,
       secure: isProduction,
-      domain: isProduction ? ".onrender.com" : undefined,  // ✅ ADD THIS
     },
   })
 );
 
 console.log("✅ Session middleware configured");
+
+// ================== DEBUG MIDDLEWARE (ADD THIS) ==================
+app.use((req, res, next) => {
+  console.log('\n🔍 === REQUEST DEBUG ===');
+  console.log('📍 URL:', req.method, req.url);
+  console.log('🌐 Origin:', req.headers.origin);
+  console.log('🍪 Cookie Header:', req.headers.cookie);
+  console.log('🆔 Session ID:', req.sessionID);
+  console.log('👤 Session Data:', req.session);
+  console.log('========================\n');
+  next();
+});
 
 // ================== BASIC MIDDLEWARE ==================
 app.use(express.json());
