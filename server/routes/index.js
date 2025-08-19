@@ -7,7 +7,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const SALT_ROUNDS = 10;
-const express = require("express"); 
+const express = require("express");
 
 const UserModel = require("../models/User");
 const PurchaseModel = require("../models/Purchase");
@@ -2357,5 +2357,3 @@ router.post("/complete-purchase-artwork", async (req, res) => {
 });
 
 module.exports = router;
-
-
