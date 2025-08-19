@@ -78,11 +78,11 @@ app.use(
     saveUninitialized: false,
     store: store,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
-      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24,
+      sameSite: isProduction ? "none" : "lax",
       httpOnly: true,
       secure: isProduction,
-      // domain: isProduction ? undefined : undefined, // ✅ ADD THIS
+      domain: isProduction ? ".onrender.com" : undefined,  // ✅ ADD THIS
     },
   })
 );
