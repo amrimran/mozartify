@@ -83,6 +83,7 @@ app.use(
       sameSite:"none",
       httpOnly: true,
       secure: isProduction,
+      domain: ".onrender.com",
     },
   })
 );
