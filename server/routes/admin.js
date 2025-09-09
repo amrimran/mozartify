@@ -341,9 +341,4 @@ router.get("/admin/feedbacks", async (req, res) => {
   }
 });
 
-// Handle invalid routes
-router.use((req, res) => {
-  res.status(404).json({ error: "Route not found" });
-});
-
 module.exports = router;

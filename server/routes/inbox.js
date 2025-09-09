@@ -7,6 +7,11 @@ const Feedback2 = require("../models/Feedback2");
 const router = express.Router();
 const upload = multer();
 
+router.get("/inbox-test", (req, res) => {
+  console.log("🚀 INBOX TEST ROUTE HIT!");
+  res.json({ message: "Inbox routes are working!", timestamp: new Date() });
+});
+
 router.post("/api/feedback", upload.none(), async (req, res) => {
   const { username, title, detail, user_id, attachment_url } = req.body;
 
@@ -288,5 +293,17 @@ router.put("/api/artwork-feedback/:id/mark-read-admin", async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 });
+
+console.log("🔍 INBOX ROUTER DEBUG INFO:");
+console.log("Router exists:", !!router);
+console.log("Router stack length:", router.stack ? router.stack.length : 'undefined');
+console.log("Router type:", typeof router);
+
+if (router.stack) {
+  console.log("Routes in stack:");
+  router.stack.forEach((layer, index) => {
+    console.log(`  ${index}: ${layer.route?.path || 'middleware'}`);
+  });
+}
 
 module.exports = router;

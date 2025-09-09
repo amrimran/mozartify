@@ -80,10 +80,9 @@ app.use(
     store: store,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24,
-      sameSite:"none",
+      sameSite: "lax",
       httpOnly: true,
       secure: isProduction,
-      domain: ".onrender.com",
     },
   })
 );
@@ -91,16 +90,16 @@ app.use(
 console.log("✅ Session middleware configured");
 
 // ================== DEBUG MIDDLEWARE  ==================
-app.use((req, res, next) => {
-  console.log('\n🔍 === REQUEST DEBUG(from mainserver.js) ===');
-  console.log('📍 URL:', req.method, req.url);
-  console.log('🌐 Origin:', req.headers.origin);
-  console.log('🍪 Cookie Header:', req.headers.cookie);
-  console.log('🆔 Session ID:', req.sessionID);
-  console.log('👤 Session Data:', req.session);
-  console.log('========================\n');
-  next();
-});
+// app.use((req, res, next) => {
+//   console.log('\n🔍 === REQUEST DEBUG(from mainserver.js) ===');
+//   console.log('📍 URL:', req.method, req.url);
+//   console.log('🌐 Origin:', req.headers.origin);
+//   console.log('🍪 Cookie Header:', req.headers.cookie);
+//   console.log('🆔 Session ID:', req.sessionID);
+//   console.log('👤 Session Data:', req.session);
+//   console.log('========================\n');
+//   next();
+// });
 
 // ================== BASIC MIDDLEWARE ==================
 app.use(express.json());
@@ -116,7 +115,8 @@ app.get("/health", (req, res) => {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || "development",
     services: {
-      mongodb: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+      mongodb:
+        mongoose.connection.readyState === 1 ? "connected" : "disconnected",
       server: "running",
       sessions: "enabled",
     },
@@ -130,32 +130,29 @@ app.get("/health", (req, res) => {
 try {
   console.log("🔄 Loading route modules...");
 
-  // Import as route modules (these should export routers, not apps)
   const indexRoutes = require("./routes/index");
+  console.log("✅ Index routes loaded");
+
   const adminRoutes = require("./routes/admin");
+  console.log("✅ Admin routes loaded");
+
   const serverRoutes = require("./routes/server");
+  console.log("✅ Server routes loaded");
+
   const inboxRoutes = require("./routes/inbox");
+  console.log("✅ Inbox routes loaded");
 
-  // Mount the routes
   app.use("/", indexRoutes);
-  app.use("/", adminRoutes);
   app.use("/", serverRoutes);
+  
   app.use("/", inboxRoutes);
+  app.use("/", adminRoutes);
+  
 
-  console.log("✅ All route modules loaded successfully");
+  console.log("✅ All route modules mounted successfully");
 } catch (error) {
   console.error("❌ Error loading route modules:", error);
-  
-  // Fallback error route
-  app.get("*", (req, res) => {
-    res.status(500).json({
-      error: "Backend services failed to load",
-      message: error.message
-    });
-  });
 }
-
-
 
 // ================== ERROR HANDLING ==================
 app.use((err, req, res, next) => {
