@@ -1504,24 +1504,19 @@ export default function CustomerHomepage2() {
                                     justifyContent: "center",
                                   }}
                                 >
-                                  <Tooltip title={artwork.title} arrow>
-                                    <Box>
-                                      {/* Whatever you want to display that shows the tooltip when hovered */}
-                                      <Typography>{artwork.title}</Typography>
-                                    </Box>
+                                   <Tooltip title={artwork.title} arrow>
+                                    <Typography
+                                      variant="h6"
+                                      noWrap
+                                      sx={{
+                                        textAlign: "center",
+                                        mb: 1,
+                                        fontFamily: "Montserrat",
+                                      }}
+                                    >
+                                      {artwork.title}
+                                    </Typography>
                                   </Tooltip>
-
-                                  <Typography
-                                    variant="h6"
-                                    noWrap
-                                    sx={{
-                                      textAlign: "center",
-                                      mb: 1,
-                                      fontFamily: "Montserrat",
-                                    }}
-                                  >
-                                    {artwork.title}
-                                  </Typography>
                                   <Typography
                                     variant="body2"
                                     color="textSecondary"
