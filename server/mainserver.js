@@ -31,7 +31,9 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
+    
     if (allowedOrigins.some((allowed) => origin.startsWith(allowed))) {
       callback(null, true);
     } else {
@@ -39,10 +41,11 @@ const corsOptions = {
       callback(new Error("Not allowed by CORS"));
     }
   },
-  credentials: true,
+  credentials: true, // ← CRITICAL: Must be true
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   exposedHeaders: ["Set-Cookie"],
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
@@ -79,11 +82,13 @@ app.use(
     saveUninitialized: false,
     store: store,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24,
-      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24, // 24 hours
+      sameSite: isProduction ? "none" : "lax", // ← CRITICAL: Must be "none" for cross-origin
       httpOnly: true,
-      secure: isProduction,
+      secure: isProduction, // ← Must be true when sameSite is "none"
+      path: "/",
     },
+    name: "mozartify.sid", // Custom session name (optional but recommended)
   })
 );
 

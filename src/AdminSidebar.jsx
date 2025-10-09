@@ -20,7 +20,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import { useUnread } from "./UnreadContext.jsx";
 
 import { API_BASE_URL} from './config/api.js';
-axios.defaults.withCredentials = true;
 
 const AdminSidebar = ({ active }) => {
   const location = useLocation();

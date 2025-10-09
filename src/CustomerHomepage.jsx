@@ -42,7 +42,6 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import MenuIcon from "@mui/icons-material/Menu";
 
-axios.defaults.withCredentials = true;
 import { API_BASE_URL} from './config/api.js';
 
 export default function CustomerHomepage() {

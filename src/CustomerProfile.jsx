@@ -40,7 +40,6 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import CustomerSidebar from "./CustomerSidebar";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
-axios.defaults.withCredentials = true;
 import { API_BASE_URL} from './config/api.js';
 
 const DRAWER_WIDTH = 230;

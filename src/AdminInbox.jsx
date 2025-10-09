@@ -216,9 +216,6 @@ const AdminInbox = () => {
     reload: false,
   });
 
-  // Configure axios with credentials
-  axios.defaults.withCredentials = true;
-
   const handleSort = (key) => {
     setSortConfig((prev) => ({
       key,

@@ -36,8 +36,6 @@ import { storage } from "./firebase";
 import CustomerSidebar from "./CustomerSidebar";
 import { API_BASE_URL} from './config/api.js';
 
-axios.defaults.withCredentials = true;
-
 const GlobalStyle = createGlobalStyle`
   body {
     margin: 0;

@@ -26,7 +26,6 @@ import SidebarMozartifyLogo from "./assets/mozartify.png";
 import { useUnread } from "./UnreadContext.jsx";
 import { API_BASE_URL} from "./config/api.js";
 
-axios.defaults.withCredentials = true;
 
 const CustomerSidebar = ({ active }) => {
   const currentPath = window.location.pathname;

@@ -46,7 +46,6 @@ import { createGlobalStyle } from "styled-components";
 
 import { useUnread } from "./UnreadContext.jsx";
 
-axios.defaults.withCredentials = true;
 import { API_BASE_URL} from './config/api.js';
 
 const DRAWER_WIDTH = 230;

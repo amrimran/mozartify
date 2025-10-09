@@ -37,8 +37,6 @@ import { createGlobalStyle } from "styled-components";
 import ClerkSidebar from "./MusicEntryClerkSidebar";
 import { API_BASE_URL} from './config/api.js';
 
-axios.defaults.withCredentials = true;
-
 const DRAWER_WIDTH = 230;
 
 export default function MusicEntryClerkProfile() {

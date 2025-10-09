@@ -251,7 +251,7 @@ export default function Login() {
     e.preventDefault();
     setErrorMessage("");
     axios
-      .post(`${API_BASE_URL}/login`, { username_or_email, password })
+      .post(`${API_BASE_URL}/login`, { username_or_email, password },{ withCredentials: true })
       .then((result) => {
         const { message, role, music_first_timer, art_first_timer, approval } =
           result.data;

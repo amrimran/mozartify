@@ -30,7 +30,6 @@ import { useNavigate } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
 import CustomerSidebar2 from "./CustomerSidebar2";
 
-axios.defaults.withCredentials = true;
 import { API_BASE_URL} from './config/api.js';
 
 export default function CustomerFavorites2() {
