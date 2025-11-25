@@ -150,16 +150,35 @@ try {
   const inboxRoutes = require("./routes/inbox");
   console.log("✅ Inbox routes loaded");
 
-  app.use("/", indexRoutes);
-  app.use("/", serverRoutes);
+  app.use("/api", indexRoutes);
+  app.use("/api", serverRoutes);
 
-  app.use("/", inboxRoutes);
-  app.use("/", adminRoutes);
+  app.use("/api", inboxRoutes);
+  app.use("/api/admin", adminRoutes);
 
   console.log("✅ All route modules mounted successfully");
 } catch (error) {
   console.error("❌ Error loading route modules:", error);
 }
+
+// ================== DEBUG 404 HANDLER ==================
+app.all("*", (req, res) => {
+  console.log("🚨 404 - Route not found:", {
+    method: req.method,
+    url: req.url,
+    originalUrl: req.originalUrl,
+    path: req.path,
+    baseUrl: req.baseUrl,
+    headers: req.headers
+  });
+  
+  res.status(404).json({
+    error: "Route not found",
+    method: req.method,
+    url: req.url,
+    availableRoutes: ["/login", "/health", "/current-user"]
+  });
+});
 
 // ================== ERROR HANDLING ==================
 app.use((err, req, res, next) => {

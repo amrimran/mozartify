@@ -4,8 +4,8 @@ const isProduction = import.meta.env.PROD;
 
 export const API_CONFIG = {
   BASE_URL: isProduction
-    ? "https://mozartify.onrender.com"
-    : "http://localhost:10000",
+    ? "https://mozartify.onrender.com/api"
+    : "http://localhost:10000/api",
   TIMEOUT: 30000,
   DEFAULT_HEADERS: {
     "Content-Type": "application/json",
