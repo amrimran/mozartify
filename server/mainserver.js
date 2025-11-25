@@ -176,7 +176,7 @@ app.all("*", (req, res) => {
     error: "Route not found",
     method: req.method,
     url: req.url,
-    availableRoutes: ["/login", "/health", "/current-user"]
+    availableRoutes: ["/api/login", "/api/health", "/api/current-user"]
   });
 });
 
