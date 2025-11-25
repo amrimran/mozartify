@@ -25,7 +25,8 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "http://localhost:10000",
-  "https://mozartify-production.up.railway.app/api",
+  // "https://mozartify-production.up.railway.app/api",
+  "https://mozartify.onrender.com/api",
   "https://mozartify-nasir.onrender.com",
 ].filter(Boolean);
 
@@ -87,7 +88,7 @@ app.use(
       maxAge: 1000 * 60 * 60 * 24,
       sameSite: isProduction ? "none" : "lax", // ← CRITICAL for cross-origin
       httpOnly: true,
-      secure: isProduction, // ← CRITICAL: must be true when sameSite is "none"
+      secure: isProduction,
       path: "/",
     },
     name: "mozartify.sid", // Custom name to identify your cookie
@@ -130,7 +131,8 @@ app.get("/api/health", (req, res) => {
     },
     routes: ["index", "admin", "server", "inbox"],
     frontend: "https://mozartify-nasir.onrender.com",
-    backend: "https:/mozartify-production.up.railway.app/api",
+    // backend: "https:/mozartify-production.up.railway.app/api",
+    backend: "https://mozartify.onrender.com/api",
   });
 });
 
@@ -206,6 +208,7 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`📍 Port: ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(`🌐 Backend URL: https://mozartify-production.up.railway.app/api`);
+  console.log(`🌐 Backend URL: https://mozartify.onrender.com/api`);
   console.log(`🎨 Frontend URL: https://mozartify-nasir.onrender.com`);
   console.log("🚀 =================================\n");
 });

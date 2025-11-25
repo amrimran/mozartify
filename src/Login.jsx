@@ -245,8 +245,7 @@ export default function Login() {
       });
   }, []);
 
-  // Update your Login.jsx handleLogin function:
-
+  //Login.jsx handleLogin function:
   const handleLogin = (e, type) => {
     e.preventDefault();
     setErrorMessage("");

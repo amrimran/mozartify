@@ -5,10 +5,9 @@ const nodemailer = require("nodemailer");
 const { MongoClient, ObjectId } = require("mongodb");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const bodyParser = require("body-parser");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const SALT_ROUNDS = 10;
 const express = require("express");
-
 
 const UserModel = require("../models/User");
 const PurchaseModel = require("../models/Purchase");
