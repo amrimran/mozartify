@@ -25,7 +25,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "http://localhost:10000",
-  "https://mozartify.onrender.com/api",
+  "https://mozartify-production.up.railway.app/api",
   "https://mozartify-nasir.onrender.com",
 ].filter(Boolean);
 
@@ -130,7 +130,7 @@ app.get("/api/health", (req, res) => {
     },
     routes: ["index", "admin", "server", "inbox"],
     frontend: "https://mozartify-nasir.onrender.com",
-    backend: "https://mozartify.onrender.com/api",
+    backend: "https:/mozartify-production.up.railway.app/api",
   });
 });
 
@@ -205,7 +205,7 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log("🚀 =================================");
   console.log(`📍 Port: ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`🌐 Backend URL: https://mozartify.onrender.com/api`);
+  console.log(`🌐 Backend URL: https://mozartify-production.up.railway.app/api`);
   console.log(`🎨 Frontend URL: https://mozartify-nasir.onrender.com`);
   console.log("🚀 =================================\n");
 });
