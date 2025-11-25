@@ -139,16 +139,16 @@ app.get("/api/health", (req, res) => {
 try {
   console.log("🔄 Loading route modules...");
 
-  const indexRoutes = require("/routes/index");
+  const indexRoutes = require("./routes/index");
   console.log("✅ Index routes loaded");
 
-  const adminRoutes = require("/routes/admin");
+  const adminRoutes = require("./routes/admin");
   console.log("✅ Admin routes loaded");
 
-  const serverRoutes = require("/routes/server");
+  const serverRoutes = require("./routes/server");
   console.log("✅ Server routes loaded");
 
-  const inboxRoutes = require("/routes/inbox");
+  const inboxRoutes = require("./routes/inbox");
   console.log("✅ Inbox routes loaded");
 
   app.use("/api", indexRoutes);
