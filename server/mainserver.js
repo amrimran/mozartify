@@ -46,7 +46,6 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   exposedHeaders: ["Set-Cookie"],
   optionsSuccessStatus: 200,
-  preflightContinue: false,
 };
 
 app.use(cors(corsOptions));
@@ -78,7 +77,6 @@ store.on("error", (error) => {
 
 app.set("trust proxy", 1);
 
-// In your mainserver.js, replace the session configuration with:
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -87,43 +85,29 @@ app.use(
     store: store,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24,
-      sameSite: isProduction ? "none" : "lax",
+      sameSite: isProduction ? "none" : "lax", // ← CRITICAL for cross-origin
       httpOnly: true,
-      secure: isProduction,
+      secure: isProduction, // ← CRITICAL: must be true when sameSite is "none"
       path: "/",
-      // REMOVE domain completely - let browser handle it
     },
-    name: "mozartify.sid",
-    proxy: true,
+    name: "mozartify.sid", // Custom name to identify your cookie
+    proxy: true, // ← ADD THIS: Trust proxy headers (Render uses proxies)
   })
 );
-
-// Test if cookies are being sent
-app.get("/test-cookies", (req, res) => {
-  console.log("🍪 Cookies received:", req.headers.cookie);
-  console.log("🆔 Session ID:", req.sessionID);
-  console.log("👤 Session user:", req.session.userId);
-  
-  res.json({
-    cookies: req.headers.cookie,
-    sessionId: req.sessionID,
-    userId: req.session.userId
-  });
-});
 
 console.log("✅ Session middleware configured");
 
 // ================== DEBUG MIDDLEWARE  ==================
-app.use((req, res, next) => {
-  console.log('\n🔍 === REQUEST DEBUG(from mainserver.js) ===');
-  console.log('📍 URL:', req.method, req.url);
-  console.log('🌐 Origin:', req.headers.origin);
-  console.log('🍪 Cookie Header:', req.headers.cookie);
-  console.log('🆔 Session ID:', req.sessionID);
-  console.log('👤 Session Data:', req.session);
-  console.log('========================\n');
-  next();
-});
+// app.use((req, res, next) => {
+//   console.log('\n🔍 === REQUEST DEBUG(from mainserver.js) ===');
+//   console.log('📍 URL:', req.method, req.url);
+//   console.log('🌐 Origin:', req.headers.origin);
+//   console.log('🍪 Cookie Header:', req.headers.cookie);
+//   console.log('🆔 Session ID:', req.sessionID);
+//   console.log('👤 Session Data:', req.session);
+//   console.log('========================\n');
+//   next();
+// });
 
 // ================== BASIC MIDDLEWARE ==================
 app.use(express.json());
