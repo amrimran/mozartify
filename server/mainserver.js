@@ -33,7 +33,7 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.some((allowed) => origin.startsWith(allowed))) {
       callback(null, true);
     } else {
@@ -45,7 +45,8 @@ const corsOptions = {
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   exposedHeaders: ["Set-Cookie"],
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  preflightContinue: false,
 };
 
 app.use(cors(corsOptions));
@@ -75,6 +76,9 @@ store.on("error", (error) => {
   console.log("❌ Session store error:", error);
 });
 
+app.set("trust proxy", 1);
+
+// In your mainserver.js, replace the session configuration with:
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -82,29 +86,44 @@ app.use(
     saveUninitialized: false,
     store: store,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 24 hours
-      sameSite: isProduction ? "none" : "lax", // ← CRITICAL: Must be "none" for cross-origin
+      maxAge: 1000 * 60 * 60 * 24,
+      sameSite: isProduction ? "none" : "lax",
       httpOnly: true,
-      secure: isProduction, // ← Must be true when sameSite is "none"
+      secure: isProduction,
       path: "/",
+      // REMOVE domain completely - let browser handle it
     },
-    name: "mozartify.sid", // Custom session name (optional but recommended)
+    name: "mozartify.sid",
+    proxy: true,
   })
 );
+
+// Test if cookies are being sent
+app.get("/test-cookies", (req, res) => {
+  console.log("🍪 Cookies received:", req.headers.cookie);
+  console.log("🆔 Session ID:", req.sessionID);
+  console.log("👤 Session user:", req.session.userId);
+  
+  res.json({
+    cookies: req.headers.cookie,
+    sessionId: req.sessionID,
+    userId: req.session.userId
+  });
+});
 
 console.log("✅ Session middleware configured");
 
 // ================== DEBUG MIDDLEWARE  ==================
-// app.use((req, res, next) => {
-//   console.log('\n🔍 === REQUEST DEBUG(from mainserver.js) ===');
-//   console.log('📍 URL:', req.method, req.url);
-//   console.log('🌐 Origin:', req.headers.origin);
-//   console.log('🍪 Cookie Header:', req.headers.cookie);
-//   console.log('🆔 Session ID:', req.sessionID);
-//   console.log('👤 Session Data:', req.session);
-//   console.log('========================\n');
-//   next();
-// });
+app.use((req, res, next) => {
+  console.log('\n🔍 === REQUEST DEBUG(from mainserver.js) ===');
+  console.log('📍 URL:', req.method, req.url);
+  console.log('🌐 Origin:', req.headers.origin);
+  console.log('🍪 Cookie Header:', req.headers.cookie);
+  console.log('🆔 Session ID:', req.sessionID);
+  console.log('👤 Session Data:', req.session);
+  console.log('========================\n');
+  next();
+});
 
 // ================== BASIC MIDDLEWARE ==================
 app.use(express.json());
@@ -149,10 +168,9 @@ try {
 
   app.use("/", indexRoutes);
   app.use("/", serverRoutes);
-  
+
   app.use("/", inboxRoutes);
   app.use("/", adminRoutes);
-  
 
   console.log("✅ All route modules mounted successfully");
 } catch (error) {
