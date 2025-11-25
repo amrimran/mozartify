@@ -98,16 +98,16 @@ app.use(
 console.log("✅ Session middleware configured");
 
 // ================== DEBUG MIDDLEWARE  ==================
-// app.use((req, res, next) => {
-//   console.log('\n🔍 === REQUEST DEBUG(from mainserver.js) ===');
-//   console.log('📍 URL:', req.method, req.url);
-//   console.log('🌐 Origin:', req.headers.origin);
-//   console.log('🍪 Cookie Header:', req.headers.cookie);
-//   console.log('🆔 Session ID:', req.sessionID);
-//   console.log('👤 Session Data:', req.session);
-//   console.log('========================\n');
-//   next();
-// });
+app.use((req, res, next) => {
+  console.log('\n🔍 === REQUEST DEBUG(from mainserver.js) ===');
+  console.log('📍 URL:', req.method, req.url);
+  console.log('🌐 Origin:', req.headers.origin);
+  console.log('🍪 Cookie Header:', req.headers.cookie);
+  console.log('🆔 Session ID:', req.sessionID);
+  console.log('👤 Session Data:', req.session);
+  console.log('========================\n');
+  next();
+});
 
 // ================== BASIC MIDDLEWARE ==================
 app.use(express.json());
@@ -117,7 +117,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ================== HEALTH CHECK ==================
-app.get("/health", (req, res) => {
+app.get("/api/health", (req, res) => {
   res.json({
     status: "healthy",
     timestamp: new Date().toISOString(),
