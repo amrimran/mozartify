@@ -132,9 +132,6 @@ router.use((req, res, next) => {
   next();
 });
 
-// Update your isAuthenticated middleware to be more descriptive:
-// Update your isAuthenticated middleware with more debugging:
-
 const isAuthenticated = (req, res, next) => {
   console.log("🔍 AUTH CHECK DETAILED:");
   console.log("   Request path:", req.path);
