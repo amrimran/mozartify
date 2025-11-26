@@ -48,7 +48,6 @@
     "xml2abc": "^1.68.3"
   },
   "devDependencies": {
-    "@types/bcrypt": "^5.0.2",
     "nodemon": "^3.1.4"
   }
 }
