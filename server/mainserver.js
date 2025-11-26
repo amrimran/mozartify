@@ -166,6 +166,12 @@ const inboxRoutes  = require(path.join(__dirname, "routes/inbox"));
 }
 
 // ================== DEBUG 404 HANDLER ==================
+
+app.get("/", (req, res) => {
+  res.send("Mozartify Backend is running 🚀");
+});
+
+
 app.all("*", (req, res) => {
   console.log("🚨 404 - Route not found:", {
     method: req.method,
@@ -199,10 +205,6 @@ app.use((err, req, res, next) => {
     error: "Internal server error",
     message: isProduction ? "Something went wrong" : err.message,
   });
-});
-
-app.get("/", (req, res) => {
-  res.send("Mozartify Backend is running 🚀");
 });
 
 // ================== START SERVER ==================
