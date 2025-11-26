@@ -27,6 +27,7 @@ const allowedOrigins = [
   "http://localhost:10000",
   // "https://mozartify-production.up.railway.app/api",
   "https://mozartify.onrender.com/api",
+  "https://mozartify.onrender.com",
   "https://mozartify-nasir.onrender.com",
 ].filter(Boolean);
 
@@ -198,6 +199,10 @@ app.use((err, req, res, next) => {
     error: "Internal server error",
     message: isProduction ? "Something went wrong" : err.message,
   });
+});
+
+app.get("/", (req, res) => {
+  res.send("Mozartify Backend is running 🚀");
 });
 
 // ================== START SERVER ==================
