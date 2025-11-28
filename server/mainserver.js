@@ -18,17 +18,13 @@ console.log(`📍 Environment: ${isProduction ? "production" : "development"}`);
 
 // ================== CORS CONFIGURATION (CENTRALIZED) ==================
 const allowedOrigins = [
-  process.env.FRONTEND_PROD_URL,
+  process.env.FRONTEND_PROD_URL,  // Your Railway frontend URL
   process.env.FRONTEND_DEV_URL,
-  process.env.BACKEND_PROD_URL,
+  process.env.BACKEND_PROD_URL,   // Your Railway backend URL
   process.env.BACKEND_DEV_URL,
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "http://localhost:10000",
-  "https://mozartify-production.up.railway.app/api",
-  "https://mozartify.onrender.com/api",
-  "https://mozartify.onrender.com",
-  "https://mozartify-nasir.onrender.com",
 ].filter(Boolean);
 
 const corsOptions = {
