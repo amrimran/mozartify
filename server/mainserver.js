@@ -25,7 +25,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "http://localhost:10000",
-  // "https://mozartify-production.up.railway.app/api",
+  "https://mozartify-production.up.railway.app/api",
   "https://mozartify.onrender.com/api",
   "https://mozartify.onrender.com",
   "https://mozartify-nasir.onrender.com",
@@ -132,7 +132,7 @@ app.get("/api/health", (req, res) => {
     },
     routes: ["index", "admin", "server", "inbox"],
     frontend: "https://mozartify-nasir.onrender.com",
-    // backend: "https:/mozartify-production.up.railway.app/api",
+    backend: "https:/mozartify-production.up.railway.app/api",
     backend: "https://mozartify.onrender.com/api",
   });
 });
