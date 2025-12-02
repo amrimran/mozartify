@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
- "scripts": {
+"scripts": {
   "dev": "vite",
   "//COMMENT": "Railway runs 'npm install' (root) automatically. We add the server install here:",
   "build": "npm install --prefix server && vite build",

@@ -167,7 +167,11 @@ try {
   console.error("❌ Error loading route modules:", error);
 }
 
-app.use(express.static(path.join(__dirname, "../dist")));
+const staticOptions = {
+  maxAge: '1d', // Tell browser to remember files for 1 day
+  etag: true,
+};
+app.use(express.static(path.join(__dirname, "../dist"), staticOptions));
 
 app.get("*", (req, res) => {
   // Safety check: If it starts with /api but didn't match a route, return 404 JSON
