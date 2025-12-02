@@ -218,7 +218,9 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(
     `🌐 Backend URL: https://mozartify-production-01c1.up.railway.app//`
   );
-  console.log(`🎨 Frontend URL: https://mozartify-production-ad3c.up.railway.app/`);
+  console.log(
+    `🎨 Frontend URL: https://mozartify-production-ad3c.up.railway.app/`
+  );
   console.log("🚀 =================================\n");
 });
 
