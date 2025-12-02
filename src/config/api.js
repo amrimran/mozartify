@@ -15,9 +15,21 @@ export const API_CONFIG = {
   },
 };
 
+
+
 axios.defaults.baseURL = API_CONFIG.BASE_URL;
 axios.defaults.withCredentials = true;
 axios.defaults.timeout = API_CONFIG.TIMEOUT;
+
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.error("❌ Unauthorized - Session issue:", error.response.data);
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const API_BASE_URL = API_CONFIG.BASE_URL;
 

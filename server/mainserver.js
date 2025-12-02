@@ -18,9 +18,9 @@ console.log(`📍 Environment: ${isProduction ? "production" : "development"}`);
 
 // ================== CORS CONFIGURATION (CENTRALIZED) ==================
 const allowedOrigins = [
-  process.env.FRONTEND_PROD_URL,  // Your Railway frontend URL
+  process.env.FRONTEND_PROD_URL, // Your Railway frontend URL
   process.env.FRONTEND_DEV_URL,
-  process.env.BACKEND_PROD_URL,   // Your Railway backend URL
+  process.env.BACKEND_PROD_URL, // Your Railway backend URL
   process.env.BACKEND_DEV_URL,
   "http://localhost:5173",
   "http://127.0.0.1:5173",
@@ -73,6 +73,10 @@ store.on("error", (error) => {
   console.log("❌ Session store error:", error);
 });
 
+store.on("connected", () => {
+  console.log("✅ Session store connected to MongoDB");
+});
+
 app.set("trust proxy", true);
 
 app.use(
@@ -83,13 +87,16 @@ app.use(
     store: store,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24,
-      sameSite: isProduction ? "none" : "lax", // ← CRITICAL for cross-origin
+      sameSite: isProduction ? "none" : "lax",
       httpOnly: true,
       secure: isProduction,
       path: "/",
+      domain: isProduction ? undefined : undefined,
     },
-    name: "mozartify.sid", // Custom name to identify your cookie
-    proxy: true, // ← ADD THIS: Trust proxy headers (Render uses proxies)
+    name: "mozartify.sid",
+    proxy: true,
+    rolling: true,
+    unset: "destroy",
   })
 );
 
@@ -97,13 +104,13 @@ console.log("✅ Session middleware configured");
 
 // ================== DEBUG MIDDLEWARE  ==================
 app.use((req, res, next) => {
-  console.log('\n🔍 === REQUEST DEBUG(from mainserver.js) ===');
-  console.log('📍 URL:', req.method, req.url);
-  console.log('🌐 Origin:', req.headers.origin);
-  console.log('🍪 Cookie Header:', req.headers.cookie);
-  console.log('🆔 Session ID:', req.sessionID);
-  console.log('👤 Session Data:', req.session);
-  console.log('========================\n');
+  console.log("\n🔍 === REQUEST DEBUG(from mainserver.js) ===");
+  console.log("📍 URL:", req.method, req.url);
+  console.log("🌐 Origin:", req.headers.origin);
+  console.log("🍪 Cookie Header:", req.headers.cookie);
+  console.log("🆔 Session ID:", req.sessionID);
+  console.log("👤 Session Data:", req.session);
+  console.log("========================\n");
   next();
 });
 
@@ -133,21 +140,20 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-
 // ================== LOAD ROUTE MODULES (NOT APPS) ==================
 try {
   console.log("🔄 Loading route modules...");
 
-const indexRoutes  = require(path.join(__dirname, "routes/index"));
+  const indexRoutes = require(path.join(__dirname, "routes/index"));
   console.log("✅ Index routes loaded");
 
-const adminRoutes  = require(path.join(__dirname, "routes/admin"));
+  const adminRoutes = require(path.join(__dirname, "routes/admin"));
   console.log("✅ Admin routes loaded");
 
-const serverRoutes = require(path.join(__dirname, "routes/server"));
+  const serverRoutes = require(path.join(__dirname, "routes/server"));
   console.log("✅ Server routes loaded");
 
-const inboxRoutes  = require(path.join(__dirname, "routes/inbox"));
+  const inboxRoutes = require(path.join(__dirname, "routes/inbox"));
   console.log("✅ Inbox routes loaded");
 
   app.use("/api", indexRoutes);
@@ -167,7 +173,6 @@ app.get("/", (req, res) => {
   res.send("Mozartify Backend is running 🚀");
 });
 
-
 app.all("*", (req, res) => {
   console.log("🚨 404 - Route not found:", {
     method: req.method,
@@ -175,14 +180,14 @@ app.all("*", (req, res) => {
     originalUrl: req.originalUrl,
     path: req.path,
     baseUrl: req.baseUrl,
-    headers: req.headers
+    headers: req.headers,
   });
-  
+
   res.status(404).json({
     error: "Route not found",
     method: req.method,
     url: req.url,
-    availableRoutes: ["/api/login", "/api/health", "/api/current-user"]
+    availableRoutes: ["/api/login", "/api/health", "/api/current-user"],
   });
 });
 
@@ -206,13 +211,14 @@ app.use((err, req, res, next) => {
 // ================== START SERVER ==================
 app.listen(PORT, "0.0.0.0", () => {
   console.log("\n🚀 =================================");
-  console.log(`   Mozartify Backend Server`);
+  console.log(`   Mozartify Backend Server (Railway)`);
   console.log("🚀 =================================");
   console.log(`📍 Port: ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`🌐 Backend URL: https://mozartify-production.up.railway.app/api`);
-  console.log(`🌐 Backend URL: https://mozartify.onrender.com/api`);
-  console.log(`🎨 Frontend URL: https://mozartify-nasir.onrender.com`);
+  console.log(
+    `🌐 Backend URL: https://mozartify-production-01c1.up.railway.app//`
+  );
+  console.log(`🎨 Frontend URL: https://mozartify-production-ad3c.up.railway.app/`);
   console.log("🚀 =================================\n");
 });
 

@@ -117,20 +117,20 @@ const sendAdminApprovalEmail = (adminEmail, username, email) => {
   );
 };
 
-router.use((req, res, next) => {
-  // Only log for specific routes that are failing
-  if (
-    req.path.includes("/current-user") ||
-    req.path.includes("/recommendations")
-  ) {
-    console.log(`🔍 ${req.method} ${req.path}`);
-    console.log(`   Session ID: ${req.session?.id}`);
-    console.log(`   User ID in session: ${req.session?.userId}`);
-    console.log(`   Session data:`, req.session);
-    console.log(`   Cookies:`, req.headers.cookie);
-  }
-  next();
-});
+// router.use((req, res, next) => {
+//   // Only log for specific routes that are failing
+//   if (
+//     req.path.includes("/current-user") ||
+//     req.path.includes("/recommendations")
+//   ) {
+//     console.log(`🔍 ${req.method} ${req.path}`);
+//     console.log(`   Session ID: ${req.session?.id}`);
+//     console.log(`   User ID in session: ${req.session?.userId}`);
+//     console.log(`   Session data:`, req.session);
+//     console.log(`   Cookies:`, req.headers.cookie);
+//   }
+//   next();
+// });
 
 const isAuthenticated = (req, res, next) => {
   console.log("🔍 AUTH CHECK DETAILED:");
@@ -271,6 +271,7 @@ router.get("/login", async (req, res) => {
 });
 
 // POST LOGIN REQUEST
+// POST LOGIN REQUEST
 router.post("/login", async (req, res) => {
   const { username_or_email, password } = req.body;
 
@@ -298,62 +299,75 @@ router.post("/login", async (req, res) => {
     user.failedLoginAttempts = 0;
     user.lockUntil = null;
 
-    // CRITICAL: Set session data
-    req.session.userId = user._id.toString();
-    req.session.username = user.username;
-    req.session.loginTime = new Date().toISOString();
-
-    console.log("💾 Setting session data:");
-    console.log("   Session ID:", req.session.id);
-    console.log("   User ID:", req.session.userId);
-    console.log("   Session object:", req.session);
-
-    // Update user record
-    user.sessionId = req.session.id;
-
-    // CRITICAL: Use req.session.save() to force persistence
-    req.session.save(async (sessionSaveErr) => {
-      if (sessionSaveErr) {
-        console.error("❌ Session save error:", sessionSaveErr);
-        return res.status(500).json({ message: "Session save failed" });
+    // CRITICAL FIX: Regenerate session to prevent fixation attacks
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error("❌ Session regeneration error:", err);
+        return res.status(500).json({ message: "Session creation failed" });
       }
 
-      console.log("✅ Session saved successfully");
-      console.log("   Session after save:", req.session);
+      // Set session data AFTER regeneration
+      req.session.userId = user._id.toString();
+      req.session.username = user.username;
+      req.session.loginTime = new Date().toISOString();
 
-      try {
-        // Save user document
-        await user.save();
-        console.log("✅ User document saved with sessionId:", user.sessionId);
+      console.log("💾 Setting session data:");
+      console.log("   Session ID:", req.session.id);
+      console.log("   User ID:", req.session.userId);
+      console.log("   Session object:", req.session);
 
-        // Send response
-        res.json({
-          message: "Success",
-          userId: user._id,
-          role: user.role,
-          music_first_timer: user.music_first_timer,
-          art_first_timer: user.art_first_timer,
-          approval: user.approval,
-          sessionId: req.session.id,
-          debug: {
-            userIdInSession: req.session.userId,
-            sessionKeys: Object.keys(req.session),
-          },
-        });
+      // CRITICAL: Force save with explicit callback
+      req.session.save(async (sessionSaveErr) => {
+        if (sessionSaveErr) {
+          console.error("❌ Session save error:", sessionSaveErr);
+          return res.status(500).json({ message: "Session save failed" });
+        }
 
-        console.log("✅ Login response sent");
-      } catch (userSaveErr) {
-        console.error("❌ User save error:", userSaveErr);
-        res.json({
-          message: "Success",
-          userId: user._id,
-          role: user.role,
-          music_first_timer: user.music_first_timer,
-          art_first_timer: user.art_first_timer,
-          approval: user.approval,
-          sessionId: req.session.id,
-        });
-      }
+        console.log("✅ Session saved successfully");
+        console.log("   Session after save:", req.session);
+        console.log("   Session keys:", Object.keys(req.session));
+
+        try {
+          // Save sessionId to user document
+          user.sessionId = req.session.id;
+          await user.save();
+          console.log("✅ User document saved with sessionId:", user.sessionId);
+
+          // Send response with session cookie
+          res.json({
+            message: "Success",
+            userId: user._id,
+            role: user.role,
+            music_first_timer: user.music_first_timer,
+            art_first_timer: user.art_first_timer,
+            approval: user.approval,
+            sessionId: req.session.id,
+            debug: {
+              userIdInSession: req.session.userId,
+              sessionKeys: Object.keys(req.session),
+              cookieSettings: {
+                sameSite: req.session.cookie.sameSite,
+                secure: req.session.cookie.secure,
+                httpOnly: req.session.cookie.httpOnly,
+              },
+            },
+          });
+
+          console.log("✅ Login response sent");
+        } catch (userSaveErr) {
+          console.error("❌ User save error:", userSaveErr);
+          // Still send success response since session is created
+          res.json({
+            message: "Success",
+            userId: user._id,
+            role: user.role,
+            music_first_timer: user.music_first_timer,
+            art_first_timer: user.art_first_timer,
+            approval: user.approval,
+            sessionId: req.session.id,
+          });
+        }
+      });
     });
   } catch (err) {
     console.error("❌ Login error:", err);
