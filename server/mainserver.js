@@ -167,6 +167,17 @@ try {
   console.error("❌ Error loading route modules:", error);
 }
 
+app.use(express.static(path.join(__dirname, "../dist")));
+
+app.get("*", (req, res) => {
+  // Safety check: If it starts with /api but didn't match a route, return 404 JSON
+  if (req.originalUrl.startsWith("/api")) {
+    return res.status(404).json({ message: "API route not found" });
+  }
+  // Otherwise, send the React app's index.html
+  res.sendFile(path.join(__dirname, "../dist/index.html"));
+});
+
 // ================== DEBUG 404 HANDLER ==================
 
 app.get("/", (req, res) => {
