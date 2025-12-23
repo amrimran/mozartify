@@ -544,7 +544,7 @@ export default function MusicEntryClerkCatalog() {
       // Update catalogData with the predicted instrumentation
       setCatalogData((prevData) => ({
         ...prevData,
-        instrumentation: instrumentResponse.data.top_instruments,
+        instrumentation: instrumentResponse.data.instrumentation,
       }));
 
       setDialogTitle("Prediction Complete");
