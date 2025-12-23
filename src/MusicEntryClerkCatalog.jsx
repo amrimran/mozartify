@@ -438,7 +438,10 @@ export default function MusicEntryClerkCatalog() {
       // NEW: Call your Node Backend Endpoint
       const emotionResponse = await axios.post(
         `${API_BASE_URL}/predictEmotion`, // Uses your config/api.js base url
-        { fileUrl }
+        { fileUrl },
+        {
+          timeout:300000,
+        }
       );
 
       // Update catalogData with the new emotion
@@ -452,7 +455,10 @@ export default function MusicEntryClerkCatalog() {
       // NEW: Call your Node Backend Endpoint
       const genderResponse = await axios.post(
         `${API_BASE_URL}/predictGender`,
-        { fileUrl } // NOTE: Your Node route expects 'fileUrl', ensure backend matches this key
+        { fileUrl }, // NOTE: Your Node route expects 'fileUrl', ensure backend matches this key
+        {
+          timeout: 300000,
+        }
       );
 
       // Update catalogData with the predicted gender
@@ -462,9 +468,15 @@ export default function MusicEntryClerkCatalog() {
       }));
 
       // Call genre prediction API
-      const genreResponse = await axios.post(`${API_BASE_URL}/predictGenre`, {
-        fileUrl,
-      });
+      const genreResponse = await axios.post(
+        `${API_BASE_URL}/predictGenre`,
+        {
+          fileUrl,
+        },
+        {
+          timeout: 300000,
+        }
+      );
 
       // Update catalogData with the new genre
       setCatalogData((prevData) => ({
@@ -525,7 +537,7 @@ export default function MusicEntryClerkCatalog() {
           fileUrl: catalogData.mp3FileUrl,
         },
         {
-          timeout:300000,
+          timeout: 300000,
         }
       );
 
