@@ -523,6 +523,9 @@ export default function MusicEntryClerkCatalog() {
         `${API_BASE_URL}/predictInstrument`,
         {
           fileUrl: catalogData.mp3FileUrl,
+        },
+        {
+          timeout:300000,
         }
       );
 
