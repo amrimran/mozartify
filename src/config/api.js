@@ -3,9 +3,6 @@ import axios from "axios";
 const isProduction = import.meta.env.PROD;
 
 export const API_CONFIG = {
-  // BASE_URL: isProduction
-  //   ? "https://mozartify-production.up.railway.app/api"
-  //   : "http://localhost:10000/api",
   BASE_URL: isProduction
     ? "https://mozartify-production-01c1.up.railway.app/api"
     : "http://localhost:10000/api",
@@ -14,8 +11,6 @@ export const API_CONFIG = {
     "Content-Type": "application/json",
   },
 };
-
-
 
 axios.defaults.baseURL = API_CONFIG.BASE_URL;
 axios.defaults.withCredentials = true;

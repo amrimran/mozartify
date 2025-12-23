@@ -13,21 +13,22 @@ const ArtsDynamicField = require("../models/ArtsDynamicField.js");
 const ArtsTab = require("../models/ArtsTab.js");
 const MusicDynamicField = require("../models/MusicDynamicField.js");
 const MusicTab = require("../models/MusicTab.js");
-const express = require("express"); 
+const express = require("express");
 
 const isProduction = process.env.NODE_ENV === "production";
 const router = express.Router();
 
 // ================== FASTAPI ENDPOINT CONFIG ==================
-const FASTAPI_BASE_URL = isProduction
-  ? process.env.FASTAPI_PROD_URL // Base URL for production
-  : process.env.FASTAPI_DEV_URL;
+
+const ML_BASE = isProduction 
+  ? process.env.ML_BASE_URL  // Expects: "https://kaibutsuningen-mozartify-ai-api.hf.space"
+  : "http://127.0.0.1:8000"; // Local unified python server
 
 const fastApiEndpoints = {
-  emotion: `${FASTAPI_BASE_URL}:5173/predict-emotion`,
-  gender: `${FASTAPI_BASE_URL}:9000/predict-gender`,
-  genre: `${FASTAPI_BASE_URL}:8001/predict-genre`,
-  instrument: `${FASTAPI_BASE_URL}:8000/predict-instrument`,
+  emotion: `${ML_BASE}/predict-emotion`,
+  gender: `${ML_BASE}/predict-gender`,
+  genre: `${ML_BASE}/predict-genre`,
+  instrument: `${ML_BASE}/predict-instrument`
 };
 
 // Configure file storage for uploads
@@ -194,27 +195,26 @@ router.post("/predictGenre", async (req, res) => {
   }
 });
 
-// // Endpoint for instrument prediction from URL
-// router.post('/predictInstrument', async (req, res) => {
-//   const { fileUrl } = req.body;
-//   if (!fileUrl) {
-//     return res.status(400).json({ message: 'No file URL provided.' });
-//   }
+// Endpoint for instrument prediction from URL
+router.post("/predictInstrument", async (req, res) => {
+  const { fileUrl } = req.body;
+  if (!fileUrl) {
+    return res.status(400).json({ message: "No file URL provided." });
+  }
 
-//   try {
-//     // Forward the file URL to FastAPI for instrument prediction
-//     const genderResponse = await axios.post('http://127.0.0.1:8000/predict-instrument', { fileUrl });
+  try {
+    const response = await axios.post(fastApiEndpoints.instrument, { fileUrl });
 
-//     // Return the response from FastAPI (list of top instruments) to the frontend
-//     res.json({
-//       instrumentation: response.data.top_instruments,
-//     });
-
-//   } catch (error) {
-//     console.error('Error predicting instrument:', error);
-//     res.status(500).json({ message: 'Error predicting instrument', error: error.message });
-//   }
-// });
+    res.json({
+      instrumentation: response.data.top_instruments,
+    });
+  } catch (error) {
+    console.error("Error predicting instrument:", error);
+    res
+      .status(500)
+      .json({ message: "Error predicting instrument", error: error.message });
+  }
+});
 
 // Additional endpoints
 router.get("/abc-file", async (req, res) => {

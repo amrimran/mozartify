@@ -18,9 +18,9 @@ console.log(`📍 Environment: ${isProduction ? "production" : "development"}`);
 
 // ================== CORS CONFIGURATION (CENTRALIZED) ==================
 const allowedOrigins = [
-  process.env.FRONTEND_PROD_URL, // Your Railway frontend URL
+  process.env.FRONTEND_PROD_URL,
   process.env.FRONTEND_DEV_URL,
-  process.env.BACKEND_PROD_URL, // Your Railway backend URL
+  process.env.BACKEND_PROD_URL,
   process.env.BACKEND_DEV_URL,
   "http://localhost:5173",
   "http://127.0.0.1:5173",
@@ -29,7 +29,6 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.some((allowed) => origin.startsWith(allowed))) {
@@ -102,17 +101,17 @@ app.use(
 
 console.log("✅ Session middleware configured");
 
-// ================== DEBUG MIDDLEWARE  ==================
-app.use((req, res, next) => {
-  console.log("\n🔍 === REQUEST DEBUG(from mainserver.js) ===");
-  console.log("📍 URL:", req.method, req.url);
-  console.log("🌐 Origin:", req.headers.origin);
-  console.log("🍪 Cookie Header:", req.headers.cookie);
-  console.log("🆔 Session ID:", req.sessionID);
-  console.log("👤 Session Data:", req.session);
-  console.log("========================\n");
-  next();
-});
+// // ================== DEBUG MIDDLEWARE  ==================
+// app.use((req, res, next) => {
+//   console.log("\n🔍 === REQUEST DEBUG(from mainserver.js) ===");
+//   console.log("📍 URL:", req.method, req.url);
+//   console.log("🌐 Origin:", req.headers.origin);
+//   console.log("🍪 Cookie Header:", req.headers.cookie);
+//   console.log("🆔 Session ID:", req.sessionID);
+//   console.log("👤 Session Data:", req.session);
+//   console.log("========================\n");
+//   next();
+// });
 
 // ================== BASIC MIDDLEWARE ==================
 app.use(express.json());
@@ -223,6 +222,8 @@ app.listen(PORT, "0.0.0.0", () => {
   );
   console.log("🚀 =================================\n");
 });
+
+
 
 // ================== GRACEFUL SHUTDOWN ==================
 process.on("SIGTERM", () => {

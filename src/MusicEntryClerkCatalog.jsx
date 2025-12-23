@@ -42,7 +42,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
 import { Menu as MenuIcon } from "@mui/icons-material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { API_BASE_URL} from './config/api.js';
+import { API_BASE_URL } from "./config/api.js";
 
 const DRAWER_WIDTH = 225;
 
@@ -285,17 +285,19 @@ export default function MusicEntryClerkCatalog() {
     const fetchTabsAndFields = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch tabs
         const tabsResponse = await axios.get(`${API_BASE_URL}/music-tabs`);
         const fetchedTabs = tabsResponse.data;
-        
+
         // Sort tabs by display order
         fetchedTabs.sort((a, b) => a.displayOrder - b.displayOrder);
         setTabsData(fetchedTabs);
-        
+
         // Fetch fields
-        const fieldsResponse = await axios.get(`${API_BASE_URL}/music-dynamic-fields`);
+        const fieldsResponse = await axios.get(
+          `${API_BASE_URL}/music-dynamic-fields`
+        );
         const fetchedFields = fieldsResponse.data;
         setDynamicFields(fetchedFields);
 
@@ -305,11 +307,11 @@ export default function MusicEntryClerkCatalog() {
           if (!acc[tabId]) {
             acc[tabId] = [];
           }
-          
+
           // Sort fields by display order within each tab group
           acc[tabId].push(field);
           acc[tabId].sort((a, b) => a.displayOrder - b.displayOrder);
-          
+
           return acc;
         }, {});
 
@@ -336,7 +338,6 @@ export default function MusicEntryClerkCatalog() {
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
-
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -432,9 +433,11 @@ export default function MusicEntryClerkCatalog() {
         mp3FileName: file.name,
       }));
 
-      // Call emotion prediction API
+      // 1. EMOTION PREDICTION
+      // OLD: axios.post("http://127.0.0.1:5173/predict-emotion", ...)
+      // NEW: Call your Node Backend Endpoint
       const emotionResponse = await axios.post(
-        "http://127.0.0.1:5173/predict-emotion",
+        `${API_BASE_URL}/predictEmotion`, // Uses your config/api.js base url
         { fileUrl }
       );
 
@@ -444,10 +447,12 @@ export default function MusicEntryClerkCatalog() {
         emotion: emotionResponse.data.predicted_mood,
       }));
 
-      // Call gender prediction API
+      // 2. GENDER PREDICTION
+      // OLD: axios.post("http://127.0.0.1:9000/predict-gender", ...)
+      // NEW: Call your Node Backend Endpoint
       const genderResponse = await axios.post(
-        "http://127.0.0.1:9000/predict-gender",
-        { file_url: fileUrl }
+        `${API_BASE_URL}/predictGender`,
+        { fileUrl } // NOTE: Your Node route expects 'fileUrl', ensure backend matches this key
       );
 
       // Update catalogData with the predicted gender
@@ -457,10 +462,9 @@ export default function MusicEntryClerkCatalog() {
       }));
 
       // Call genre prediction API
-      const genreResponse = await axios.post(
-        "http://127.0.0.1:8001/predict-genre",
-        { fileUrl }
-      );
+      const genreResponse = await axios.post(`${API_BASE_URL}/predictGenre`, {
+        fileUrl,
+      });
 
       // Update catalogData with the new genre
       setCatalogData((prevData) => ({
@@ -516,7 +520,7 @@ export default function MusicEntryClerkCatalog() {
 
       // Call instrument prediction API
       const instrumentResponse = await axios.post(
-        "http://127.0.0.1:8000/predict-instrument",
+        `${API_BASE_URL}/predictInstrument`,
         {
           fileUrl: catalogData.mp3FileUrl,
         }
@@ -561,16 +565,20 @@ export default function MusicEntryClerkCatalog() {
     const missingFields = [];
 
     // Check for required fields in dynamic fields
-    dynamicFields.forEach(field => {
-      if (field.required && field.isActive && (!data[field.name] || String(data[field.name]).trim() === "")) {
+    dynamicFields.forEach((field) => {
+      if (
+        field.required &&
+        field.isActive &&
+        (!data[field.name] || String(data[field.name]).trim() === "")
+      ) {
         missingFields.push(field.label);
       }
     });
 
     // Also check hardcoded required fields for the special tabs
     const hardcodedRequiredFields = {
-      "emotion": "Emotion",
-      "genre": "Genre"
+      emotion: "Emotion",
+      genre: "Genre",
     };
 
     Object.entries(hardcodedRequiredFields).forEach(([field, label]) => {
@@ -651,7 +659,9 @@ export default function MusicEntryClerkCatalog() {
           return "Inst.";
         default:
           // If label is longer than 6 characters, abbreviate it
-          return fullLabel.length > 6 ? `${fullLabel.substring(0, 5)}...` : fullLabel;
+          return fullLabel.length > 6
+            ? `${fullLabel.substring(0, 5)}...`
+            : fullLabel;
       }
     }
     return fullLabel;
@@ -661,7 +671,7 @@ export default function MusicEntryClerkCatalog() {
   const renderDynamicFields = (tabId) => {
     const fields = fieldsByTab[tabId] || [];
     // Filter only active fields
-    const activeFields = fields.filter(field => field.isActive);
+    const activeFields = fields.filter((field) => field.isActive);
 
     return (
       <Grid container spacing={2} direction={isMobile ? "column" : "row"}>
@@ -669,7 +679,7 @@ export default function MusicEntryClerkCatalog() {
           <Grid item xs={12} sm={6} key={field._id}>
             <DynamicField
               field={field}
-              value={catalogData[field.name] || ''}
+              value={catalogData[field.name] || ""}
               onChange={handleInputChange}
               formStyles={formStyles(theme)}
               isMobile={isMobile}
@@ -678,7 +688,10 @@ export default function MusicEntryClerkCatalog() {
         ))}
         {activeFields.length === 0 && (
           <Grid item xs={12}>
-            <Typography variant="body1" sx={{ textAlign: "center", py: 4, color: "#666" }}>
+            <Typography
+              variant="body1"
+              sx={{ textAlign: "center", py: 4, color: "#666" }}
+            >
               No fields have been configured for this tab.
             </Typography>
           </Grid>
@@ -693,12 +706,17 @@ export default function MusicEntryClerkCatalog() {
     const allTabs = [...tabsData];
 
     // Then add the hardcoded tabs (Cover Image, MP3 File, Instrumentation)
-    const lastDynamicTabId = allTabs.length > 0 ? Math.max(...allTabs.map(tab => tab.tabId)) : -1;
-    
+    const lastDynamicTabId =
+      allTabs.length > 0 ? Math.max(...allTabs.map((tab) => tab.tabId)) : -1;
+
     allTabs.push(
       { tabId: lastDynamicTabId + 1, name: "Cover Image", isHardcoded: true },
       { tabId: lastDynamicTabId + 2, name: "MP3 File", isHardcoded: true },
-      { tabId: lastDynamicTabId + 3, name: "Instrumentation", isHardcoded: true }
+      {
+        tabId: lastDynamicTabId + 3,
+        name: "Instrumentation",
+        isHardcoded: true,
+      }
     );
 
     return allTabs;
@@ -708,11 +726,11 @@ export default function MusicEntryClerkCatalog() {
   const renderTabContent = () => {
     const allTabs = getTabs();
     const currentTab = allTabs.find((tab, index) => index === tabIndex);
-    
+
     if (!currentTab) {
       return <Typography>Tab content not found</Typography>;
     }
-    
+
     // Handle hardcoded tabs
     if (currentTab.isHardcoded) {
       switch (currentTab.name) {
@@ -783,11 +801,7 @@ export default function MusicEntryClerkCatalog() {
                     : "No cover image available"}
                 </Typography>
 
-                <Button
-                  variant="contained"
-                  component="label"
-                  sx={buttonStyles}
-                >
+                <Button variant="contained" component="label" sx={buttonStyles}>
                   {coverImageUrl ? "Change Image" : "Upload Image"}
                   <input
                     type="file"
@@ -799,7 +813,7 @@ export default function MusicEntryClerkCatalog() {
               </Card>
             </Grid>
           );
-          
+
         case "MP3 File":
           return (
             <Grid container spacing={4} justifyContent="center">
@@ -965,473 +979,478 @@ export default function MusicEntryClerkCatalog() {
               </Grid>
             </Grid>
           );
-          
-          case "Instrumentation":
-            return (
-              <Grid container spacing={4} justifyContent="center">
-                <Grid item xs={12} sm={8} md={6}>
-                  <Card
-                    variant="outlined"
+
+        case "Instrumentation":
+          return (
+            <Grid container spacing={4} justifyContent="center">
+              <Grid item xs={12} sm={8} md={6}>
+                <Card
+                  variant="outlined"
+                  sx={{
+                    p: 3,
+                    mt: 3,
+                    borderRadius: 3,
+                    borderColor: "#8BD3E6",
+                    boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.1)",
+                    position: "relative",
+                  }}
+                >
+                  <Typography
+                    variant="h6"
                     sx={{
-                      p: 3,
-                      mt: 3,
-                      borderRadius: 3,
-                      borderColor: "#8BD3E6",
-                      boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.1)",
-                      position: "relative",
+                      fontFamily: "Montserrat",
+                      fontWeight: "bold",
+                      mb: 3,
+                      textAlign: "center",
                     }}
                   >
+                    Instrumentation Details
+                  </Typography>
+
+                  <TextField
+                    required
+                    name="instrumentation"
+                    label="Instrumentation"
+                    variant="outlined"
+                    fullWidth
+                    multiline
+                    rows={4}
+                    sx={formStyles}
+                    value={catalogData.instrumentation || ""}
+                    onChange={handleInputChange}
+                    placeholder="Get instrumentation prediction or enter manually"
+                  />
+
+                  <Box
+                    sx={{ display: "flex", justifyContent: "center", mt: 3 }}
+                  >
+                    <Button
+                      variant="contained"
+                      onClick={handleInstrumentationPrediction}
+                      disabled={
+                        !catalogData.mp3FileUrl || instrumentationLoading
+                      }
+                      sx={buttonStyles}
+                    >
+                      {instrumentationLoading
+                        ? "Predicting..."
+                        : "Get Instrumentation Prediction"}
+                    </Button>
+                  </Box>
+
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontFamily: "Montserrat",
+                      mt: 2,
+                      color: "#666",
+                      textAlign: "center",
+                    }}
+                  >
+                    Note: Instrumentation prediction may take longer to process.
+                    {!catalogData.mp3FileUrl &&
+                      " Please upload an MP3 in the MP3 File tab first."}
+                  </Typography>
+
+                  {/* Backdrop for loading spinner */}
+                  <Backdrop
+                    open={instrumentationLoading}
+                    sx={{
+                      color: "#fff",
+                      zIndex: (theme) => theme.zIndex.drawer + 1,
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      bgcolor: "rgba(0, 0, 0, 0.6)",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      flexDirection: "column",
+                      borderRadius: 2,
+                    }}
+                  >
+                    <CircularProgress
+                      size={60}
+                      color="inherit"
+                      sx={{ mb: 2 }}
+                    />
                     <Typography
                       variant="h6"
                       sx={{
+                        color: "#fff",
                         fontFamily: "Montserrat",
                         fontWeight: "bold",
-                        mb: 3,
-                        textAlign: "center",
                       }}
                     >
-                      Instrumentation Details
+                      Analyzing instrumentation...
                     </Typography>
-  
-                    <TextField
-                      required
-                      name="instrumentation"
-                      label="Instrumentation"
-                      variant="outlined"
-                      fullWidth
-                      multiline
-                      rows={4}
-                      sx={formStyles}
-                      value={catalogData.instrumentation || ""}
-                      onChange={handleInputChange}
-                      placeholder="Get instrumentation prediction or enter manually"
-                    />
-  
-                    <Box
-                      sx={{ display: "flex", justifyContent: "center", mt: 3 }}
-                    >
-                      <Button
-                        variant="contained"
-                        onClick={handleInstrumentationPrediction}
-                        disabled={
-                          !catalogData.mp3FileUrl || instrumentationLoading
-                        }
-                        sx={buttonStyles}
-                      >
-                        {instrumentationLoading
-                          ? "Predicting..."
-                          : "Get Instrumentation Prediction"}
-                      </Button>
-                    </Box>
-  
                     <Typography
                       variant="body2"
                       sx={{
+                        color: "#fff",
                         fontFamily: "Montserrat",
-                        mt: 2,
-                        color: "#666",
+                        mt: 1,
+                        maxWidth: "80%",
                         textAlign: "center",
                       }}
                     >
-                      Note: Instrumentation prediction may take longer to
-                      process.
-                      {!catalogData.mp3FileUrl &&
-                        " Please upload an MP3 in the MP3 File tab first."}
+                      This may take a moment as we analyze the audio in detail
                     </Typography>
-  
-                    {/* Backdrop for loading spinner */}
-                    <Backdrop
-                      open={instrumentationLoading}
-                      sx={{
-                        color: "#fff",
-                        zIndex: (theme) => theme.zIndex.drawer + 1,
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        height: "100%",
-                        bgcolor: "rgba(0, 0, 0, 0.6)",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        flexDirection: "column",
-                        borderRadius: 2,
-                      }}
-                    >
-                      <CircularProgress
-                        size={60}
-                        color="inherit"
-                        sx={{ mb: 2 }}
-                      />
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          color: "#fff",
-                          fontFamily: "Montserrat",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        Analyzing instrumentation...
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: "#fff",
-                          fontFamily: "Montserrat",
-                          mt: 1,
-                          maxWidth: "80%",
-                          textAlign: "center",
-                        }}
-                      >
-                        This may take a moment as we analyze the audio in detail
-                      </Typography>
-                    </Backdrop>
-                  </Card>
-                </Grid>
+                  </Backdrop>
+                </Card>
               </Grid>
-            );
-            
-          default:
-            return <Typography>Tab content not found</Typography>;
-        }
-      } else {
-        // This is a dynamic tab, render dynamic fields
-        return renderDynamicFields(currentTab.tabId);
+            </Grid>
+          );
+
+        default:
+          return <Typography>Tab content not found</Typography>;
       }
-    };
-  
-    return (
-      <ThemeProvider theme={theme}>
-        <GlobalStyle />
-        <Box sx={styles.root}>
-          {/* Mobile AppBar */}
-          <AppBar position="fixed" sx={styles.appBar}>
-            <Toolbar>
-              <IconButton
-                color="inherit"
-                edge="start"
-                onClick={handleDrawerToggle}
-                sx={{ mr: 2, color: "#3B3183" }}
-              >
-                <MenuIcon />
-              </IconButton>
-  
-              {/* Title */}
-              <Typography
-                variant="h6"
+    } else {
+      // This is a dynamic tab, render dynamic fields
+      return renderDynamicFields(currentTab.tabId);
+    }
+  };
+
+  return (
+    <ThemeProvider theme={theme}>
+      <GlobalStyle />
+      <Box sx={styles.root}>
+        {/* Mobile AppBar */}
+        <AppBar position="fixed" sx={styles.appBar}>
+          <Toolbar>
+            <IconButton
+              color="inherit"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, color: "#3B3183" }}
+            >
+              <MenuIcon />
+            </IconButton>
+
+            {/* Title */}
+            <Typography
+              variant="h6"
+              sx={{
+                color: "#3B3183",
+                fontWeight: "bold",
+                flexGrow: 1,
+              }}
+            >
+              Catalog Metadata
+            </Typography>
+
+            {/* Avatar in App Bar */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {!isMobile && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "#3B3183",
+                    display: { xs: "none", sm: "block" },
+                  }}
+                >
+                  {user?.username}
+                </Typography>
+              )}
+              <Avatar
+                alt={user?.username}
+                src={user?.profile_picture || null}
                 sx={{
-                  color: "#3B3183",
+                  width: { xs: 32, sm: 40 },
+                  height: { xs: 32, sm: 40 },
+                }}
+              >
+                {user?.username?.charAt(0).toUpperCase()}
+              </Avatar>
+            </Box>
+          </Toolbar>
+        </AppBar>
+
+        {/* Permanent Drawer for Large Screens */}
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: "none", lg: "block" },
+            "& .MuiDrawer-paper": {
+              width: DRAWER_WIDTH,
+              boxSizing: "border-box",
+            },
+          }}
+        >
+          <ClerkSidebar active="catalogMetadata" />
+        </Drawer>
+
+        {/* Temporary Drawer for Mobile */}
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            display: { xs: "block", lg: "none" },
+            "& .MuiDrawer-paper": {
+              width: DRAWER_WIDTH,
+              boxSizing: "border-box",
+            },
+          }}
+        >
+          <ClerkSidebar active="catalogMetadata" />
+        </Drawer>
+
+        {/* Main Content */}
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: { xs: 2, sm: 3 },
+            mt: { xs: 8, lg: 2 },
+            ml: { lg: `${DRAWER_WIDTH}px` },
+            maxWidth: "100%",
+            overflowX: "hidden",
+          }}
+        >
+          {/* Desktop Header */}
+          {isLargeScreen && (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 3,
+              }}
+            >
+              <Typography
+                variant="h4"
+                sx={{
+                  fontFamily: "Montserrat",
                   fontWeight: "bold",
-                  flexGrow: 1,
+                  fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
                 }}
               >
                 Catalog Metadata
               </Typography>
-  
-              {/* Avatar in App Bar */}
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                {!isMobile && (
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: "#3B3183",
-                      display: { xs: "none", sm: "block" },
-                    }}
-                  >
-                    {user?.username}
-                  </Typography>
-                )}
+
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    display: { xs: "none", lg: "block" },
+                    fontFamily: "Montserrat",
+                    color: "black",
+                  }}
+                >
+                  {user?.username || "User"}
+                </Typography>
                 <Avatar
                   alt={user?.username}
                   src={user?.profile_picture || null}
                   sx={{
-                    width: { xs: 32, sm: 40 },
-                    height: { xs: 32, sm: 40 },
+                    width: { xs: 32, lg: 40 },
+                    height: { xs: 32, lg: 40 },
                   }}
                 >
                   {user?.username?.charAt(0).toUpperCase()}
                 </Avatar>
               </Box>
-            </Toolbar>
-          </AppBar>
-  
-          {/* Permanent Drawer for Large Screens */}
-          <Drawer
-            variant="permanent"
+            </Box>
+          )}
+
+          {/* Divider */}
+          {isLargeScreen && <Divider sx={{ mb: 3 }} />}
+
+          {/* Tab Navigation */}
+          <Tabs
+            value={tabIndex}
+            onChange={handleTabChange}
+            aria-label="catalog tabs"
             sx={{
-              display: { xs: "none", lg: "block" },
-              "& .MuiDrawer-paper": {
-                width: DRAWER_WIDTH,
-                boxSizing: "border-box",
-              },
-            }}
-          >
-            <ClerkSidebar active="catalogMetadata" />
-          </Drawer>
-  
-          {/* Temporary Drawer for Mobile */}
-          <Drawer
-            variant="temporary"
-            open={mobileOpen}
-            onClose={handleDrawerToggle}
-            ModalProps={{ keepMounted: true }}
-            sx={{
-              display: { xs: "block", lg: "none" },
-              "& .MuiDrawer-paper": {
-                width: DRAWER_WIDTH,
-                boxSizing: "border-box",
-              },
-            }}
-          >
-            <ClerkSidebar active="catalogMetadata" />
-          </Drawer>
-  
-          {/* Main Content */}
-          <Box
-            component="main"
-            sx={{
-              flexGrow: 1,
-              p: { xs: 2, sm: 3 },
-              mt: { xs: 8, lg: 2 },
-              ml: { lg: `${DRAWER_WIDTH}px` },
-              maxWidth: "100%",
-              overflowX: "hidden"
-            }}
-          >
-            {/* Desktop Header */}
-            {isLargeScreen && (
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  mb: 3,
-                }}
-              >
-                <Typography
-                  variant="h4"
-                  sx={{
-                    fontFamily: "Montserrat",
-                    fontWeight: "bold",
-                    fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
-                  }}
-                >
-                  Catalog Metadata
-                </Typography>
-  
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      display: { xs: "none", lg: "block" },
-                      fontFamily: "Montserrat",
-                      color: "black",
-                    }}
-                  >
-                    {user?.username || "User"}
-                  </Typography>
-                  <Avatar
-                    alt={user?.username}
-                    src={user?.profile_picture || null}
-                    sx={{
-                      width: { xs: 32, lg: 40 },
-                      height: { xs: 32, lg: 40 },
-                    }}
-                  >
-                    {user?.username?.charAt(0).toUpperCase()}
-                  </Avatar>
-                </Box>
-              </Box>
-            )}
-  
-            {/* Divider */}
-            {isLargeScreen && <Divider sx={{ mb: 3 }} />}
-  
-            {/* Tab Navigation */}
-            <Tabs
-              value={tabIndex}
-              onChange={handleTabChange}
-              aria-label="catalog tabs"
-              sx={{
-                mb: 3,
-                fontFamily: "Montserrat",
-                overflowX: "auto",
-                width: "100%",
-                maxWidth: "100vw",
+              mb: 3,
+              fontFamily: "Montserrat",
+              overflowX: "auto",
+              width: "100%",
+              maxWidth: "100vw",
+              minHeight: { xs: "36px", sm: "48px" },
+              "& .MuiTab-root": {
+                textTransform: "none",
+                color: "#666",
+                padding: { xs: "6px 12px", sm: "12px 16px" },
                 minHeight: { xs: "36px", sm: "48px" },
-                "& .MuiTab-root": {
-                  textTransform: "none",
-                  color: "#666",
-                  padding: { xs: "6px 12px", sm: "12px 16px" },
-                  minHeight: { xs: "36px", sm: "48px" },
-                  minWidth: { xs: "50px", sm: "auto" },
-                  fontSize: { xs: "0.75rem", sm: "0.875rem" },
-                  textOverflow: "ellipsis",
-                  overflow: "hidden",
-                  whiteSpace: "nowrap",
-                  "&:hover": {
-                    color: "#8BD3E6",
-                  },
+                minWidth: { xs: "50px", sm: "auto" },
+                fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                textOverflow: "ellipsis",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                "&:hover": {
+                  color: "#8BD3E6",
                 },
-                "& .Mui-selected": {
-                  color: "#8BD3E6 !important",
-                  fontWeight: "normal",
+              },
+              "& .Mui-selected": {
+                color: "#8BD3E6 !important",
+                fontWeight: "normal",
+              },
+              "& .MuiTabs-indicator": {
+                backgroundColor: "#8BD3E6",
+              },
+              "& .MuiTabs-scrollableX": {
+                "&::-webkit-scrollbar": {
+                  display: "none",
                 },
-                "& .MuiTabs-indicator": {
-                  backgroundColor: "#8BD3E6",
-                },
-                "& .MuiTabs-scrollableX": {
-                  "&::-webkit-scrollbar": {
-                    display: "none",
-                  },
-                  scrollbarWidth: "none",
-                },
-                "& .MuiTabs-flexContainer": {
-                  justifyContent: { xs: "center", sm: "flex-start" },
-                  padding: { xs: "0 12px", sm: "0" },
-                },
-              }}
-              variant="scrollable"
-              scrollButtons="auto"
-              allowScrollButtonsMobile
-            >
-              {loading ? (
-                // Show skeleton tabs while loading
-                Array(5).fill(0).map((_, i) => (
-                  <Tab 
-                    key={i}
-                    label={
-                      <Skeleton 
-                        variant="text" 
-                        width={60} 
-                        height={24} 
-                        sx={{ bgcolor: "#f0f0f0" }} 
-                      />
-                    } 
-                  />
-                ))
-              ) : (
-                // Show actual tabs when loaded
+                scrollbarWidth: "none",
+              },
+              "& .MuiTabs-flexContainer": {
+                justifyContent: { xs: "center", sm: "flex-start" },
+                padding: { xs: "0 12px", sm: "0" },
+              },
+            }}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+          >
+            {loading
+              ? // Show skeleton tabs while loading
+                Array(5)
+                  .fill(0)
+                  .map((_, i) => (
+                    <Tab
+                      key={i}
+                      label={
+                        <Skeleton
+                          variant="text"
+                          width={60}
+                          height={24}
+                          sx={{ bgcolor: "#f0f0f0" }}
+                        />
+                      }
+                    />
+                  ))
+              : // Show actual tabs when loaded
                 getTabs().map((tab) => (
                   <Tab key={tab.tabId} label={getTabLabel(tab.name)} />
-                ))
-              )}
-            </Tabs>
-  
-            {/* Form and Tab Content */}
-            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, pl: { xs: 0, sm: 4 }, maxWidth: "100%" }}>
-              {/* Show skeleton while loading, actual content when loaded */}
-              {loading ? (
-                <Box sx={{ p: 2 }}>
-                  <Grid container spacing={2}>
-                    {Array(4).fill(0).map((_, i) => (
+                ))}
+          </Tabs>
+
+          {/* Form and Tab Content */}
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            sx={{ mt: 2, pl: { xs: 0, sm: 4 }, maxWidth: "100%" }}
+          >
+            {/* Show skeleton while loading, actual content when loaded */}
+            {loading ? (
+              <Box sx={{ p: 2 }}>
+                <Grid container spacing={2}>
+                  {Array(4)
+                    .fill(0)
+                    .map((_, i) => (
                       <Grid item xs={12} sm={6} key={i}>
-                        <Skeleton 
-                          variant="rectangular" 
-                          height={56} 
-                          sx={{ borderRadius: 1, mb: 2 }} 
+                        <Skeleton
+                          variant="rectangular"
+                          height={56}
+                          sx={{ borderRadius: 1, mb: 2 }}
                         />
                       </Grid>
                     ))}
-                  </Grid>
-                </Box>
-              ) : (
-                renderTabContent()
-              )}
-  
-              {/* Dialog for messages */}
-              <Dialog
-                open={openDialog}
-                onClose={handleCloseDialog}
-                PaperProps={dialogStyles.dialog.PaperProps}
-                aria-labelledby={dialogStyles.dialog.aria.labelledby}
-                aria-describedby={dialogStyles.dialog.aria.describedby}
-              >
-                <DialogTitle id="alert-dialog-title" sx={dialogStyles.title.sx}>
-                  {dialogTitle}
-                </DialogTitle>
-  
-                <DialogContent sx={dialogStyles.content.sx}>
-                  <DialogContentText
-                    id="alert-dialog-description"
-                    sx={dialogStyles.contentText.sx}
+                </Grid>
+              </Box>
+            ) : (
+              renderTabContent()
+            )}
+
+            {/* Dialog for messages */}
+            <Dialog
+              open={openDialog}
+              onClose={handleCloseDialog}
+              PaperProps={dialogStyles.dialog.PaperProps}
+              aria-labelledby={dialogStyles.dialog.aria.labelledby}
+              aria-describedby={dialogStyles.dialog.aria.describedby}
+            >
+              <DialogTitle id="alert-dialog-title" sx={dialogStyles.title.sx}>
+                {dialogTitle}
+              </DialogTitle>
+
+              <DialogContent sx={dialogStyles.content.sx}>
+                <DialogContentText
+                  id="alert-dialog-description"
+                  sx={dialogStyles.contentText.sx}
+                >
+                  {dialogMessage}
+                </DialogContentText>
+              </DialogContent>
+
+              <DialogActions sx={dialogStyles.actions.sx}>
+                {[
+                  "Prediction Complete",
+                  "Missing Required Fields",
+                  "Error",
+                  "Uploaded",
+                ].includes(dialogTitle) ? (
+                  <Button
+                    onClick={handleCloseDialog}
+                    variant="contained"
+                    sx={{
+                      ...dialogStyles.button.common,
+                      ...dialogStyles.button.close,
+                    }}
                   >
-                    {dialogMessage}
-                  </DialogContentText>
-                </DialogContent>
-  
-                <DialogActions sx={dialogStyles.actions.sx}>
-                  {[
-                    "Prediction Complete",
-                    "Missing Required Fields",
-                    "Error",
-                    "Uploaded",
-                  ].includes(dialogTitle) ? (
-                    <Button
-                      onClick={handleCloseDialog}
-                      variant="contained"
-                      sx={{
-                        ...dialogStyles.button.common,
-                        ...dialogStyles.button.close,
-                      }}
-                    >
-                      Close
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => navigate("/clerk-homepage")}
-                      variant="contained"
-                      sx={{
-                        ...dialogStyles.button.common,
-                        ...dialogStyles.button.close,
-                      }}
-                    >
-                      Go to Homepage
-                    </Button>
-                  )}
-                </DialogActions>
-              </Dialog>
-  
-              {/* Form Action Buttons */}
-              <Box
+                    Close
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => navigate("/clerk-homepage")}
+                    variant="contained"
+                    sx={{
+                      ...dialogStyles.button.common,
+                      ...dialogStyles.button.close,
+                    }}
+                  >
+                    Go to Homepage
+                  </Button>
+                )}
+              </DialogActions>
+            </Dialog>
+
+            {/* Form Action Buttons */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                flexDirection: { xs: "column", sm: "row" },
+                alignItems: "center",
+                mt: 3,
+                mb: 2,
+                gap: { xs: 2, sm: 3 },
+              }}
+            >
+              <Button
+                variant="outlined"
+                size="large"
+                type="submit"
                 sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  flexDirection: { xs: "column", sm: "row" },
-                  alignItems: "center",
-                  mt: 3,
-                  mb: 2,
-                  gap: { xs: 2, sm: 3 }
+                  ...buttonStyles,
+                  width: { xs: "95%", sm: "auto" },
                 }}
               >
+                Save Metadata
+              </Button>
+              {!loading && tabIndex < getTabs().length - 1 && (
                 <Button
                   variant="outlined"
                   size="large"
-                  type="submit"
+                  onClick={handleNext}
                   sx={{
                     ...buttonStyles,
                     width: { xs: "95%", sm: "auto" },
                   }}
                 >
-                  Save Metadata
+                  Next Tab
                 </Button>
-                {!loading && tabIndex < getTabs().length - 1 && (
-                  <Button
-                    variant="outlined"
-                    size="large"
-                    onClick={handleNext}
-                    sx={{
-                      ...buttonStyles,
-                      width: { xs: "95%", sm: "auto" },
-                    }}
-                  >
-                    Next Tab
-                  </Button>
-                )}
-              </Box>
+              )}
             </Box>
           </Box>
         </Box>
-      </ThemeProvider>
-    );
-  }
+      </Box>
+    </ThemeProvider>
+  );
+}

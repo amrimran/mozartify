@@ -271,7 +271,6 @@ router.get("/login", async (req, res) => {
 });
 
 // POST LOGIN REQUEST
-// POST LOGIN REQUEST
 router.post("/login", async (req, res) => {
   const { username_or_email, password } = req.body;
 

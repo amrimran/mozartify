@@ -1,6 +1,7 @@
 import warnings
 warnings.filterwarnings("ignore")
 
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,17 +18,19 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Add both origins
+    allow_origins=["*"], 
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
+# 2. FIX: Use Relative Paths using os.path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Load models once to avoid reloading them on every request
-model_spec_path = "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/fastapi-server/model/emotion/Conv2D_spec_agumented.h5"
-model_mfcc_path = "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/fastapi-server/model/emotion/Conv2D_mfcc_agumented.h5"
-model_mel_path = "C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/fastapi-server/model/emotion/Conv2D_mel_agumented.h5"
+model_spec_path = os.path.join(BASE_DIR, "model", "emotion", "Conv2D_spec_agumented.h5")
+model_mfcc_path = os.path.join(BASE_DIR, "model", "emotion", "Conv2D_mfcc_agumented.h5")
+model_mel_path = os.path.join(BASE_DIR, "model", "emotion", "Conv2D_mel_agumented.h5")
 
 try:
     model_spec = load_model(model_spec_path)

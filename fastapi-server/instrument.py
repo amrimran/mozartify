@@ -27,7 +27,9 @@ app = FastAPI()
 # Add CORS middleware to allow requests from frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    # In production, this should be your Railway Backend URL
+    # For now, allow all is safest for debugging, or list specific Railway URLs
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -52,7 +54,10 @@ def load_model(model_path):
     return model
 
 # Load the pre-trained model
-model = load_model("C:/Users/ADMIN/OneDrive/Documents/GitHub/mozartify/fastapi-server/model/instrument/Trained_model.h5")
+model = tf.keras.models.load_model(
+    "/Users/wanamaer/mozartify/fastapi-server/model/instrument/Trained_model.h5",
+    compile=False
+)
 
 # Define instrument classes
 classes = [
