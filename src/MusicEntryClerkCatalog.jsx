@@ -440,7 +440,7 @@ export default function MusicEntryClerkCatalog() {
         `${API_BASE_URL}/predictEmotion`, // Uses your config/api.js base url
         { fileUrl },
         {
-          timeout:300000,
+          timeout: 300000,
         }
       );
 

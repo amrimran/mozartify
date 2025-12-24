@@ -265,15 +265,15 @@ export default function Login() {
                 "Your account is awaiting approval. Please contact the admin."
               );
             } else if (music_first_timer && role === "customer") {
-              navigate("/first-time-login");
+              navigate("/first-time-login",{ replace: true });
             } else if (role === "customer") {
-              navigate("/customer-homepage");
+              navigate("/customer-homepage",{ replace: true });
             } else if (role === "music_entry_clerk") {
-              navigate("/clerk-homepage");
+              navigate("/clerk-homepage",{ replace: true });
             } else if (role === "admin") {
-              navigate("/admin-dashboard");
+              navigate("/admin-dashboard",{ replace: true });
             } else {
-              navigate("/login");
+              navigate("/login",{ replace: true });
             }
           } else if (type === "arts") {
             // Arts login redirections
@@ -282,13 +282,13 @@ export default function Login() {
                 "Your account is awaiting approval. Please contact the admin."
               );
             } else if (art_first_timer && role === "customer") {
-              navigate("/first-time-login-2");
+              navigate("/first-time-login-2",{ replace: true });
             } else if (role === "customer") {
-              navigate("/customer-homepage-2");
+              navigate("/customer-homepage-2",{ replace: true });
             } else if (role === "music_entry_clerk") {
-              navigate("/arts-clerk-homepage");
+              navigate("/arts-clerk-homepage",{ replace: true });
             } else if (role === "admin") {
-              navigate("/admin-dashboard");
+              navigate("/admin-dashboard",{ replace: true });
             } else {
               navigate("/login");
             }
