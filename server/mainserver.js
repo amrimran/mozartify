@@ -133,9 +133,6 @@ app.get("/api/health", (req, res) => {
       sessions: "enabled",
     },
     routes: ["index", "admin", "server", "inbox"],
-    frontend: "https://mozartify-nasir.onrender.com",
-    backend: "https:/mozartify-production.up.railway.app/api",
-    backend: "https://mozartify.onrender.com/api",
   });
 });
 
@@ -210,16 +207,10 @@ app.use((err, req, res, next) => {
 // ================== START SERVER ==================
 app.listen(PORT, "0.0.0.0", () => {
   console.log("\n🚀 =================================");
-  console.log(`   Mozartify Backend Server (Railway)`);
+  console.log(`   Mozartify Backend Server`);
   console.log("🚀 =================================");
   console.log(`📍 Port: ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(
-    `🌐 Backend URL: https://mozartify-production-01c1.up.railway.app//`
-  );
-  console.log(
-    `🎨 Frontend URL: https://mozartify-production-ad3c.up.railway.app/`
-  );
   console.log("🚀 =================================\n");
 });
 
